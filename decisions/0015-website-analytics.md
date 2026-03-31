@@ -7,7 +7,7 @@ Status: accepted
 
 Anomalica needs to understand how people use the site - which articles are read, where visitors come from, and how the site grows over time. This data also feeds back into the assembly pipeline: page view counts can surface popular articles on the homepage and help prioritise content work.
 
-However, the project has a strong privacy stance (see 0003) and operates across jurisdictions (see 0008). Analytics must not compromise visitor privacy, must not require cookie consent banners, and should align with General Data Protection Regulation (GDPR) and ePrivacy Directive requirements.
+However, the project has a strong privacy stance (see 0003) and operates across jurisdictions (see 0002). Analytics must not compromise visitor privacy, must not require cookie consent banners, and should align with General Data Protection Regulation (GDPR) and ePrivacy Directive requirements.
 
 The main options considered were:
 
