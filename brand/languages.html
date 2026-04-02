@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anomalica - Language Coverage</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --teal-950: #031F1F;
+      --teal-900: #064D4D;
+      --teal-700: #0B6E6E;
+      --teal-500: #14A3A3;
+      --teal-400: #4BB8B8;
+      --teal-300: #72D3D3;
+      --teal-100: #D1F1F1;
+      --teal-50:  #EDF8F8;
+      --paper:     #F8F6F1;
+      --bone:      #E9E5DC;
+      --fog:       #D6D2C9;
+      --stone:     #B5B0A6;
+      --pebble:    #8A8579;
+      --slate:     #5E5A50;
+      --graphite:  #3D3B35;
+      --ink:       #1E1D19;
+      --copper:    #B35A28;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      background: #EBE8E1;
+      color: var(--ink);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      line-height: 1.6;
+      padding-top: 44px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; gap: 1.5rem;
+      padding: 0.75rem 2rem;
+      background: rgba(3, 31, 31, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      font-size: 0.8125rem; letter-spacing: 0.05em;
+    }
+    .page-nav a { color: var(--teal-300); text-decoration: none; transition: color 0.15s ease; }
+    .page-nav a:hover { color: #FFFFFF; }
+    .page-nav a.active { color: #FFFFFF; border-bottom: 1px solid var(--teal-400); padding-bottom: 2px; }
+
+    .section { padding: 5rem 2rem; }
+    .section--white { background: #FFFFFF; }
+    .section--paper { background: var(--paper); }
+    .section--teal  { background: #064D4D; color: #FFFFFF; }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+    .section-title {
+      font-weight: 600; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.2em;
+      color: var(--teal-700); margin-bottom: 2rem;
+    }
+    .section--teal .section-title { color: var(--teal-300); }
+
+    .hero { background: #064D4D; padding: 5rem 2rem 4rem; text-align: center; }
+    .hero h1 { font-family: 'Outfit', sans-serif; font-weight: 400; font-size: clamp(2rem, 5vw, 3.5rem); color: #FFFFFF; }
+    .hero p { font-weight: 300; font-size: 1rem; color: var(--teal-100); margin-top: 0.75rem; letter-spacing: 0.08em; }
+
+    .chart-wrap {
+      background: #FFFFFF; border-radius: 8px; padding: 2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 2rem;
+    }
+    .chart-wrap canvas { max-height: 480px; }
+
+    .lang-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .lang-table th {
+      text-align: left; font-weight: 600; font-size: 0.6875rem;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate);
+      padding: 0.75rem 1rem; border-bottom: 2px solid var(--fog);
+      position: sticky; top: 44px; background: var(--paper); z-index: 10;
+    }
+    .lang-table td {
+      padding: 0.625rem 1rem; border-bottom: 1px solid var(--bone); vertical-align: middle;
+    }
+    .lang-table tr:hover td { background: var(--teal-50); }
+    .lang-table .num { text-align: right; font-family: 'Noto Sans', sans-serif; font-variant-numeric: tabular-nums; }
+    .lang-table .rank { color: var(--stone); font-weight: 500; width: 40px; }
+    .lang-table .lang-name-cell { font-weight: 500; color: var(--ink); }
+    .lang-table .pct-bar {
+      display: inline-block; height: 6px; border-radius: 3px;
+      background: var(--teal-500); vertical-align: middle; margin-right: 0.5rem;
+    }
+    .lang-table .cut-line td {
+      border-top: 3px solid var(--teal-700);
+      padding-top: 0.875rem;
+    }
+    .lang-table .below-cut { opacity: 0.55; }
+
+    .note-card {
+      background: var(--teal-50); border-left: 3px solid var(--teal-500);
+      border-radius: 0 6px 6px 0; padding: 1.25rem 1.5rem;
+      font-size: 0.875rem; line-height: 1.7; color: var(--graphite); margin-top: 2rem;
+    }
+    .note-card strong { color: var(--teal-700); }
+    .note-card + .note-card { margin-top: 1rem; }
+    .note-card code {
+      font-size: 0.8125rem; background: rgba(0,0,0,0.05);
+      padding: 0.1rem 0.35rem; border-radius: 3px;
+    }
+    .note-card a { color: var(--teal-700); }
+
+    .method-step {
+      margin-bottom: 1.5rem; padding-left: 2rem; position: relative;
+      font-size: 0.875rem; line-height: 1.7; color: var(--graphite);
+    }
+    .method-step::before {
+      content: attr(data-step);
+      position: absolute; left: 0; top: 0;
+      font-weight: 600; color: var(--teal-700); font-size: 0.875rem;
+    }
+
+    .lang-table th[title] {
+      cursor: help;
+      text-decoration: underline dotted var(--stone);
+      text-underline-offset: 3px;
+    }
+
+    @media (max-width: 768px) {
+      .section { padding: 3rem 1rem; }
+      .lang-table { font-size: 0.8125rem; }
+      .lang-table th, .lang-table td { padding: 0.5rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="page-nav">
+    <a href="brand-board.html">Brand</a>
+    <a href="typography.html">Typography</a>
+    <a href="languages.html" class="active">Languages</a>
+  </nav>
+
+  <header class="hero">
+    <h1>Language Coverage</h1>
+    <p>Which languages cover the most people? Analysis from Unicode CLDR open data.</p>
+  </header>
+
+
+  <!-- ============ CHART ============ -->
+  <section class="section section--white">
+    <div class="section-inner">
+      <h2 class="section-title">Cumulative Coverage of Literate World Population</h2>
+      <div class="chart-wrap">
+        <canvas id="coverageChart"></canvas>
+      </div>
+      <div class="note-card">
+        Two additional displayed languages are produced by mechanical conversion, not separate translation: <strong>Traditional Chinese</strong> (character conversion from Simplified Chinese) and <strong>American English</strong> (spelling and formatting conversion from British English). Together with the 28 translations, this produces 30 displayed languages.
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============ TABLE ============ -->
+  <section class="section section--paper">
+    <div class="section-inner">
+      <h2 class="section-title">Algorithmic Ranking</h2>
+      <p style="font-size: 0.875rem; color: var(--slate); margin-bottom: 1rem; max-width: 720px">Each language is ranked by how many additional literate people it covers who are not already covered by any higher-ranked language, accounting for multilingual overlap within each territory.</p>
+      <p style="font-size: 0.875rem; color: var(--slate); margin-bottom: 2rem; max-width: 720px"><strong style="color: var(--graphite)">Caveat:</strong> CLDR data measures functional language populations, which includes spoken fluency. For some languages (particularly pidgins and regional spoken languages), the number of people who <em>read and write</em> the language is significantly lower than the number who speak it. These cases are noted in the editorial adjustments below.</p>
+
+      <table class="lang-table">
+        <thead>
+          <tr>
+            <th style="text-align:center">Supported</th>
+            <th>Algorithm rank</th>
+            <th>Language</th>
+            <th class="num" title="Total number of people who speak this language, including both native and second-language speakers (Ethnologue 2026)">Total speakers</th>
+            <th class="num" title="Additional literate people covered by adding this language, after subtracting those who can already read a higher-ranked language">Incremental</th>
+            <th class="num" title="Running total of literate people covered by this language and all supported languages above it">Cumulative</th>
+            <th title="Cumulative coverage as a percentage of the world's literate population (6,517 million)">Coverage</th>
+          </tr>
+        </thead>
+        <tbody id="langTableBody">
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ EDITORIAL ADJUSTMENTS ============ -->
+  <section class="section section--white">
+    <div class="section-inner">
+      <h2 class="section-title">Editorial Adjustments</h2>
+      <p style="font-size: 0.875rem; color: var(--slate); margin-bottom: 2rem; max-width: 720px">The algorithmic ranking is the starting point, not the final answer. The following adjustments reflect editorial judgment about what is practical for a written encyclopaedia.</p>
+
+      <h3 style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal-700); margin-bottom: 1.25rem">Excluded from supported set</h3>
+      <table class="lang-table" style="margin-bottom: 3rem">
+        <thead>
+          <tr>
+            <th>Language</th>
+            <th class="num">Algorithm rank</th>
+            <th class="num">Incremental</th>
+            <th>Reason for exclusion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lang-name-cell">Javanese</td>
+            <td class="num">21</td>
+            <td class="num">32M</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">Primarily a spoken language. Most literate Javanese speakers read and write in Indonesian, which is already supported at position 8.</td>
+          </tr>
+          <tr>
+            <td class="lang-name-cell">Malay</td>
+            <td class="num">27</td>
+            <td class="num">17M</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">Malay and Indonesian are mutually intelligible in written form. Indonesian is supported at position 8. Malaysian readers can access Indonesian content and vice versa. Supporting both as separate translations would produce near-identical output.</td>
+          </tr>
+          <tr>
+            <td class="lang-name-cell">Nigerian Pidgin</td>
+            <td class="num">30</td>
+            <td class="num">14M</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">A pidgin language used primarily for spoken communication. Not a standard written language for reference works. Speakers are covered by English.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal-700); margin-bottom: 1.25rem">Added to supported set</h3>
+      <table class="lang-table" style="margin-bottom: 3rem">
+        <thead>
+          <tr>
+            <th>Language</th>
+            <th class="num">Algorithm rank</th>
+            <th class="num">Incremental</th>
+            <th>Reason for inclusion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lang-name-cell">Ukrainian</td>
+            <td class="num">33</td>
+            <td class="num">13M</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">Ukrainian is included by editorial decision because the platform does not wish to support Russian without Ukrainian during an active conflict between the two countries.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal-700); margin-bottom: 1.25rem">Rendering variants</h3>
+      <table class="lang-table">
+        <thead>
+          <tr>
+            <th>Variant</th>
+            <th>Parent language</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lang-name-cell">Traditional Chinese</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">Mandarin (position 2)</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">Taiwan, Hong Kong, and Macau use Traditional Chinese characters. Mainland China, Singapore, and Malaysia use Simplified. Content is translated once to Chinese, then mechanically converted between character sets.</td>
+          </tr>
+          <tr>
+            <td class="lang-name-cell">American English</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">English (position 1)</td>
+            <td style="font-size: 0.8125rem; color: var(--slate)">British English is the canonical form. American English is produced by mechanical conversion: spelling changes (colour/color, analyse/analyze, centre/center), date formatting (27 March 2026 to March 27, 2026), and a small vocabulary list. Not a separate translation.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- ============ METHODOLOGY ============ -->
+  <section class="section section--white">
+    <div class="section-inner">
+      <h2 class="section-title">Methodology</h2>
+
+      <div class="method-step" data-step="1.">
+        <strong>Source data:</strong> Language population data from the <a href="https://github.com/unicode-org/cldr/blob/main/common/supplemental/supplementalData.xml">Unicode Common Locale Data Repository</a> (CLDR). For each of 244 territories, CLDR provides the percentage of the population that speaks each language, the territory's total population, and its literacy rate. CLDR is maintained by the Unicode Consortium and is freely available under the Unicode Licence.
+      </div>
+
+      <div class="method-step" data-step="2.">
+        <strong>Coverage model:</strong> For each territory, we calculate the literate population (population multiplied by literacy rate). When a language is added to the supported set, it covers a fraction of each territory's literate population. People who already speak a previously selected language are not counted again. Overlap between languages within a territory is modelled using an independence assumption: if 60% speak language A and 40% speak language B, the combined coverage is 1 - (1 - 0.6) x (1 - 0.4) = 76%, not 100%.
+      </div>
+
+      <div class="method-step" data-step="3.">
+        <strong>Selection algorithm:</strong> Languages are selected greedily. At each step, the language that would cover the most currently-uncovered literate people across all territories is chosen. This is a standard greedy approximation to the <a href="https://en.wikipedia.org/wiki/Set_cover_problem">set cover problem</a>, which is known to produce near-optimal results.
+      </div>
+
+      <div class="method-step" data-step="4.">
+        <strong>Limitations:</strong> The independence assumption for bilingual overlap is a simplification. In practice, speakers of minority languages within a territory are more likely to also speak the majority language than vice versa. This means our incremental estimates may slightly overcount coverage for smaller languages. However, the ranking order is robust to this effect.
+      </div>
+
+      <div class="note-card">
+        <strong>Reproduce this analysis:</strong> The analysis script (<code>analyse-languages.py</code>) and its output (<code>language-coverage.json</code>) are in the <a href="https://github.com/anomalica/anomalica">repository</a>. Run <code>python3 analyse-languages.py</code> with the CLDR supplementalData.xml to regenerate the results. The script, data source, and methodology are all open.
+      </div>
+    </div>
+  </section>
+
+
+  <script>
+    // Languages excluded by editorial judgment (by CLDR code)
+    var EXCLUDED = { jv: 'Primarily spoken', ms: 'Mutually intelligible with Indonesian', pcm: 'Pidgin' };
+    // Languages added despite lower algorithmic rank
+    var ADDED = { uk: 'Added editorially' };
+
+    fetch('language-coverage.json')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var languages = data.languages;
+
+        // Determine supported set: algorithmic order, skip excluded, count until we have enough
+        var supportedCount = 0;
+        languages.forEach(function (l) {
+          if (EXCLUDED[l.code]) {
+            l.status = 'excluded';
+          } else if (supportedCount < 27) {
+            l.status = 'supported';
+            supportedCount++;
+          } else {
+            l.status = 'unsupported';
+          }
+        });
+        // Mark Ukrainian as added if not already supported
+        languages.forEach(function (l) {
+          if (ADDED[l.code] && l.status !== 'supported') {
+            l.status = 'added';
+          }
+        });
+
+        // Recalculate cumulative coverage excluding removed languages
+        var supportedCumulative = 0;
+        languages.forEach(function (l) {
+          if (l.status === 'supported' || l.status === 'added') {
+            supportedCumulative += l.incremental_m;
+            l.supported_cumulative_m = supportedCumulative;
+            l.supported_coverage_pct = Math.round(supportedCumulative / data.total_literate_population_m * 10000) / 100;
+          } else if (l.status === 'excluded') {
+            l.supported_cumulative_m = supportedCumulative;
+            l.supported_coverage_pct = null;
+          } else {
+            l.supported_cumulative_m = supportedCumulative;
+            l.supported_coverage_pct = null;
+          }
+        });
+
+        // Build table
+        var displayCount = 0;
+        var tbody = document.getElementById('langTableBody');
+        languages.forEach(function (l, i) {
+          var tr = document.createElement('tr');
+          if (l.status === 'excluded') {
+            tr.style.opacity = '0.4';
+            tr.style.textDecoration = 'line-through';
+          } else if (l.status === 'unsupported') {
+            tr.classList.add('below-cut');
+          } else if (l.status === 'added') {
+            tr.style.fontWeight = '500';
+            tr.style.background = 'var(--teal-50)';
+          } else if (l.status === 'supported') {
+            tr.style.fontWeight = '500';
+          }
+
+          if (l.status === 'supported' || l.status === 'added') {
+            displayCount++;
+            l.supportedNum = displayCount;
+          }
+
+          var nameExtra = '';
+          if (l.status === 'excluded') nameExtra = ' <span style="font-weight:400;font-size:0.75rem;color:var(--pebble);text-decoration:none;display:inline-block">' + EXCLUDED[l.code] + '</span>';
+          if (l.status === 'added') nameExtra = ' <span style="font-weight:400;font-size:0.75rem;color:var(--teal-700)">added editorially</span>';
+
+          var cumulStr, coverStr;
+          if (l.status === 'excluded') {
+            cumulStr = '-';
+            coverStr = '-';
+          } else if (l.status === 'supported' || l.status === 'added') {
+            cumulStr = l.supported_cumulative_m + 'M';
+            coverStr = '<span class="pct-bar" style="width: ' + (l.supported_coverage_pct / 90 * 100) + '%"></span>' + l.supported_coverage_pct + '%';
+          } else {
+            cumulStr = '<span style="color:var(--stone)">' + l.cumulative_m + 'M</span>';
+            coverStr = '<span style="color:var(--stone)">' + l.coverage_pct + '%</span>';
+          }
+
+          var supportedNumStr = l.supportedNum ? '<strong style="color:var(--teal-700)">' + l.supportedNum + '</strong>' : '';
+
+          tr.innerHTML =
+            '<td class="rank" style="text-align:center">' + supportedNumStr + '</td>' +
+            '<td class="rank">' + l.rank + '</td>' +
+            '<td class="lang-name-cell">' + l.name + nameExtra + '</td>' +
+            '<td class="num">' + l.total_speakers_m + 'M</td>' +
+            '<td class="num">' + l.incremental_m + 'M</td>' +
+            '<td class="num">' + cumulStr + '</td>' +
+            '<td>' + coverStr + '</td>';
+          tbody.appendChild(tr);
+        });
+
+        // Chart
+        var ctx = document.getElementById('coverageChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: languages.map(function (l) { return l.name; }),
+            datasets: [
+              {
+                type: 'line',
+                label: 'Cumulative coverage %',
+                data: languages.map(function (l) { return l.coverage_pct; }),
+                borderColor: '#B35A28',
+                backgroundColor: 'transparent',
+                borderWidth: 2.5,
+                pointBackgroundColor: languages.map(function (l) {
+                  if (l.status === 'supported' || l.status === 'added') return '#B35A28';
+                  return '#D4915E';
+                }),
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                tension: 0.3,
+                yAxisID: 'y1',
+                order: 0
+              },
+              {
+                type: 'bar',
+                label: 'Incremental coverage (millions)',
+                data: languages.map(function (l) { return l.incremental_m; }),
+                backgroundColor: languages.map(function (l) {
+                  if (l.status === 'excluded') return '#E8C0B0';
+                  if (l.status === 'supported' || l.status === 'added') return '#0B6E6E';
+                  return '#D6D2C9';
+                }),
+                borderRadius: 3,
+                yAxisID: 'y',
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: {
+                labels: {
+                  font: { family: 'Outfit', size: 12 },
+                  color: '#5E5A50',
+                  usePointStyle: true,
+                  pointStyleWidth: 20
+                }
+              },
+              tooltip: {
+                titleFont: { family: 'Outfit', size: 13 },
+                bodyFont: { family: 'Noto Sans', size: 12 },
+                callbacks: {
+                  afterBody: function (items) {
+                    var idx = items[0].dataIndex;
+                    var l = languages[idx];
+                    return 'Total speakers: ' + l.total_speakers_m + 'M\nCumulative: ' + l.cumulative_m + 'M (' + l.coverage_pct + '%)';
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  font: { family: 'Outfit', size: 11 },
+                  color: '#8A8579',
+                  maxRotation: 55,
+                  minRotation: 55
+                },
+                grid: { display: false }
+              },
+              y: {
+                position: 'left',
+                title: {
+                  display: true,
+                  text: 'Incremental coverage (millions)',
+                  font: { family: 'Outfit', size: 12 },
+                  color: '#8A8579'
+                },
+                ticks: {
+                  font: { family: 'Noto Sans', size: 11 },
+                  color: '#8A8579'
+                },
+                grid: { color: 'rgba(0,0,0,0.04)' }
+              },
+              y1: {
+                position: 'right',
+                min: 0,
+                max: 90,
+                title: {
+                  display: true,
+                  text: 'Cumulative coverage %',
+                  font: { family: 'Outfit', size: 12 },
+                  color: '#B35A28'
+                },
+                ticks: {
+                  font: { family: 'Noto Sans', size: 11 },
+                  color: '#B35A28',
+                  callback: function (v) { return v + '%'; }
+                },
+                grid: { drawOnChartArea: false }
+              }
+            }
+          }
+        });
+      });
+
+    // Live reload
+    (function () {
+      var lastMod = null;
+      setInterval(function () {
+        fetch(location.href, { method: 'HEAD', cache: 'no-store' })
+          .then(function (r) {
+            var m = r.headers.get('last-modified');
+            if (!m) return;
+            if (lastMod === null) lastMod = m;
+            else if (m !== lastMod) location.reload();
+          })
+          .catch(function () {});
+      }, 1000);
+    })();
+  </script>
+
+</body>
+</html>
