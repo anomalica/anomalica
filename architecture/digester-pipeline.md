@@ -15,15 +15,9 @@ Extraction is independent per document and can be parallelised across any number
 
 The output is a human-readable extraction markdown file containing all extracted nodes, domain claims, and infrastructure claims with their metadata, original excerpts, and provenance information.
 
-### 2. Review (human)
+### 2. Import (deterministic, no AI)
 
-A human reads the extraction markdown and corrects any errors: misclassified claim types, wrong speakers, incorrect unit conversions, irrelevant claims that should be removed, missing claims that should be added. The reviewed file is committed to the anomalica-extractions repository.
-
-This is the quality gate. Everything downstream is deterministic.
-
-### 3. Import (deterministic, no AI)
-
-The reviewed extraction markdown files are imported into the database by a deterministic parser. No AI is involved. The import process:
+Extraction markdown files are imported into the database by a deterministic parser. No AI is involved and no human review is required before import. The import process:
 
 - Creates record and node entries from the markdown
 - Matches nodes against existing entries using exact name, alias, and Levenshtein distance
@@ -31,10 +25,6 @@ The reviewed extraction markdown files are imported into the database by a deter
 - Preserves the UUIDs from the markdown so that re-importing an edited file updates in place
 
 The database can be rebuilt from scratch at any time by importing all extraction files from the anomalica-extractions repository.
-
-### 4. Reconciliation
-
-A separate maintenance pass that can run at any time, independently of ingestion. It walks the graph looking for nodes that should be merged:
 
 ### 3. Reconciliation
 
@@ -44,6 +34,18 @@ A separate maintenance pass that can run at any time, independently of ingestion
 - Nodes whose names are similar but were not caught during integration (perhaps because they were ingested in different batches or the graph context was different at the time)
 
 Proposed merges can be reviewed before being applied. When a merge is confirmed, one node becomes the canonical and the other becomes an alias. All claims pointing to the alias are relinked to the canonical. No data is lost - the alias name is preserved and continues to work for future lookups.
+
+## Human review and correction
+
+Human review is not a pipeline stage. It can happen at any time - before import, after import, weeks later, or never. The system works without it. Review improves quality when it happens but does not gate the pipeline.
+
+Extraction markdown files live in the anomalica-extractions git repository. Every edit is tracked in the commit history, which serves as the audit trail for corrections. When a correction is made to an extraction file:
+
+1. The corrected file is committed to the repository
+2. The database is rebuilt from the updated extraction files
+3. Any articles affected by the change are reassembled
+
+The extraction files are publicly readable on the git hosting platform. When a reader spots an error in an article, they can follow the reference links to the extraction file and report the problem via the repository's issue tracker. Corrections flow through the extraction files, not through direct database edits or article overrides.
 
 ## Aliases
 
