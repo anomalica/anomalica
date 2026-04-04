@@ -15,6 +15,12 @@ The knowledge graph may be split across multiple SQLite files for practical reas
 
 If public submissions (Phase 2) generate high concurrent write volume, a hosted database may be introduced as an intermediary to buffer incoming submissions until they can be processed and fed into the SQLite files.
 
+## Relationship to extraction markdown
+
+The SQLite database is derived data, not the source of truth. The source of truth is the collection of reviewed extraction markdown files in the anomalica-extractions repository. The database is rebuilt deterministically from these files by the import process. If the database is deleted, it can be reconstructed from the extraction files at any time.
+
+This means the database serves two purposes: a query and computation layer (for embedding search, corroboration detection, and evidence scoring), and a distribution format (for public download). It is not precious state.
+
 ## Consequences
 
-The public can download the complete knowledge graph as a file. Anyone can build their own viewer, run their own analysis, or verify the scoring methodology against the raw data. If the platform ceases operation, the data survives in every copy.
+The public can download the complete knowledge graph as a file. Anyone can build their own viewer, run their own analysis, or verify the scoring methodology against the raw data. If the platform ceases operation, the data survives in every copy - both as the SQLite database and as the extraction markdown files in a git repository.

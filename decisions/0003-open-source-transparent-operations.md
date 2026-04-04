@@ -9,11 +9,12 @@ The platform's credibility depends on being verifiable. Users need to be able to
 
 ## Decision
 
-All code, documentation, and operational decisions will be public. The project operates under a GitHub organisation (github.com/anomalica) with three repositories:
+All code, documentation, and operational decisions will be public. The project operates under a GitHub organisation (github.com/anomalica) with repositories for each component:
 
 - **anomalica** - organisation-level decisions, architecture, and documentation (this repository)
 - **anomalica-ingester** - raw source material to structured text (audio, video, ebooks, PDFs, scanned documents)
-- **anomalica-digester** - claim extraction, knowledge graph building, evidence scoring
+- **anomalica-digester** - AI extraction from records, producing reviewable markdown files
+- **anomalica-extractions** - reviewed extraction markdown files, the source of truth for the knowledge graph
 - **anomalica-assembler** - article assembly from knowledge graph data, directive application
 - **anomalica-content** - the output: assembled articles and associated media
 - **anomalica-site** - the Hugo static site, consumes content from anomalica-content

@@ -4,7 +4,7 @@ The assembler reads from the knowledge graph and produces articles. It also appl
 
 ## Inputs
 
-- Knowledge graph (SQLite, read-only)
+- Knowledge graph (SQLite, rebuilt from anomalica-extractions, read-only)
 - Directives (from the content hierarchy)
 - Existing articles (for incremental updates)
 

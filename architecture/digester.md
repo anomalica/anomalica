@@ -42,7 +42,9 @@ The specific scoring algorithm is an implementation detail. The principle is tha
 
 ## Outputs
 
-The digester's only output is the knowledge graph (SQLite database). It does not know about articles, directives, or the site.
+The digester produces extraction markdown files - human-readable documents containing all extracted nodes and claims with their metadata, original excerpts, and provenance information. These files are reviewed by humans, committed to the anomalica-extractions repository, and then imported into the knowledge graph database (SQLite) by a deterministic process with no AI involvement.
+
+The database is derived from the extraction files and can be rebuilt from scratch at any time. The extraction markdown files in the anomalica-extractions repository are the source of truth for the knowledge graph.
 
 ## Source properties
 

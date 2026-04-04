@@ -4,30 +4,37 @@ This document describes how the digester processes records and integrates them i
 
 ## Pipeline stages
 
-### 1. Extraction
+### 1. Extraction (AI)
 
-Each record is sent to an AI model (Claude) which reads the text and extracts:
+Each record is sent to an AI model (Claude) which reads the text and extracts nodes and claims. Two separate extraction passes run on each document:
 
-- **Domain nodes** - people, organisations, places, events, matters, objects mentioned in the record
-- **Claims** - atomic assertions, each with a speaker, claim type, attestation level, and references to the nodes it mentions
+- **Domain extraction** - claims about the phenomena: testimony, evidence, events, programmes, investigations
+- **Infrastructure extraction** - claims about the information ecosystem: who produced the content, inter-source references, career backgrounds, network connections
 
-Extraction is independent per document. It does not require access to the knowledge graph and can be parallelised across any number of records using the Anthropic batch API.
+Extraction is independent per document and can be parallelised across any number of records using the Anthropic batch API.
 
-The output is a self-contained extraction result per record. At this point, node names are whatever the AI chose from the source text ("Commander Fravor", "Fravor", "David Fravor" could all appear).
+The output is a human-readable extraction markdown file containing all extracted nodes, domain claims, and infrastructure claims with their metadata, original excerpts, and provenance information.
 
-### 2. Integration
+### 2. Review (human)
 
-Each extraction result is integrated into the knowledge graph one at a time, sequentially. The order matters because each integration changes the graph, and subsequent integrations need to see those changes.
+A human reads the extraction markdown and corrects any errors: misclassified claim types, wrong speakers, incorrect unit conversions, irrelevant claims that should be removed, missing claims that should be added. The reviewed file is committed to the anomalica-extractions repository.
 
-For each extracted node, the digester attempts to match it against existing nodes in the graph:
+This is the quality gate. Everything downstream is deterministic.
 
-1. **Exact name match** - check whether a node with this name and type already exists, including aliases
-2. **Fuzzy name match** - use Levenshtein distance to find close variants ("K. Day" vs "Kevin Day", "Sgt Fravor" vs "David Fravor"). This catches typos, abbreviations, and minor formatting differences
-3. **Claim-based matching** - if neither name match finds a candidate, embed the claims associated with the extracted node and search for similar claims already in the graph. If a cluster of similar claims are attached to an existing node of the same type, that node is likely the same thing. This handles the case where two documents describe the same event with completely different names.
+### 3. Import (deterministic, no AI)
 
-If a match is found, the extracted name is stored as an alias of the canonical node. If no match is found, a new node is created.
+The reviewed extraction markdown files are imported into the database by a deterministic parser. No AI is involved. The import process:
 
-Claims are then stored and linked to the resolved nodes.
+- Creates record and node entries from the markdown
+- Matches nodes against existing entries using exact name, alias, and Levenshtein distance
+- Stores claims with all their metadata and node references
+- Preserves the UUIDs from the markdown so that re-importing an edited file updates in place
+
+The database can be rebuilt from scratch at any time by importing all extraction files from the anomalica-extractions repository.
+
+### 4. Reconciliation
+
+A separate maintenance pass that can run at any time, independently of ingestion. It walks the graph looking for nodes that should be merged:
 
 ### 3. Reconciliation
 
@@ -62,9 +69,10 @@ This enables distributed operation. Multiple people or machines can run the dige
 For large ingestion runs (tens or hundreds of records), the pipeline works as follows:
 
 1. Parse all records
-2. Send all extractions to the AI batch API in parallel
-3. When results return, integrate them sequentially against the graph
-4. Run a reconciliation pass to catch any cross-document duplicates the sequential integration missed
+2. Send all extractions to the AI batch API in parallel (produces markdown files)
+3. Review the extraction markdown files (human step)
+4. Import reviewed files sequentially into the database
+5. Run a reconciliation pass to catch any cross-document duplicates
 
 The expensive step (AI extraction) is parallelised. The cheap step (database integration) is sequential. The reconciliation pass is a safety net, not a primary mechanism.
 

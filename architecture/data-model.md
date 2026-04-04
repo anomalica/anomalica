@@ -47,4 +47,6 @@ Two claims corroborate each other only if their provenance chains do not share a
 
 ## Storage
 
-The knowledge graph is stored as SQLite files (ADR 0009). The database is the distribution format - downloadable, torrentable, and verifiable. Embedding vectors are stored separately from core data to keep the primary download small.
+The source of truth for the knowledge graph is the collection of extraction markdown files in the anomalica-extractions repository. These are human-readable, version-controlled, and reviewable.
+
+The SQLite database is rebuilt from the extraction files by a deterministic import process. It serves as the query and distribution format - downloadable, torrentable, and verifiable - but is derived data, not primary. If deleted, it can be rebuilt. Embedding vectors are stored separately from core data to keep the primary download small.
