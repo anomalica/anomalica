@@ -7,7 +7,7 @@ Status: draft
 
 Some submitters may have material they want released only if something happens to them. This was originally conceived as a "dead man's switch" with heartbeat check-ins, automated timers, and duress codes, but analysis showed that this added complexity without adding value. The share holders themselves are the mechanism - no timers needed.
 
-Research into WikiLeaks' insurance file failure (single encryption key published accidentally by a journalist) demonstrated that single-key systems are fragile. Shamir Secret Sharing eliminates single points of failure by distributing trust.
+Research into WikiLeaks' insurance file failure (single encryption key published accidentally by a journalist) demonstrated that single-key systems are fragile. Shamir Secret Sharing (a method for splitting a secret into multiple pieces so that only a specified number of pieces are needed to reconstruct it) eliminates single points of failure by distributing trust.
 
 ## Decision
 
@@ -29,7 +29,7 @@ A valid share will be the authorisation. No identity check, no approval process.
 
 Anomalica will not collect the share holder's contact details. The printed letter will instruct the share holder to contact Anomalica and provide their code. At least one external share holder will be required - without one, the platform operator could decrypt at will.
 
-Submissions will have a maximum holding period (default 5 years, renewable). If Anomalica ceases operation, its shares will be published to IPFS and the encrypted files distributed.
+Submissions will have a maximum holding period (default 5 years, renewable). If Anomalica ceases operation, its shares will be published to a distributed file network and the encrypted files distributed.
 
 ## Consequences
 

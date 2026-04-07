@@ -1,21 +1,21 @@
-# Supported languages
+# 0022. Supported languages
 
 Date: 2026-03-27
 Status: accepted
 
 ## Context
 
-Existing UAP/NHI platforms are overwhelmingly English-only. GEIPAN (France) is the only significant non-English resource. The platform's position as international and not American-centric requires genuine multilingual support, not English-first with translations added later.
+Existing platforms covering unidentified anomalous phenomena and non-human intelligence are overwhelmingly English-only. GEIPAN (France) is the only significant non-English resource. The platform's position as international and not American-centric requires genuine multilingual support, not English-first with translations added later.
 
 ## Methodology
 
-Languages are ranked by incremental coverage using data from the Unicode Common Locale Data Repository (CLDR), an open dataset maintained by the Unicode Consortium. For each of 244 territories, CLDR provides the percentage of the population that speaks each language, the territory's total population, and its literacy rate.
+Languages are ranked by incremental coverage using data from the Unicode Common Locale Data Repository, an open dataset maintained by the Unicode Consortium. For each of 244 territories, the dataset provides the percentage of the population that speaks each language, the territory's total population, and its literacy rate.
 
 The selection algorithm is a greedy set-cover: at each step, the language that would cover the most currently-uncovered literate people across all territories is chosen. Overlap between languages within a territory is modelled using an independence assumption (if 60% speak language A and 40% speak language B, combined coverage is 76%, not 100%).
 
 The analysis is reproducible. The script (`brand/analyse-languages.py`), source data, and output (`brand/language-coverage.json`) are in the repository. The methodology and results are published on the site as part of the platform's transparency commitments.
 
-**Caveat:** CLDR data measures functional language populations, which includes spoken fluency. For some languages, the number of people who read and write the language is lower than the number who speak it. The editorial adjustments below address these cases.
+**Caveat:** The locale data measures functional language populations, which includes spoken fluency. For some languages, the number of people who read and write the language is lower than the number who speak it. The editorial adjustments below address these cases.
 
 Mandarin Chinese is treated as one translation with two rendering variants: Simplified (mainland China, Singapore, Malaysia) and Traditional (Taiwan, Hong Kong, Macau). The conversion between character sets is a mechanical transformation, not a separate translation. Traditional Chinese is not counted as a separate language but is always produced alongside Simplified.
 
@@ -74,12 +74,12 @@ Total coverage of literate world population: approximately 80%.
 
 ## Consequences
 
-30 languages multiplied by thousands of articles produces hundreds of thousands of pages. This is the primary driver behind the Hugo choice (ADR 0008) - build performance at this scale eliminates most other frameworks.
+30 languages multiplied by thousands of articles produces hundreds of thousands of pages. This is the primary driver behind the Hugo choice (decision 0014) - build performance at this scale eliminates most other frameworks.
 
 Script support requires multiple script families, all covered by the Noto Sans font family: Latin, Devanagari, Arabic, Nastaliq, Bengali, Cyrillic, Han (Simplified and Traditional), Kana, Hangul, Thai, Tamil, Telugu, Ge'ez, Myanmar, and Hangul.
 
-Arabic, Persian, and Urdu require right-to-left layout support. CJK languages require appropriate font loading and affect search tokenisation.
+Arabic, Persian, and Urdu require right-to-left layout support. Chinese, Japanese, and Korean require appropriate font loading and affect search tokenisation.
 
-AI translation quality varies by language. High-resource languages (the top 15-20) produce reliable translations. Lower-resource languages (Burmese, Uzbek) may initially produce lower-quality output and should be flagged accordingly in metadata. Translation quality is expected to improve over time as language models advance.
+Artificial intelligence translation quality varies by language. High-resource languages (the top 15-20) produce reliable translations. Lower-resource languages (Burmese, Uzbek) may initially produce lower-quality output and should be flagged accordingly in metadata. Translation quality is expected to improve over time as language models advance.
 
 Translation corrections are handled through the directive system. Community members edit articles in their language, and the changes are extracted as durable directives that persist across reassembly.

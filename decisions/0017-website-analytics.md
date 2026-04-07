@@ -1,4 +1,4 @@
-# 0015. Website analytics
+# 0017. Website analytics
 
 Date: 2026-03-31
 Status: accepted
@@ -7,13 +7,13 @@ Status: accepted
 
 Anomalica needs to understand how people use the site - which articles are read, where visitors come from, and how the site grows over time. This data also feeds back into the assembly pipeline: page view counts can surface popular articles on the homepage and help prioritise content work.
 
-However, the project has a strong privacy stance (see 0003) and operates across jurisdictions (see 0002). Analytics must not compromise visitor privacy, must not require cookie consent banners, and should align with General Data Protection Regulation (GDPR) and ePrivacy Directive requirements.
+However, the project has a strong privacy stance (see 0004) and operates across jurisdictions (see 0002). Analytics must not compromise visitor privacy, must not require cookie consent banners, and should align with General Data Protection Regulation (GDPR) and ePrivacy Directive requirements.
 
 The main options considered were:
 
 - **Umami** - open source (MIT), self-hostable, cookieless. US-based company (San Francisco), venture capital funded. Already used on a separate project.
-- **GoatCounter** - open source (EUPL), self-hostable, cookieless. Created by Martin Tournoij, based in Ireland. Solo developer, funded through GitHub Sponsors and paid tiers.
-- **Plausible** - open source (AGPL), self-hostable, cookieless. EU-based (Estonia). Hosted plans from 9 USD/month.
+- **GoatCounter** - open source (European Union Public Licence), self-hostable, cookieless. Created by Martin Tournoij, based in Ireland. Solo developer, funded through GitHub Sponsors and paid tiers.
+- **Plausible** - open source (Affero General Public Licence), self-hostable, cookieless. EU-based (Estonia). Hosted plans from 9 USD/month.
 - **Cloudflare Web Analytics** - free, cookieless. US-based, closed source. Sampled data (not actual traffic), limited retention.
 - **Google Analytics** - rejected outright. Requires cookies, consent banners, and sends data to a US advertising company.
 
@@ -25,13 +25,13 @@ Use GoatCounter for website analytics, self-hosted on EU infrastructure.
 
 GoatCounter was chosen over Umami and other alternatives for these reasons:
 
-1. **Jurisdiction.** GoatCounter is developed in Ireland (EU) and uses the EUPL licence (an EU-originated copyleft licence). This aligns with Anomalica's jurisdiction-independent stance and avoids dependency on US-based companies.
+1. **Jurisdiction.** GoatCounter is developed in Ireland (EU) and uses the European Union Public Licence (a copyleft licence originating from the EU). This aligns with Anomalica's jurisdiction-independent stance and avoids dependency on US-based companies.
 
 2. **Sustainability.** GoatCounter is a solo developer project funded through GitHub Sponsors and paid hosting tiers. This is more predictable than venture capital funding, which creates pressure to change direction when investors need returns.
 
-3. **Simplicity.** GoatCounter is a single Go binary with SQLite storage. No Node.js runtime, no external database dependencies. This reduces the operational surface and makes self-hosting straightforward.
+3. **Simplicity.** GoatCounter is a single Go binary with SQLite storage (a lightweight file-based database). No Node.js runtime, no external database dependencies. This reduces the operational surface and makes self-hosting straightforward.
 
-4. **Pipeline integration.** GoatCounter provides a REST API with cursor-based export for incremental syncing. When self-hosted, the SQLite database can also be queried directly. This allows the assembly pipeline to read page view data and surface popular articles.
+4. **Pipeline integration.** GoatCounter provides a web-based programming interface with cursor-based export for incremental syncing. When self-hosted, the SQLite database can also be queried directly. This allows the assembly pipeline to read page view data and surface popular articles.
 
 5. **Privacy.** GoatCounter uses no cookies, stores no personal data, and does not fingerprint devices. It is GDPR and ePrivacy compliant without requiring a consent banner. The privacy policy should mention that analytics are collected, but no opt-in mechanism is needed.
 

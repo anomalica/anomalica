@@ -1,4 +1,4 @@
-# 0011. Neutral voice with no editorial content
+# 0007. Neutral voice with no editorial content
 
 Date: 2026-03-23
 Status: accepted
@@ -11,14 +11,14 @@ The platform's model is closer to wire service reporting than to a magazine. A w
 
 ## Decision
 
-The platform publishes factual, source-attributed content with a neutral voice. This applies to all content, whether AI-assembled or contributed by humans through the directive system.
+The platform publishes factual, source-attributed content with a neutral voice. This applies to all content, whether assembled by artificial intelligence (AI) or contributed by humans through the directive system.
 
 - **No opinion pieces.** The platform does not publish editorials, perspective articles, or commentary from contributors or staff.
-- **No characterisation of the field or community.** Articles do not describe the UAP topic as "controversial," "fringe," "legitimate," or any other evaluative framing. They present what sources say.
+- **No characterisation of the field or community.** Articles do not describe the unidentified anomalous phenomena topic as "controversial," "fringe," "legitimate," or any other evaluative framing. They present what sources say.
 - **No promotional language.** The platform does not describe itself as "groundbreaking," "revolutionary," or "the first." It states what it does and lets readers judge.
 - **No speculative conclusions.** If the evidence for a claim is weak, the evidence score reflects that. The article does not add qualifiers like "this extraordinary claim" or "this compelling evidence." The scoring speaks for itself.
 - **No assumption of truth or falsehood.** The platform does not declare claims to be true or false. It presents what sources say, how well-corroborated the claims are, and what the evidence scoring produces. Readers and researchers make their own judgements.
-- **Every assertion traces to a source.** If something cannot be attributed to a specific source in the knowledge graph, it does not appear in an article.
+- **Every assertion traces to a source.** If something cannot be attributed to a specific source in the knowledge graph (a structured database of interconnected facts), it does not appear in an article.
 
 Human contributions through the directive system follow the same principles. Corrections and additions must cite sources. The directive system is for factual input, not for adding opinion or interpretation.
 

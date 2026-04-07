@@ -5,14 +5,14 @@ Status: draft
 
 ## Context
 
-The knowledge graph will be built from a variety of source material with different accessibility and copyright characteristics. The platform needs to extract meaning from all of these without infringing copyright or reproducing content that belongs to others.
+The knowledge graph (a structured database of interconnected facts) will be built from a variety of source material with different accessibility and copyright characteristics. The platform needs to extract meaning from all of these without infringing copyright or reproducing content that belongs to others.
 
 ## Decision
 
 The platform will ingest the following types of sources:
 
 **Public domain and openly accessible:**
-- Government documents, FOIA releases, declassified material
+- Government documents, Freedom of Information Act releases, declassified material
 - Congressional and parliamentary records and testimony
 - Academic papers (open access)
 - Podcast and YouTube video transcripts (publicly available audio/video, transcribed for extraction)
@@ -24,7 +24,7 @@ The platform will ingest the following types of sources:
 - Documentary transcripts
 
 **Original submissions:**
-- Documents, testimony, sensor data, and other material deposited directly with Anomalica by submitters. These will be held by the platform and may be published with the submitter's consent (see ADR 0016 for source identity and ADR 0017 for conditional release).
+- Documents, testimony, sensor data, and other material deposited directly with Anomalica by submitters. These will be held by the platform and may be published with the submitter's consent (see [source identity model](source-identity-model.md) and [conditional release](conditional-release.md)).
 
 For copyrighted material, the platform will:
 - Extract structured claims and meaning, not reproduce the original text

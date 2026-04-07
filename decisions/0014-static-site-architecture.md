@@ -1,4 +1,4 @@
-# 0008. Serve the platform as a static website
+# 0014. Serve the platform as a static website
 
 Date: 2026-03-20
 Status: accepted
@@ -9,13 +9,13 @@ The platform needs to present assembled articles to the public. The hosting stra
 
 ## Decision
 
-Serve the platform as a static website - pre-built HTML, CSS, and JavaScript files with no server-side application processing requests. Articles are assembled offline from the knowledge graph and built into static files that are then deployed.
+Serve the platform as a static website - pre-built HTML, CSS, and JavaScript files with no server-side application processing requests. Articles are assembled offline from the knowledge graph (a structured database of interconnected facts) and built into static files that are then deployed.
 
 Reasons:
 - **Replication** - a static site is just a folder of files. It can be copied, mirrored, or redeployed to any hosting provider in minutes.
-- **Resilience** - there is no central application server that can be overwhelmed or taken down. Content delivery networks distribute the files globally and handle traffic spikes by design.
+- **Resilience** - there is no central application server that can be overwhelmed or taken down. Content delivery networks (globally distributed servers that cache and serve files close to the reader) distribute the files globally and handle traffic spikes by design.
 - **Cost** - serving static files is significantly cheaper than running application servers.
-- **Security** - there is no running application to exploit. The attack surface is reduced to the hosting provider and DNS.
+- **Security** - there is no running application to exploit. The attack surface is reduced to the hosting provider and the domain name system.
 
 Interactive features (search, maps, language switching, unit conversion) will be handled client-side with lightweight JavaScript.
 

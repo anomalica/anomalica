@@ -1,19 +1,19 @@
-# Canonical English normalisation for embeddings
+# 0020. Canonical English normalisation for embeddings
 
 Date: 2026-03-20
-Status: draft
+Status: accepted
 
 ## Context
 
-The platform ingests sources in any language and needs to deduplicate claims, detect corroboration, and compute similarity across the entire knowledge graph. Cross-lingual embedding models exist but perform worse on non-English-to-non-English language pairs (e.g. Japanese to Portuguese) than on within-language comparisons.
+The platform ingests sources in any language and needs to deduplicate claims, detect corroboration, and compute similarity across the entire knowledge graph (a structured database of interconnected facts). Cross-lingual embedding models (systems that convert text into numerical representations so that similar meanings produce similar numbers) exist but perform worse on non-English-to-non-English language pairs (e.g. Japanese to Portuguese) than on within-language comparisons.
 
-Using a multilingual embedding model introduces an API dependency if the best models are cloud-only, and increases vector size and computation cost.
+Using a multilingual embedding model introduces a dependency on an external service if the best models are cloud-only, and increases vector size and computation cost.
 
 ## Decision
 
 All claims will be normalised to a canonical English representation before embedding, regardless of the source language. The original-language excerpt will be preserved in provenance metadata.
 
-The embedding model will be English-optimised rather than multilingual, running locally with no external API dependency. The specific model and runtime are implementation details documented in [architecture/embeddings.md](../../architecture/embeddings.md).
+The embedding model will be English-optimised rather than multilingual, running locally with no dependency on an external service. The specific model and runtime are implementation details documented in [architecture/embeddings.md](../../architecture/embeddings.md).
 
 ## Consequences
 

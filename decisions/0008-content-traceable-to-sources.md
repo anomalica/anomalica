@@ -1,15 +1,15 @@
-# 0010. Content traceable to sources
+# 0008. Content traceable to sources
 
 Date: 2026-03-23
 Status: accepted
 
 ## Context
 
-ADR 0004 establishes that AI is central to the platform's operation and that its use is transparent. This decision clarifies the boundary of that role.
+Decision 0009 establishes that artificial intelligence (AI) is central to the platform's operation and that its use is transparent. This decision clarifies the boundary of that role.
 
-AI necessarily produces prose when assembling articles - it chooses words, structures sentences, and decides how to present information. This is unavoidable and is not the concern. The concern is whether the factual content of an article can be traced back to specific sources in the knowledge graph, or whether the AI is drawing on its training data to add information that does not come from any identifiable source.
+AI necessarily produces prose when assembling articles - it chooses words, structures sentences, and decides how to present information. This is unavoidable and is not the concern. The concern is whether the factual content of an article can be traced back to specific sources in the knowledge graph (a structured database of interconnected facts), or whether the AI is drawing on its training data to add information that does not come from any identifiable source.
 
-Some platforms in the UAP space use AI-generated illustrations as article imagery - fabricated depictions of alleged incidents, beings, or craft. Others allow AI models to draw on training data when writing articles, producing claims that cannot be traced to any specific source. Both practices blur the line between what is known and what is imagined.
+Some platforms in the unidentified anomalous phenomena space use AI-generated illustrations as article imagery - fabricated depictions of alleged incidents, beings, or craft. Others allow AI models to draw on training data when writing articles, producing claims that cannot be traced to any specific source. Both practices blur the line between what is known and what is imagined.
 
 ## Decision
 

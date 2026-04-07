@@ -1,4 +1,4 @@
-# 0012. Markdown with YAML annotations as record interchange format
+# 0019. Markdown with YAML annotations as record interchange format
 
 Date: 2026-03-24
 Status: accepted
@@ -12,7 +12,7 @@ The ingester converts raw source material (PDFs, audio, video, ebooks, web pages
 - News articles with standard prose
 - Books with chapter structure
 
-We evaluated DoclingDocument (IBM), Unstructured.io's element model, TEI, Apache Tika XHTML, Pandoc AST, WebVTT, WARC, NewsML-G2, and various JSON schemas from NLP pipelines (LlamaIndex, Haystack, JSON-NLP). We also prototyped with DoclingDocument and found it adds significant structural bloat (self-references, duplicated fields, tree of JSON pointers) without benefit to the digester.
+We evaluated DoclingDocument (IBM), Unstructured.io's element model, TEI (Text Encoding Initiative), Apache Tika XHTML, Pandoc's abstract syntax tree, WebVTT, WARC, NewsML-G2, and various JSON schemas from natural language processing pipelines (LlamaIndex, Haystack, JSON-NLP). We also prototyped with DoclingDocument and found it adds significant structural bloat (self-references, duplicated fields, tree of JSON pointers) without benefit to the digester.
 
 ## Decision
 

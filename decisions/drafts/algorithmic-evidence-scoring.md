@@ -6,7 +6,7 @@ Status: draft
 
 ## Context
 
-Claims in the knowledge graph need some form of quality assessment. Without it, a newcomer cannot distinguish between well-documented sensor data and an anonymous forum post. Existing platforms either present claims without assessment or rely on editorial judgement, which invites accusations of bias.
+Claims in the knowledge graph (a structured database of interconnected facts) need some form of quality assessment. Without it, a newcomer cannot distinguish between well-documented sensor data and an anonymous forum post. Existing platforms either present claims without assessment or rely on editorial judgement, which invites accusations of bias.
 
 ## Decision
 

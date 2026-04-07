@@ -1,4 +1,4 @@
-# 0016. Content review lifecycle
+# 0021. Content review lifecycle
 
 Date: 2026-04-02
 Status: draft
@@ -7,9 +7,9 @@ Status: draft
 
 Anomalica publishes content before it has been reviewed by humans. This is deliberate - requiring review before publication would gate content behind reviewer availability and create bottlenecks. However, readers and contributors need to know whether content has been checked, and reviewers need a way to record their assessments.
 
-The project already has AI verification (0014) which checks whether assembled articles faithfully represent the knowledge graph. Human review is a separate concern: has a person read this content and confirmed it is correct, well-written, and appropriate?
+The project already has artificial intelligence (AI) verification (0010) which checks whether assembled articles faithfully represent the knowledge graph (a structured database of interconnected facts). Human review is a separate concern: has a person read this content and confirmed it is correct, well-written, and appropriate?
 
-Reviews must work across 30 languages (0013). A reviewer in any language should be able to review content in their language without needing English. The review system must not create a hierarchy where English reviews are privileged over others.
+Reviews must work across 30 languages (0022). A reviewer in any language should be able to review content in their language without needing English. The review system must not create a hierarchy where English reviews are privileged over others.
 
 The system must also distinguish between reviews (audit trail) and directives (assembler instructions). These serve different purposes and have different consumers.
 
@@ -41,7 +41,7 @@ Each document has a `review.yaml` sidecar file that sits alongside the content f
   comment: "Date format should use European convention"
 ```
 
-Reviews are never deleted or modified. The log only grows. Each entry records the language reviewed, the SHA-256 hash of the document body (excluding frontmatter) at the time of review, and the reviewer's comment.
+Reviews are never deleted or modified. The log only grows. Each entry records the language reviewed, a cryptographic hash of the document body (excluding frontmatter) at the time of review, and the reviewer's comment. The hash is a fixed-length fingerprint computed from the content - if even one character changes, the hash changes, making it possible to detect whether the content has been modified.
 
 ### Computing review status
 
@@ -67,7 +67,7 @@ This is informational. Review status is never a gate - content publishes regardl
 
 ### Relationship to AI verification
 
-AI verification (0014) and human review are independent systems:
+AI verification (0010) and human review are independent systems:
 
 - AI verification checks whether the article faithfully represents the knowledge graph. It is automated and runs after each assembly.
 - Human review checks whether a person has read the content and finds it correct. It is manual and happens when a reviewer chooses to review.
@@ -100,5 +100,5 @@ Hugo supports this layout using filename-based language detection (the `.en.md`,
 - Reviewers in any language are equal - no English-first hierarchy
 - The assembler's interface is unchanged - it reads directives, not reviews
 - Humans bridge the gap between reviews and directives when action is needed
-- The existing AI verification system (0014) continues to work alongside human review
+- The existing AI verification system (0010) continues to work alongside human review
 - The directory structure change from language-first to document-first affects the assembler's output format and Hugo's configuration

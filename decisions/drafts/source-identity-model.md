@@ -7,11 +7,11 @@ Status: draft
 
 The platform will accept submissions from the public (Phase 2). Submitters need a way to authenticate for follow-up communication and to link multiple submissions, without being required to reveal their real-world identity.
 
-Research was conducted into SecureDrop (7-word passphrase, used by NYT/Guardian/Washington Post), GlobaLeaks (16-digit receipt with ECC keypair and identity disclosure framework), and Signal (phone-number-based identity with sealed sender).
+Research was conducted into SecureDrop (7-word passphrase, used by The New York Times, The Guardian, and The Washington Post), GlobaLeaks (16-digit receipt with elliptic curve cryptographic keypair and identity disclosure framework), and Signal (phone-number-based identity with sealed sender).
 
 ## Decision
 
-Submitters will receive a seven-word passphrase (Diceware-style) on first submission. The passphrase will deterministically generate an Ed25519 keypair via Argon2id key derivation in the browser. The server will only see the public key.
+Submitters will receive a seven-word passphrase (Diceware-style, where words are selected randomly from a large word list) on first submission. The passphrase will deterministically generate a cryptographic key pair (a matched public and private key used for digital signatures) in the browser. The server will only see the public key.
 
 Identity disclosure will have three states:
 - **Undisclosed** - fully anonymous, platform knows only the public key
@@ -22,7 +22,7 @@ Disclosure will always be the submitter's choice. Each transition is one-way (ca
 
 Submitters will be able to hold multiple passphrases for different purposes and cryptographically link them later by signing a linking statement with both private keys.
 
-All cryptographic operations will use libsodium (not GPG/PGP) and happen in the browser. The passphrase and private key will never leave the submitter's device.
+All cryptographic operations will use libsodium (a modern cryptographic library, chosen over the older GPG/PGP tools) and happen in the browser. The passphrase and private key will never leave the submitter's device.
 
 ## Consequences
 

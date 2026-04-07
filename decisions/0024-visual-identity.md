@@ -1,7 +1,7 @@
-# Visual identity
+# 0024. Visual identity
 
 Date: 2026-03-27
-Status: draft
+Status: accepted
 
 ## Context
 
@@ -13,12 +13,12 @@ The platform needs a visual identity that reflects its values: neutral, scholarl
 
 The logo is a triangle with rounded corners. It is used in two forms:
 
-- **Mark** - the triangle alone, used as favicon, app icon, and small-context identifier. Defined in `brand/anomalica-mark.svg`.
+- **Mark** - the triangle alone, used as favicon, app icon, and small-context identifier. Defined in `brand/anomalica-mark.svg` (a scalable vector graphics file).
 - **Wordmark** - the triangle followed by "nomalica" in Outfit Regular, where the triangle serves as the letter "A". Defined in `brand/anomalica-logo.svg`.
 
 Both files contain black paths with no colour or font dependencies. Colour is applied in context.
 
-The triangle was chosen for its simplicity and because it carries relevant associations without being explicit about any of them: it echoes commonly reported UAP shapes, ancient structures, and the act of looking upward. It does not declare any of these connections. It is deliberately simple enough to work at any size, in any medium, and to be memorable without being complex.
+The triangle was chosen for its simplicity and because it carries relevant associations without being explicit about any of them: it echoes commonly reported unidentified anomalous phenomena shapes, ancient structures, and the act of looking upward. It does not declare any of these connections. It is deliberately simple enough to work at any size, in any medium, and to be memorable without being complex.
 
 ### Colour
 
@@ -49,7 +49,7 @@ Accents:
 
 Two font families only:
 
-- **Outfit** - used for the wordmark, navigation, buttons, labels, and UI chrome. A geometric sans-serif with clean proportions and personality. Not used for article body text.
+- **Outfit** - used for the wordmark, navigation, buttons, labels, and user interface chrome. A geometric sans-serif with clean proportions and personality. Not used for article body text.
 - **Noto Sans** - used for all content: article headings, body text, source citations, footnotes. Script-specific variants (Noto Sans JP, Noto Sans Arabic, Noto Sans Devanagari, etc.) are loaded per language. Noto was chosen because it covers every script required by the platform's supported languages with visual consistency across all of them.
 
 ### Name treatment
@@ -62,10 +62,10 @@ Anomalica | Encyclopaedia of Anomalous Phenomena
 
 ## Consequences
 
-The two-font approach keeps page weight low and ensures visual consistency across all supported languages. Noto Sans variants are loaded per-language via CSS unicode-range, so readers only download the glyphs their language needs.
+The two-font approach keeps page weight low and ensures visual consistency across all supported languages. Noto Sans variants are loaded per-language via stylesheet unicode-range rules, so readers only download the glyphs their language needs.
 
-The logo SVG files are the definitive reference for rendering. Any reproduction should be derived from these files rather than recreated.
+The logo vector graphics files are the definitive reference for rendering. Any reproduction should be derived from these files rather than recreated.
 
 The colour palette is defined as hex values. Pantone equivalents are not required while the platform is digital-only but can be matched if physical materials are needed in future.
 
-Brand assets and interactive references are maintained in `brand/` including a live brand board (`brand/brand-board.html`), typography samples across all supported languages (`brand/typography.html`), and language coverage analysis (`brand/languages.html`).
+Working brand assets (interactive brand board, typography samples, language coverage analysis) are maintained separately and may move or change format over time. This decision record is the authoritative reference for the visual identity.
