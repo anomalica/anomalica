@@ -1,10 +1,10 @@
 # Embeddings
 
-Embeddings are vector representations of text used throughout the digester for deduplication, similarity search, and corroboration detection. This document covers how embeddings are generated, stored, and managed.
+Embeddings are vector representations of text (numerical summaries that capture meaning, allowing comparison of semantically similar content) used throughout the digester for deduplication, similarity search, and corroboration detection. This document covers how embeddings are generated, stored, and managed.
 
 ## Canonical English
 
-All text is normalised to canonical English before embedding, regardless of the source language. The original-language text is preserved in provenance metadata. See [ADR: Canonical English normalisation](../decisions/drafts/canonical-english-embeddings.md) for the rationale.
+All text is normalised to canonical English before embedding, regardless of the source language. The original-language text is preserved in provenance metadata. See [architecture decision record 0020: Canonical English normalisation](../decisions/0020-canonical-english-embeddings.md) for the rationale.
 
 This means the embedding model only ever compares English to English, which is the best-represented language in training data for all models and consistently produces the highest quality results.
 
@@ -12,8 +12,8 @@ This means the embedding model only ever compares English to English, which is t
 
 The embedding model should be:
 
-- Runnable locally with no external API dependency
-- Strong on semantic textual similarity (the MTEB STS benchmark is the most relevant measure, since it directly reflects claim deduplication performance)
+- Runnable locally with no external service dependency
+- Strong on semantic textual similarity (the Massive Text Embedding Benchmark semantic textual similarity score is the most relevant measure, since it directly reflects claim deduplication performance)
 - 1024 dimensions (balances quality against storage cost)
 - Small enough to bake into a container image
 
@@ -21,7 +21,7 @@ The specific model will change over time as better options become available. The
 
 ## Storage
 
-Embedding vectors are stored in separate SQLite databases from the core knowledge graph. This separation exists for several reasons:
+Embedding vectors are stored in separate SQLite (a lightweight file-based database) databases from the core knowledge graph (a structured database of interconnected facts). This separation exists for several reasons:
 
 - The core knowledge graph (claims, entities, provenance, scores) is the primary data. Embeddings are derived data, computable from it.
 - Keeping embeddings separate keeps the primary database download small.
@@ -38,6 +38,6 @@ This makes model upgrades low-risk. A new embedding database can be built alongs
 
 ## Runtime
 
-In development, the embedding model may run via Ollama on the host machine. In production, the model is packaged directly into the container image using a lightweight inference runtime (such as ONNX Runtime) with no external service dependency.
+In development, the embedding model may run via Ollama on the host machine. In production, the model is packaged directly into the container image using a lightweight inference runtime (such as ONNX Runtime, a portable model execution engine) with no external service dependency.
 
 The digester code abstracts the embedding backend so that the rest of the pipeline does not care how vectors are produced.

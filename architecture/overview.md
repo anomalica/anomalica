@@ -5,16 +5,13 @@ This is a living document. It reflects the current state of the system architect
 ## Pipeline
 
 ```
-any raw format ──> anomalica-ingester ──> ingest (structured text, not shared)
+any raw format ──> anomalica-ingester ──> anomalica-ingests (private git repo)
 (audio, video, ebooks,                            |
 PDFs, scanned docs,                               v
-web pages)                                anomalica-digester ──> digest (claims + nodes)
+web pages)                                anomalica-digester ──> anomalica-digests (public git repo)
                                                                         |
-                                                                  human review
-                                                                        |
-                                                                        v
-                                                              anomalica-digests (git)
-                                                                        |
+                                                human review via ───────┤
+                                                anomalica-workbench     |
                                                                   rebuild database
                                                                         |
                                           directives ───────────────────┤
@@ -40,6 +37,7 @@ web pages)                                anomalica-digester ──> digest (cla
 |-----------|---------|
 | **anomalica** | Organisation-level decisions, architecture, and documentation |
 | **anomalica-ingester** | Raw source material to structured text (audio, video, ebooks, PDFs, scanned documents) |
+| **anomalica-ingests** | Ingester output (private - contains copyrighted source material) |
 | **anomalica-digester** | Artificial intelligence extraction from ingests, producing digests |
 | **anomalica-digests** | Reviewed digests - the source of truth for the knowledge graph (a structured database of interconnected facts) |
 | **anomalica-assembler** | Article assembly from knowledge graph data, directive application |
@@ -50,7 +48,11 @@ web pages)                                anomalica-digester ──> digest (cla
 
 ## Data flow
 
-The digester produces digests - human-readable markdown files containing all claims and nodes extracted from a single ingest. These are reviewed (and corrected if necessary), then committed to the anomalica-digests repository. The knowledge graph database (SQLite, a lightweight file-based database) is rebuilt deterministically from these files at any time. The database is derived data, not the source of truth - if it is deleted, it can be rebuilt from the digests.
+The ingester writes ingests to the private anomalica-ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public anomalica-digests repository. Both the ingester and digester need access to the private repository.
+
+Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
+
+The knowledge graph database (SQLite, a lightweight file-based database) is rebuilt deterministically from the digests at any time. The database is derived data, not the source of truth - if it is deleted, it can be rebuilt from the digests.
 
 Digests are publicly readable on the git hosting platform but are not rendered as pages on the site. The site presents assembled articles only. Each article's references link back to both the original source material and the digest, giving readers a path to verify claims or report errors via the repository's issue tracker. Corrections to digests trigger a database rebuild and article reassembly.
 

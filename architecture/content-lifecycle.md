@@ -127,7 +127,7 @@ Reviews do not instruct the assembler. When a reviewer identifies an issue that 
 
 ## AI verification
 
-AI verification is a separate, automated process (see ADR 0014 and the assembler architecture). After assembly, a different AI model checks that every assertion traces to the knowledge graph. The verification report is stored in `verification.yaml` within the document directory.
+AI verification is a separate, automated process (see decision 0010 and the assembler architecture). After assembly, a different AI model checks that every assertion traces to the knowledge graph. The verification report is stored in `verification.yaml` within the document directory.
 
 Human review and AI verification are independent. An article can have one, both, or neither. Both are informational indicators, not publication gates.
 

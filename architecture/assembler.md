@@ -1,10 +1,10 @@
 # Assembler
 
-The assembler reads from the knowledge graph and produces articles. It also applies directives - durable instructions extracted from human edits that affect presentation without altering meaning.
+The assembler reads from the knowledge graph (a structured database of interconnected facts) and produces articles. It also applies directives - durable instructions extracted from human edits that affect presentation without altering meaning.
 
 ## Inputs
 
-- Knowledge graph (SQLite, rebuilt from anomalica-extractions, read-only)
+- Knowledge graph (SQLite - a lightweight file-based database, rebuilt from anomalica-digests, read-only)
 - Directives (from the content hierarchy)
 - Existing articles (for incremental updates)
 
@@ -21,9 +21,21 @@ The assembler does not modify the knowledge graph. It is a consumer, not a produ
 
 ## Articles
 
-Articles are AI-assembled from knowledge graph data. The AI arranges existing claims, attributions, and relationships into readable prose. It does not create information (ADR 0010).
+Articles are assembled by artificial intelligence from knowledge graph data. The artificial intelligence arranges existing claims, attributions, and relationships into readable prose. It does not create information (decision 0008).
 
 Each article is assembled per-language from the knowledge graph rather than translated from a canonical English version. The knowledge graph is language-independent; the articles are language-specific.
+
+### References
+
+Every article includes references at the bottom linking each claim to its source. A reference includes:
+
+- The record title and date (e.g. "Lex Fridman Podcast #122, 2020-09-08")
+- A link to the original source material (URL, where available)
+- The location within the record (timestamp, page number)
+- Who made the assertion (the speaker)
+- A link to the digest in the anomalica-digests repository, where readers can see exactly how the claim was extracted and report errors via the repository's issue tracker
+
+This gives readers two paths: follow the link to the original source to verify the claim themselves, or follow the link to the digest to challenge how the claim was interpreted.
 
 ## Directives
 
@@ -43,7 +55,12 @@ Directives affect presentation, not meaning:
 
 Directives cannot alter the factual content of an article. Any edit that changes the meaning of a claim - adding information, removing information, reframing what a source said - is rejected. The assembler detects meaning-altering edits during directive extraction and discards them.
 
-If a reader believes the factual content is wrong, the path is to submit the correcting evidence as a record through the digestion pipeline. Facts flow through the knowledge graph, not through directives.
+If a reader believes the factual content is wrong, there are two paths depending on the nature of the error:
+
+- **Extraction error** (the claim was misinterpreted from the source) - the reader follows the reference link to the digest and opens an issue on the repository. A correction to the digest triggers a database rebuild and article reassembly.
+- **New evidence** (the claim is accurately extracted but contradicted by other sources) - the reader submits the contradicting source as a new record through the ingestion pipeline. The new claims enter the knowledge graph and the evidence scoring handles the conflict.
+
+Facts flow through the knowledge graph, not through directives.
 
 ### How directives work
 
@@ -97,12 +114,12 @@ Over time, the accumulated directives form an emergent style guide shaped by com
 
 ## Assembly audit trail
 
-Every article assembly is auditable. A reader can verify that the article was produced from the inputs claimed and nothing else (ADR 0014).
+Every article assembly is auditable. A reader can verify that the article was produced from the inputs claimed and nothing else (decision 0010).
 
 ### What is recorded per assembly
 
-- **Article hash** - SHA-256 of the assembled article content
-- **Prompt hash** - SHA-256 of the full prompt sent to the AI (knowledge graph data + directives + system template + previous article version)
+- **Article hash** - SHA-256 (a cryptographic hash that uniquely fingerprints content) of the assembled article content
+- **Prompt hash** - SHA-256 of the full prompt sent to the artificial intelligence (knowledge graph data + directives + system template + previous article version)
 - **Directives active** - the specific directives that were collected and applied
 - **Knowledge graph version** - which state of the knowledge graph was used
 
@@ -129,7 +146,7 @@ The site provides a prompt inspector page for each article. This is a client-sid
 
 ## Independent verification
 
-After assembly, a different AI model from a different provider verifies that every assertion in the article traces to the knowledge graph (ADR 0004). The verification report is stored alongside the article.
+After assembly, a different AI model from a different provider verifies that every assertion in the article traces to the knowledge graph (decision 0009). The verification report is stored alongside the article.
 
 ### Verification report
 
@@ -170,4 +187,4 @@ Articles can be published before verification. The verification status is inform
 
 ## Languages
 
-The platform targets 30 languages (ADR 0013). English-language content uses British English throughout.
+The platform targets 30 languages (decision 0022). English-language content uses British English throughout.

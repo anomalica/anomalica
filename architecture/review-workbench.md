@@ -16,15 +16,39 @@ The digester pipeline produces ingests (structured text from source material) an
 
 **Development:** During development, Vite's dev server proxies `/api` requests to the FastAPI backend running on a separate port. This avoids Cross-Origin Resource Sharing configuration.
 
-**Storage:** The git repositories ARE the storage. Ingests are read from the ingester's output. Digests are read from and written to the anomalica-digests repository. The backend commits corrections via the git hosting platform's application programming interface. No separate database.
+**Storage:** Two git repositories hold the pipeline output:
 
-**Authentication:** Via the git hosting platform's OAuth. If someone can push to the anomalica-digests repository, they can review.
+- **anomalica-ingests** (private) - contains the structured text output from the ingester. These files contain copyrighted source material and are never publicly accessible. The workbench backend has a service account with access to this repository and serves individual ingests to authenticated reviewers one at a time, gated by the hash verification described below.
+- **anomalica-digests** (public) - contains the extracted claims and nodes. No copyrighted content. The backend commits digest corrections here on behalf of reviewers.
+
+The backend has no database of its own. The git repositories are the storage.
+
+**Access model:** The workbench has two tiers:
+
+- **Public (no login)** - anyone can browse digests, see extracted claims and nodes, and view the correction history. This data is already public (it comes from the anomalica-digests repository).
+- **Authenticated (login required)** - viewing ingests (which also requires hash verification of the original source) and submitting corrections to either ingests or digests. Any edit requires a logged-in identity so it can be attributed in the git history.
+
+**Authentication:** OAuth implemented directly in FastAPI using Authlib (a lightweight BSD-3 licensed Python library). No external identity service or self-hosted identity platform. The workbench supports multiple OAuth providers - initially just the git hosting platform (such as GitHub), with others (Google, etc.) addable in about 20 lines of Python each.
+
+The OAuth flow:
+
+1. Reviewer clicks "log in" in the workbench
+2. Browser redirects to the FastAPI `/login` endpoint
+3. FastAPI redirects to the OAuth provider's authorisation page
+4. Reviewer authorises, provider redirects back to FastAPI with a token
+5. FastAPI extracts the reviewer's name and email, sets a session cookie
+6. The Svelte frontend reads the cookie and includes it in subsequent requests
+
+No authentication library is needed on the frontend. It is just a redirect and a cookie.
+
+For the initial phase with a small number of reviewers, edit access is controlled by an allowlist of email addresses on the backend. Adding a reviewer means adding their email to the list. Browse access to digests requires no allowlist - it is open to everyone.
 
 **Supply chain discipline:** The workbench handles sensitive source material, so dependency management matters. Every third-party library added is a trust decision. The framework choice (plain Svelte over heavier alternatives) and the preference for platform APIs over libraries reflect this priority. Key dependencies are limited to:
 
 - **PaneForge** - resizable panel layout (Svelte 5 native)
 - **pdfjs-dist** - PDF rendering (Mozilla, framework-agnostic)
 - **hash-wasm** - streaming file hashing via WebAssembly (for copyright verification of large files)
+- **Authlib** - OAuth protocol handling on the backend (BSD-3 licence, single dependency)
 
 Video and audio playback uses native HTML5 media elements with Svelte's built-in element bindings (`bind:currentTime`, `bind:paused`). No media player library.
 
@@ -73,11 +97,18 @@ The review interface uses structured forms rather than raw text editing. Reviewe
 
 ## How corrections are saved
 
-This is not yet decided. Options include:
+When a reviewer submits corrections, the workbench backend commits the changes to the appropriate git repository using a service account. The commit records the reviewer's identity using git's author/committer separation:
 
-- **Updating the ingest and digest files directly** - the workbench writes corrected versions back to the repository. Simple but means the ingest is no longer a pure ingester output.
-- **Storing corrections as patches** - the original ingest is preserved and corrections are stored separately, applied at import time. More complex but preserves the distinction between automated output and human corrections.
-- **A hybrid approach** - the ingest is updated in place (since it is an internal working file anyway) but the digest corrections are tracked as commits in the anomalica-digests repository, where the git history provides the audit trail.
+- **Author** - the reviewer (name and email from their OAuth profile). This is the person who made the correction.
+- **Committer** - the workbench service account. This is the system that applied the change.
+
+This is the same convention used by git hosting platforms when merging pull requests - the author did the work, the committer applied it. Any git client displays both fields.
+
+**Ingest corrections** (speaker merges, timestamp adjustments, marking irrelevant sections) are committed to the private anomalica-ingests repository. Reviewers cannot access this repository directly - they interact with ingests only through the workbench, which serves one file at a time after hash verification. The project maintainer has full access to the repository and can review, revert, or approve changes.
+
+**Digest corrections** (claim type changes, speaker reattribution, node corrections) are committed to the public anomalica-digests repository. These corrections are visible to anyone and tracked in the public commit history.
+
+The git history provides the full audit trail: who changed what, when, and why. The workbench shows reviewers the diff of their changes before they submit, and displays the history of corrections to each record.
 
 ## Relationship to the main site
 

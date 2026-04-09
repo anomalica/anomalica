@@ -1,30 +1,30 @@
 # Digester Pipeline
 
-This document describes how the digester processes records and integrates them into the knowledge graph. See [digester.md](digester.md) for what the digester does; this document covers how it does it.
+This document describes how the digester processes records and integrates them into the knowledge graph (a structured database of interconnected facts). See [digester.md](digester.md) for what the digester does; this document covers how it does it.
 
 ## Pipeline stages
 
-### 1. Extraction (AI)
+### 1. Digestion (artificial intelligence)
 
-Each record is sent to an AI model (Claude) which reads the text and extracts nodes and claims. Two separate extraction passes run on each document:
+Each ingest is sent to an artificial intelligence model (Claude) which reads the text and extracts nodes and claims. Two separate extraction passes run on each document:
 
 - **Domain extraction** - claims about the phenomena: testimony, evidence, events, programmes, investigations
 - **Infrastructure extraction** - claims about the information ecosystem: who produced the content, inter-source references, career backgrounds, network connections
 
-Extraction is independent per document and can be parallelised across any number of records using the Anthropic batch API.
+Digestion is independent per document and can be parallelised across any number of ingests using the Anthropic batch application programming interface.
 
-The output is a human-readable extraction markdown file containing all extracted nodes, domain claims, and infrastructure claims with their metadata, original excerpts, and provenance information.
+The output is one digest per ingest - a human-readable markdown file containing all extracted nodes, domain claims, and infrastructure claims with their metadata, original excerpts, and provenance information (the path each claim took from its original source to the knowledge graph).
 
-### 2. Import (deterministic, no AI)
+### 2. Import (deterministic, no artificial intelligence)
 
-Extraction markdown files are imported into the database by a deterministic parser. No AI is involved and no human review is required before import. The import process:
+Digests are imported into the database by a deterministic parser. No artificial intelligence is involved and no human review is required before import. The import process:
 
 - Creates record and node entries from the markdown
 - Matches nodes against existing entries using exact name, alias, and Levenshtein distance
 - Stores claims with all their metadata and node references
-- Preserves the UUIDs from the markdown so that re-importing an edited file updates in place
+- Preserves the universally unique identifiers from the markdown so that re-importing an edited file updates in place
 
-The database can be rebuilt from scratch at any time by importing all extraction files from the anomalica-extractions repository.
+The database can be rebuilt from scratch at any time by importing all digests from the anomalica-digests repository.
 
 ### 3. Reconciliation
 
@@ -39,13 +39,13 @@ Proposed merges can be reviewed before being applied. When a merge is confirmed,
 
 Human review is not a pipeline stage. It can happen at any time - before import, after import, weeks later, or never. The system works without it. Review improves quality when it happens but does not gate the pipeline.
 
-Extraction markdown files live in the anomalica-extractions git repository. Every edit is tracked in the commit history, which serves as the audit trail for corrections. When a correction is made to an extraction file:
+Digests live in the anomalica-digests git repository. Every edit is tracked in the commit history, which serves as the audit trail for corrections. When a correction is made to a digest:
 
-1. The corrected file is committed to the repository
-2. The database is rebuilt from the updated extraction files
+1. The corrected digest is committed to the repository
+2. The database is rebuilt from the updated digests
 3. Any articles affected by the change are reassembled
 
-The extraction files are publicly readable on the git hosting platform. When a reader spots an error in an article, they can follow the reference links to the extraction file and report the problem via the repository's issue tracker. Corrections flow through the extraction files, not through direct database edits or article overrides.
+Digests are publicly readable on the git hosting platform. When a reader spots an error in an article, they can follow the reference links to the digest and report the problem via the repository's issue tracker. Corrections flow through the digests, not through direct database edits or article overrides.
 
 ## Aliases
 
@@ -60,9 +60,9 @@ Aliases accumulate over time as more records are processed. They serve two purpo
 
 Two independently produced knowledge graphs can be merged by combining their contents and running a reconciliation pass.
 
-The merge itself is naive - all nodes, claims, and records from both graphs are combined into one. Since every node uses a UUID, there are no primary key collisions. The result will contain duplicates: "David Fravor" from graph A and "Commander Fravor" from graph B as separate nodes, each with their own claims.
+The merge itself is naive - all nodes, claims, and records from both graphs are combined into one. Since every node uses a universally unique identifier, there are no primary key collisions. The result will contain duplicates: "David Fravor" from graph A and "Commander Fravor" from graph B as separate nodes, each with their own claims.
 
-The reconciliation pass then resolves these duplicates using the same matching logic as integration (exact name, fuzzy name, claim-based embedding similarity). Merged nodes become aliases of a chosen canonical.
+The reconciliation pass then resolves these duplicates using the same matching logic as integration (exact name, fuzzy name, claim-based embedding similarity - where embeddings are vector representations that capture meaning, allowing comparison of semantically similar text). Merged nodes become aliases of a chosen canonical.
 
 This enables distributed operation. Multiple people or machines can run the digester independently on different source material, producing separate graphs. Those graphs can be merged and reconciled at any time without coordinating during ingestion.
 
@@ -70,13 +70,13 @@ This enables distributed operation. Multiple people or machines can run the dige
 
 For large ingestion runs (tens or hundreds of records), the pipeline works as follows:
 
-1. Parse all records
-2. Send all extractions to the AI batch API in parallel (produces markdown files)
-3. Review the extraction markdown files (human step)
-4. Import reviewed files sequentially into the database
+1. Parse all ingests
+2. Send all ingests to the artificial intelligence batch interface in parallel (produces digests)
+3. Review the digests (human step)
+4. Import digests sequentially into the database
 5. Run a reconciliation pass to catch any cross-document duplicates
 
-The expensive step (AI extraction) is parallelised. The cheap step (database integration) is sequential. The reconciliation pass is a safety net, not a primary mechanism.
+The expensive step (artificial intelligence digestion) is parallelised. The cheap step (database import) is sequential. The reconciliation pass is a safety net, not a primary mechanism.
 
 ## Node matching tools
 
@@ -116,6 +116,6 @@ Reasons for separate passes rather than a single combined pass:
 
 - **No forced binary.** Something genuinely borderline can appear in both databases independently, which is useful signal rather than a forced classification.
 - **Different prompts.** Domain extraction looks for testimony, evidence, events, programmes. Infrastructure extraction looks for inter-source references, career context, sentiment, network connections. These are different tasks.
-- **Infrastructure is optional.** A FOIA document probably contains zero infrastructure content. A podcast transcript contains lots. The infrastructure pass can be skipped for document types where it would produce nothing.
+- **Infrastructure is optional.** A Freedom of Information Act document probably contains zero infrastructure content. A podcast transcript contains lots. The infrastructure pass can be skipped for document types where it would produce nothing.
 
 Both databases use the same schema and share node identifiers so they can be joined when needed.

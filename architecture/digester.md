@@ -1,10 +1,10 @@
 # Digester
 
-The digester takes pre-ingested records and breaks them down into atomic components stored in the knowledge graph. It creates record and claim nodes, identifies domain nodes (people, organisations, places, events, matters, objects), builds provenance chains, and scores evidence.
+The digester takes ingests and breaks them down into atomic components. It creates record and claim nodes (entries in the knowledge graph, a structured database of interconnected facts), identifies domain nodes (people, organisations, places, events, matters, objects), builds provenance chains (the path each claim took from its original source to the knowledge graph), and scores evidence. The output for each ingest is a digest.
 
 ## Inputs
 
-The digester accepts records in the Anomalica record interchange format - markdown files with YAML frontmatter and annotation blocks (see [ADR 0012](../decisions/0012-record-interchange-format.md)). It does not process raw source material directly. The ingester converts raw formats (PDFs, audio, video, ebooks, web pages) into the record format before the digester sees them.
+The digester reads ingests from the private anomalica-ingests repository. These are markdown files with YAML metadata frontmatter and annotation blocks in the Anomalica record interchange format (see [architecture decision record 0019](../decisions/0019-record-interchange-format.md)). It does not process raw source material directly. The ingester converts raw formats (PDFs, audio, video, ebooks, web pages) into ingests and writes them to the anomalica-ingests repository.
 
 ## Processing
 
@@ -42,9 +42,9 @@ The specific scoring algorithm is an implementation detail. The principle is tha
 
 ## Outputs
 
-The digester produces extraction markdown files - human-readable documents containing all extracted nodes and claims with their metadata, original excerpts, and provenance information. These files are reviewed by humans, committed to the anomalica-extractions repository, and then imported into the knowledge graph database (SQLite) by a deterministic process with no AI involvement.
+The digester produces one digest per ingest - a human-readable markdown file containing all extracted nodes and claims with their metadata, original excerpts, and provenance information. Digests are written to the public anomalica-digests repository and imported into the knowledge graph database (SQLite, a lightweight file-based database) by a deterministic process with no artificial intelligence involvement.
 
-The database is derived from the extraction files and can be rebuilt from scratch at any time. The extraction markdown files in the anomalica-extractions repository are the source of truth for the knowledge graph.
+The database is derived from the digests and can be rebuilt from scratch at any time. The digests in the anomalica-digests repository are the source of truth for the knowledge graph.
 
 ## Source properties
 
@@ -65,7 +65,7 @@ The digester is tested against a small, focused corpus of records centred on fou
 | Person | Role | Source type |
 |--------|------|-------------|
 | **David Fravor** | Navy pilot, USS Nimitz 2004 | Direct eyewitness (first-hand claims) |
-| **David Grusch** | Intelligence officer, UAP Task Force | Whistleblower (second-hand claims about programmes he was briefed on) |
+| **David Grusch** | Intelligence officer, Unidentified Anomalous Phenomena Task Force | Whistleblower (second-hand claims about programmes he was briefed on) |
 | **Lue Elizondo** | Former head of AATIP | Insider who went public (mix of first-hand and second-hand) |
 | **Ross Coulthart** | Investigative journalist, NewsNation | Reporter (second-hand/third-hand, interviews the other three) |
 

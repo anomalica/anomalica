@@ -1,6 +1,6 @@
 # Data Model
 
-See also: [node types](node-types.md), [terminology draft ADR](../decisions/drafts/terminology.md)
+See also: [node types](node-types.md), [terminology (decision 0012)](../decisions/0012-terminology.md)
 
 ## Core terms
 
@@ -8,8 +8,8 @@ See also: [node types](node-types.md), [terminology draft ADR](../decisions/draf
 |------|-----------|
 | **Source** | A role, not a node type. A person or organisation that produces records is a source. David Fravor is a Person node who is also a source because he has produced records (interviews, written statements). The New York Times is an Organisation node that is also a source. |
 | **Record** | A node type. A specific artefact containing information: a podcast episode, document, transcript, article, video. A record is a pointer to the original material (URL, ISBN, archive identifier), not a copy. See [node types](node-types.md). |
-| **Claim** | A node type. An atomic assertion extracted from a record, with a specific location within that record (timestamp, page, paragraph) and a speaker. The smallest unit of information in the knowledge graph and the mechanism by which domain nodes are connected. See [node types](node-types.md). |
-| **Directive** | A durable instruction for the assembler, extracted by AI from human edits. Affects presentation only (style, grammar, disambiguation, formatting, naming). Cannot alter factual content. |
+| **Claim** | A node type. An atomic assertion extracted from a record, with a specific location within that record (timestamp, page, paragraph) and a speaker. The smallest unit of information in the knowledge graph (a structured database of interconnected facts) and the mechanism by which domain nodes (entries in the knowledge graph) are connected. See [node types](node-types.md). |
+| **Directive** | A durable instruction for the assembler, extracted by artificial intelligence from human edits. Affects presentation only (style, grammar, disambiguation, formatting, naming). Cannot alter factual content. |
 
 ## Relationships
 
@@ -23,7 +23,7 @@ See also: [node types](node-types.md), [terminology draft ADR](../decisions/draf
 
 ## Claim attestation
 
-Each claim carries an attestation level describing the chain between the speaker and the events described:
+Each claim carries an attestation level (how close the speaker was to what they are describing) describing the chain between the speaker and the events described:
 
 | Level | Definition | Example |
 |-------|-----------|---------|
@@ -41,12 +41,22 @@ Claim type is orthogonal to attestation level. A claim can be first-hand opinion
 
 ## Provenance chains
 
-Every claim has a provenance chain showing its path from origin to the knowledge graph. Provenance chains are used to determine genuine independence when assessing corroboration.
+Every claim has a provenance chain (the path a claim took from its original source to the knowledge graph). Provenance chains are used to determine genuine independence when assessing corroboration.
 
 Two claims corroborate each other only if their provenance chains do not share a common root. Ten outlets all reporting the same press release is one source, not ten.
 
+## Pipeline outputs
+
+Each pipeline stage has a named output:
+
+| Stage | Output | Shareable | Description |
+|-------|--------|-----------|-------------|
+| Ingester | **Ingest** | No (copyright) | The record converted to structured text with metadata. Contains the actual content. |
+| Digester | **Digest** | Yes | Claims, nodes, and provenance extracted from one ingest. No copyrighted content. |
+| Assembler | **Article** | Yes | Readable prose assembled from knowledge graph data in a specific language. |
+
 ## Storage
 
-The source of truth for the knowledge graph is the collection of extraction markdown files in the anomalica-extractions repository. These are human-readable, version-controlled, and reviewable.
+The source of truth for the knowledge graph is the collection of digests in the anomalica-digests repository. These are human-readable, version-controlled, and reviewable.
 
-The SQLite database is rebuilt from the extraction files by a deterministic import process. It serves as the query and distribution format - downloadable, torrentable, and verifiable - but is derived data, not primary. If deleted, it can be rebuilt. Embedding vectors are stored separately from core data to keep the primary download small.
+The SQLite database (a lightweight file-based database) is rebuilt from the digests by a deterministic import process. It serves as the query and distribution format - downloadable, torrentable, and verifiable - but is derived data, not primary. If deleted, it can be rebuilt. Embedding vectors are stored separately from core data to keep the primary download small.

@@ -1,14 +1,14 @@
 # Record Format
 
-The record format is the interchange format between the ingester and the digester. Each ingested source produces one `.md` file in this format.
+The record format is the interchange format between the ingester and the digester. Each ingested source produces one ingest - a `.md` file in this format.
 
-See [ADR 0012](../decisions/0012-record-interchange-format.md) for why this format was chosen.
+See [architecture decision record 0019](../decisions/0019-record-interchange-format.md) for why this format was chosen.
 
 ## Structure
 
 A record file has three parts:
 
-1. **Frontmatter** - YAML block at the top, fenced with `---`. Document-level metadata.
+1. **Frontmatter** - YAML (a human-readable metadata format) block at the top, fenced with `---`. Document-level metadata.
 2. **Content** - markdown text. The actual content as it naturally reads.
 3. **Annotations** - either block-level (YAML fenced with `---`) or inline (`{{YAML}}`).
 
@@ -38,7 +38,7 @@ source_type: pdf
 | `source_url` | string | no | URL where the source can be found |
 | `authors` | list | no | Authors for written documents |
 | `speakers` | list | no | Speaker roster for audio/video (see below) |
-| `content_hash` | string | no | SHA-256 hash of the source file |
+| `content_hash` | string | no | SHA-256 cryptographic hash of the source file (a fingerprint that uniquely identifies the content) |
 | `pages` | integer | no | Page count for documents |
 | `duration` | number | no | Duration in seconds for audio/video |
 
@@ -188,7 +188,7 @@ output/
 
 ### Store
 
-The `store/` directory contains the actual record files, named by the SHA-256 hash of the source file (the same value as `content_hash` in the frontmatter). This provides deduplication: the same source file always produces the same output path, regardless of where it was ingested from or what it was called.
+The `store/` directory contains the actual record files, named by the SHA-256 cryptographic hash of the source file (the same value as `content_hash` in the frontmatter). This provides deduplication: the same source file always produces the same output path, regardless of where it was ingested from or what it was called.
 
 Each record has a companion `.meta.json` file with extraction metadata (token counts, timestamps).
 
@@ -297,7 +297,7 @@ It was about the size of an F-18, roughly 40 feet long, with no
 wings, no exhaust plume.
 ```
 
-### FOIA document with redactions
+### Freedom of Information Act document with redactions
 
 ```markdown
 ---

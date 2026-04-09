@@ -4,7 +4,7 @@ The ingester converts raw source material into structured text that the digester
 
 ## Source material and copyright
 
-The ingester processes privately acquired source material. Original text, audio, and video are not stored in the knowledge graph, published on the site, or made available to users. Only extracted claims with source attribution appear in the output.
+The ingester processes privately acquired source material. Original text, audio, and video are not stored in the knowledge graph (a structured database of interconnected facts), published on the site, or made available to users. Only extracted claims with source attribution appear in the output.
 
 This is analogous to academic referencing. A researcher reads sources, extracts facts, cites them, and writes new work. The facts themselves are not copyrightable - the specific expression an author uses is, but an atomic factual claim ("radar contact was maintained for 12 minutes") is a fact, not expression. The assembled articles are new works that cite their sources, not reproductions or derivatives of the source material.
 
@@ -15,7 +15,7 @@ This is analogous to academic referencing. A researcher reads sources, extracts 
 | Audio/video (YouTube, podcasts) | Download, transcribe, diarise, identify speakers |
 | EPUB (ebooks) | Extract text directly (EPUB is zipped HTML) |
 | MOBI/AZW3 (Kindle) | Convert to EPUB via Calibre, then extract text |
-| PDF (born-digital or scanned) | Send to vision-capable AI model for comprehension-based extraction |
+| PDF (born-digital or scanned) | Send to vision-capable artificial intelligence model for comprehension-based extraction |
 | Web pages, news articles | Scrape and extract text |
 | Plain text, markdown | Pass through with metadata |
 
@@ -45,7 +45,7 @@ New voices that do not match any known profile are flagged for manual identifica
 
 ## Output
 
-Regardless of input format, the ingester produces a markdown file with YAML annotations following the [record format specification](record-format.md). See [ADR 0012](../decisions/0012-record-interchange-format.md) for why this format was chosen over alternatives including DoclingDocument.
+Regardless of input format, the ingester produces a markdown file with YAML (a human-readable metadata format) annotations following the [record format specification](record-format.md). See [architecture decision record 0019](../decisions/0019-record-interchange-format.md) for why this format was chosen over alternatives including DoclingDocument.
 
 Each output record contains:
 
@@ -62,7 +62,7 @@ For audio/video specifically, the frontmatter includes a speaker roster and the 
 
 | Stage | Tool | Notes |
 |-------|------|-------|
-| Transcription | WhisperX 3.8+ with Whisper Large V3 Turbo | WhisperX wraps faster-whisper for transcription, wav2vec2 for word-level timestamp alignment, and pyannote for diarisation. Whisper Large V3 Turbo (809M params) is the practical sweet spot: 99+ languages, 6x faster than Large V3, ~6 GB VRAM |
+| Transcription | WhisperX 3.8+ with Whisper Large V3 Turbo | WhisperX wraps faster-whisper for transcription, wav2vec2 for word-level timestamp alignment, and pyannote for diarisation. Whisper Large V3 Turbo (809M params) is the practical sweet spot: 99+ languages, 6x faster than Large V3, ~6 GB of GPU memory |
 | Diarisation | pyannote community-1 (pyannote.audio 4.0) | Replaces pyannote 3.1. Uses VBx clustering and WeSpeaker embeddings. Improved accuracy across all benchmarks. CC-BY-4.0 licence |
 | Speaker identification | WeSpeaker ECAPA-TDNN embeddings + cosine similarity | pyannote community-1 uses WeSpeaker internally, so we reuse the same embeddings for speaker identification. Matches are suggestions requiring human confirmation |
 | Download | yt-dlp, podcast RSS parsers | Handles YouTube, podcast feeds, and other sources |
@@ -71,11 +71,11 @@ For audio/video specifically, the frontmatter includes a speaker roster and the 
 
 | Stage | Tool | Notes |
 |-------|------|-------|
-| PDF extraction | Vision-capable AI model | PDFs sent directly to a vision model for comprehension-based text extraction. Handles both born-digital and scanned PDFs in a single pipeline. Avoids the layout-mangling problems of raw text extraction (pdftotext) and the structural errors of character-level OCR (Tesseract) |
+| PDF extraction | Vision-capable artificial intelligence model | PDFs sent directly to a vision model for comprehension-based text extraction. Handles both born-digital and scanned PDFs in a single pipeline. Avoids the layout-mangling problems of raw text extraction (pdftotext) and the structural errors of character-level optical character recognition (Tesseract) |
 | Ebook conversion | Calibre | Converts between ebook formats, open source |
 | Web scraping | trafilatura | Extracts article text and metadata from HTML. Fetch chain (HTTP, Wayback Machine, Patchright) handled by the acquire layer |
 
-Self-hosted open source tooling is preferred for independence and cost control. The vision model for PDF extraction is the exception - it calls an external API.
+Self-hosted open source tooling is preferred for independence and cost control. The vision model for PDF extraction is the exception - it calls an external application programming interface.
 
 ## Deep linking
 

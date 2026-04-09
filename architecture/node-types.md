@@ -1,14 +1,14 @@
 # Node Types
 
-The knowledge graph contains typed nodes connected by relationships. This document defines the node types, their purpose, and how they relate. Each node uses a UUID as its primary key, consistent across all languages.
+The knowledge graph (a structured database of interconnected facts) contains typed nodes (entries) connected by relationships. This document defines the node types, their purpose, and how they relate. Each node uses a universally unique identifier as its primary key, consistent across all languages.
 
 ## Design principles
 
-**AI-extractable at ingestion.** Every node type must be something the extraction pipeline can reliably classify from source text. Types requiring subjective judgement or thematic interpretation are deferred to the post-analysis layer.
+**Extractable by artificial intelligence at ingestion.** Every node type must be something the extraction pipeline can reliably classify from source text. Types requiring subjective judgement or thematic interpretation are deferred to the post-analysis layer.
 
-**Claims are the connective tissue.** Domain nodes (person, organisation, place, event, matter, object) do not link directly to each other. Every relationship passes through a claim. There are no naked edges in the graph. This ensures every connection is traceable to a source record.
+**Claims are the connective tissue.** Domain nodes (person, organisation, place, event, matter, object) do not link directly to each other. Every relationship passes through a claim. There are no unattributed connections in the graph. This ensures every connection is traceable to a source record.
 
-**Extensible without restructuring.** The schema links claims to nodes by UUID, not by type-specific foreign keys. New node types can be added without altering the core schema or reprocessing existing data.
+**Extensible without restructuring.** The schema links claims to nodes by universally unique identifier, not by type-specific foreign keys. New node types can be added without altering the core schema or reprocessing existing data.
 
 ## Classification rules
 
@@ -35,7 +35,7 @@ A single real-world thing may produce multiple nodes of different types. This is
 
 ## Ingestion types
 
-These types are populated by the AI extraction pipeline during digestion.
+These types are populated by the artificial intelligence extraction pipeline during digestion.
 
 ### Person
 
@@ -67,7 +67,7 @@ Examples: the 2004 Nimitz tic tac encounter, Grusch's 2023 congressional testimo
 
 An ongoing situation, effort, or process that spans a period of time. Has a start and possibly an end, but is not a single moment. If it unfolds over weeks, months, or years, it is a matter.
 
-Examples: the push for congressional UAP disclosure, the alleged craft retrieval cover-up, the Galileo Project's observation campaign, the AARO investigation backlog.
+Examples: the push for congressional unidentified anomalous phenomena disclosure, the alleged craft retrieval cover-up, the Galileo Project's observation campaign, the AARO investigation backlog.
 
 The distinction from Event is temporal scope: an event has a date, a matter has a date range. The distinction from Organisation is that a matter is a situation, not an actor. AATIP (the programme) is an Organisation. The investigation AATIP conducted is a Matter.
 
@@ -81,9 +81,9 @@ Not for documents or information artefacts. The Wilson-Davis memo is a Record, n
 
 ### Record
 
-A specific artefact that contains information. A podcast episode, a FOIA document, a congressional transcript, a news article, a book, a video, a case file. Records are what claims are extracted from.
+A specific artefact that contains information. A podcast episode, a Freedom of Information Act document, a congressional transcript, a news article, a book, a video, a case file. Records are what claims are extracted from.
 
-A record node is a pointer, not a copy. It describes how to find the original material - a URL, book title, ISBN, archive identifier, FOIA reference number - but does not reproduce the content. Some records are protected by copyright, some may be confidential. The platform refers users to the original rather than hosting copies.
+A record node is a pointer, not a copy. It describes how to find the original material - a URL, book title, ISBN, archive identifier, Freedom of Information Act reference number - but does not reproduce the content. Some records are protected by copyright, some may be confidential. The platform refers users to the original rather than hosting copies.
 
 A record links to the person or organisation that produced it. A person or organisation that produces records is a source - this is a role, not a separate node type.
 
@@ -91,13 +91,13 @@ Examples: Lex Fridman Podcast #122 (David Fravor interview), the Nimitz encounte
 
 ### Claim
 
-An atomic assertion extracted from a record. The smallest unit of information in the knowledge graph and the mechanism by which all other nodes are connected.
+An atomic assertion extracted from a record. The smallest unit of information in the knowledge graph, and the mechanism by which all other nodes are connected.
 
 A claim always has:
 - **Source record** - which Record node it was extracted from
 - **Location in record** - where in the record the assertion appears (timestamp, page number, paragraph, chapter)
 - **Speaker** - who made the assertion (a Person node, which may differ from the record's producer - e.g. a guest on a podcast)
-- **Attestation level** - first-hand, second-hand, or third-hand (see data model)
+- **Attestation level** - how close the speaker was to what they are describing: first-hand, second-hand, or third-hand (see data model)
 - **Claim type** - the nature of the assertion (see below)
 - **Node references** - zero or more links to domain nodes the claim mentions
 
@@ -146,16 +146,16 @@ These types are not populated during ingestion. They are added later through use
 
 Potential future types include:
 
-- **Concept** - a recurring idea, theme, or theoretical framework (reverse engineering, nuclear-UAP correlation, simulation hypothesis). Claims cluster around these thematically.
+- **Concept** - a recurring idea, theme, or theoretical framework (reverse engineering, nuclear-unidentified anomalous phenomena correlation, simulation hypothesis). Claims cluster around these thematically.
 - **Pattern** - a recurring observational category (orb, triangle, tic tac, grey, mantis). Individual observations and objects get classified into these.
 - **Classification** - broader taxonomic groupings of patterns or other nodes.
 
-These require subjective judgement to assign and are better suited to human curation, community tagging, or a separate analytical pipeline than to initial AI extraction.
+These require subjective judgement to assign and are better suited to human curation, community tagging, or a separate analytical pipeline than to initial artificial intelligence extraction.
 
 ## Non-human intelligence
 
 The current ingestion types are designed around the data as it exists today, which is overwhelmingly human testimony about anomalous phenomena. Person covers named human individuals.
 
-If a named non-human intelligence appears in the data (an entity that communicates, is individually identifiable, and warrants its own node), the schema supports adding a new type (such as Being or Intelligence) without restructuring. Claims link to nodes by UUID, so a new type plugs in the same way Person does. This is a deliberate design choice: account for the possibility without over-engineering for it now.
+If a named non-human intelligence appears in the data (an entity that communicates, is individually identifiable, and warrants its own node), the schema supports adding a new type (such as Being or Intelligence) without restructuring. Claims link to nodes by universally unique identifier, so a new type plugs in the same way Person does. This is a deliberate design choice: account for the possibility without over-engineering for it now.
 
 Similarly, if distinct non-human groups or species emerge in the data, Organisation could potentially accommodate them, or a new type could be added.
