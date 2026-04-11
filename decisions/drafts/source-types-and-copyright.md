@@ -47,9 +47,12 @@ What the workbench can show depends on the copyright status of the source and wh
 
 | Copyright status | Digested claims | Original source | Ingested markdown |
 |---|---|---|---|
-| Public domain / open licence | Shown | Served directly | Shown |
-| Publicly available (YouTube, news article) | Shown | Embedded from original source | Shown only if viewer provides file (hash match) or has been granted access |
-| Copyrighted, not publicly available (books, paywalled) | Shown | Not served | Shown only if viewer provides file (hash match) or has been granted access |
+| `public_domain` / `open_licence` | Shown | Served directly from storage | Shown |
+| `publicly_accessible` (web articles, YouTube, podcasts) | Shown | Embedded or linked from original source URL | Shown |
+| `licensed` (explicit permission from rights holder) | Shown | Served directly from storage | Shown |
+| `restricted` (books, paywalled papers, documentaries) | Shown | Gated: hash verification or manual access grant | Gated: hash verification or manual access grant |
+
+Only `restricted` gates any content. All other statuses show everything freely.
 
 For copyrighted sources, there are two independent paths to unlock the ingested markdown view:
 
@@ -82,7 +85,7 @@ Each ingested record carries a `copyright` block in its YAML frontmatter that de
 
 ```yaml
 copyright:
-  status: public_domain | open_licence | licensed | restricted
+  status: public_domain | open_licence | publicly_accessible | licensed | restricted
   detail: US federal government work (17 USC 105)
   holder: CBS Broadcasting Inc.
   licence_url: https://creativecommons.org/licenses/by/4.0/
@@ -96,7 +99,12 @@ The `status` field tells the workbench what display rules to apply. The `detail`
 
 ### Defaults and safety
 
-The ingester always sets `status: restricted` for new records. This is the safe default - no content is served beyond extracted claims until someone actively determines the copyright status and provides justification.
+The ingester sets the copyright status automatically based on the source type:
+
+- **Web pages, YouTube, podcasts** (anything with a public URL): `publicly_accessible`. The original is freely available on the internet - gating the ingested reproduction of something anyone can read by clicking a link serves no purpose.
+- **Everything else** (PDFs, local files, books, documentaries): `restricted`. This is the safe default - no content is served beyond extracted claims until someone actively determines the copyright status and provides justification.
+
+The `publicly_accessible` status can be downgraded to `restricted` if a source is taken offline or paywalled after ingestion. The `restricted` status can be upgraded to `public_domain`, `open_licence`, or `licensed` once someone determines the actual copyright status and provides justification.
 
 Only `status` is always required. The other fields are conditional:
 
@@ -105,6 +113,7 @@ Only `status` is always required. The other fields are conditional:
 | `restricted` | (none beyond status) | `holder`, `detail` |
 | `public_domain` | `detail` | `holder` |
 | `open_licence` | `detail` | `holder`, `licence_url` |
+| `publicly_accessible` | (none beyond status) | `detail`, `holder` |
 | `licensed` | `holder`, `granted_by`, `granted_at`, `reference` | `detail`, `expires`, `licence_url` |
 
 Changing the status away from `restricted` requires filling in the appropriate justification fields. The workbench enforces this by presenting a structured form that requires the conditional fields based on the selected status.
@@ -114,6 +123,21 @@ All changes to the copyright field are tracked in git history, providing a full 
 ### References
 
 For `licensed` status, the `reference` field points to evidence of the permission: a file path within the repository (e.g. `correspondence/cbs-2026-04-11.pdf`), a URL to an archived email, or similar. The point is that the claim of permission is verifiable.
+
+## Original file storage
+
+The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the source file's SHA-256 content hash. The content hash already exists in the ingest's frontmatter, so it doubles as the storage key.
+
+Two storage zones are used:
+
+- **Public zone** (CDN-backed) - public domain and open-licence originals. Served directly to anyone. URL pattern: `https://cdn.anomalica.is/sources/{hash}.{ext}`
+- **Private zone** (no public access) - copyrighted originals. Only accessible via the workbench API, which checks hash verification or manual grant before proxying the file. No direct public URL exists.
+
+For publicly available sources (YouTube, podcasts, news articles), the original is not stored - the workbench embeds or links to it at its source URL.
+
+The ingester uploads originals to the appropriate storage zone during ingestion, based on the record's copyright status. If the status is later changed (e.g. from `restricted` to `public_domain` after determining copyright has expired), the file is moved between zones.
+
+For local development, the workbench backend serves originals from a local directory. The ingester already retains source files on disk during processing.
 
 ## Consequences
 

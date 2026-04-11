@@ -50,14 +50,14 @@ content_hash: sha256:abc123...
 
 First page content here.
 
-<!--
+<!-- anomalica
 file_page: 2
 printed_page: 2
 -->
 
 Second page content here.
 
-<!--
+<!-- anomalica
 speaker: Ross Coulthart
 time: 00:15:32
 irrelevant: true
@@ -66,15 +66,20 @@ irrelevant: true
 This is what the speaker said.
 ```
 
-## Why HTML comments
+The word `anomalica` on the opening line of each comment block distinguishes metadata from regular HTML comments. The parser regex is `<!--\s*anomalica\n(.*?)-->` - no need for field detection or content heuristics.
+
+## Why HTML comments with a marker
 
 - **No collision with markdown syntax.** HTML comments are part of the HTML spec, supported in all markdown renderers, and have no ambiguity.
 - **Invisible when rendered.** Markdown renderers and editors ignore HTML comments in output. The workbench preprocesses them into visual elements (page markers, speaker badges) as needed.
 - **Preserved by editors.** WYSIWYG markdown editors (Milkdown, ProseMirror-based) preserve HTML comments in the document model without trying to interpret them.
-- **Same content, different delimiters.** The YAML inside is identical. Only the wrapping changes from `---`/`---` to `<!--`/`-->`.
-- **Easy to parse.** Find `<!--` ... `-->` blocks, check for known fields (`speaker:`, `time:`, `file_page:`, `irrelevant:`), parse as YAML. Regular HTML comments (if any) are left alone.
+- **Same content, different delimiters.** The YAML inside is identical. Only the wrapping changes from `---`/`---` to `<!-- anomalica`/`-->`.
+- **Unambiguous parsing.** The `anomalica` marker makes it binary: a comment is either a metadata block or it isn't. No risk of false-matching a regular HTML comment that happens to contain a colon.
+- **Simple regex.** `<!--\s*anomalica\n(.*?)-->` captures every metadata block with no ambiguity.
 
 ## Alternatives considered
+
+**HTML comments without a marker** (`<!-- speaker: Ross Coulthart ... -->`). Works but requires content heuristics to distinguish metadata from regular HTML comments. Fragile if a regular comment happens to contain a colon-separated line.
 
 **One comment per field** (`<!-- speaker: Ross Coulthart -->` on separate lines). Simpler regex but fields are disconnected - hard to tell which belong together as a group.
 
@@ -87,8 +92,7 @@ This is what the speaker said.
 ## Migration
 
 The change is mechanical:
-1. Replace `\n---\n` (inline, not the first frontmatter pair) with `\n<!--\n`
-2. Replace the closing `\n---\n` of each inline block with `\n-->\n`
+1. Replace inline `\n---\n{yaml fields}\n---\n` blocks (not the first frontmatter pair) with `\n<!-- anomalica\n{yaml fields}\n-->\n`
 
 This can be done with a script across all records in anomalica-ingests.
 
@@ -98,7 +102,7 @@ This can be done with a script across all records in anomalica-ingests.
 |-----------|--------|
 | **anomalica-ingester** | Output `<!-- -->` instead of `--- ---` for inline blocks |
 | **anomalica-ingests** | One-time migration of existing records |
-| **anomalica-workbench** | Update transcript parser, page marker preprocessor, and document store operations to use `<!-- -->` delimiters |
+| **anomalica-workbench** | Update transcript parser, page marker preprocessor, and document store operations to use `<!-- anomalica -->` delimiters |
 | **anomalica-digester** | Update record parser (when built) |
 | **Record format spec** | Update `architecture/record-format.md` to document the new syntax |
 

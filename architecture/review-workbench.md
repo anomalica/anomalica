@@ -1,10 +1,12 @@
 # Review Workbench
 
-A separate web application for reviewing and correcting ingests and digests. Not part of the main site. The workbench is where the human review step of the pipeline happens.
+A separate web application that serves two purposes: reviewing and correcting ingests and digests, and providing public transparency into the full extraction pipeline. Not part of the main site.
 
 ## Purpose
 
-The digester pipeline produces ingests (structured text from source material) and digests (extracted claims and nodes). Both need human review to catch errors - misidentified speakers, wrong timestamps, irrelevant content, misclassified claims. The review workbench provides a purpose-built interface for this work, rather than asking reviewers to edit raw markdown files.
+**Review and correction.** The pipeline produces ingests (structured text from source material) and digests (extracted claims and nodes). Both need human review to catch errors - misidentified speakers, wrong timestamps, irrelevant content, misclassified claims. The workbench provides a purpose-built interface for this work, rather than asking reviewers to edit raw markdown files.
+
+**Public transparency.** Anyone reading the main site can follow any claim back through the workbench to see exactly how it was extracted: which source it came from, what the ingestion produced, and how the digester interpreted it. This auditability is fundamental to the platform's credibility. The workbench is not an internal tool - it is part of how Anomalica earns public trust.
 
 ## Technology
 
@@ -23,10 +25,11 @@ The digester pipeline produces ingests (structured text from source material) an
 
 The backend has no database of its own. The git repositories are the storage.
 
-**Access model:** The workbench has two tiers:
+**Access model:** The workbench has three tiers:
 
-- **Public (no login)** - anyone can browse digests, see extracted claims and nodes, and view the correction history. This data is already public (it comes from the anomalica-digests repository).
-- **Authenticated (login required)** - viewing ingests (which also requires hash verification of the original source) and submitting corrections to either ingests or digests. Any edit requires a logged-in identity so it can be attributed in the git history.
+- **Anonymous (no login)** - anyone can browse digests, see extracted claims and nodes, view the correction history, and follow the provenance chain of any claim. For copyrighted sources, anonymous viewers can also unlock the ingested markdown by providing their own copy of the source file (hash verification, described in the copyright handling section below). This data is already public (it comes from the anomalica-digests repository) or gated by proof of possession, not by identity.
+- **Authenticated (login required)** - same as anonymous, plus the ability to submit corrections to either ingests or digests. Any edit requires a logged-in identity so it can be attributed in the git history. Authenticated users can also request manual access grants for copyrighted sources where hash verification is impractical.
+- **Granted access (per record)** - authenticated users who have been manually granted access to specific copyrighted records by an Anomalica member. Grants are stored separately from the records (see the [source types and copyright decision](../decisions/drafts/source-types-and-copyright.md) for the grants storage model).
 
 **Authentication:** OAuth implemented directly in FastAPI using Authlib (a lightweight BSD-3 licensed Python library). No external identity service or self-hosted identity platform. The workbench supports multiple OAuth providers - initially just the git hosting platform (such as GitHub), with others (Google, etc.) addable in about 20 lines of Python each.
 
@@ -68,11 +71,45 @@ The three panels are resizable using PaneForge, which supports nested panel grou
 
 ## Copyright handling
 
-The workbench never distributes copyrighted source material. The reviewer provides their own copy of the original file via the browser's File System Access API (no upload to the server). The browser reads the file locally and computes a SHA-256 hash using hash-wasm in a Web Worker (streaming, so multi-gigabyte video files are handled without loading them fully into memory). The hash is sent to the server. If it matches the content hash stored in the ingest's metadata, the server confirms the match and shows the reviewer the ingest and digest alongside their own copy of the original.
+The workbench may serve extracted text from copyrighted source material to users who demonstrate they have a legitimate copy. It is not a distribution channel. What is shown depends on the copyright status of each record (see the [source types and copyright decision](../decisions/drafts/source-types-and-copyright.md) for the full display rules and metadata schema). Protection is layered:
 
-The platform stores ingests (which contain the full text of source material) but does not serve them to anyone who cannot prove they already have the original. The original file is never uploaded to the server, only the hash.
+1. **Private ingests repository** - only the workbench backend service account has read access
+2. **Hash-gated API** - ingest retrieval requires the full 64-character SHA-256 hash of the original source file, which can only be obtained by hashing the file itself (no login required - possession of the file is the proof)
+3. **Manual access grants** - for cases where hash verification is impractical (physical book owners, different editions), an Anomalica member can grant per-user per-record access to authenticated users
+4. **Rate limiting** - prevents brute-force attempts to guess the missing hash characters
+5. **Partial hashes in public references** - the public digests repository references ingests using a truncated hash; the full hash required to fetch an ingest can only be obtained by hashing the original source file
 
-This approach works for any source material the reviewer can obtain independently: videos downloadable from YouTube, publicly available PDFs, books they own, podcast episodes. It does not work for material the reviewer cannot access, but in those cases only people with existing access would be reviewing.
+### Full hashes and public hashes
+
+Every ingest is identified by the SHA-256 of its source file, a 64-character hex string. Two forms are used:
+
+- **Full hash** (64 hex chars) - the actual SHA-256. Appears in the ingest file's `content_hash` frontmatter field. Required by the workbench API to fetch an ingest.
+- **Public hash** (56 hex chars) - the first 56 characters of the full hash. Used as the identifier in the public digests repository and in any public-facing workbench UI. Not sufficient on its own to fetch an ingest.
+
+The 32 bits dropped from the public hash mean that an attacker who has harvested every public hash from the digests repository still cannot fetch the corresponding ingests. Their options are:
+
+- **Hash the original source file** - the intended path. Takes milliseconds for a reviewer who legitimately has the file
+- **Brute-force via the API** - 2^32 (4.3 billion) requests per ingest, defeated by rate limiting
+- **Find a SHA-256 pre-image with a matching 224-bit prefix** - computationally infeasible
+
+This means the protection is not a social convention ("please only fetch ingests you already have"): it is a technical requirement that you possess the source file, or find another path to its hash.
+
+### Flow
+
+The viewer provides their own copy of the original file via the browser's File System Access API (no upload to the server). No login is required for this step - possession of the source file is sufficient proof. The browser reads the file locally and computes a SHA-256 hash using hash-wasm in a Web Worker (streaming, so multi-gigabyte video files are handled without loading them fully into memory). The full hash is sent to the workbench API. If an ingest exists for that hash, the server returns the ingest. The original file is never uploaded.
+
+### Operational requirements
+
+Because the partial-hash protection relies on the API never accepting prefix lookups, two rules are non-negotiable:
+
+- The ingest-fetch endpoint rejects any hash that is not exactly 64 hex characters. Prefix search is never exposed.
+- The endpoint returns identical responses for "hash not found" and "hash malformed" (both 404 with no distinguishing body). Otherwise an attacker could use the error distinction to verify partial guesses.
+
+Rate limiting is a load-bearing security control, not just an anti-abuse measure, and should be tested as such.
+
+### Scope
+
+This approach works for any source material the reviewer can obtain independently: videos downloadable from YouTube, publicly available PDFs, books they own, podcast episodes. It does not work for material the reviewer cannot access, but in those cases only people with existing access would be reviewing anyway.
 
 ## Review tasks for video and audio
 
