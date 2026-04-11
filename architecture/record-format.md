@@ -10,11 +10,11 @@ A record file has three parts:
 
 1. **Frontmatter** - YAML (a human-readable metadata format) block at the top, fenced with `---`. Document-level metadata.
 2. **Content** - markdown text. The actual content as it naturally reads.
-3. **Annotations** - either block-level (YAML fenced with `---`) or inline (`{{YAML}}`).
+3. **Annotations** - either block-level (YAML inside `<!-- anomalica ... -->` HTML comments) or inline (`{{YAML}}`).
 
 All annotations use YAML throughout - the same data format as the frontmatter. Block annotations for structural markers (page boundaries, speaker turns, images). Inline annotations for mid-sentence markers (redactions, illegible text, actions).
 
-The first `---` fenced block is always the frontmatter. All subsequent `---` fenced blocks are annotations. Text between blocks is content.
+The first `---` fenced block is always the frontmatter. All subsequent block annotations use `<!-- anomalica ... -->` HTML comment syntax. Text between blocks is content. The `anomalica` marker on the opening line distinguishes metadata comments from regular HTML comments.
 
 ## Frontmatter
 
@@ -69,23 +69,23 @@ Standard markdown. Headings, paragraphs, lists, bold, italic, links, and tables 
 
 ## Block annotations
 
-YAML fenced with `---` on its own line. Used for structural markers that sit between content.
+YAML inside HTML comment blocks, marked with `anomalica` on the opening line. Used for structural markers that sit between content.
 
 ### Page boundary
 
 ```markdown
----
-file_file_page: 2
----
+<!-- anomalica
+file_page: 2
+-->
 ```
 
 `file_page` is always the PDF page number (1-indexed from the start of the file). If the page has its own printed page number that differs, include `printed_page`:
 
 ```markdown
----
-file_file_page: 19
-printed_file_page: 15
----
+<!-- anomalica
+file_page: 19
+printed_page: 15
+-->
 ```
 
 `printed_page` is omitted when there is no printed page number, or when it matches `file_page`.
@@ -95,10 +95,10 @@ printed_file_page: 15
 All content after a speaker annotation until the next speaker annotation belongs to that speaker. The `speaker` value references an `id` from the frontmatter speaker roster.
 
 ```markdown
----
+<!-- anomalica
 speaker: fravor
 time: 00:01:45
----
+-->
 We had been at sea for roughly 2 weeks.
 ```
 
@@ -109,19 +109,19 @@ We had been at sea for roughly 2 weeks.
 Factual description of a figure, chart, or photograph. The image itself is not extracted (copyright).
 
 ```markdown
----
+<!-- anomalica
 image: Bar chart showing UAP reports by year from 2019 to 2023,
   with a sharp increase in 2021.
----
+-->
 ```
 
 ### Block-level redaction
 
 ```markdown
----
+<!-- anomalica
 redacted:
   extent: paragraph
----
+-->
 ```
 
 `extent` estimates how much was redacted: `words`, `sentence`, `paragraph`, or `page`.
@@ -156,19 +156,12 @@ Since the content is YAML, values containing colons or commas need quoting:
 
 Standard YAML quoting rules apply.
 
-## Triple-dash conflict
-
-The `---` delimiter could conflict with content containing three dashes on a line. The ingester normalises these during extraction:
-
-- Em-dashes written as `---` are converted to `-`
-- Horizontal rules in source documents are removed (layout, not content)
-
 ## Parser behaviour
 
-1. Split the file on lines that are exactly `---`
-2. First block is frontmatter (YAML)
-3. Each subsequent block: attempt YAML parse. Success means annotation, failure means content.
-4. Within content blocks, scan for `{{...}}` patterns and parse the interior as YAML.
+1. Extract the first `---` fenced block as frontmatter (standard markdown frontmatter).
+2. Find all `<!-- anomalica ... -->` blocks in the body. The marker `anomalica` on the opening line distinguishes metadata from regular HTML comments. Parse the content between the markers as YAML.
+3. Text between annotation blocks is content.
+4. Within content blocks, scan for `{{...}}` patterns and parse the interior as YAML (inline annotations).
 
 ## Output directory structure
 
@@ -227,9 +220,9 @@ content_hash: sha256:7bf2c20d...
 pages: 3
 ---
 
----
+<!-- anomalica
 file_page: 1
----
+-->
 
 David Fravor Statement for the House Oversight Committee.
 
@@ -237,17 +230,17 @@ I first want to thank you for the invitation to speak to this
 committee on the UAP topic that has been in the news for the past
 6 years and seems to be continuing to gain momentum.
 
----
+<!-- anomalica
 file_page: 2
----
+-->
 
 As we proceeded to the west and as the air controller counted down
 the range, we had nothing on our radars and were unaware of what
 we were going to see when we arrived.
 
----
+<!-- anomalica
 file_page: 3
----
+-->
 
 In closing, I would like to say that the Tic Tac Object that we
 engaged in Nov 2004 was far superior to anything that we had at
@@ -276,17 +269,17 @@ speakers:
     confirmed: true
 ---
 
----
+<!-- anomalica
 speaker: lex
 time: 00:01:23
----
+-->
 So tell me about what happened in 2004. You were a Navy pilot
 stationed on the Nimitz.
 
----
+<!-- anomalica
 speaker: fravor
 time: 00:01:45
----
+-->
 We had been at sea for roughly 2 weeks. I was the Commanding
 Officer of Strike Fighter Squadron Forty-One. We were at the
 beginning of our workup cycle.
@@ -308,31 +301,31 @@ source_type: pdf
 pages: 5
 ---
 
----
+<!-- anomalica
 file_page: 1
----
+-->
 
 # Incident Report
 
 On {{redacted: date in November 2004}}, personnel at {{redacted}}
 observed an unidentified aerial object in restricted airspace.
 
----
+<!-- anomalica
 redacted:
   extent: paragraph
----
+-->
 
 The object was tracked on radar for approximately 12 minutes
 before {{redacted: ~5 words}}.
 
----
+<!-- anomalica
 file_page: 2
----
+-->
 
----
+<!-- anomalica
 image: Grainy black and white photograph showing a small oblong
   object against a featureless sky. No scale reference visible.
----
+-->
 
 The following personnel were present during the observation:
 
