@@ -83,15 +83,16 @@ Each ingested record carries a `copyright` block in its YAML frontmatter that de
 ```yaml
 copyright:
   status: public_domain | open_licence | licensed | restricted
-  reason: us_government_work | cc0 | expired | cc_by_4 | cc_by_sa_4 | cc_by_nc_4 | explicit_permission
+  detail: US federal government work (17 USC 105)
   holder: CBS Broadcasting Inc.
   licence_url: https://creativecommons.org/licenses/by/4.0/
   granted_by: Jane Smith, Head of Licensing
   granted_at: 2026-04-11
   expires: null
   reference: correspondence/cbs-2026-04-11.pdf
-  notes: Permission covers transcript display only, not audio playback
 ```
+
+The `status` field tells the workbench what display rules to apply. The `detail` field is freetext for humans - the justification for the status, readable in the audit trail.
 
 ### Defaults and safety
 
@@ -101,30 +102,14 @@ Only `status` is always required. The other fields are conditional:
 
 | Status | Required fields | Optional fields |
 |--------|----------------|-----------------|
-| `restricted` | (none beyond status) | `holder` |
-| `public_domain` | `reason` | `holder`, `notes` |
-| `open_licence` | `reason` | `holder`, `licence_url`, `notes` |
-| `licensed` | `holder`, `granted_by`, `granted_at`, `reference` | `expires`, `licence_url`, `notes` |
+| `restricted` | (none beyond status) | `holder`, `detail` |
+| `public_domain` | `detail` | `holder` |
+| `open_licence` | `detail` | `holder`, `licence_url` |
+| `licensed` | `holder`, `granted_by`, `granted_at`, `reference` | `detail`, `expires`, `licence_url` |
 
 Changing the status away from `restricted` requires filling in the appropriate justification fields. The workbench enforces this by presenting a structured form that requires the conditional fields based on the selected status.
 
 All changes to the copyright field are tracked in git history, providing a full audit trail of who changed the status, when, and what justification they provided.
-
-### Reason values
-
-| Value | Meaning |
-|-------|---------|
-| `us_government_work` | Created by the US federal government (17 USC 105) |
-| `government_work` | Created by a government where Crown Copyright or equivalent has expired or does not apply |
-| `cc0` | Dedicated to the public domain via Creative Commons Zero |
-| `expired` | Copyright term has expired |
-| `cc_by_4` | Creative Commons Attribution 4.0 International |
-| `cc_by_sa_4` | Creative Commons Attribution-ShareAlike 4.0 International |
-| `cc_by_nc_4` | Creative Commons Attribution-NonCommercial 4.0 International |
-| `explicit_permission` | Rights holder has granted permission directly |
-| `submitter_grant` | Original submission where the submitter has authorised use |
-
-This list will grow as new licence types are encountered.
 
 ### References
 
