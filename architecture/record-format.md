@@ -24,7 +24,7 @@ Required fields:
 ---
 schema: anomalica/record/1
 title: "Document title"
-date: 2023-07-26
+date_published: 2023-07-26
 source_type: pdf
 ---
 ```
@@ -33,7 +33,7 @@ source_type: pdf
 |-------|------|----------|-------------|
 | `schema` | string | yes | Format version. Always `anomalica/record/1` for this version. |
 | `title` | string | yes | Document or episode title. Always quoted. |
-| `date` | date | yes | Publication or recording date (ISO 8601) |
+| `date_published` | string | yes | When the original content was published. ISO 8601, precision varies: `2023`, `2023-07`, `2023-07-26`, or with time and zone. |
 | `source_type` | string | yes | One of: `pdf`, `audio`, `video`, `web`, `ebook` |
 | `source_url` | string | no | URL where the source can be found |
 | `source_id` | string | no | Stable platform-specific identifier (e.g. `youtube:ZBtMbBPzqHY`) |
@@ -42,7 +42,8 @@ source_type: pdf
 | `content_hash` | string | no | SHA-256 cryptographic hash of the source file |
 | `pages` | integer | no | Page count for documents |
 | `duration` | number | no | Duration in seconds for audio/video |
-| `extracted_at` | string | no | ISO 8601 timestamp of when the ingestion was performed |
+| `date_accessed` | string | no | When the source was fetched. ISO 8601 with timezone (always Zulu). |
+| `date_extracted` | string | no | When the ingestion pipeline ran. ISO 8601 with timezone (always Zulu). |
 | `copyright` | object | no | Copyright status (see the [copyright decision](../decisions/drafts/source-types-and-copyright.md)) |
 | `processing` | object | no | Processing metadata: handler, version, tools used, source characteristics |
 
@@ -182,7 +183,7 @@ The date, source_type, and title are taken from the record's frontmatter. The sy
 ---
 schema: anomalica/record/1
 title: "David Fravor Statement for the House Oversight Committee"
-date: 2023-07-26
+date_published: 2023-07-26
 authors:
   - David Fravor
 source_url: https://oversight.house.gov/...
@@ -219,7 +220,7 @@ years.
 ---
 schema: anomalica/record/1
 title: "Lex Fridman Podcast #122 - David Fravor"
-date: 2020-09-08
+date_published: 2020-09-08
 source_url: https://youtube.com/watch?v=aB8zcAttP1E
 source_type: video
 source_id: youtube:aB8zcAttP1E
@@ -254,7 +255,7 @@ wings, no exhaust plume.
 ---
 schema: anomalica/record/1
 title: "Incident Report"
-date: 2004-11-14
+date_published: 2004-11-14
 source_type: pdf
 pages: 5
 ---
