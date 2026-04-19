@@ -70,19 +70,30 @@ YAML inside HTML comments. Single-field annotations use inline comments. Multi-f
 
 `printed_page` is omitted when there is no printed page number, or when it matches `file_page`.
 
-### Speaker turn
+### Speaker change
 
-All content after a speaker annotation until the next speaker annotation belongs to that speaker.
+An inline HTML comment marks when the speaker changes. All content until the next speaker annotation belongs to that speaker.
 
 ```markdown
-<!--
-speaker: David Fravor
-time: 00:01:45
--->
-We had been at sea for roughly 2 weeks.
+<!-- speaker: David Fravor -->
 ```
 
-`time` is in `HH:MM:SS` format. The `speaker` value is the speaker's name (or `Speaker 1`, `Speaker 2`, etc. before human review has identified them).
+The `speaker` value is the speaker's name, or `Speaker 1`, `Speaker 2`, etc. before human review has identified them.
+
+### Sentence-level timestamps
+
+In audio and video transcripts, each sentence starts on its own line prefixed with a `HH:MM:SS.D` timestamp (fixed 10 characters, one decimal place). An empty line indicates a paragraph break.
+
+```markdown
+<!-- speaker: David Fravor -->
+00:01:45.2 We had been at sea for roughly two weeks.
+00:01:48.7 I was the Commanding Officer of Strike Fighter Squadron Forty-One.
+00:01:53.1 We were at the beginning of our workup cycle.
+
+00:01:56.4 When we arrived at the location at 20,000 feet, the controller called merge plot.
+```
+
+The timestamp format is always `HH:MM:SS.D` - hours, minutes, seconds, and one decimal place (tenths of a second). This lines up in a fixed-width column for readability.
 
 ### Image description
 
@@ -228,25 +239,17 @@ duration: 7200
 content_hash: sha256:e27169e8...
 ---
 
-<!--
-speaker: Speaker 1
-time: 00:01:23
--->
-So tell me about what happened in 2004. You were a Navy pilot
-stationed on the Nimitz.
+<!-- speaker: Speaker 1 -->
+00:01:23.0 So tell me about what happened in 2004.
+00:01:25.4 You were a Navy pilot stationed on the Nimitz.
 
-<!--
-speaker: Speaker 2
-time: 00:01:45
--->
-We had been at sea for roughly 2 weeks. I was the Commanding
-Officer of Strike Fighter Squadron Forty-One. We were at the
-beginning of our workup cycle.
+<!-- speaker: Speaker 2 -->
+00:01:45.2 We had been at sea for roughly two weeks.
+00:01:48.7 I was the Commanding Officer of Strike Fighter Squadron Forty-One.
+00:01:53.1 We were at the beginning of our workup cycle.
 
-{{action: Fravor gestures to indicate the size of the object}}
-
-It was about the size of an F-18, roughly 40 feet long, with no
-wings, no exhaust plume.
+00:01:56.4 {{action: Fravor gestures to indicate the size of the object}}
+00:01:58.1 It was about the size of an F-18, roughly 40 feet long, with no wings, no exhaust plume.
 ```
 
 ### Freedom of Information Act document with redactions
