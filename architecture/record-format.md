@@ -35,6 +35,7 @@ source_type: pdf
 | `title` | string | yes | Document or episode title. Always quoted. |
 | `date_published` | string | yes | When the original content was published. ISO 8601, precision varies: `2023`, `2023-07`, `2023-07-26`, or with time and zone. |
 | `source_type` | string | yes | One of: `pdf`, `audio`, `video`, `web`, `ebook` |
+| `publisher` | string | no | The entity that created the content (e.g. "CBS News", "The Debrief", "House Oversight Committee"). Not the hosting platform. |
 | `source_url` | string | no | URL where the source can be found |
 | `source_id` | string | no | Stable platform-specific identifier (e.g. `youtube:ZBtMbBPzqHY`) |
 | `fetched_url` | string | no | URL from which the content was actually retrieved, if different from source_url (e.g. a Wayback Machine archive URL) |
