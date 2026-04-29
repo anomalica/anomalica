@@ -104,6 +104,22 @@ Factual description of a figure, chart, or photograph. The image itself is not e
 <!-- image: Bar chart showing UAP reports by year from 2019 to 2023, with a sharp increase in 2021. -->
 ```
 
+### Chapter boundary
+
+Marks the start of a chapter or top-level structural section in long-form documents (primarily ebooks).
+
+```markdown
+<!-- chapter: 3 -->
+<!-- chapter_title: "DEDICATION" -->
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `chapter` | integer | yes | Sequential index of the chapter within the document, starting at 1. Counts every structural section the source defines, including front matter (cover, dedication, contents). |
+| `chapter_title` | string | no | The chapter's title as given in the source. Always quoted. Omitted when the source provides no explicit title. |
+
+These are structural markers, not rendered prose. Consumers typically use them for navigation (jump-to-chapter, table of contents construction) and suppress them when displaying the body. Where a `chapter_title` is present, the source itself usually also opens the chapter with a heading on the next non-empty line; consumers should not render the annotation as a duplicate of that heading.
+
 ### Block-level redaction
 
 ```markdown
