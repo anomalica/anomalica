@@ -6,6 +6,8 @@ The digester takes ingests and breaks them down into atomic components. It creat
 
 The digester reads ingests from the private anomalica-ingests repository. These are markdown files with YAML metadata frontmatter and annotation blocks in the Anomalica record interchange format (see [architecture decision record 0019](../decisions/0019-record-interchange-format.md)). It does not process raw source material directly. The ingester converts raw formats (PDFs, audio, video, ebooks, web pages) into ingests and writes them to the anomalica-ingests repository.
 
+Each ingest may have associated media at `media/{record_hash}/` (currently extracted images from EPUBs). When the digester reaches an `<!-- image: ... -->` annotation with a `file` field, it can load the image bytes and pass them to a vision-capable model alongside the surrounding text. This lets claims be extracted from charts, photographs, and figures, not just prose.
+
 ## Processing
 
 ### Record creation

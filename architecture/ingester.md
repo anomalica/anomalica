@@ -56,6 +56,14 @@ Each output record contains:
 
 For audio/video specifically, the frontmatter includes a speaker roster and the content uses speaker turn annotations with timestamps. For documents, page boundary annotations mark where each page begins.
 
+### Image extraction
+
+Images embedded in the source are extracted alongside the record. EPUBs are supported today; PDF figure extraction and video keyframes will follow.
+
+Each image is content-hashed and saved to `media/{record_hash}/{img_hash}.{ext}` in the ingests repository. The body annotation references the image by bare filename (`<!-- image: file: abc123.png alt: "..." -->`); the consumer resolves the full path from the record's location. See the [record format specification](record-format.md) for the exact annotation form and rationale.
+
+Alt text from the source (`<img alt="">`) is preserved when present. A factual `description` is added later by a vision pass or human review, not at ingestion time.
+
 ## Tooling
 
 ### Audio/video

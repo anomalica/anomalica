@@ -51,9 +51,9 @@ Each pipeline stage has a named output:
 
 | Stage | Output | Shareable | Description |
 |-------|--------|-----------|-------------|
-| Ingester | **Ingest** | No (copyright) | The record converted to structured text with metadata. Contains the actual content. |
+| Ingester | **Ingest** | No (copyright) | The record converted to structured text with metadata, plus any extracted media (images today; figures from PDFs and video keyframes later). Contains the actual content. |
 | Digester | **Digest** | Yes | Claims, nodes, and provenance extracted from one ingest. No copyrighted content. |
-| Assembler | **Article** | Yes | Readable prose assembled from knowledge graph data in a specific language. |
+| Assembler | **Article** | Yes | Readable prose assembled from knowledge graph data in a specific language. Public-eligible images from ingests are copied into the assembler's output for serving on the site. |
 
 ## Storage
 
