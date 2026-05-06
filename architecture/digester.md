@@ -8,6 +8,8 @@ The digester reads ingests from the private anomalica-ingests repository. These 
 
 Each ingest may have associated media at `media/{record_hash}/` (currently extracted images from EPUBs). When the digester reaches an `<!-- image: ... -->` annotation with a `file` field, it can load the image bytes and pass them to a vision-capable model alongside the surrounding text. This lets claims be extracted from charts, photographs, and figures, not just prose.
 
+The digester is also responsible for populating the `description` field on image annotations - a factual description of the image content, used by consumers that lack vision capabilities. The ingester leaves this field absent; the digester writes it back into the ingest as part of its processing pass.
+
 ## Processing
 
 ### Record creation
