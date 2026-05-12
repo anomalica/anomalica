@@ -40,7 +40,9 @@ source_type: pdf
 | `source_id` | string | no | Stable platform-specific identifier (e.g. `youtube:ZBtMbBPzqHY`) |
 | `fetched_url` | string | no | URL from which the content was actually retrieved, if different from source_url (e.g. a Wayback Machine archive URL) |
 | `authors` | list | no | Authors for written documents |
-| `content_hash` | string | no | SHA-256 cryptographic hash of the source file |
+| `content_hash` | string | no | SHA-256 cryptographic hash of the extracted record body. The record file in `store/` is named by this. |
+| `source_hash` | string | no | SHA-256 of the raw source asset (HTML bytes, original PDF, etc.). Differs from `content_hash` for formats where the record body is extracted text (web, ebook). Used by consumers to locate `sources/{source_hash}.{ext}`. |
+| `snapshots` | list | no | Sibling capture artefacts produced alongside the main record. Each entry has `role` (well-known string), `hash` (sha256 of the artefact bytes), and `content_type` (MIME). Used for web records to expose PDF renders and frozen-page captures - see [Web record snapshots](#web-record-snapshots) below. |
 | `pages` | integer | no | Page count for documents |
 | `duration` | number | no | Duration in seconds for audio/video |
 | `date_accessed` | string | no | When the source was fetched. ISO 8601 with timezone (always Zulu). |
@@ -48,6 +50,31 @@ source_type: pdf
 | `copyright` | object | no | Copyright status (see the [copyright decision](../decisions/drafts/source-types-and-copyright.md)) |
 | `processing` | object | no | Processing metadata: handler, version, tools used, source characteristics |
 | `media` | object | no | Summary of extracted media stored at `media/{record_hash}/`. Currently `{ count, total_bytes }`. Omitted when the record has no extracted media. |
+
+### Web record snapshots
+
+For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `sources/` directory. The frontmatter exposes them like this:
+
+```yaml
+source_hash: sha256:904c041f...   # raw post-render HTML asset
+snapshots:
+  - role: page_render
+    hash: sha256:82f42514...
+    content_type: application/pdf
+  - role: single_file
+    hash: sha256:e7115739...
+    content_type: text/html
+```
+
+| Role | What it is | Use it for |
+|------|-----------|------------|
+| (raw HTML via `source_hash`) | Post-render DOM, no external resources inlined | Fidelity check on the extraction. Renders unstyled in a sandboxed iframe because external CSS won't load - not the right surface for visual review. |
+| `page_render` | Single-page PDF rendered at 1024 px wide, sized to the document's scrollHeight (no internal pagination) | Printing; PDF.js review panes. |
+| `single_file` ("frozen page") | Self-contained HTML produced by `single-file-cli` with every external resource inlined as data URIs | **Canonical review surface.** Renders identically to the original page under `sandbox=""`. |
+
+Consumers preferring fidelity should pick `single_file` first, fall back to `page_render`, and use the raw HTML only as a last resort.
+
+Snapshot roles are an extensible registry. New roles can be added without bumping `schema` provided consumers ignore unknown roles. Known roles as of `anomalica/record/1`: `page_render`, `single_file`.
 
 ## Content
 
@@ -81,6 +108,17 @@ An inline HTML comment marks when the speaker changes. All content until the nex
 ```
 
 The `speaker` value is the speaker's name, or `Speaker 1`, `Speaker 2`, etc. before human review has identified them.
+
+Four bracketed tokens are reserved for non-individual sources:
+
+| Token | Meaning |
+|-------|---------|
+| `[narrator]` | A voice-over narrator distinct from any on-camera speaker. |
+| `[external footage]` | Audio from an inserted clip (news segment, archival recording, etc.) where the speaker isn't part of the primary recording. |
+| `[group]` | Multiple people saying the same thing simultaneously - chants, unison answers from a committee, group responses. |
+| `[irrelevant]` | Content that doesn't belong in the record (ads, sponsor reads, off-topic asides). Reviewers can hide these segments from the rendered output. |
+
+The brackets are part of the value. The ingester does not emit these tokens itself - they're applied by human reviewers in the workbench when the diarisation-assigned `Speaker N` is identified as one of these cases.
 
 ### Sentence-level timestamps
 
