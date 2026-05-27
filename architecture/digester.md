@@ -70,7 +70,7 @@ The digester is tested against a small, focused corpus of records centred on fou
 |--------|------|-------------|
 | **David Fravor** | Navy pilot, USS Nimitz 2004 | Direct eyewitness (first-hand claims) |
 | **David Grusch** | Intelligence officer, Unidentified Anomalous Phenomena Task Force | Whistleblower (second-hand claims about programmes he was briefed on) |
-| **Lue Elizondo** | Former head of AATIP | Insider who went public (mix of first-hand and second-hand) |
+| **Lue Elizondo** | Former head of the Advanced Aerospace Threat Identification Program (AATIP) | Insider who went public (mix of first-hand and second-hand) |
 | **Ross Coulthart** | Investigative journalist, NewsNation | Reporter (second-hand/third-hand, interviews the other three) |
 
 This combination exercises the full pipeline:

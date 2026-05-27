@@ -1,0 +1,532 @@
+# Second batch of pattern definitions for the patterns that arrived
+# through the matter triage (apply pass, 2026-05-24) without definitions
+# attached. The 4 manual seeds and the 2 reclassified existing patterns
+# (Non-Human Craft Recovery Programs, UAP Biological Effects) need
+# definitions too - the latter pair were reclassified directly from
+# matter type without going through the seed-definition flow.
+#
+# Format: same shape as initial-pattern-definitions.yaml. Definitions
+# are written to match the existing claim corpus where claims are
+# already attached, and are deliberately broad-but-bounded where claim
+# counts are low. The per-claim pattern tagging pass will populate
+# supporting_cases through embedding similarity + LLM adjudication, so
+# this file does not enumerate them.
+#
+# Three patterns are flagged as MERGE candidates and carry no definition
+# of their own - they should be retired and their claims re-pointed to
+# the canonical seed pattern named in the merge_into field.
+
+schema: anomalica/pattern-seed/1
+created_at: '2026-05-24'
+created_by: anomalica-site (Claude, batch 2 after matter triage)
+
+patterns:
+
+  # === MERGE CANDIDATES - retire, re-point claims to seed pattern ===
+
+  - name: uap-nuclear-facilities-interference  # node id baf0d460
+    merge_into: uap-near-nuclear-facilities
+    notes: |
+      Retire and re-point its 29 claims onto the seed pattern. The names
+      and inclusion criteria are coextensive; nothing distinct to preserve.
+
+  - name: uap-sixth-observable-biological-effects  # node id 7125a27c
+    merge_into: uap-biological-effects
+    notes: |
+      Retire and re-point its 2 claims onto the existing pattern (which
+      has 46 claims). "Sixth observable" framing is Elizondo's terminology
+      for the same phenomenon already captured under uap-biological-effects.
+
+  - name: uap-cover-up-playbook  # node id a000a7c7
+    merge_into: shifting-official-accounts
+    notes: |
+      Retire - has 0 claims attached anyway. The "playbook" framing
+      restates the same procedural pattern already defined under
+      shifting-official-accounts. If a distinct "procedural script for
+      cover-up" concept warrants a separate node later (different from
+      the observed shifting), define it then.
+
+  # === RECLASSIFIED EXISTING (heavy claim base, need precise definitions) ===
+
+  - name: non-human-craft-recovery-programs  # 76 claims
+    display_name: Non-human craft recovery programmes
+    category: procedural
+    definition: >
+      Alleged classified programmes operated by national governments or their contractors to recover, exploit, and reverse-engineer
+      non-human craft and associated materials. The pattern is the recurring testimony - across multiple independent claimants
+      over decades - that such programmes exist, are compartmented at Special Access Program levels, and are not acknowledged
+      through ordinary congressional oversight.
+    inclusion_criteria:
+      - Claim asserts the existence (current or historical) of a recovery, exploitation, or reverse-engineering programme
+        for non-human craft or materials.
+      - Claim is sourced to a named witness whose role would have plausibly exposed them to such a programme, or to documentary
+        evidence (FOIA, declassified record, formal testimony).
+      - Claim describes structural features of the programme (compartmentation, contractor involvement, denial routine) rather
+        than abstract speculation.
+    exclusion_criteria:
+      - General speculation about hypothetical reverse-engineering without any attribution to a specific programme, contractor,
+        or witness.
+      - Claims about acknowledged conventional programmes (Project Blue Book, AATIP/AAWSAP) - those are programmes/investigations
+        in their own right, not instances of this pattern.
+    suggested_match_keywords:
+      - crash retrieval
+      - reverse engineering
+      - recovered craft
+      - recovered materials
+      - non-human craft
+      - non-human biologics
+      - Special Access Program
+      - SAP
+      - controlled access programme
+      - legacy programme
+      - Wright-Patterson
+      - exploitation programme
+
+  - name: uap-biological-effects  # 46 claims
+    display_name: Biological effects on UAP witnesses
+    category: phenomenal
+    definition: >
+      Reports of physiological harm, injury, or biological anomaly in humans who were in close proximity to UAP. Effects range
+      from acute (burns, radiation symptoms, paralysis, time loss) to chronic (long-term illness, neurological change, immune
+      dysfunction). The pattern is the recurrence of similar effect profiles across independent witnesses, encounters, and
+      decades.
+    inclusion_criteria:
+      - Claim describes a physical or biological effect on a named witness or witness group attributable to UAP proximity.
+      - The effect is described in physiological terms (specific symptoms, medical findings) rather than purely psychological
+        or emotional.
+      - The temporal sequence (encounter then effect) is documented.
+    exclusion_criteria:
+      - Witness emotional reactions (fear, awe) without physical effect.
+      - Indirect or socially-mediated effects (career consequences, ridicule, harassment) - those are instances of [[witness-intimidation-after-anomalous-events]]
+        not biological effects.
+    suggested_match_keywords:
+      - burns
+      - radiation exposure
+      - radiation symptoms
+      - illness following encounter
+      - paralysis
+      - missing time
+      - time loss
+      - immune dysfunction
+      - hospitalised after sighting
+      - sixth observable
+      - implant
+      - physical effects
+
+  # === HIGH-CLAIM NET-NEW PATTERNS ===
+
+  - name: uap-alien-implants  # 17 claims
+    display_name: Alleged anomalous implants in UAP experiencers
+    category: phenomenal
+    definition: >
+      Reports of small physical artefacts surgically extracted from individuals who claim UAP encounter histories, where the
+      artefact has unusual material properties, anomalous manufacture, or no plausible mundane origin. The pattern is the
+      consistency of recovered-object characteristics across independent extractions performed by different surgeons.
+    inclusion_criteria:
+      - Claim describes a physical object extracted from a named individual.
+      - The individual has a UAP-encounter history relevant to the extraction context.
+      - Material analysis or extraction circumstances are documented (surgeon notes, lab results, photographs).
+    exclusion_criteria:
+      - Claims of "implants" without physical extraction or only through hypnosis-recovered memory.
+      - Ordinary medical hardware (surgical clips, dental work) found post-hoc and attributed to UAP origin without distinguishing
+        evidence.
+    suggested_match_keywords:
+      - implant
+      - implant removal
+      - surgical extraction
+      - anomalous object
+      - Roger Leir
+      - metallurgical analysis
+      - foreign body
+      - encounter implant
+
+  - name: us-cattle-mutilation-cases  # 13 claims
+    display_name: US cattle mutilation cases
+    category: phenomenal
+    definition: >
+      Cattle and livestock found dead with characteristic injury patterns - precision incisions, organ removal without blood
+      spill, drained blood, no tracks - across multiple US states and decades. The pattern is the consistency of the injury
+      profile across independent investigations and the absence of identified perpetrators or natural-cause explanations sufficient
+      to account for the case load.
+    inclusion_criteria:
+      - Case involves a livestock death with documented injury features matching the established cattle-mutilation profile.
+      - Investigated by law enforcement, FBI, or ranchers' association contemporaneously.
+      - Geographic and temporal context recorded.
+    exclusion_criteria:
+      - Routine predator kills without the characteristic precision injuries.
+      - Anecdotal claims without contemporaneous investigation or photographic documentation.
+    suggested_match_keywords:
+      - cattle mutilation
+      - livestock mutilation
+      - precision incision
+      - organ removal
+      - bloodless wound
+      - FBI cattle investigation
+      - Cook cattle
+      - Skinwalker Ranch livestock
+
+  - name: uap-legacy-programmes  # 11 claims, was "UAP Legacy Programs"
+    display_name: Claimed historical UAP recovery and exploitation lineage
+    category: procedural
+    definition: >
+      Allegations that a continuous, multi-decade lineage of classified US programmes has handled non-human craft and materials
+      since at least the 1940s, passed between contractors and agencies as successor programmes inherited the work of cancelled
+      predecessors. The pattern is the assertion of *continuity* across the corpus, not any single named programme.
+    inclusion_criteria:
+      - Claim asserts continuity or succession between named or unnamed programmes over time.
+      - Source describes the lineage as a feature (programmes hidden from oversight, transferred between contractors, renamed
+        to evade disclosure).
+      - Distinct from claims about a single named programme - those attach to that programme's own node.
+    exclusion_criteria:
+      - Claims about individual programmes in isolation (those are instances of [[non-human-craft-recovery-programs]] but
+        only at the single-programme level).
+    suggested_match_keywords:
+      - decades-long programme
+      - legacy programme
+      - eighty-year programme
+      - sub-rosa
+      - continuous programme
+      - successor programme
+      - hidden lineage
+      - programme inheritance
+
+  - name: elizondo-home-orb-sightings  # 10 claims
+    display_name: Orb sightings reported around the Elizondo home
+    category: behavioural
+    definition: >
+      Reports of small luminous orbs observed by Luis Elizondo and his family at their residences across multiple US states
+      from approximately the time of his departure from the Pentagon (2017) onwards. The pattern is the recurrence of the
+      same observation profile across multiple residences and witnesses within the family unit.
+    inclusion_criteria:
+      - Claim describes an orb observation at an Elizondo family residence.
+      - Observer is a named member of the Elizondo household or named visitor.
+      - Date and residence context recorded.
+    exclusion_criteria:
+      - General orb sighting claims unconnected to the Elizondo residences.
+    suggested_match_keywords:
+      - orb at home
+      - orb in yard
+      - Elizondo residence
+      - Jennifer Elizondo
+      - orb encounter
+      - small luminous object
+      - household sighting
+
+  - name: virginia-beach-uap-sightings  # 9 claims
+    display_name: Recurring UAP sightings near Virginia Beach
+    category: behavioural
+    definition: >
+      Recurring UAP observations by US Navy F/A-18 squadrons operating out of Naval Air Station Oceana over restricted airspace
+      south-east of Virginia Beach, from approximately 2014 through the late 2010s. The pattern is the daily / near-daily
+      nature of the sightings, the multi-sensor confirmation (radar and infrared simultaneously), and the persistence of the
+      phenomenon at the same training airspace across years.
+    inclusion_criteria:
+      - Claim references the Virginia Beach / VACAPES operating area airspace or VFA squadron sightings from that region.
+      - Observation is recorded by Navy aircrew or aircraft sensors.
+      - Falls in the documented 2014-2019 active period.
+    exclusion_criteria:
+      - Unconnected Atlantic seaboard sightings (those are separate events or fit other patterns).
+    suggested_match_keywords:
+      - Virginia Beach UAP
+      - VACAPES
+      - Oceana NAS
+      - Ryan Graves squadron
+      - VFA-11
+      - GIMBAL
+      - GO FAST
+      - east coast sightings
+
+  - name: foo-fighters-wwii-sightings  # 8 claims
+    display_name: Foo fighter sightings by WWII aircrew
+    category: morphological
+    definition: >
+      Reports by Allied and Axis aircrew during the Second World War of small luminous objects (orange / silver / metallic
+      balls) that paced or surrounded combat aircraft in flight without apparent hostile action. The pattern is the consistency
+      of the observation profile across both Allied and Axis pilots, multiple theatres, and the absence of an established
+      explanation in the contemporary record.
+    inclusion_criteria:
+      - Sighting occurs during a WWII combat or transit flight.
+      - Object is luminous or metallic, small, and paces or accompanies the aircraft.
+      - Aircrew testimony is documented (debrief, mission report, post-war memoir, intelligence summary).
+    exclusion_criteria:
+      - General WWII UFO claims that do not involve in-flight pacing encounters with aircrew witnesses.
+    suggested_match_keywords:
+      - foo fighter
+      - foo-fighters
+      - WWII pilot
+      - in-flight encounter
+      - pacing object
+      - silver ball
+      - orange light
+      - 415th night fighter
+      - bomber crew sighting
+
+  - name: cherokee-uap-experiencer-connection  # 6 claims
+    display_name: Reports of UAP experience among Cherokee-descended individuals
+    category: phenomenal
+    definition: >
+      Reports drawn from interviews and self-identification claiming that individuals with Cherokee ancestry are disproportionately
+      represented among UAP experiencers and abduction reporters. The pattern is the recurring framing across multiple research
+      sources rather than any single claimed individual.
+    inclusion_criteria:
+      - Claim references a documented over-representation of Cherokee ancestry in an experiencer cohort.
+      - Source is a researcher who has surveyed experiencers and reports the demographic finding.
+    exclusion_criteria:
+      - Individual experiencer claims that mention Cherokee ancestry incidentally without the broader demographic framing.
+    suggested_match_keywords:
+      - Cherokee ancestry
+      - Cherokee descent
+      - experiencer demographics
+      - Native American
+      - indigenous experiencer
+      - Mary Rodwell
+      - Garry Nolan demographics
+
+  - name: uap-disclosure-congressional-campaign  # 6 claims
+    display_name: UAP disclosure congressional campaign
+    category: procedural
+    definition: >
+      The sustained, multi-actor advocacy effort to compel US congressional UAP disclosure through repeated public testimony,
+      legislative provisions (NDAA amendments), media engagement, and direct outreach to elected representatives from approximately
+      2017 onwards. The pattern is the coordinated and recurring shape of the advocacy across named figures (Elizondo, Mellon,
+      Grusch, Coulthart, others), legislative cycles, and media moments.
+    inclusion_criteria:
+      - Claim describes a discrete advocacy action (testimony, legislative drafting, journalism contribution, public appearance)
+        directed at compelling disclosure.
+      - Actor is identified.
+      - Action contributes to the sustained campaign rather than being a one-off statement.
+    exclusion_criteria:
+      - Routine media commentary about UAP that does not call for disclosure.
+      - Claims about specific disclosure investigations (those attach to the investigation node).
+    suggested_match_keywords:
+      - disclosure campaign
+      - UAP disclosure
+      - call for hearings
+      - congressional pressure
+      - lobby for disclosure
+      - public pressure
+      - amendment to NDAA
+      - whistleblower protections
+
+  - name: chupa-chupa-phenomenon  # 5 claims
+    display_name: Chupa-Chupa Amazonian UAP encounters
+    category: behavioural
+    definition: >
+      A cluster of UAP encounters reported in the Brazilian Amazon basin (particularly Pará state) from the 1970s onward in
+      which luminous airborne objects directed beams at human targets, causing reported burns, puncture wounds, and in some
+      cases death. The pattern is the consistency of the targeting behaviour and resulting injury profile across multiple
+      villages and years, investigated by the Brazilian Air Force.
+    inclusion_criteria:
+      - Encounter occurs in the documented Chupa-Chupa region or period.
+      - Object exhibits beam-projection behaviour.
+      - Human injuries follow with documented medical examination.
+    exclusion_criteria:
+      - General Brazilian UFO sightings without the beam-projection behaviour.
+    suggested_match_keywords:
+      - Chupa-Chupa
+      - Chupa Chupa
+      - Operation Prato
+      - Amazon UAP
+      - Pará state
+      - Brazilian Air Force UFO
+      - beam injuries
+      - luminous beam burns
+      - Colares
+
+  - name: uap-cabal-suppression  # 5 claims
+    display_name: Alleged organised suppression of UAP information
+    category: procedural
+    definition: >
+      Allegations of a coordinated, transnational network of actors - across intelligence agencies, defence contractors, and
+      industrial interests - working to suppress public knowledge of UAP through classification, intimidation, disinformation,
+      and control of the chain of custody for evidence. The pattern is the assertion of *coordination*, distinguishing this
+      from individual instances of [[witness-intimidation-after-anomalous-events]] or [[shifting-official-accounts]].
+    inclusion_criteria:
+      - Claim asserts a coordinated suppressive entity (named or unnamed) acting across multiple incidents.
+      - Source describes specific suppressive mechanisms (gag orders, intimidation, evidence interception).
+      - Distinct from claims about a single agency's classification practice - those are administrative facts about that agency.
+    exclusion_criteria:
+      - Individual cover-up incidents (those instantiate the intimidation or shifting-accounts seed patterns).
+      - Speculation about cabals without evidentiary basis in the corpus.
+    suggested_match_keywords:
+      - cabal
+      - coordinated suppression
+      - shadow programme
+      - cartel
+      - inner ring
+      - control group
+      - usurpation
+      - secret syndicate
+
+  # === LOW-CLAIM PATTERNS (sparse defs; tagging pass populates) ===
+
+  - name: jay-stratton-hitchhiker-effect  # 2 claims
+    display_name: The "hitchhiker effect" in paranormal investigation
+    category: phenomenal
+    definition: >
+      The claim, popularised by Jay Stratton and James Lacatski in the context of Skinwalker Ranch fieldwork, that paranormal
+      phenomena observed at an investigative site can subsequently manifest at the residences and workplaces of investigators
+      who visited the site - as though attaching to and travelling with the investigator. The pattern is the recurrence of
+      this attachment claim across multiple investigators reporting similar domestic phenomena post-site-visit.
+    inclusion_criteria:
+      - Claim describes a paranormal manifestation at an investigator's residence following site fieldwork.
+      - Investigator is named and the temporal sequence is documented.
+    exclusion_criteria:
+      - General domestic poltergeist claims unconnected to prior paranormal-investigation fieldwork.
+    suggested_match_keywords:
+      - hitchhiker effect
+      - hitchhiker phenomenon
+      - attachment
+      - investigator follow-home
+      - Skinwalker Ranch attachment
+      - Lacatski hitchhiker
+      - residual phenomena
+
+  - name: guantanamo-bay-uap-lights-reports  # 1 claim
+    display_name: Recurring lights observed at Guantanamo Bay Naval Base
+    category: behavioural
+    definition: >
+      Reports of unidentified luminous objects observed by US Navy personnel at Naval Station Guantanamo Bay, Cuba, across
+      multiple shifts and witnesses. Light claim base; included as a starter node for the tagging pass to attach further evidence
+      to.
+    inclusion_criteria:
+      - Sighting reported by Guantanamo Bay personnel.
+      - Object is luminous and unidentified at the time of observation.
+    exclusion_criteria:
+      - Identified aircraft, satellites, or weather phenomena.
+    suggested_match_keywords:
+      - Guantanamo Bay UAP
+      - GTMO sighting
+      - Naval Station Guantanamo
+      - Cuba base lights
+      - Caribbean Navy sighting
+
+  - name: ohio-river-valley-orb-reports  # 1 claim
+    display_name: Recurring orb reports in the Ohio River Valley
+    category: morphological
+    definition: >
+      Reports of small luminous orbs observed in the Ohio River Valley region (Ohio, West Virginia, Kentucky borders) across
+      multiple witnesses and decades. Light claim base; starter definition for the tagging pass.
+    inclusion_criteria:
+      - Sighting located in the Ohio River Valley region.
+      - Object morphology is orb / spherical luminous form.
+    exclusion_criteria:
+      - Unrelated regional sightings of different morphology (cigar, triangle, etc.) - those attach to morphology-specific
+        patterns.
+    suggested_match_keywords:
+      - Ohio River Valley
+      - West Virginia orb
+      - Kentucky sighting
+      - Point Pleasant
+      - Mothman region
+      - rural Ohio UAP
+
+  - name: uap-disinformation-campaign  # 1 claim
+    display_name: Alleged active disinformation campaigns targeting UAP discourse
+    category: procedural
+    definition: >
+      Allegations of deliberate, active production and seeding of false UAP narratives by intelligence or defence actors to
+      contaminate the public information environment around real UAP cases. Distinct from [[shifting-official-accounts]] (which
+      is reactive public-record revision) in that disinformation is proactive - false narratives planted to mislead.
+    inclusion_criteria:
+      - Claim describes proactive production of false UAP information.
+      - Source identifies (named or by role) the alleged actor and target audience.
+    exclusion_criteria:
+      - Routine classification decisions that withhold information without producing false replacements.
+      - Genuine error or speculation by good-faith actors.
+    suggested_match_keywords:
+      - disinformation
+      - false narrative
+      - planted story
+      - deception operation
+      - psychological operation
+      - PSYOP
+      - Doty
+      - Bennewitz
+
+  - name: uap-military-airspace-intrusions  # 1 claim
+    display_name: UAP intrusions into restricted military airspace
+    category: behavioural
+    definition: >
+      Reports of UAP entering and persisting in US military restricted operating areas - training ranges, weapons testing
+      ranges, carrier strike group operating boxes - without identification or response capability from the host force. Broader
+      behavioural pattern that the more specific patterns (Nimitz operating area, Virginia Beach, etc.) instantiate.
+    inclusion_criteria:
+      - UAP observed within a designated restricted airspace.
+      - Host force unable to identify or intercept.
+      - Observation documented in operational records or aircrew debrief.
+    exclusion_criteria:
+      - Sightings in civilian airspace incidentally near military installations.
+    suggested_match_keywords:
+      - restricted airspace
+      - operating area
+      - W-72
+      - W-291
+      - training range intrusion
+      - air defence identification zone
+      - ADIZ
+      - unidentified track
+
+  - name: uss-roosevelt-luminous-underwater-craft-reports  # 1 claim
+    display_name: Luminous underwater craft reports around USS Theodore Roosevelt
+    category: behavioural
+    definition: >
+      Reports by USS Theodore Roosevelt aircrew and ship personnel of luminous underwater objects (USOs - unidentified submerged
+      objects) observed in operating areas around the carrier strike group during the 2014-2015 period. Light claim base;
+      starter definition.
+    inclusion_criteria:
+      - Sighting attributed to USS Theodore Roosevelt CSG personnel.
+      - Object observed as luminous and underwater or transitioning the water surface.
+    exclusion_criteria:
+      - Surface vessel sightings (those are surface contacts).
+    suggested_match_keywords:
+      - USS Roosevelt
+      - USS Theodore Roosevelt
+      - USO
+      - unidentified submerged object
+      - luminous water object
+      - carrier strike group 12
+
+  - name: min-min-lights  # 0 claims
+    display_name: Min Min lights (Australian outback luminous phenomena)
+    category: morphological
+    definition: >
+      Recurring sightings of distant unexplained luminous orbs across the Australian outback (particularly western Queensland
+      and the Channel Country), reported continuously from the late 19th century through the present. The pattern is the consistency
+      of the observation profile across more than a century. Currently zero claims attached; starter definition for the tagging
+      pass.
+    inclusion_criteria:
+      - Sighting located in the Australian outback Min Min region or adjacent.
+      - Object described as a distant luminous orb behaving consistently with the historical Min Min profile (recedes when
+        approached, appears at fixed bearings, persists across nights).
+    exclusion_criteria:
+      - Identified Fata Morgana refractions, vehicle lights, or astronomical objects.
+    suggested_match_keywords:
+      - Min Min light
+      - Min Min phenomenon
+      - Channel Country
+      - Boulia
+      - outback lights
+      - Australian unexplained light
+
+  - name: pentagon-uap-usaf-uncooperativeness  # 0 claims
+    display_name: USAF non-cooperation with Pentagon UAP work
+    category: procedural
+    definition: >
+      Reports of the US Air Force declining to share UAP-relevant information, deferring information requests, or actively
+      obstructing Pentagon UAP investigatory efforts (AATIP, AAWSAP, AARO). The pattern is the recurrence of the same stance
+      across multiple administrations and investigatory bodies. Currently zero claims attached; provisional starter definition.
+    inclusion_criteria:
+      - Claim describes a specific USAF refusal, deferral, or obstruction of a UAP information request.
+      - Requester is a Pentagon-affiliated UAP investigatory body or senior office.
+    exclusion_criteria:
+      - General USAF classification decisions not tied to a specific Pentagon UAP request.
+      - Routine inter-service information friction unconnected to UAP.
+    suggested_match_keywords:
+      - USAF uncooperative
+      - Air Force declined
+      - Air Force obstruction
+      - AATIP USAF
+      - AARO USAF
+      - service reluctance
+      - inter-service friction UAP

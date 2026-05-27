@@ -1,0 +1,229 @@
+# Initial pattern definitions for import into the knowledge graph.
+#
+# This file seeds the first four pattern nodes per ADR 0028 (taxonomy
+# revision: splitting matter and broadening patterns). It is intended for
+# import by the digester's pattern-node import path. The digester assigns
+# UUIDs at import; supporting_cases are resolved from the entity slugs.
+#
+# Format is structured but informal - the digester should normalise into
+# its node + alias + claim-link tables. Bus the site workspace if the
+# shape needs adjustment.
+#
+# Pattern coverage was checked against the existing claim corpus before
+# inclusion; every supporting case below has at least one verified claim
+# in the digests as of 2026-05-24. Where the corpus is currently thin
+# on a pattern, that is noted.
+
+schema: anomalica/pattern-seed/1
+created_at: '2026-05-24'
+created_by: anomalica-site (Claude, on Mark's authority via ADR 0028)
+
+patterns:
+
+  - name: shifting-official-accounts
+    display_name: Shifting official accounts of anomalous events
+    category: procedural
+    definition: >
+      An initial official statement about an anomalous event - typically a press release, briefing, or attribution to a mundane
+      cause - is subsequently retracted, replaced, or contradicted by a later official statement about the same event. The
+      pattern is the sequence of changes itself, not any single account in isolation.
+    inclusion_criteria:
+      - The event has at least two official statements from the same responsible body (or its institutional successor) that
+        materially contradict each other.
+      - The shift is between official actors, not between an official account and a witness or third-party account (which
+        is normal and not the pattern).
+      - The shift is documented, not asserted; each official statement traces to a record in the corpus.
+    exclusion_criteria:
+      - Routine clarifications or corrections of factual detail (typos, location names) - the shift must change the explanation
+        or attribution, not refine it.
+      - A single statement plus subsequent silence; the pattern needs at least two affirmative statements that differ.
+    supporting_cases:
+      - entity: events/roswell-uap-crash
+        notes: |
+          Five-step shift over five decades. Initial press release
+          1947-07-08 ("recovered a flying disc") -> General Ramey
+          weather-balloon counter-statement three hours later -> USAF
+          1994 report attributing the wreckage to classified Project
+          MOGUL -> USAF 1995 "Roswell Report" reiterating MOGUL -> USAF
+          1997 "Case Closed" with additional balloon materials. Alien-
+          bodies claims later attributed to 1956 KC-97 and 1959 manned
+          balloon conflations. Most documented case in the corpus.
+      - entity: events/2004-uss-nimitz-encounter
+        notes: |
+          Lighter version of the pattern. Initial denial / silence
+          from 2004-2017 -> NYT 2017 acknowledgement of AATIP and the
+          object -> DoD 2020 official release of the FLIR1 / Gimbal /
+          GoFast videos. The shift here is silence-then-acknowledgement
+          rather than retraction-then-replacement.
+    suggested_match_keywords:
+      - retraction
+      - revised account
+      - amended statement
+      - originally said
+      - later acknowledged
+      - press release withdrawn
+      - subsequent report
+      - reclassified
+      - re-attributed
+      - cover story
+
+  - name: document-destruction-after-sensitive-events
+    display_name: Documentary record destruction after sensitive events
+    category: procedural
+    definition: >
+      After an event involving anomalous phenomena, documentary records held by the responsible organisation are subsequently
+      found to be missing, destroyed, or unaccounted-for - in patterns inconsistent with the organisation's normal record-keeping
+      practice. The pattern is the *anomaly in the record-keeping*, not the absence of records about an unimportant event.
+    inclusion_criteria:
+      - The destruction or absence is documented by a later investigation, audit, or FOIA response.
+      - The destruction is inconsistent with the responsible organisation's standard retention practice (records of similar
+        events at similar times are intact).
+      - There is no documented authorisation for the destruction.
+    exclusion_criteria:
+      - Normal records-retention disposals on schedule.
+      - Records lost to fire, flood, or other disaster with documented scope.
+      - Classified records that exist but are not disclosed; this pattern is about absence, not classification.
+    supporting_cases:
+      - entity: events/roswell-uap-crash
+        notes: |
+          GAO 1995 review found that no document from Roswell Army
+          Airfield covering the crash period had survived; every
+          document had been destroyed with no apparent authorisation.
+          Specifically called out as inconsistent with normal AAF
+          records practice.
+      - entity: programmes/advanced-aerospace-threat-identification-program
+        notes: |
+          FOIA Response 18-F-0324 (2022-08-17 record) demonstrates
+          extensive redactions and refusals around AATIP documents.
+          Weaker fit than Roswell - this is non-disclosure rather than
+          confirmed destruction. Worth flagging during reviewer
+          confirmation; may belong in a separate
+          "documents-withheld-on-classification" pattern.
+    suggested_match_keywords:
+      - records destroyed
+      - documents missing
+      - no record survives
+      - paperwork shredded
+      - files unaccounted for
+      - retention violation
+      - GAO finding
+      - no authorisation for destruction
+
+  - name: uap-near-nuclear-facilities
+    display_name: UAP observed in proximity to nuclear facilities
+    category: behavioural
+    definition: >
+      UAP sightings, encounters, or interactions occur in close spatial proximity to nuclear weapons facilities, nuclear-armed
+      vessels, nuclear power generation sites, or nuclear weapons testing ranges - including instances where UAP have apparently
+      interfered with weapons systems or with the function of nuclear infrastructure.
+    inclusion_criteria:
+      - The UAP encounter has a documented spatial and temporal association with a nuclear facility or asset.
+      - The association is reported either by direct witnesses (military personnel, facility staff) or in official documents
+        released through declassification or FOIA.
+      - Where weapons-system interference is claimed, the interference is documented by the operating organisation, not solely
+        by third-party assertion.
+    exclusion_criteria:
+      - General-vicinity coincidences without a specific tie to nuclear infrastructure (a sighting "near a city that has a
+        power plant" does not qualify).
+      - Post-hoc speculative connections drawn by a single author without contemporaneous witness or documentary support.
+    supporting_cases:
+      - entity: events/malmstrom-1967-icbm-incident
+        notes: |
+          March 1967 - UAP described as zigzagging 'stars' appeared over
+          Malmstrom AFB; one hovered over missile silos and multiple
+          Minuteman ICBMs went offline. Entity may not yet exist as a
+          dedicated event node; if not, the supporting claim from
+          Coulthart's "In Plain Sight" digest is in the
+          2023-11-17-ebook-in-plain-sight.yaml extract.
+      - entity: events/rendlesham-forest-1980-incident
+        notes: |
+          UAP hovered over an underground bunker at the joint UK-US
+          military facility at Rendlesham Forest where nuclear weapons
+          were secretly stockpiled. Sourced from Coulthart and
+          Elizondo's "Imminent".
+      - entity: events/north-west-cape-1973-uap-sighting
+        notes: |
+          Encounter at the Australian US Naval Communications Station
+          (Harold Holt) at North West Cape, 1973. Mentioned in the
+          Whitaker page via Chalker's research; possibly correlates with
+          a heavily redacted NSA document about a 1973 UFO sighting.
+      - entity: documents/1971-us-ussr-agreement-on-nuclear-war-risk
+        notes: |
+          Article 3 of the 1971 US-USSR agreement requires the parties
+          to notify each other on detection of unidentified objects by
+          missile warning systems. Both Coulthart and Elizondo treat
+          this language as a direct response to UAP interference with
+          nuclear weapons systems on both sides. Worth indexing as
+          documentary evidence of the pattern even though it pre-dates
+          most public disclosure.
+    suggested_match_keywords:
+      - nuclear facility
+      - missile silo
+      - ICBM
+      - nuclear weapons
+      - nuclear stockpile
+      - missile range
+      - weapons disabled
+      - missile offline
+      - nuclear-armed vessel
+      - atomic test
+      - reactor
+      - warhead
+
+  - name: witness-intimidation-after-anomalous-events
+    display_name: Witness intimidation after anomalous events
+    category: procedural
+    definition: >
+      Witnesses to anomalous events report being subsequently threatened, warned, surveilled, or otherwise pressured by government
+      agents, military personnel, or institutional actors, in patterns inconsistent with the responsible body's documented
+      investigation practice. The pressure is directed at suppressing public account of the event rather than at lawful evidence
+      gathering.
+    inclusion_criteria:
+      - The witness is identifiable and the account of the intimidation is on record in the corpus.
+      - The pressure occurred in a temporal window connected to the event (hours to years after, not lifetime-later context).
+      - The pressure is documented as directed at suppression or silencing, not at routine investigation.
+    exclusion_criteria:
+      - Voluntary NDAs signed as part of programme employment - those are a separate pattern of contractual silencing.
+      - Reasonable security debriefs of military personnel about classified operational detail.
+    supporting_cases:
+      - entity: events/exmouth-annie-farinaccio-sighting
+        notes: |
+          1991-12, Exmouth Western Australia. Two military police
+          arrived at the Harold Holt naval communications station with
+          an "implied threat if she refused" to accompany them. During
+          the interrogation, an Australian Federal Police officer
+          warned Farinaccio: "Please shut up . . . Shut up before you
+          get us all killed." Source: 2023-11-17 In Plain Sight digest.
+          (Note: this event also instantiates uap-near-nuclear-
+          facilities - Harold Holt is a nuclear-communications facility.)
+      - entity: events/westall-ufo-sighting
+        notes: |
+          1966-04, Westall, Australia. Multiple corroborating witnesses
+          report immediate post-event military arrival at the school
+          (jeeps and trucks of soldiers), all students called to an
+          assembly and warned not to talk about what they saw; teacher
+          Andrew Greenwood reports two government agents knocking on
+          his door the same night with the same warning; student Terry
+          Peck independently recalls being warned at the school
+          assembly. Strongest multi-witness instance in the corpus.
+      - entity: events/roswell-uap-crash
+        notes: |
+          Edgar Mitchell, whose family lived near the Roswell crash
+          site, reportedly told Harold Puthoff and Eric Davis that
+          his family was among Roswell-area families threatened by
+          the FBI after the incident, with agents visiting ranchers
+          to warn that speaking about the crashes could cost them
+          their lives.
+    suggested_match_keywords:
+      - warned not to talk
+      - threatened
+      - told to keep quiet
+      - shut up
+      - silenced
+      - government agents visited
+      - military arrived
+      - debrief turned threatening
+      - implied threat
+      - intimidation
+      - witness pressured
+      - school assembly warning
