@@ -49,7 +49,7 @@ Digests are publicly readable on the git hosting platform. When a reader spots a
 
 ## Aliases
 
-An alias is a name that points to a canonical node. "Commander Fravor", "CDR Fravor", "Fravor", and "David Fravor" can all be aliases pointing to the same Person node whose canonical name is "David Fravor".
+An alias is a name that points to a canonical node. "Commander Fravor", "CDR Fravor", "Fravor", and "David Fravor" can all be aliases pointing to the same Person node whose canonical name is "Fravor, David" ([decision 0026](../decisions/0026-person-name-ordering.md)).
 
 Aliases accumulate over time as more records are processed. They serve two purposes:
 
@@ -60,7 +60,7 @@ Aliases accumulate over time as more records are processed. They serve two purpo
 
 Two independently produced knowledge graphs can be merged by combining their contents and running a reconciliation pass.
 
-The merge itself is naive - all nodes, claims, and records from both graphs are combined into one. Since every node uses a universally unique identifier, there are no primary key collisions. The result will contain duplicates: "David Fravor" from graph A and "Commander Fravor" from graph B as separate nodes, each with their own claims.
+The merge itself is naive - all nodes, claims, and records from both graphs are combined into one. Since every node uses a universally unique identifier, there are no primary key collisions. The result will contain duplicates: "Fravor, David" from graph A and "Commander Fravor" from graph B as separate nodes, each with their own claims.
 
 The reconciliation pass then resolves these duplicates using the same matching logic as integration (exact name, fuzzy name, claim-based embedding similarity - where embeddings are vector representations that capture meaning, allowing comparison of semantically similar text). Merged nodes become aliases of a chosen canonical.
 
@@ -88,7 +88,7 @@ Each matching approach has different strengths:
 | Levenshtein distance | Typos, abbreviations, minor formatting | Completely different names for the same thing |
 | Claim embedding similarity | Same meaning expressed in different words | Short strings with little semantic content (names) |
 
-Embedding similarity works well for comparing claims (full sentences) but poorly for comparing node names. Short names like "Kevin Day" and "David Fravor" are semantically similar to an embedding model (both are person names in a military context) even though they are completely different people. Claims provide enough textual content for the model to distinguish meaning.
+Embedding similarity works well for comparing claims (full sentences) but poorly for comparing node names. Short names like "Day, Kevin" and "Fravor, David" are semantically similar to an embedding model (both are person names in a military context) even though they are completely different people. Claims provide enough textual content for the model to distinguish meaning.
 
 ## Domain and infrastructure extraction
 
