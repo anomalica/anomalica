@@ -33,6 +33,14 @@ What is not yet specified is how media propagates from ingested records, through
 - The assembler design must account for media inclusion from the outset rather than treating it as a later extension.
 - Video introduces a transcoding and hosting question that images do not: a single original may need multiple delivery formats (web-playable codec, thumbnails for preview). The content repository's role expands accordingly.
 
+## Site-layer implications
+
+(Added 2026-05-27 from anomalica-site after reading this draft.)
+
+- The graph-first vs flat-provenance decision propagates directly to the assembler's frontmatter shape and therefore to the Hugo `single.html` template. Graph-first means a layout shaped as "media reference block alongside text reference block" - parallel structure mirroring the claim-provenance reference layout. Flat means the layout gets a hero image at the top and not much more. The choice is layout-shaping, not decorative.
+- Video delivery splits into two camps: `<video>` tags pointing at MP4s in `static/` (durable, offline-capable, content the project hosts) versus embed iframes pointing at external hosts (YouTube/Vimeo - has copyright-laundering risk for clips the project does not own). The licensing question above feeds directly into which path is appropriate per item.
+- The existing reference layout (one block per source with a workbench link) is the natural home for media references too. Same provenance shape: `record_hash + claim_id + workbench_url`.
+
 ## Status
 
 Captured for later resolution. No decision yet. Worth revisiting once the digester pipeline stabilises and the assembler begins design.
