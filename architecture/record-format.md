@@ -33,7 +33,7 @@ source_type: pdf
 |-------|------|----------|-------------|
 | `schema` | string | yes | Format version. Always `anomalica/record/1` for this version. |
 | `title` | string | yes | Document or episode title. Always quoted. |
-| `date_published` | string | yes | When the original content was published. ISO 8601, precision varies: `2023`, `2023-07`, `2023-07-26`, or with time and zone. |
+| `date_published` | string or null | yes | When the original content was published. ISO 8601, precision varies: `2023`, `2023-07`, `2023-07-26`, or with time and zone. Set to `null` when the source is genuinely undated (e.g. an undated transcript or memo) - do not fabricate a fallback from file modification or ingestion dates, as a wrong date is worse provenance than an absent one. |
 | `source_type` | string | yes | One of: `pdf`, `audio`, `video`, `web`, `ebook` |
 | `publisher` | string | no | The entity that created the content (e.g. "CBS News", "The Debrief", "House Oversight Committee"). Not the hosting platform. |
 | `source_url` | string | no | URL where the source can be found |
@@ -48,6 +48,7 @@ source_type: pdf
 | `date_accessed` | string | no | When the source was fetched. ISO 8601 with timezone (always Zulu). |
 | `date_extracted` | string | no | When the ingestion pipeline ran. ISO 8601 with timezone (always Zulu). |
 | `copyright` | object | no | Copyright status (see the [copyright decision](../decisions/drafts/source-types-and-copyright.md)) |
+| `classification` | string | no | Original security classification banner of the source, verbatim with surrounding parentheses stripped (e.g. `SECRET//REL TO USA, FVEY`). Present only for documents carrying a classification marking; absent otherwise. Portion-level markings that differ from the document banner are captured inline - see [Classification markings](#classification-markings). |
 | `processing` | object | no | Processing metadata: handler, version, tools used, source characteristics |
 | `media` | object | no | Summary of extracted media stored at `media/{record_hash}/`. Currently `{ count, total_bytes }`. Omitted when the record has no extracted media. |
 
@@ -221,6 +222,24 @@ Since the content is YAML, values containing colons or commas need quoting:
 ```
 
 Standard YAML quoting rules apply.
+
+### Classification markings
+
+Declassified government documents carry security classification markings at two levels. Both are preserved.
+
+**Document level.** The overall classification banner (`(SECRET//REL TO USA, FVEY)`, `(SECRET//NOFORN)`) goes in the frontmatter `classification` field, verbatim with the surrounding parentheses stripped. In-body repetitions of that same banner - the page headers and footers that restate it - are redundant with the frontmatter and stripped from the body.
+
+**Portion level.** Markings that classify a specific portion and differ from the document banner (`(S//REL)`, `(U)`, `(S/RELIDO)` prefixing a paragraph or section heading) are preserved as an inline annotation at the start of the portion they govern:
+
+```markdown
+{{classification: U}} This paragraph was unclassified within an otherwise classified report.
+
+{{classification: "S//REL"}} This paragraph carried its own portion marking.
+```
+
+The value is the marking verbatim, parentheses stripped, quoted when it contains special characters (the `//` and commas common in markings). A portion marking applies from its position until the next classification marking; the frontmatter `classification` is the default for any portion with no preceding marking. This lets a consumer attribute the classification of any portion - and therefore of a claim extracted from it - though doing so is optional.
+
+Classification markings are never represented with strikethrough; strikethrough is reserved for text genuinely struck through in the source. Like every annotation, classification markings are metadata, not prose - consumers strip or interpret them before treating the body as text. The extraction pipeline in particular removes them before reading prose, so a marking never leaks into an extracted claim.
 
 ## Parser behaviour
 
