@@ -147,6 +147,56 @@ This is the same convention used by git hosting platforms when merging pull requ
 
 The git history provides the full audit trail: who changed what, when, and why. The workbench shows reviewers the diff of their changes before they submit, and displays the history of corrections to each record.
 
+## Review identity across re-ingestion
+
+The ingester improves continually: capture pipelines get better, parsers find bugs, post-processing rules tighten. When the ingester re-ingests a record, the record's body changes - which changes its `content_hash`, which is the SHA-256 of the body in the canonical store layout.
+
+Naive binding of reviews to `content_hash` orphans every prior review when the ingester re-runs. A reviewer who approved a record yesterday would find the same record back in the unreviewed queue today, with no signal that they had already approved its previous form. The friction compounds: a single ingester improvement that touches one file format can invalidate the entire review backlog for that format.
+
+This is the expected operational shape - ingester improvements should not gate on review preservation - so the spec binds reviews to a hierarchy of identities, accepting the strongest available match.
+
+### Identity hierarchy
+
+A record can carry up to three identities at any given time:
+
+| Kind | Source | Stable across | Available for |
+|------|--------|---------------|----------------|
+| `url` | The `source_url` frontmatter field. The URL the ingester fetched. | Re-ingestion. Publisher byte-level changes. Re-extraction. | Web records, YouTube videos, anything fetched by URL. |
+| `sha256` | The `source_hash` frontmatter field. SHA-256 of the original source-file bytes. | Re-extraction. Parser improvements. Post-processing changes. | PDFs, ebooks, audio files, video files, any record sourced from a file. |
+| `content` | The `content_hash` (record body SHA-256). | Nothing - any body change rotates it. | All records (always present). |
+
+`url` is preferred over `sha256` is preferred over `content`. A given record may have any subset of the three. Web records have `url` and `content`. File-sourced records have `sha256` and `content`. Web records that the ingester also archives by file (a SingleFile snapshot for offline reading) carry all three.
+
+### Trailer form
+
+A review commit records the identities of the record it reviewed using one or more `Reviewed-Record:` trailers:
+
+```
+Reviewed-Record: url:https://thedebrief.org/some-article-slug
+Reviewed-Record: sha256:abc123def456...
+Reviewed-Record: content:9f2a8c5e...
+```
+
+Each trailer is `Reviewed-Record: <kind>:<value>` where kind is one of `url`, `sha256`, `content`. The workbench backend emits whichever identities the record carried at the time of review. Multiple trailers in one commit are alternative identities for the same review - all of them are equivalent claims of identity, the strongest available one will match.
+
+### Match scan
+
+To find prior reviews for a given record, the workbench scans review commits in the appropriate repository and matches their trailers against the record's identities. A match is established when any kind in the trailer matches the same kind on the record:
+
+- The record has `source_url = U` and a prior review's commit carries `Reviewed-Record: url:U` - match.
+- The record has `source_hash = H` and a prior review's commit carries `Reviewed-Record: sha256:H` - match.
+- No url or sha256 match, but the record's `content_hash = C` matches a prior `Reviewed-Record: content:C` - match (weakest).
+
+When multiple prior reviews match (the same `source_url` appears in two old commits because the same article was ingested twice and reviewed each time), the workbench surfaces all of them rather than picking one. The reviewer disambiguates.
+
+When the new record matches no prior reviews on any kind, it enters the queue as unreviewed.
+
+### Future use: URL rotation and aliasing
+
+A record's `source_url` is not guaranteed stable over time. Wayback Machine URLs rotate, publishers issue 301 redirects, articles move between sites. The multiple-trailer form already supports this case: when the workbench (or any other tool) discovers that a record's prior `source_url` is now reachable only via a new URL, it can emit a new review commit (or a maintenance commit) that lists both URLs as `Reviewed-Record:` trailers. Future scans will match either.
+
+The spec does not prescribe how aliasing gets detected or who emits the maintenance commit. The trailer format simply admits the case; implementation is deferred until the problem actually bites.
+
 ## Relationship to the main site
 
 The workbench is a separate application with a different audience (reviewers) and different requirements (video playback, interactive editing, file upload). It is not part of the main Anomalica site, which serves assembled articles to readers.
