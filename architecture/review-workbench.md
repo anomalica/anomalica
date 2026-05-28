@@ -191,6 +191,10 @@ When multiple prior reviews match (the same `source_url` appears in two old comm
 
 When the new record matches no prior reviews on any kind, it enters the queue as unreviewed.
 
+### Back-compatibility with historical trailers
+
+Review commits emitted before this spec carried a single trailer of the form `Reviewed-Record: sha256:<hash>`, where the value was the record's content_hash (the only identity the workbench was emitting at the time). The match scan retries any `sha256:<hash>` trailer as a `content:<hash>` match when the kind-matched scan finds nothing. The collision space between an arbitrary content_hash and an unrelated source_hash is astronomical (2^256), so this retry is safe in practice. New review commits emit fully labelled trailers; the retry exists only to preserve continuity of pre-spec reviews.
+
 ### Future use: URL rotation and aliasing
 
 A record's `source_url` is not guaranteed stable over time. Wayback Machine URLs rotate, publishers issue 301 redirects, articles move between sites. The multiple-trailer form already supports this case: when the workbench (or any other tool) discovers that a record's prior `source_url` is now reachable only via a new URL, it can emit a new review commit (or a maintenance commit) that lists both URLs as `Reviewed-Record:` trailers. Future scans will match either.
