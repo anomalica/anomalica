@@ -24,9 +24,10 @@ Note: Anomalica was founded by a single person. "We" is used throughout these re
 Principles:
 - Not aligned with any national interest
 - Not government-funded from any country
-- No advertising, no sponsorship, no data monetisation
+- Not run for profit; funded by donations
+- The core knowledge is always free - the curated claims, articles, and knowledge graph are never paywalled or gated by money
+- No advertising, no sponsorship, no outside investment
 - All project code and data are open source
-- Self-funded initially
 
 ### Jurisdiction-independent in practice, not just in principle
 

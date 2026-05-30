@@ -5,7 +5,7 @@ Status: accepted
 
 ## Context
 
-The platform publishes information about programmes that may attract adversarial attention at a state level. The hosting strategy needs to ensure continuity of service under pressure while keeping costs sustainable for a self-funded project.
+The platform publishes information about programmes that may attract adversarial attention at a state level. The hosting strategy needs to ensure continuity of service under pressure while keeping costs sustainable for a donation-funded project.
 
 Research was conducted into censorship-resistant hosting providers (FlokiNET, Bahnhof, 1984 Hosting), content delivery network options (bunny.net, Cloudflare, KeyCDN), and case studies of platforms under pressure (WikiLeaks, Sci-Hub, The Pirate Bay). A content delivery network distributes copies of files to servers around the world so readers download from a nearby location rather than a single central server.
 
