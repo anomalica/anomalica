@@ -5,24 +5,24 @@ This is a living document. It reflects the current state of the system architect
 ## Pipeline
 
 ```
-any raw format ──> anomalica-ingester ──> anomalica-ingests (private git repo)
+any raw format ──> ingester ──> ingests (private git repo)
 (audio, video, ebooks,                            |
 PDFs, scanned docs,                               v
-web pages)                                anomalica-digester ──> anomalica-digests (public git repo)
+web pages)                                digester ──> digests (public git repo)
                                                                         |
                                                 human review via ───────┤
-                                                anomalica-workbench     |
+                                                workbench     |
                                                                   rebuild database
                                                                         |
                                           directives ───────────────────┤
                                                                         v
-                                                                anomalica-assembler
+                                                                assembler
                                                                         |
                                                                         v
-                                                                anomalica-content (articles, media)
+                                                                content (articles, media)
                                                                         |
                                                                         v
-                                                                anomalica-site (static HTML)
+                                                                site (static HTML)
 
                                           human edits article on site
                                                       |
@@ -36,19 +36,19 @@ web pages)                                anomalica-digester ──> anomalica-d
 | Repository | Purpose |
 |-----------|---------|
 | **anomalica** | Organisation-level decisions, architecture, and documentation |
-| **anomalica-ingester** | Raw source material to structured text (audio, video, ebooks, PDFs, scanned documents) |
-| **anomalica-ingests** | Ingester output (private - contains copyrighted source material) |
-| **anomalica-digester** | Artificial intelligence extraction from ingests, producing digests |
-| **anomalica-digests** | Reviewed digests - the source of truth for the knowledge graph (a structured database of interconnected facts) |
-| **anomalica-assembler** | Article assembly from knowledge graph data, directive application |
-| **anomalica-content** | Output: assembled articles and associated media |
-| **anomalica-site** | Hugo static site, consumes anomalica-content |
-| **anomalica-workbench** | Review application for correcting ingests and digests (Svelte 5 single-page application) |
-| **anomalica-brand** | Shared visual identity: logos, colour palette, fonts, design tokens |
+| **ingester** | Raw source material to structured text (audio, video, ebooks, PDFs, scanned documents) |
+| **ingests** | Ingester output (private - contains copyrighted source material) |
+| **digester** | Artificial intelligence extraction from ingests, producing digests |
+| **digests** | Reviewed digests - the source of truth for the knowledge graph (a structured database of interconnected facts) |
+| **assembler** | Article assembly from knowledge graph data, directive application |
+| **content** | Output: assembled articles and associated media |
+| **site** | Hugo static site, consumes content |
+| **workbench** | Review application for correcting ingests and digests (Svelte 5 single-page application) |
+| **brand** | Shared visual identity: logos, colour palette, fonts, design tokens |
 
 ## Data flow
 
-The ingester writes ingests to the private anomalica-ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public anomalica-digests repository. Both the ingester and digester need access to the private repository.
+The ingester writes ingests to the private ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public digests repository. Both the ingester and digester need access to the private repository.
 
 Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
 

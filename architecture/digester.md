@@ -4,7 +4,7 @@ The digester takes ingests and breaks them down into atomic components. It creat
 
 ## Inputs
 
-The digester reads ingests from the private anomalica-ingests repository. These are markdown files with YAML metadata frontmatter and annotation blocks in the Anomalica record interchange format (see [architecture decision record 0019](../decisions/0019-record-interchange-format.md)). It does not process raw source material directly. The ingester converts raw formats (PDFs, audio, video, ebooks, web pages) into ingests and writes them to the anomalica-ingests repository.
+The digester reads ingests from the private ingests repository. These are markdown files with YAML metadata frontmatter and annotation blocks in the Anomalica record interchange format (see [architecture decision record 0019](../decisions/0019-record-interchange-format.md)). It does not process raw source material directly. The ingester converts raw formats (PDFs, audio, video, ebooks, web pages) into ingests and writes them to the ingests repository.
 
 Each ingest may have associated media at `media/{record_hash}/` (currently extracted images from EPUBs). When the digester reaches an `<!-- image: ... -->` annotation with a `file` field, it can load the image bytes and pass them to a vision-capable model alongside the surrounding text. This lets claims be extracted from charts, photographs, and figures, not just prose.
 
@@ -46,9 +46,9 @@ The specific scoring algorithm is an implementation detail. The principle is tha
 
 ## Outputs
 
-The digester produces one digest per ingest - a human-readable markdown file containing all extracted nodes and claims with their metadata, original excerpts, and provenance information. Digests are written to the public anomalica-digests repository and imported into the knowledge graph database (SQLite, a lightweight file-based database) by a deterministic process with no artificial intelligence involvement.
+The digester produces one digest per ingest - a human-readable markdown file containing all extracted nodes and claims with their metadata, original excerpts, and provenance information. Digests are written to the public digests repository and imported into the knowledge graph database (SQLite, a lightweight file-based database) by a deterministic process with no artificial intelligence involvement.
 
-The database is derived from the digests and can be rebuilt from scratch at any time. The digests in the anomalica-digests repository are the source of truth for the knowledge graph.
+The database is derived from the digests and can be rebuilt from scratch at any time. The digests in the digests repository are the source of truth for the knowledge graph.
 
 ## Source properties
 

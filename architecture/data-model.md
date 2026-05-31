@@ -57,6 +57,6 @@ Each pipeline stage has a named output:
 
 ## Storage
 
-The source of truth for the knowledge graph is the collection of digests in the anomalica-digests repository. These are human-readable, version-controlled, and reviewable.
+The source of truth for the knowledge graph is the collection of digests in the digests repository. These are human-readable, version-controlled, and reviewable.
 
 The SQLite database (a lightweight file-based database) is rebuilt from the digests by a deterministic import process. It serves as the query and distribution format - downloadable, torrentable, and verifiable - but is derived data, not primary. If deleted, it can be rebuilt. Embedding vectors are stored separately from core data to keep the primary download small.

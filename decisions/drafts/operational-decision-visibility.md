@@ -36,7 +36,7 @@ tracked, and secret information.
   in the public meta-repo and on the website.
 - **Private but tracked:** operational and strategic decisions - providers,
   account management, business development, positioning, and the like. These live
-  in the private `anomalica-operations` repository. The founder may graduate a
+  in the private `operations` repository. The founder may graduate a
   specific item to the published tier when it serves the mission.
 - **Secret:** credentials, in Bitwarden, never in any repository.
 
@@ -48,7 +48,7 @@ govern them - remains public as 0004 intends. This amendment narrows only the
 
 The transparency claim becomes precise and defensible: the things that matter for
 trust are public, and the founder retains room to operate. A private
-`anomalica-operations` repository becomes the home for the private-but-tracked
+`operations` repository becomes the home for the private-but-tracked
 tier. When promoted to a numbered record, this supersedes the relevant clause of
 0004; 0004 itself is annotated with a pointer to the superseding record rather
 than edited in place.

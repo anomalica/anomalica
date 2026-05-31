@@ -17,7 +17,7 @@ If public submissions (Phase 2) generate high concurrent write volume, a hosted 
 
 ## Relationship to digests
 
-The SQLite database is derived data, not the source of truth. The source of truth is the collection of reviewed digests in the anomalica-digests repository. The database is rebuilt deterministically from these files by the import process. If the database is deleted, it can be reconstructed from the digests at any time.
+The SQLite database is derived data, not the source of truth. The source of truth is the collection of reviewed digests in the digests repository. The database is rebuilt deterministically from these files by the import process. If the database is deleted, it can be reconstructed from the digests at any time.
 
 This means the database serves two purposes: a query and computation layer (for embedding search, corroboration detection, and evidence scoring), and a distribution format (for public download). It is not precious state.
 

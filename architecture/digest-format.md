@@ -1,7 +1,7 @@
 # Digest interchange format
 
 The output of the digester for each record is a single YAML file at
-`anomalica-digests/records/{friendly-name}.yaml`. This file is the canonical
+`digests/records/{friendly-name}.yaml`. This file is the canonical
 intermediate between the artificial-intelligence extraction step and every
 downstream consumer (the SQLite database, the workbench, the assembler).
 
@@ -19,7 +19,7 @@ understand.
 ## File layout in the repository
 
 ```
-anomalica-digests/
+digests/
   records/
     2020-04-27-web-statement-by-the-department-of-defense-on-the-release-of.yaml
     2024-08-19-ebook-imminent-inside-the-pentagon-s-hunt-for-ufos.yaml
@@ -27,7 +27,7 @@ anomalica-digests/
 ```
 
 One YAML file per record. Filenames mirror the friendly filenames in
-`anomalica-ingests/records/` (same `{date}-{format}-{slug}` form), with
+`ingests/records/` (same `{date}-{format}-{slug}` form), with
 `.md` swapped for `.yaml`. This pairing is how the workbench joins the
 two sides for any given record.
 
@@ -85,7 +85,7 @@ infrastructure_claims: []
 The five fields describing the source record this digest was produced
 from. `id` is the universally unique identifier assigned to the record
 node in the knowledge graph and is the join key against
-`anomalica-ingests`. `producer` is in `Last, First Middle` form for
+`ingests`. `producer` is in `Last, First Middle` form for
 persons ([decision 0023](../decisions/0023-person-naming-convention.md),
 [decision 0026](../decisions/0026-person-name-ordering.md)) or a plain
 organisation name. `date` is a string in the form `YYYY` or `YYYY-MM-DD`.
@@ -183,7 +183,7 @@ Producers (the digester, the converter, future tooling) must:
 ## Legacy markdown format
 
 Prior to schema `anomalica/digest/1`, the digester emitted a markdown
-intermediate at `anomalica-digests/extracts/{name}.extract.md`. That
+intermediate at `digests/extracts/{name}.extract.md`. That
 format is described in the codebase under `digester/markdown_format.py`
 for historical reference only and is no longer produced. The conversion
 script `extract_to_yaml.py` translates existing markdown extracts into

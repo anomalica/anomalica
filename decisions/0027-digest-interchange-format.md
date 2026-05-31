@@ -15,7 +15,7 @@ contract between everything that follows the artificial-intelligence
 extraction step.
 
 Until now this artefact was a markdown file at
-`anomalica-digests/extracts/{name}.extract.md`. The format was never
+`digests/extracts/{name}.extract.md`. The format was never
 written down. It existed as the implicit contract between the writer
 in `digester/markdown_format.py` and the parser in the same file. The
 parser depends on strict line conventions - level-three headings of
@@ -53,7 +53,7 @@ before the workbench is built against it, avoids relitigating later.
 ## Decision
 
 The digester output is a YAML file at
-`anomalica-digests/records/{friendly-name}.yaml`, conforming to schema
+`digests/records/{friendly-name}.yaml`, conforming to schema
 `anomalica/digest/1`. The full specification lives in
 [`architecture/digest-format.md`](../architecture/digest-format.md).
 
@@ -72,8 +72,8 @@ Key shape choices, with the rationale:
   do not understand. Mirrors the record format on the ingester side.
 
 - **Folder named `records/`, file extension `.yaml` only.** Avoids the
-  repetition of `anomalica-digests/extracts/...digest.yaml`. The
-  parallel structure with `anomalica-ingests/records/{name}.md` makes
+  repetition of `digests/extracts/...digest.yaml`. The
+  parallel structure with `ingests/records/{name}.md` makes
   the workbench join obvious: same filename in two repositories,
   different extension reflecting different content.
 
@@ -108,7 +108,7 @@ Key shape choices, with the rationale:
 
 ## Migration
 
-The legacy markdown extracts in `anomalica-digests/extracts/` are
+The legacy markdown extracts in `digests/extracts/` are
 converted to YAML by the script `extract_to_yaml.py` in the digester
 repository. The conversion preserves all universally unique
 identifiers from the markdown source, so the rebuild produces a
@@ -129,8 +129,8 @@ The conversion is one-way; the digester no longer produces markdown.
 - Producer and consumer code is simpler: standard YAML libraries
   replace a custom line-regex parser.
 - The workbench can now be built against a stable, documented
-  format. Mounting `anomalica-ingests/records/` and
-  `anomalica-digests/records/` side by side, keyed by friendly
+  format. Mounting `ingests/records/` and
+  `digests/records/` side by side, keyed by friendly
   filename, is sufficient for the "source -> ingest -> digest"
   three-column view.
 - The one-off taxonomy fixers in `digester/reclassify.py` still

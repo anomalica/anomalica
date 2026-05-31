@@ -7,7 +7,7 @@ How content flows from generation through review, and how the directory structur
 Content is organised document-first. Each document is a directory containing all its language versions and associated metadata.
 
 ```
-anomalica-content/
+content/
   _directives.yaml                    # global directives (all languages)
   pages/
     _directives.yaml                  # directives for all pages

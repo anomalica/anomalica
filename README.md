@@ -12,7 +12,7 @@ Organisation-level decisions, architecture, and documentation. For code, see the
 
 ## Decisions
 
-Decision records following the [architecture decision record format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). Each record is immutable once accepted. To change a decision, a new record is created that supersedes the old one.
+Decision records following the [architecture decision record format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). Records are maintained rather than frozen: corrections, renamed references, and clarifications are edited in place (git tracks the history). A material change of decision is recorded - either a dated amendment within the record, or a new record that supersedes it.
 
 | # | Decision |
 |---|----------|
@@ -56,12 +56,12 @@ Living documents that reflect the current state of the system. See [architecture
 
 ## Related Repositories
 
-- **anomalica-ingester** - raw source material to ingests (audio, video, ebooks, PDFs, scanned documents)
-- **anomalica-digester** - ingests to digests (claim extraction, evidence scoring)
-- **anomalica-digests** - reviewed digests, the source of truth for the knowledge graph
-- **anomalica-assembler** - article assembly from knowledge graph, directive application
-- **anomalica-content** - assembled articles and associated media
-- **anomalica-site** - Hugo static site
+- **ingester** - raw source material to ingests (audio, video, ebooks, PDFs, scanned documents)
+- **digester** - ingests to digests (claim extraction, evidence scoring)
+- **digests** - reviewed digests, the source of truth for the knowledge graph
+- **assembler** - article assembly from knowledge graph, directive application
+- **content** - assembled articles and associated media
+- **site** - Hugo static site
 
 ## Contact
 

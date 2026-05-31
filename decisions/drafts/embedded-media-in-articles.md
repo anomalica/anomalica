@@ -10,7 +10,7 @@ Final assembled articles will benefit from embedded media alongside the prose. T
 - A page about a person should include a photograph of that person where one is available.
 - A page about an event (the Nimitz encounter) should be able to embed the relevant video (the Tic Tac footage) inline.
 
-The ingester landed image extraction on 2026-04-30 (this repository at `335d67f`, ingester at `2cb5944`). Images are now stored at `anomalica-ingests/media/{record_hash}/{img_hash}.{ext}` alongside the records that reference them, and the record-format spec describes the body annotation form. That solves the input side of the pipeline for images sourced from books and other ingested artefacts.
+The ingester landed image extraction on 2026-04-30 (this repository at `335d67f`, ingester at `2cb5944`). Images are now stored at `ingests/media/{record_hash}/{img_hash}.{ext}` alongside the records that reference them, and the record-format spec describes the body annotation form. That solves the input side of the pipeline for images sourced from books and other ingested artefacts.
 
 What is not yet specified is how media propagates from ingested records, through the digester, through the assembler, into the content repository, and onto the site.
 
@@ -24,7 +24,7 @@ What is not yet specified is how media propagates from ingested records, through
 
 **Sourcing video.** The ingester only extracts images from EPUBs in its first pass. Video has no extraction pathway yet. Sources include direct download from primary sources (US government releases, news outlets) and embedded clips from web pages. Storage layout, transcoding policy, and the relationship between the ingester and a video-extraction pipeline are all open.
 
-**Licensing and permission.** Media often carries explicit copyright (a press photograph of a witness, a news outlet's clip of the Tic Tac video as broadcast versus the raw government release). The existing copyright status field on records (`public_domain`, `open_licence`, `publicly_accessible`, `licensed`, `restricted`) was designed for the body of the record. Whether the same statuses apply per-media-item, or whether a media item inherits the record's copyright, or whether each media item carries its own status, is unspecified. Treat as related but separable from the propagation question above; the answer informs which media can be served publicly via `anomalica-content` and which must stay private inside `anomalica-ingests`.
+**Licensing and permission.** Media often carries explicit copyright (a press photograph of a witness, a news outlet's clip of the Tic Tac video as broadcast versus the raw government release). The existing copyright status field on records (`public_domain`, `open_licence`, `publicly_accessible`, `licensed`, `restricted`) was designed for the body of the record. Whether the same statuses apply per-media-item, or whether a media item inherits the record's copyright, or whether each media item carries its own status, is unspecified. Treat as related but separable from the propagation question above; the answer informs which media can be served publicly via `content` and which must stay private inside `ingests`.
 
 ## Implications
 
@@ -35,7 +35,7 @@ What is not yet specified is how media propagates from ingested records, through
 
 ## Site-layer implications
 
-(Added 2026-05-27 from anomalica-site after reading this draft.)
+(Added 2026-05-27 from site after reading this draft.)
 
 - The graph-first vs flat-provenance decision propagates directly to the assembler's frontmatter shape and therefore to the Hugo `single.html` template. Graph-first means a layout shaped as "media reference block alongside text reference block" - parallel structure mirroring the claim-provenance reference layout. Flat means the layout gets a hero image at the top and not much more. The choice is layout-shaping, not decorative.
 - Video delivery splits into two camps: `<video>` tags pointing at MP4s in `static/` (durable, offline-capable, content the project hosts) versus embed iframes pointing at external hosts (YouTube/Vimeo - has copyright-laundering risk for clips the project does not own). The licensing question above feeds directly into which path is appropriate per item.

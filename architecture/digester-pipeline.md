@@ -24,7 +24,7 @@ Digests are imported into the database by a deterministic parser. No artificial 
 - Stores claims with all their metadata and node references
 - Preserves the universally unique identifiers from the markdown so that re-importing an edited file updates in place
 
-The database can be rebuilt from scratch at any time by importing all digests from the anomalica-digests repository.
+The database can be rebuilt from scratch at any time by importing all digests from the digests repository.
 
 ### 3. Reconciliation
 
@@ -39,7 +39,7 @@ Proposed merges can be reviewed before being applied. When a merge is confirmed,
 
 Human review is not a pipeline stage. It can happen at any time - before import, after import, weeks later, or never. The system works without it. Review improves quality when it happens but does not gate the pipeline.
 
-Digests live in the anomalica-digests git repository. Every edit is tracked in the commit history, which serves as the audit trail for corrections. When a correction is made to a digest:
+Digests live in the digests git repository. Every edit is tracked in the commit history, which serves as the audit trail for corrections. When a correction is made to a digest:
 
 1. The corrected digest is committed to the repository
 2. The database is rebuilt from the updated digests

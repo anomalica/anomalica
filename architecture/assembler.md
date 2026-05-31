@@ -4,13 +4,13 @@ The assembler reads from the knowledge graph (a structured database of interconn
 
 ## Inputs
 
-- Knowledge graph (SQLite - a lightweight file-based database, rebuilt from anomalica-digests, read-only)
+- Knowledge graph (SQLite - a lightweight file-based database, rebuilt from digests, read-only)
 - Directives (from the content hierarchy)
 - Existing articles (for incremental updates)
 
 ## Outputs
 
-Updated articles in anomalica-content.
+Updated articles in content.
 
 ## When the assembler runs
 
@@ -33,7 +33,7 @@ Every article includes references at the bottom linking each claim to its source
 - A link to the original source material (URL, where available)
 - The location within the record (timestamp, page number)
 - Who made the assertion (the speaker)
-- A link to the digest in the anomalica-digests repository, where readers can see exactly how the claim was extracted and report errors via the repository's issue tracker
+- A link to the digest in the digests repository, where readers can see exactly how the claim was extracted and report errors via the repository's issue tracker
 
 This gives readers two paths: follow the link to the original source to verify the claim themselves, or follow the link to the digest to challenge how the claim was interpreted.
 

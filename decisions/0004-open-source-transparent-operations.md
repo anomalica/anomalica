@@ -12,12 +12,12 @@ The platform's credibility depends on being verifiable. Users need to be able to
 All code, documentation, and operational decisions will be public. The project is hosted on a public git platform with repositories for each component:
 
 - **anomalica** - organisation-level decisions, architecture, and documentation (this repository)
-- **anomalica-ingester** - raw source material to structured text (audio, video, ebooks, PDFs, scanned documents)
-- **anomalica-digester** - artificial intelligence extraction from ingests, producing digests
-- **anomalica-digests** - reviewed digests, the source of truth for the knowledge graph (a structured database of interconnected facts)
-- **anomalica-assembler** - article assembly from knowledge graph data, directive application
-- **anomalica-content** - the output: assembled articles and associated media
-- **anomalica-site** - the Hugo static site, consumes content from anomalica-content
+- **ingester** - raw source material to structured text (audio, video, ebooks, PDFs, scanned documents)
+- **digester** - artificial intelligence extraction from ingests, producing digests
+- **digests** - reviewed digests, the source of truth for the knowledge graph (a structured database of interconnected facts)
+- **assembler** - article assembly from knowledge graph data, directive application
+- **content** - the output: assembled articles and associated media
+- **site** - the Hugo static site, consumes content from content
 
 Decisions are recorded as architecture decision records in `decisions/`. Tasks and ongoing work are tracked via the hosting platform's issue tracker. Conversations and open questions use the platform's discussion features.
 

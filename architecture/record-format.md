@@ -302,7 +302,7 @@ Each record's images live in their own subdirectory. Images shared across record
 
 A record's `media/` directory is omitted entirely when the record has no extracted media. Consumers should not assume every record has one.
 
-Copyright status follows the parent record. If `copyright.status` is `licensed` or `restricted`, the images stay private. The assembler copies images into `anomalica-content` only for records eligible for public serving (`public_domain`, `open_licence`, `publicly_accessible`).
+Copyright status follows the parent record. If `copyright.status` is `licensed` or `restricted`, the images stay private. The assembler copies images into `content` only for records eligible for public serving (`public_domain`, `open_licence`, `publicly_accessible`).
 
 ## Examples
 

@@ -12,7 +12,7 @@ A separate web application that serves two purposes: reviewing and correcting in
 
 **Frontend:** A plain Svelte 5 single-page application built with Vite. No meta-framework (not SvelteKit) - the workbench has no need for server-side rendering, file-based routing, or a Node.js server. Svelte compiles components to plain JavaScript at build time, so there is no framework runtime in the browser. This keeps the application lightweight and reduces the attack surface.
 
-**Styling:** Tailwind CSS v4 with shared design tokens imported from anomalica-brand. Panel contents use container queries (`@container`) rather than viewport breakpoints, so components adapt to their panel width as users resize the layout.
+**Styling:** Tailwind CSS v4 with shared design tokens imported from brand. Panel contents use container queries (`@container`) rather than viewport breakpoints, so components adapt to their panel width as users resize the layout.
 
 **Backend:** A minimal Python service (FastAPI) that reads from and writes to the git repositories. Python because the rest of the pipeline (ingester, digester) is Python, allowing shared libraries for record parsing and validation. The backend is a thin layer between the frontend and git - it has no database of its own. In production, FastAPI serves both the API and the built static frontend files.
 
@@ -20,14 +20,14 @@ A separate web application that serves two purposes: reviewing and correcting in
 
 **Storage:** Two git repositories hold the pipeline output:
 
-- **anomalica-ingests** (private) - contains the structured text output from the ingester. These files contain copyrighted source material and are never publicly accessible. The workbench backend has a service account with access to this repository and serves individual ingests to authenticated reviewers one at a time, gated by the hash verification described below.
-- **anomalica-digests** (public) - contains the extracted claims and nodes. No copyrighted content. The backend commits digest corrections here on behalf of reviewers.
+- **ingests** (private) - contains the structured text output from the ingester. These files contain copyrighted source material and are never publicly accessible. The workbench backend has a service account with access to this repository and serves individual ingests to authenticated reviewers one at a time, gated by the hash verification described below.
+- **digests** (public) - contains the extracted claims and nodes. No copyrighted content. The backend commits digest corrections here on behalf of reviewers.
 
 The backend has no database of its own. The git repositories are the storage.
 
 **Access model:** The workbench has three tiers:
 
-- **Anonymous (no login)** - anyone can browse digests, see extracted claims and nodes, view the correction history, and follow the provenance chain of any claim. For copyrighted sources, anonymous viewers can also unlock the ingested markdown by providing their own copy of the source file (hash verification, described in the copyright handling section below). This data is already public (it comes from the anomalica-digests repository) or gated by proof of possession, not by identity.
+- **Anonymous (no login)** - anyone can browse digests, see extracted claims and nodes, view the correction history, and follow the provenance chain of any claim. For copyrighted sources, anonymous viewers can also unlock the ingested markdown by providing their own copy of the source file (hash verification, described in the copyright handling section below). This data is already public (it comes from the digests repository) or gated by proof of possession, not by identity.
 - **Authenticated (login required)** - same as anonymous, plus the ability to submit corrections to either ingests or digests. Any edit requires a logged-in identity so it can be attributed in the git history. Authenticated users can also request manual access grants for copyrighted sources where hash verification is impractical.
 - **Granted access (per record)** - authenticated users who have been manually granted access to specific copyrighted records by an Anomalica member. Grants are stored separately from the records (see the [source types and copyright decision](../decisions/drafts/source-types-and-copyright.md) for the grants storage model).
 
@@ -141,9 +141,9 @@ When a reviewer submits corrections, the workbench backend commits the changes t
 
 This is the same convention used by git hosting platforms when merging pull requests - the author did the work, the committer applied it. Any git client displays both fields.
 
-**Ingest corrections** (speaker merges, timestamp adjustments, marking irrelevant sections) are committed to the private anomalica-ingests repository. Reviewers cannot access this repository directly - they interact with ingests only through the workbench, which serves one file at a time after hash verification. The project maintainer has full access to the repository and can review, revert, or approve changes.
+**Ingest corrections** (speaker merges, timestamp adjustments, marking irrelevant sections) are committed to the private ingests repository. Reviewers cannot access this repository directly - they interact with ingests only through the workbench, which serves one file at a time after hash verification. The project maintainer has full access to the repository and can review, revert, or approve changes.
 
-**Digest corrections** (claim type changes, speaker reattribution, node corrections) are committed to the public anomalica-digests repository. These corrections are visible to anyone and tracked in the public commit history.
+**Digest corrections** (claim type changes, speaker reattribution, node corrections) are committed to the public digests repository. These corrections are visible to anyone and tracked in the public commit history.
 
 The git history provides the full audit trail: who changed what, when, and why. The workbench shows reviewers the diff of their changes before they submit, and displays the history of corrections to each record.
 

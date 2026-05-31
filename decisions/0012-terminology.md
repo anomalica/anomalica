@@ -26,7 +26,7 @@ Each pipeline stage has a named output:
 | Term | Definition |
 |------|-----------|
 | **Ingest** | The output of the ingester. A record converted to structured text with metadata in the Anomalica record interchange format. Ingests contain the actual content of the source material, so they are not publicly shareable due to copyright. They are internal working files. |
-| **Digest** | The output of the digester. A human-readable markdown file containing all claims, nodes, and provenance information extracted from one ingest. Digests contain no copyrighted content - only atomic facts, structured metadata, and references back to the original record. Digests are the source of truth for the knowledge graph. They are publicly hosted in the anomalica-digests repository. |
+| **Digest** | The output of the digester. A human-readable markdown file containing all claims, nodes, and provenance information extracted from one ingest. Digests contain no copyrighted content - only atomic facts, structured metadata, and references back to the original record. Digests are the source of truth for the knowledge graph. They are publicly hosted in the digests repository. |
 | **Article** | The output of the assembler. A readable prose page assembled from knowledge graph data in a specific language. Articles are what the site renders. |
 
 ### Relationships
