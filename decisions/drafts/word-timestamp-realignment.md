@@ -57,13 +57,42 @@ fuzzy token-LCS, measure agreement.
 
 1. **Strip `{{t:}}` word tokens before extraction; preserve a word->timestamp
    map.** The digester never sees the tokens. The cost estimate then reflects the
-   clean body automatically. The map (clean-text word index -> source seconds) is
-   built at strip time and carried through to re-alignment. Two carriers are on
-   the table and this is the open question below: (a) strip inline in the
-   digester via a reversible helper, building the map in memory; (b) the ingester
-   emits a clean body plus a committed `words.json` sidecar, so the body arrives
-   clean and timing lives in the sidecar. (b) is the converged direction and
-   moots the in-memory map and the chunk-offset bookkeeping; (a) is the fallback.
+   clean body automatically. Two carriers are on the table (see open questions):
+   (a) strip inline in the digester, building the map in memory; (b) the ingester
+   emits a clean body plus a committed `words.json` sidecar. (b) is the converged
+   direction and moots the in-memory map and chunk-offset bookkeeping; (a) is the
+   fallback. Either way, the two sub-points below hold.
+
+   1a. **One canonical `clean_body()`, shared - the digester never reimplements
+   stripping.** The ingester's `verification.py` already draws cloze challenges
+   from a stripped view (`_strip_annotations`), not the raw body. To keep the
+   digester's extraction view byte-identical to the cloze source (or
+   proof-of-possession answers break), that function moves to a shared
+   `clean_body()` in the ingester's `shared/`, imported by both verification.py
+   and the digester. Its exact behaviour is pinned here and in record-format.md
+   so neither side can drift: strip the YAML frontmatter; replace each
+   HTML-comment annotation (`<!-- ... -->`, including `<!-- speaker: X -->`) and
+   each inline `{{...}}` annotation (`{{t:}}`, `{{redacted}}`, `{{classification}}`)
+   with a SINGLE SPACE; strip the line-leading `HH:MM:SS.D` prefix to nothing; do
+   NOT collapse whitespace (so a double space can remain where an annotation sat -
+   this is part of the contract, not a bug). The ingester owns this and will land
+   it with the v2 render work.
+
+   1b. **Sidecar schema `anomalica/words/1`** (converged between the ingester and
+   anomalica/anomalica), stored at `store/{hash}.words.json`. Segment-nested for
+   readability:
+
+   ```
+   {schema, record_hash, segments: [{ts, start, end, words: [{w, start, end}]}]}
+   ```
+
+   The binding is flat word order: flattening every segment's `words` in document
+   order yields a `[{w, start, end}]` array that is 1:1 with the clean body's
+   spoken-word tokens - exact by construction, because the v2 body is rendered by
+   joining those same word tokens (body-word-N === Nth flattened sidecar word, no
+   count/order drift). So re-alignment maps quote tokens to the flattened sidecar
+   array directly. Exact field names are owned jointly by the ingester and
+   anomalica/anomalica - this records the agreed shape, not a second definition.
 
 2. **Re-alignment is a deterministic post-process, not a model task.** For each
    claim: tokenise its verbatim quote, fuzzy-LCS against the word->timestamp map,
@@ -88,30 +117,61 @@ fuzzy token-LCS, measure agreement.
    attribution is only meaningful on reviewed records, where the anonymous
    Speaker 1/2/3 labels have been replaced with real names during review.
 
-6. **Add an optional timestamp-provenance field to digest/1.** Per-claim/quote
-   `(start, end, coverage)`. Optional and additive, so it does not bump the
-   schema version or break consumers that ignore it.
+6. **Add an optional timestamp-provenance field to digest/1.** Per-claim,
+   ADDITIVE to the existing `location` (which stays - PDF/web records use it for
+   page refs like "p. 2"; `timing` applies only to audio/video). Shape, agreed
+   by both readers (assembler and workbench) independently:
+
+   ```
+   timing:
+     start: 68.37        # float seconds - the primitive; consumers derive
+     end: 70.58          #   HH:MM:SS display and ?t= offsets themselves
+     coverage: 1.00      # fuzzy-LCS coverage of the quote vs source
+     resolution: word    # word (record/2) | sentence (record/1) | turn (fallback)
+   ```
+
+   Optional and additive, so it does not bump the schema version or break
+   consumers that ignore it. Per-claim is sufficient (one fact = one claim = one
+   quote); no per-quote span is needed now.
+
+   Consumer-confirmed semantics (so the producer and readers agree on what the
+   numbers mean):
+   - `coverage` is a SOFT confidence signal, not a gate and not a reviewer chore.
+     The workbench renders the jump normally at >=0.9, shows an unobtrusive
+     "approximate" hint below 0.9, and only flags prominently below ~0.7. It does
+     NOT enter Mark's review queue or the digestibility gate.
+   - Both readers degrade gracefully: they emit a precise jump-to-moment (the
+     workbench seeks its existing player; the assembler builds a `source_url`
+     `?t=int(start)` deep-link) only when `coverage` is high and `resolution` is
+     word|sentence; for turn-level or low coverage they fall back to the coarse
+     `location` string and never emit a confidently-wrong timestamp.
+
+   Duplicate-phrase disambiguation (decision 3) is the digester's alignment
+   problem alone: the assembler keys references to claims by exact `claim_index`/
+   uuid with no fuzzy quote->transcript matching, so there is no shared matcher
+   to build - only the shared neighbour-context principle.
 
 ## Consequences
 
 - Cost gate (0033) auto-corrects for record/2 once stripping lands.
 - Workbench and site gain jump-to-moment deep-links into audio/video.
 - New per-claim timing feeds evidence scoring.
-- Consumers to coordinate on the field shape before this is accepted: the
-  assembler (reads timing for citations) and the workbench (surfaces low
-  confidence, renders deep-links). The clean-text view must stay byte-consistent
-  with the ingester's `verification.py` cloze source, or proof-of-possession
-  answers break.
+- Byte-consistency with the cloze source is handled by the shared `clean_body()`
+  (decision 1a) - the ingester owns it, the digester imports it; no drift by
+  construction.
+- Consumer field shape is settled: assembler and workbench both confirmed
+  `timing: {start, end, coverage, resolution}`, per-claim, additive to
+  `location` (decision 6). Both degrade gracefully on low coverage.
 
 ## Open questions
 
 - **Strip inline (digester) vs clean-body + `words.json` sidecar (ingester).**
-  This is not a separate decision: it is the same call as the pending v2 record
-  format question with Mark (the clean-body + committed `words.json` sidecar
-  recommendation). Decision 1's carrier resolves when that is answered - the
-  sidecar is the converged direction; inline strip is the fallback only if the
-  format stays inline. Affects who owns the word->timestamp map and whether
-  chunk-offset bookkeeping is needed at all.
-- Exact field name and shape for the digest/1 provenance addition.
+  The one remaining open question, and not a separate decision: it is the same
+  call as the pending v2 record-format question with Mark (the clean-body +
+  committed `words.json` sidecar recommendation). Decision 1's carrier resolves
+  when that is answered - the sidecar is the converged direction (the ingester
+  has the `anomalica/words/1` schema ready); inline strip is the fallback only if
+  the format stays inline.
 - Hardening the duplicate-phrase disambiguator (the prototype's naive head-token
-  probe did not flag the one real collision).
+  probe did not flag the one real collision) - implementation detail of decision
+  3, not a blocker for acceptance.
