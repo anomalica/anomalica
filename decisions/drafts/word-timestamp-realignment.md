@@ -106,8 +106,12 @@ fuzzy token-LCS, measure agreement.
 ## Open questions
 
 - **Strip inline (digester) vs clean-body + `words.json` sidecar (ingester).**
-  Mark's call; the sidecar is the converged direction. Affects who owns the
-  word->timestamp map and whether chunk-offset bookkeeping is needed at all.
+  This is not a separate decision: it is the same call as the pending v2 record
+  format question with Mark (the clean-body + committed `words.json` sidecar
+  recommendation). Decision 1's carrier resolves when that is answered - the
+  sidecar is the converged direction; inline strip is the fallback only if the
+  format stays inline. Affects who owns the word->timestamp map and whether
+  chunk-offset bookkeeping is needed at all.
 - Exact field name and shape for the digest/1 provenance addition.
 - Hardening the duplicate-phrase disambiguator (the prototype's naive head-token
   probe did not flag the one real collision).
