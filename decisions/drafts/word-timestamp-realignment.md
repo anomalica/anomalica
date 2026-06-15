@@ -52,6 +52,15 @@ fuzzy token-LCS, measure agreement.
 - **Word-level mechanism works end to end** on a real record/2: strip `{{t:}}`,
   keep a parallel word->timestamp map, align the quote -> word-level start/end
   ("lateral transition" -> 72.20-72.70s, coverage 1.00).
+- **Re-alignment is MORE accurate than the model's inline timestamps, not just a
+  substitute.** The single navy case that disagreed with the model's `location`
+  by >10s was checked against the source: the quote is verbatim at 08:06.3
+  (486.3s), exactly where the aligner placed it at coverage 1.00, while the
+  model's inline location (475.9) pointed to the wrong sentence 10s earlier. The
+  aligner anchors to the verbatim text position; the model only guesses. So the
+  "agreement with the model" metric undersells the aligner where the model itself
+  was off, and correcting such inline errors is an argument FOR re-alignment
+  beyond enabling deep-links.
 
 ## Decision
 
