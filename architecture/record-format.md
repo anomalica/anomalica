@@ -40,8 +40,8 @@ source_type: pdf
 | `source_id` | string | no | Stable platform-specific identifier (e.g. `youtube:ZBtMbBPzqHY`) |
 | `fetched_url` | string | no | URL from which the content was actually retrieved, if different from source_url (e.g. a Wayback Machine archive URL) |
 | `authors` | list | no | Authors for written documents |
-| `content_hash` | string | no | SHA-256 cryptographic hash of the extracted record body. The record file in `store/` is named by this. |
-| `source_hash` | string | no | SHA-256 of the raw source asset (HTML bytes, original PDF, etc.). Differs from `content_hash` for formats where the record body is extracted text (web, ebook). Used by consumers to locate `sources/{source_hash}.{ext}`. |
+| `content_hash` | string | no | SHA-256 that names the record's file in `store/` and identifies it. What it hashes is source-type dependent (see [Store](#store)): the source asset's bytes for `audio`/`video`/`pdf`, the extracted body text for `web`/`ebook`. |
+| `source_hash` | string | no | SHA-256 of the raw source asset (HTML bytes, original PDF, etc.), used to locate `sources/{source_hash}.{ext}`. For `web`/`ebook` it differs from `content_hash` (which hashes the extracted body); for `audio`/`video`/`pdf`, `content_hash` already hashes the source asset, so the two coincide. |
 | `snapshots` | list | no | Sibling capture artefacts produced alongside the main record. Each entry has `role` (well-known string), `hash` (sha256 of the artefact bytes), and `content_type` (MIME). Used for web records to expose PDF renders and frozen-page captures - see [Web record snapshots](#web-record-snapshots) below. |
 | `pages` | integer | no | Page count for documents |
 | `duration` | number | no | Duration in seconds for audio/video |
@@ -268,7 +268,9 @@ media/          # extracted images, per-record subdirectories
 
 ### Store
 
-The `store/` directory contains the actual record files, named by the SHA-256 cryptographic hash of the source file (the same value as `content_hash` in the frontmatter). This provides deduplication: the same source file always produces the same output path, regardless of where it was ingested from or what it was called.
+The `store/` directory contains the actual record files, named by `content_hash` (see the frontmatter table). What `content_hash` hashes is source-type dependent: for `audio`/`video`/`pdf` it is the source file's bytes; for `web`/`ebook` it is the extracted body text. This provides deduplication: the same input always produces the same output path, regardless of where it was ingested from or what it was called.
+
+Because `audio`/`video`/`pdf` hash the source bytes, their `content_hash` is stable across re-extraction - reprocessing the same source (for example an improved transcriber) keeps the same identity and does not orphan reviews. `web`/`ebook` hash the extracted body, so a re-extraction that changes the body changes `content_hash` and the store path. This source-anchored/body-anchored split is current behaviour, not a settled design; making it consistent across types is under reconciliation.
 
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
 
