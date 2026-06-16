@@ -81,6 +81,8 @@ Snapshot roles are an extensible registry. New roles can be added without bumpin
 
 Standard markdown. Headings, paragraphs, lists, bold, italic, links, and tables all work as normal.
 
+The body carries the extracted content only - the ingester does not inject the title into it. The title lives in frontmatter `title:`, which the workbench and consumers (the digester parses it from the frontmatter, not the body) read from there. For web records the page's own leading title heading - which trafilatura emits and which merely duplicates `title:` - is stripped; a source document's own in-content headings (e.g. a PDF's printed heading) are preserved as faithful content. The body may begin with an optional `*Published <date>*` stamp, omitted when the body already states the publication date in a byline or when the date is unknown.
+
 ## Block annotations
 
 YAML inside HTML comments. Single-field annotations use inline comments. Multi-field annotations use multi-line comments. Used for structural markers that sit between content.
