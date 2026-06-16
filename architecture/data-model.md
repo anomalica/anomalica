@@ -76,10 +76,11 @@ Each pipeline stage has a named output:
 |-------|--------|-----------|-------------|
 | Ingester | **Ingest** | No (copyright) | The record converted to structured text with metadata, plus any extracted media (images today; figures from PDFs and video keyframes later). Contains the actual content. |
 | Digester | **Digest** | Yes | Claims, nodes, and provenance extracted from one ingest. No copyrighted content. |
+| Assimilator | **Knowledge graph** | Yes (derived) | The unified SQLite graph built from all digests: cross-record entity resolution, provenance, scoring, embeddings. Derived data, rebuildable from the digests. |
 | Assembler | **Article** | Yes | Readable prose assembled from knowledge graph data in a specific language. Public-eligible images from ingests are copied into the assembler's output for serving on the site. |
 
 ## Storage
 
 The source of truth for the knowledge graph is the collection of digests in the digests repository. These are human-readable, version-controlled, and reviewable.
 
-The SQLite database (a lightweight file-based database) is rebuilt from the digests by a deterministic import process. It serves as the query and distribution format - downloadable, torrentable, and verifiable - but is derived data, not primary. If deleted, it can be rebuilt. Embedding vectors are stored separately from core data to keep the primary download small.
+The SQLite database (a lightweight file-based database) is built and maintained by the assimilator, which imports the digests into the graph (see [assimilator.md](assimilator.md)). It serves as the query and distribution format - downloadable, torrentable, and verifiable - but is derived data, not primary. If deleted, it can be rebuilt from the digests. Embedding vectors are stored separately from core data to keep the primary download small.

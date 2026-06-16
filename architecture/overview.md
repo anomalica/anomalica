@@ -5,30 +5,20 @@ This is a living document. It reflects the current state of the system architect
 ## Pipeline
 
 ```
-any raw format ──> ingester ──> ingests (private git repo)
-(audio, video, ebooks,                            |
-PDFs, scanned docs,                               v
-web pages)                                digester ──> digests (public git repo)
-                                                                        |
-                                                human review via ───────┤
-                                                workbench     |
-                                                                  rebuild database
-                                                                        |
-                                          directives ───────────────────┤
-                                                                        v
-                                                                assembler
-                                                                        |
-                                                                        v
-                                                                content (articles, media)
-                                                                        |
-                                                                        v
-                                                                site (static HTML)
-
-                                          human edits article on site
-                                                      |
-                                                      v
-                                          AI extracts presentational directives
-                                          (meaning-altering edits rejected)
+raw sources --> ingester --> ingests (private git repo)
+(audio, video,                   |
+ ebooks, PDFs,                   v
+ scanned docs,               digester --> digests (public git repo)    [human review via workbench]
+ web pages)                      |
+                                 v
+                             assimilator --> knowledge graph (SQLite)
+                                 |
+                                 v
+                             assembler --> content (articles, media) --> site (static HTML)
+                                 ^
+                                 |
+                             directives (extracted from human edits on the site;
+                             meaning-altering edits rejected)
 ```
 
 ## Repositories
@@ -38,8 +28,10 @@ web pages)                                digester ──> digests (public git r
 | **anomalica** | Organisation-level decisions, architecture, and documentation |
 | **ingester** | Raw source material to structured text (audio, video, ebooks, PDFs, scanned documents) |
 | **ingests** | Ingester output (private - contains copyrighted source material) |
-| **digester** | Artificial intelligence extraction from ingests, producing digests |
+| **digester** | Artificial intelligence extraction from ingests, producing one digest per record (no graph) |
 | **digests** | Reviewed digests - the source of truth for the knowledge graph (a structured database of interconnected facts) |
+| **assimilator** | Builds and maintains the unified SQLite knowledge graph from digests: import, entity resolution, scoring, corroboration, embeddings, search, export |
+| **anomalica-common** | Shared library: the digest interchange (data model + YAML I/O) and the Claude transport + spend gate, single-sourced so the digester and assimilator cannot drift |
 | **assembler** | Article assembly from knowledge graph data, directive application |
 | **content** | Output: assembled articles and associated media |
 | **site** | Hugo static site, consumes content |
@@ -52,15 +44,16 @@ The ingester writes ingests to the private ingests repository. The digester read
 
 Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
 
-The knowledge graph database (SQLite, a lightweight file-based database) is rebuilt deterministically from the digests at any time. The database is derived data, not the source of truth - if it is deleted, it can be rebuilt from the digests.
+The assimilator reads the digests and builds and maintains the unified knowledge graph database (SQLite, a lightweight file-based database) from them. The database is derived data, not the source of truth - if it is deleted, the assimilator rebuilds it from the digests.
 
 Digests are publicly readable on the git hosting platform but are not rendered as pages on the site. The site presents assembled articles only. Each article's references link back to both the original source material and the digest, giving readers a path to verify claims or report errors via the repository's issue tracker. Corrections to digests trigger a database rebuild and article reassembly.
 
 ## Component Documentation
 
 - [Ingester](ingester.md) - raw source material to structured text, speaker diarisation, voice identification
-- [Digester](digester.md) - claim extraction from ingests, producing digests
-- [Digester pipeline](digester-pipeline.md) - digestion, review, import, reconciliation, graph merging
+- [Digester](digester.md) - per-record extraction from ingests, producing digests (no graph)
+- [Assimilator](assimilator.md) - builds and maintains the knowledge graph from digests (import, entity resolution, scoring, corroboration, search, export)
+- [Digester pipeline](digester-pipeline.md) - end-to-end digestion, review, import, reconciliation (note: import, reconciliation, and graph merging now belong to the assimilator; this page predates the split and needs a refresh)
 - [Embeddings](embeddings.md) - vector generation, model selection, storage separation, re-embedding
 - [Data model](data-model.md) - sources, records, claims, attestation, terminology
 - [Node types](node-types.md) - knowledge graph node type definitions and classification rules

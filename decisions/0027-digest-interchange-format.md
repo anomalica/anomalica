@@ -57,6 +57,12 @@ The digester output is a YAML file at
 `anomalica/digest/1`. The full specification lives in
 [`architecture/digest-format.md`](../architecture/digest-format.md).
 
+The format's data model and its YAML reader/writer are implemented once in the
+shared `anomalica-common` library (`anomalica_common.digest`: `models.py` +
+`yaml_format.py`), which both the digester (producer) and the assimilator
+(consumer) depend on, so the format cannot drift between them (see
+[decision 0034](0034-split-digester-extraction-from-assimilation.md)).
+
 Key shape choices, with the rationale:
 
 - **YAML rather than JSON or markdown.** YAML is line-oriented and

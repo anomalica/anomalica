@@ -1,85 +1,39 @@
 # Digester
 
-The digester takes ingests and breaks them down into atomic components. It creates record and claim nodes (entries in the knowledge graph, a structured database of interconnected facts), identifies domain nodes (people, organisations, places, events, matters, objects), builds provenance chains (the path each claim took from its original source to the knowledge graph), and scores evidence. The output for each ingest is a digest.
+The digester takes a reviewed ingest and runs two-pass artificial-intelligence extraction over it, producing a digest: a YAML file of the nodes, claims, and provenance found in that one record. It does extraction only - it builds no knowledge graph. Folding digests into the unified graph (import, cross-record entity resolution, scoring, corroboration, search, maintenance) is the assimilator's job (see [decision 0034](../decisions/0034-split-digester-extraction-from-assimilation.md) and [assimilator.md](assimilator.md)).
 
 ## Inputs
 
-The digester reads ingests from the private ingests repository. These are markdown files with YAML metadata frontmatter and annotation blocks in the Anomalica record interchange format (see [architecture decision record 0019](../decisions/0019-record-interchange-format.md)). It does not process raw source material directly. The ingester converts raw formats (PDFs, audio, video, ebooks, web pages) into ingests and writes them to the ingests repository.
+Reviewed ingests from the private ingests repository - markdown files with YAML frontmatter and annotation blocks in the record interchange format ([decision 0019](../decisions/0019-record-interchange-format.md)). The digester reads them (`record_parser`) and checks digestibility via `review_gate` (the observed-coverage check behind the `coverage` command); it does not process raw source material (the ingester does that).
 
-Each ingest may have associated media at `media/{record_hash}/` (currently extracted images from EPUBs). When the digester reaches an `<!-- image: ... -->` annotation with a `file` field, it can load the image bytes and pass them to a vision-capable model alongside the surrounding text. This lets claims be extracted from charts, photographs, and figures, not just prose.
-
-The digester is also responsible for populating the `description` field on image annotations - a factual description of the image content, used by consumers that lack vision capabilities. The ingester leaves this field absent; the digester writes it back into the ingest as part of its processing pass.
+Each ingest may have associated media at `media/{record_hash}/` (extracted images). When the digester reaches an image annotation with a `file` field, it loads the image bytes and passes them to a vision-capable model alongside the surrounding text, so claims can be extracted from charts, photographs, and figures, not just prose. The digester also populates the `description` field on image annotations (a factual description for consumers that lack vision), writing it back into the ingest.
 
 ## Processing
 
-### Record creation
+Two-pass artificial-intelligence extraction - a nodes pass and a claims pass:
 
-Each input file becomes a Record node in the knowledge graph. The record node is a pointer to the original material (URL, ISBN, archive identifier), not a copy. The digester also identifies the record's producer (a person or organisation), making them a source.
+### Node identification
+
+Identifies the domain nodes the record mentions: person, organisation, project, place, event, object, topic (the taxonomy and classification rules are in [node-types.md](node-types.md)). This is per-record - the digester sees one record at a time and does not resolve nodes across records; that cross-corpus matching is the assimilator's.
 
 ### Claim extraction
 
-Records are decomposed into atomic claims - the smallest independently verifiable factual assertions. Each claim is linked to its source record with a precise location reference (page number, paragraph, timestamp) and a speaker (the person who made the assertion, which may differ from the record's producer).
+Decomposes the record into atomic claims - the smallest independently verifiable assertions - each linked to its location in the record (timestamp range, page, paragraph) and its speaker, with a claim type and optional attestation and claim role. The claim-text conventions (SI units, assertion-not-reported-speech, question-and-answer handling) are in [node-types.md](node-types.md).
 
-### Domain node identification and linking
+### Timestamp realignment
 
-The digester identifies domain nodes mentioned in claims: people, organisations, places, events, matters, objects. Nodes are linked across records - "David Grusch" in one transcript and "Grusch" in another are resolved to the same node.
-
-### Provenance chains
-
-Every claim carries a provenance chain showing how it reached the knowledge graph. When multiple records contain the same claim, the digester traces whether they are genuinely independent or derived from a common origin.
-
-Example: If CNN, BBC, and Reuters all report the same Pentagon press release, that is one first-hand claim (the press release) with three second-hand repetitions, not four independent corroborations. The provenance chain makes this visible.
-
-Two claims genuinely corroborate each other only if their provenance chains do not share a common root.
-
-### Evidence scoring
-
-Evidence scores are algorithmic, not editorial. No human assigns a score. The scoring considers:
-
-- Number of independent sources corroborating a claim (provenance chains must not share a root)
-- Attestation depth of each corroborating claim (first-hand, second-hand, third-hand)
-- Track record of the sources involved
-- Whether claims have been contradicted and by whom
-- Quality and type of evidence (sensor data, official documents, witness testimony, hearsay)
-
-The specific scoring algorithm is an implementation detail. The principle is that scoring is transparent, reproducible, and free of editorial judgement.
+For word-timestamped audio and video records, extraction runs against a timestamp-stripped view and claim locations are realigned to the word timestamps afterwards (module: `realign`).
 
 ## Outputs
 
-The digester produces one digest per ingest - a human-readable markdown file containing all extracted nodes and claims with their metadata, original excerpts, and provenance information. Digests are written to the public digests repository and imported into the knowledge graph database (SQLite, a lightweight file-based database) by a deterministic process with no artificial intelligence involvement.
+One digest YAML file per ingest ([decision 0027](../decisions/0027-digest-interchange-format.md)), written to the public digests repository. A digest contains no copyrighted content - only atomic facts, structured metadata, and references back to the original record. The digester writes no database and no graph; the assimilator imports the digests and builds the graph.
 
-The database is derived from the digests and can be rebuilt from scratch at any time. The digests in the digests repository are the source of truth for the knowledge graph.
+## Modules and command-line surface
 
-## Source properties
+Modules: `extract` (two-pass extraction), `record_parser` (reads records), `realign` (quote-to-timestamp re-alignment), `review_gate` (the digestibility / observed-coverage gate behind the `coverage` command), and `cli`. Command-line surface: `extract`, `batch-extract`, `coverage`.
 
-The knowledge graph accumulates properties for each source over time:
+The data model and the transport are not the digester's own: it reads and writes digests through `anomalica_common.digest`, and calls the model through `anomalica_common.llm` (the Claude transport with the subscription-default / metered-API toggle, the cost estimator, and the spend gate), so the format and the billing gate stay identical to the assimilator's.
 
-| Property | Description |
-|----------|-------------|
-| **Track record** | How claims from this source's records fare when scored against independent records. Derived from data, not assigned by editors. |
-| **Correction behaviour** | Whether and how quickly this source corrects contradicted claims. Tracked as observable events. |
-| **Independence** | Institutional and financial connections to subjects the source covers. Documented factually. |
+## Testing
 
-These properties are not assigned - they emerge from the data as the graph grows.
-
-## Testing strategy
-
-The digester is tested against a small, focused corpus of records centred on four people who represent different source types:
-
-| Person | Role | Source type |
-|--------|------|-------------|
-| **David Fravor** | Navy pilot, USS Nimitz 2004 | Direct eyewitness (first-hand claims) |
-| **David Grusch** | Intelligence officer, Unidentified Anomalous Phenomena Task Force | Whistleblower (second-hand claims about programmes he was briefed on) |
-| **Lue Elizondo** | Former head of the Advanced Aerospace Threat Identification Program (AATIP) | Insider who went public (mix of first-hand and second-hand) |
-| **Ross Coulthart** | Investigative journalist, NewsNation | Reporter (second-hand/third-hand, interviews the other three) |
-
-This combination exercises the full pipeline:
-
-- **Ingestion across formats** - congressional transcripts (text), podcast interviews (audio), news articles (web), books (ebook/PDF)
-- **Claim extraction** - eyewitness accounts, whistleblower allegations, journalist reporting
-- **Provenance chains** - Coulthart interviews Grusch, then NewsNation publishes a segment, then podcasts discuss it. The digester must trace these back to one origin, not count them as independent corroboration.
-- **Attestation levels** - Fravor's "I saw it" (first-hand), Grusch's "I was told about programmes" (second-hand), Coulthart's "Grusch told me" (second-hand reporting on second-hand claims)
-- **Cross-referencing** - the same events and claims appear across multiple records from different sources
-- **Contradictions** - official DoD positions contradict whistleblower testimony
-
-The test corpus is intentionally small (5-8 records per person, roughly 20-30 records total) so that the output can be manually verified against known facts. A specific record manifest is maintained separately.
+Extraction is tested against a small, focused corpus centred on records from a few people who represent different source types - an eyewitness, a whistleblower, an insider who went public, and an investigative journalist - exercising claim extraction, attestation, claim types, and vision extraction across formats (transcripts, audio, web, ebooks and PDFs). The corpus is intentionally small (roughly 20-30 records) so output can be verified by hand. Graph-level behaviour (cross-record resolution, provenance independence, corroboration, scoring) is tested in the assimilator, not here.
