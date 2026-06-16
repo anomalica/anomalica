@@ -7,7 +7,7 @@ Status: accepted
 
 The platform's credibility depends on the quality of its knowledge graph. The knowledge graph is only as good as the records that feed it. This raises a fundamental question: who decides what gets ingested?
 
-Open ingestion - accepting any submitted material - is vulnerable to deliberate manipulation. A state-level actor with an interest in controlling the narrative around unidentified anomalous phenomena could manufacture credible-looking documents, create professional media placements, or flood the system with misleading material. Because the platform's methodology is public (decision 0004), an adversary can study the scoring system and craft material designed to game it.
+Open ingestion - accepting any submitted material - is vulnerable to deliberate manipulation. A state-level actor with an interest in controlling the narrative around unidentified anomalous phenomena could manufacture credible-looking documents, create professional media placements, or flood the system with misleading material. Because the platform's methodology is public (the governance charter), an adversary can study the scoring system and craft material designed to game it.
 
 Centralised editorial control - one person deciding what gets in - creates a single point of failure and contradicts the platform's commitment to transparency. It also doesn't scale.
 

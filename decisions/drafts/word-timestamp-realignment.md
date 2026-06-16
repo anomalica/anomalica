@@ -16,7 +16,7 @@ Two problems follow for the digester:
    record/2 (StarGate, content_hash 2399fe4e...): 5,424 `{{t:}}` tokens make up
    **64% of the body characters**. Today `record_parser.parse_record` does not
    strip them, so the model reads - and we pay for - roughly 2.8x the real
-   content as pure noise. The cost-pre-flight gate (0033) sizes the run on body
+   content as pure noise. The cost pre-flight gate (operations repo) sizes the run on body
    length, so it also over-estimates 2-3x for word-timestamp records.
 
 2. **We still want the timing.** Per-claim and per-quote timestamps let the
@@ -162,7 +162,7 @@ fuzzy token-LCS, measure agreement.
 
 ## Consequences
 
-- Cost gate (0033) auto-corrects for record/2 once stripping lands.
+- Cost gate (operations repo) auto-corrects for record/2 once stripping lands.
 - Workbench and site gain jump-to-moment deep-links into audio/video.
 - New per-claim timing feeds evidence scoring.
 - Byte-consistency with the cloze source is handled by the shared `clean_body()`

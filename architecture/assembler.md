@@ -146,9 +146,11 @@ The site provides a prompt inspector page for each article. This is a client-sid
 
 ## Independent verification
 
-After assembly, a different AI model from a different provider verifies that every assertion in the article traces to the knowledge graph (decision 0009). The verification report is stored alongside the article.
+After assembly, a different AI model from a different provider verifies that every assertion in the article traces to the knowledge graph (decision 0010). The verification report is stored alongside the article.
 
 ### Verification report
+
+> The file layout below is out of date - it is not what the assembler emits today (the assembler writes no YAML). The current review/verification model (`verification.yaml` for the AI check, `review.yaml` for human review, in document-first directories) is in [content-lifecycle.md](content-lifecycle.md) and decision 0021, which is unratified pending the flat-versus-document-first layout decision. This section will be rewritten when that lands.
 
 Each article has an accompanying review file:
 
@@ -187,4 +189,4 @@ Articles can be published before verification. The verification status is inform
 
 ## Languages
 
-The platform targets 30 languages (decision 0022). English-language content uses British English throughout.
+The platform targets 30 languages (the governance charter). English-language content uses British English throughout.

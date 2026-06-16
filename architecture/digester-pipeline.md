@@ -49,7 +49,7 @@ Digests are publicly readable on the git hosting platform. When a reader spots a
 
 ## Aliases
 
-An alias is a name that points to a canonical node. "Commander Fravor", "CDR Fravor", "Fravor", and "David Fravor" can all be aliases pointing to the same Person node whose canonical name is "Fravor, David" ([decision 0026](../decisions/0026-person-name-ordering.md)).
+An alias is a name that points to a canonical node. "Commander Fravor", "CDR Fravor", "Fravor", and "David Fravor" can all be aliases pointing to the same Person node whose canonical name is "Fravor, David" ([person naming](node-types.md#person)).
 
 Aliases accumulate over time as more records are processed. They serve two purposes:
 

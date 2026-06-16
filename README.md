@@ -12,36 +12,33 @@ Organisation-level decisions, architecture, and documentation. For code, see the
 
 ## Decisions
 
-Decision records following the [architecture decision record format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). Records are maintained rather than frozen: corrections, renamed references, and clarifications are edited in place (git tracks the history). A material change of decision is recorded - either a dated amendment within the record, or a new record that supersedes it.
+Decisions are routed by concern - see [0001](decisions/0001-record-decisions.md) for the scheme. Architecture decisions live as numbered records in `decisions/`; other decisions live in the home that fits them:
+
+- **Governance & founding** (aims, name, funding, licensing, languages, disclosure policy): [guides/governance.md](guides/governance.md)
+- **Editorial & voice** (plain language, neutral voice, AI-use disclosure): [guides/editorial-style.md](guides/editorial-style.md)
+- **Data model, terminology & taxonomy** (node types, naming, claim and extraction conventions): [architecture/data-model.md](architecture/data-model.md) and [architecture/node-types.md](architecture/node-types.md)
+- **Operations & infrastructure** (domains, hosting, analytics, AI billing and cost): the private `operations` repository
+
+Architecture decision records follow the format context / decision / consequences, and are maintained rather than frozen: corrections and clarifications are edited in place (git tracks the history); a material change is a dated amendment or a superseding record.
 
 | # | Decision |
 |---|----------|
-| [0001](decisions/0001-record-decisions.md) | Record decisions |
-| [0002](decisions/0002-project-founding.md) | Build an international reference platform for anomalous phenomena |
-| [0003](decisions/0003-name-anomalica.md) | Name the platform Anomalica |
-| [0004](decisions/0004-open-source-transparent-operations.md) | Open source with transparent operations |
-| [0005](decisions/0005-licensing.md) | MIT licence for code, CC0 for data |
-| [0006](decisions/0006-plain-language.md) | Plain language in all documents |
-| [0007](decisions/0007-neutral-voice-no-editorial-content.md) | Neutral voice with no editorial content |
+| [0001](decisions/0001-record-decisions.md) | How and where decisions are recorded |
 | [0008](decisions/0008-content-traceable-to-sources.md) | Content traceable to sources |
-| [0009](decisions/0009-transparent-ai-use.md) | Transparent use of artificial intelligence with independent verification |
 | [0010](decisions/0010-auditable-assembly.md) | Auditable article assembly |
 | [0011](decisions/0011-claims-as-atomic-unit.md) | Claims as the atomic unit of knowledge |
-| [0012](decisions/0012-terminology.md) | Platform terminology |
-| [0013](decisions/0013-domain-strategy.md) | Domain registration strategy |
 | [0014](decisions/0014-static-site-architecture.md) | Serve the platform as a static website |
-| [0015](decisions/0015-hosting-resilience.md) | Hosting strategy and graceful degradation |
+| [0015](decisions/0015-hosting-resilience.md) | Graceful degradation and data survivability |
 | [0016](decisions/0016-sqlite-storage.md) | Use SQLite for knowledge graph storage |
-| [0017](decisions/0017-website-analytics.md) | Website analytics with GoatCounter |
 | [0018](decisions/0018-network-driven-ingestion.md) | Network-driven ingestion |
 | [0019](decisions/0019-record-interchange-format.md) | Markdown with YAML annotations as record interchange format |
 | [0020](decisions/0020-canonical-english-embeddings.md) | Canonical English normalisation for embeddings |
-| [0021](decisions/0021-content-review-lifecycle.md) | Content review lifecycle |
-| [0022](decisions/0022-thirty-languages.md) | Supported languages |
-| [0023](decisions/0023-person-naming-convention.md) | Person naming convention |
+| [0021](decisions/0021-content-review-lifecycle.md) | Content review lifecycle (draft) |
 | [0024](decisions/0024-visual-identity.md) | Visual identity |
+| [0027](decisions/0027-digest-interchange-format.md) | Digest interchange format |
+| [0031](decisions/0031-per-record-inspection-pages.md) | Per-record extraction inspection pages (draft) |
 
-Draft decisions in progress can be found in [decisions/drafts/](decisions/drafts/).
+Gaps in the numbering are expected: records that moved to another home keep their slot empty rather than being renumbered. Draft decisions in progress are in [decisions/drafts/](decisions/drafts/).
 
 ## Architecture
 
@@ -51,8 +48,16 @@ Living documents that reflect the current state of the system. See [architecture
 - [Ingester](architecture/ingester.md) - raw source material to ingests (structured text)
 - [Digester](architecture/digester.md) - ingests to digests (claims, nodes, provenance)
 - [Data model](architecture/data-model.md) - sources, records, claims, terminology
+- [Node types](architecture/node-types.md) - the knowledge-graph taxonomy
 - [Assembler](architecture/assembler.md) - article assembly, directives, languages
 - [AI constraints](architecture/ai-constraints.md) - boundaries on AI involvement
+
+## Guides
+
+Living, freely-edited guides for the non-architecture concerns:
+
+- [Governance charter](guides/governance.md) - what Anomalica is, funding, licensing, languages, disclosure
+- [Editorial style](guides/editorial-style.md) - plain language, neutral voice, AI-use disclosure
 
 ## Related Repositories
 

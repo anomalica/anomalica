@@ -63,7 +63,7 @@ The assembler reads `preserved_facts` for every claim it cites, builds an allow-
 - Increases the digest YAML size modestly. Each claim gains a small structured block. Existing claims work without it (guardrail is a no-op when `preserved_facts` is absent).
 - Makes the failure mode "article fails to assemble" rather than "article ships with corrupted fact". The site never publishes a fabricated date again.
 - The assembler's prompt can also surface the `preserved_facts` to the model as an explicit "do not change these tokens" instruction, raising compliance before the deterministic check has to fire.
-- Provides a foundation for the independent-verification pass (decision 0009) - the verifier has a structured target rather than scanning prose.
+- Provides a foundation for the independent-verification pass (decision 0010) - the verifier has a structured target rather than scanning prose.
 - Does not constrain the model's freedom to rephrase, restructure, link, or summarise. Only the specific tokens marked as preserved are protected.
 
 ## Open questions

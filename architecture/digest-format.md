@@ -86,8 +86,7 @@ The five fields describing the source record this digest was produced
 from. `id` is the universally unique identifier assigned to the record
 node in the knowledge graph and is the join key against
 `ingests`. `producer` is in `Last, First Middle` form for
-persons ([decision 0023](../decisions/0023-person-naming-convention.md),
-[decision 0026](../decisions/0026-person-name-ordering.md)) or a plain
+persons ([person naming](node-types.md#person)) or a plain
 organisation name. `date` is a string in the form `YYYY` or `YYYY-MM-DD`.
 `reference` is an external identifier where one exists (book ISBN,
 report number, archive identifier) and is often null.

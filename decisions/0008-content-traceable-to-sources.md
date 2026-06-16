@@ -5,7 +5,7 @@ Status: accepted
 
 ## Context
 
-Decision 0009 establishes that artificial intelligence (AI) is central to the platform's operation and that its use is transparent. This decision clarifies the boundary of that role.
+Artificial intelligence (AI) is central to the platform's operation, and its use is disclosed openly (see the editorial style guide). This decision clarifies the boundary of that role.
 
 AI necessarily produces prose when assembling articles - it chooses words, structures sentences, and decides how to present information. This is unavoidable and is not the concern. The concern is whether the factual content of an article can be traced back to specific sources in the knowledge graph (a structured database of interconnected facts), or whether the AI is drawing on its training data to add information that does not come from any identifiable source.
 

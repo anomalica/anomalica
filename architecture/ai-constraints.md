@@ -2,7 +2,7 @@
 
 Boundaries on artificial intelligence involvement across all components. These apply to the ingester, digester, assembler, and site.
 
-For full context, see architecture decision record 0009 (transparent artificial intelligence use) and architecture decision record 0008 (no artificial intelligence-generated content).
+For full context, see decision 0008 (content traceable to sources), decision 0010 (auditable assembly, including independent verification), and the editorial style guide (open disclosure of AI use).
 
 ## Core principle
 
@@ -12,7 +12,7 @@ Artificial intelligence assembles content from existing sources. It does not cre
 
 - AI does not draw on training data for factual claims in articles
 - AI does not generate images, audio, or text from training data
-- Assembly and verification use different models from different providers in different jurisdictions (architecture decision record 0009)
+- Assembly and verification use different models from different providers in different jurisdictions (decision 0010)
 - All AI involvement is transparent and documented
 - The inputs and outputs of every AI step are visible: source document in, digest out, knowledge graph in, assembled article out
 - If no real image exists for a topic, the article has no image

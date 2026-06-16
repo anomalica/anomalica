@@ -11,7 +11,7 @@ Anomalica publishes content before it has been reviewed by humans. This is delib
 
 The project already has artificial intelligence (AI) verification (0010) which checks whether assembled articles faithfully represent the knowledge graph (a structured database of interconnected facts). Human review is a separate concern: has a person read this content and confirmed it is correct, well-written, and appropriate?
 
-Reviews must work across 30 languages (0022). A reviewer in any language should be able to review content in their language without needing English. The review system must not create a hierarchy where English reviews are privileged over others.
+Reviews must work across 30 languages (see the governance charter). A reviewer in any language should be able to review content in their language without needing English. The review system must not create a hierarchy where English reviews are privileged over others.
 
 The system must also distinguish between reviews (audit trail) and directives (assembler instructions). These serve different purposes and have different consumers.
 
