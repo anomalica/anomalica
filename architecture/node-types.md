@@ -69,7 +69,15 @@ These types are populated by the artificial intelligence extraction pipeline dur
 
 A named human individual.
 
-Canonical form is "Last, First Middle" with no titles, ranks, or honourifics ([decision 0023](../decisions/0023-person-naming-convention.md), [decision 0026](../decisions/0026-person-name-ordering.md)).
+**Canonical form: "Last, First Middle", plain legal name only - no titles, ranks, honourifics, or suffixes.** "Fravor, David", not "Commander David Fravor"; "Rubio, Marco", not "Senator Marco Rubio".
+
+- **No titles or ranks.** A title or rank is a property of a person at a point in time, not part of their identity, so it is captured as a dated claim ("David Fravor held the rank of Commander in the US Navy") rather than baked into the name. Names stay stable as people change roles, and the graph accumulates a career history as records are ingested.
+- **Surname first.** The surname is the durable identifier (first names vary: Lue/Luis, Dave/David), is often the only part initially known ("Captain Fravor" before any first name appears), sorts usefully, matches official identification, and follows the project's "most important first" convention (cf. dates YYYY-MM-DD, places largest-unit-first).
+- **Aliases.** Informal names, shortened forms, transliterations, and the reverse "First Last" order are stored as aliases on the node, not as the canonical name (canonical "Elizondo, Luis"; aliases "Lue Elizondo", "Luis Elizondo"). The digester's matcher tolerates either ordering during integration.
+- **Non-Latin names** use the person's own script as canonical, with romanisations as aliases (canonical 岸田文雄; aliases Kishida Fumio, Fumio Kishida).
+- **Single-name figures and pseudonyms** remain as-is (Madonna, Whiskey-99).
+
+Presentation reordering and culturally appropriate titles ("Commander David Fravor", "フレーバー司令官", "le commandant Fravor") are the assembler's job, drawn from claims and language directives; storage uses the one canonical form.
 
 Examples: Fravor, David; Elizondo, Luis; Reid, Harry; Kean, Leslie.
 
