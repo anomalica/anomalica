@@ -1,14 +1,28 @@
 # Node Types
 
-The knowledge graph (a structured database of interconnected facts) contains typed nodes (entries) connected by relationships. This document defines the node types, their purpose, and how they relate. Each node uses a universally unique identifier as its primary key, consistent across all languages.
+The knowledge graph (a structured database of interconnected facts) contains typed nodes (entries) connected by relationships. This document is the current contract for what the extraction pipeline produces; it is edited in place as the taxonomy evolves (git is the history). Each node uses a universally unique identifier as its primary key, consistent across all languages.
+
+> **Taxonomy status.** This documents the live extraction contract (the two-pass nodes prompt). Digests produced before this taxonomy landed still carry the older types (matter, concept, programme, investigation) and only match this contract after reclassification or re-digestion. Document the contract here, not the stale data.
+
+## Node type summary
+
+**Domain node types** (extracted by artificial intelligence at ingestion): person, organisation, project, place, event, object, document, topic.
+
+**Structural types:** record (the source artefact every claim is extracted from) and claim (the atomic assertion, and the connective tissue between all other nodes).
+
+**Curator-populated:** pattern (a cross-case phenomenon; created by a future cross-corpus curator pass, never emitted by extraction).
+
+Types no longer in the taxonomy: **matter** (folds into event / organisation / project / topic), **concept** (renamed **topic**), **programme** and **investigation** (folded into **project**), **classification** (dropped). These names may linger in the code's type enum as deprecated read-only back-compat but are never emitted.
 
 ## Design principles
 
-**Extractable by artificial intelligence at ingestion.** Every node type must be something the extraction pipeline can reliably classify from source text. Types requiring subjective judgement or thematic interpretation are deferred to the post-analysis layer.
+**Extractable by artificial intelligence at ingestion.** Every domain node type must be something the extraction pipeline can reliably classify from source text. Types requiring cross-corpus interpretation (pattern) are deferred to a curator pass.
 
-**Claims are the connective tissue.** Domain nodes (person, organisation, place, event, matter, object) do not link directly to each other. Every relationship passes through a claim. There are no unattributed connections in the graph. This ensures every connection is traceable to a source record.
+**Claims are the connective tissue.** Domain nodes do not link directly to each other. Every relationship passes through a claim. There are no unattributed connections in the graph; every connection is traceable to a source record.
 
 **Extensible without restructuring.** The schema links claims to nodes by universally unique identifier, not by type-specific foreign keys. New node types can be added without altering the core schema or reprocessing existing data.
+
+**Node completeness.** Extraction sweeps every domain type, including the easily-missed: the central phenomenon as a topic (e.g. "Unidentified Aerial Phenomena (UAP)"), military branches, legislative bodies and committees as organisations, schools and academies, and named aircraft/vehicle/vessel types as objects (e.g. "F/A-18").
 
 ## Cross-cutting rule: portability (the card test)
 
@@ -18,17 +32,17 @@ This rules out names that only make sense in their surrounding context: "the hea
 
 Names that pass: "Luis Elizondo's written testimony to the House Oversight Subcommittee on Unidentified Anomalous Phenomena, 13 November 2024"; "House Oversight Subcommittee UAP hearing of 26 July 2023"; "2024 AARO Historical Record Report, Volume I".
 
-The portability rule applies to every node type, and is the general form of the type-specific durability rules below (the place rule, the concept rule). It is the criterion the extraction pipeline uses to decide whether a candidate name is a node or just a sentence fragment.
+The portability rule applies to every node type, and is the general form of the type-specific durability rules below (the place rule, the topic rule). It is the criterion the extraction pipeline uses to decide whether a candidate name is a node or just a sentence fragment.
 
 ### Acronyms in node names
 
 The subject matter is heavy with acronyms (AATIP, AARO, VFA-41, CSG-11, FLIR, AAV). An acronym alone fails the card test: a reader who does not already know the field cannot tell what "VFA-41" or "AAV" refers to, and acronyms collide across domains.
 
-The rule: acronyms in node names are written as "Full Name (ACRONYM)". "Strike Fighter Squadron 41 (VFA-41)" beats "VFA-41". "Carrier Strike Group 11 (CSG-11)" beats "CSG-11". "Carrier Intelligence Center (CVIC)" beats "CVIC". "Anomalous Aerial Vehicle (AAV)" beats "AAV". The expanded form makes the node identifiable; the acronym in parentheses preserves searchability for readers who only know the short form.
+The rule: acronyms in node names are written as "Full Name (ACRONYM)". "Strike Fighter Squadron 41 (VFA-41)" beats "VFA-41". "Carrier Strike Group 11 (CSG-11)" beats "CSG-11". "Anomalous Aerial Vehicle (AAV)" beats "AAV". The expanded form makes the node identifiable; the acronym in parentheses preserves searchability for readers who only know the short form.
 
 Inside claim text, acronyms are expanded on first use the same way: "forward-looking infrared (FLIR) pod", "weapons systems officer (WSO)". Subsequent uses within the same claim may use the acronym alone.
 
-The original_excerpt field preserves the source's exact wording, which often uses the acronym alone. Normalisation lives in the node name and the claim text, not in the excerpt.
+The original-excerpt field preserves the source's exact wording, which often uses the acronym alone. Normalisation lives in the node name and the claim text, not in the excerpt.
 
 ### Redacted and anonymous people
 
@@ -40,30 +54,34 @@ Callsigns paired with redacted personnel (FASTEAGLE 01, FASTEAGLE 02) follow the
 
 ## Classification rules
 
-These rules are used by the extraction pipeline to assign types. Apply them in order.
+These rules are used by the extraction pipeline to assign domain types. Apply them in order.
 
 | Question | If yes | Type |
 |----------|--------|------|
-| Is it an artefact containing information (a document, episode, article, video)? | Yes | **Record** |
 | Is it a single named human individual? | Yes | **Person** |
-| Is it a named entity distinct from any single person? | Yes | **Organisation** |
+| Is it a named entity that acts (body, unit, company, outlet, foundation)? | Yes | **Organisation** |
+| Is it a named goal-aimed effort with a sponsor and temporal scope (programme, investigation, inquiry, task force, research project)? | Yes | **Project** |
+| Is it a named information artefact (book, report, FOIA release, transcript, article, podcast, video, memo, testimony, patent)? | Yes | **Document** |
 | Is it a named geographic location? | Yes | **Place** |
 | Can you put a single date on it (it happened at a specific time)? | Yes | **Event** |
-| Does it unfold over a period of time (weeks, months, years)? | Yes | **Matter** |
 | Is it a specific named physical thing you could point at or hold? | Yes | **Object** |
+| Is it a named idea, theory, framework, or principle that exists independent of any one document? | Yes | **Topic** |
 
 **Tiebreakers:**
 
-- **Organisation vs Matter**: does it act, or does it unfold? A group with staff and a name is an organisation. The work that group does over time is a matter. Both can coexist as separate nodes.
-- **Event vs Matter**: one date or many? A single hearing is an event. A multi-year investigation is a matter.
-- **Object vs Record**: physical thing vs information artefact. Metamaterial samples are objects. A memo is a record. Something can be both (the Rosetta Stone is an object and a record - two separate nodes).
-- **Person vs Organisation**: a human individual is a person. Anything with its own name that is not a human individual is an organisation - even if run by a single person. Joe Rogan is a person. The Joe Rogan Experience is an organisation. Anomalica is an organisation even if founded by one person.
+- **Project vs Organisation**: an organisation exists to do many things; a project exists to do one named thing. The Department of Defense is an organisation; AATIP is a project it ran. An entity with an advisory board, trustees, or board of directors is organisation-shaped (advisory boards exist around standing organisations, not around projects) - so NIDS, despite studying one named subject, is an organisation.
+- **Project vs Event**: a hearing is an event; the multi-hearing inquiry that contains it is a project. A testimony is an event; the complaint it was given to is a project.
+- **Project vs Document**: the effort is the project; the report it produces is a document. Both exist as separate nodes linked by claims.
+- **Topic vs Project**: a topic is a named idea independent of the corpus (general relativity, electromagnetic pulse); a project is a named effort. "Anti-gravity propulsion" is a topic; "the Galileo Project" is a project.
+- **Object vs Document**: a physical thing versus an information artefact. Metamaterial samples are objects; a memo is a document. Something can be both as separate nodes (the Rosetta Stone is an object and a document).
+- **Person vs Organisation**: a human individual is a person; anything else with its own name is an organisation, even if run by a single person. Joe Rogan is a person; The Joe Rogan Experience is an organisation.
+- **Topic vs Pattern**: a topic exists independent of the corpus; a pattern is visible only because the corpus has multiple cases, and is curator-created, not extracted (see Pattern).
+
+Finer distinctions within **project** (programme, investigation, inquiry, committee, task force) live in an optional `metadata.kind` field, not in the node type - the programme-versus-investigation split proved unworkable for both the model and reviewers, and users search for the union.
 
 A single real-world thing may produce multiple nodes of different types. This is expected, not an error.
 
-## Ingestion types
-
-These types are populated by the artificial intelligence extraction pipeline during digestion.
+## Domain node types
 
 ### Person
 
@@ -83,17 +101,27 @@ Examples: Fravor, David; Elizondo, Luis; Reid, Harry; Kean, Leslie.
 
 ### Organisation
 
-A named entity distinct from any single person. This includes government bodies, military units, companies, research groups, programmes, publications, podcasts, news outlets, and any other named entity that is not a human individual. An organisation can be run by a single person - if it has its own name, it is its own entity.
+A named entity that acts: government bodies, military units, companies, research groups, publications, podcasts, foundations, news outlets, and any other named entity that is not a human individual. An organisation can be run by a single person - if it has its own name, it is its own entity. Programmes, investigations, and task forces are not organisations; they are projects.
 
-Examples: the US Navy, the Advanced Aerospace Threat Identification Program (AATIP), the Advanced Aerospace Weapon System Applications Program (AAWSAP), Sol Foundation, GEIPAN, NewsNation, the Weaponized podcast, The New York Times, Anomalica.
+Examples: the US Navy, Sol Foundation, GEIPAN, NewsNation, the Weaponized podcast, The New York Times, Anomalica.
 
-Note: programmes (AATIP, AAWSAP, Project Blue Book) are organisations with temporal bounds, not a separate type. The "ongoing effort" aspect is captured through claims linking the organisation to events, people, and time periods.
+### Project
+
+A named goal-aimed effort: a name, a sponsor, a temporal scope, and work it exists to do. Subsumes operational programmes, formal investigations and inquiries, task forces, and research efforts - the programme-versus-investigation distinction is not a type boundary (it proved unworkable for the model and reviewers, and users search for the union). Where the distinction matters to a consumer, an optional `metadata.kind` (programme, investigation, inquiry, committee, task_force) carries it.
+
+The public URL section is `/projects/`.
+
+Examples: AATIP, AAWSAP, Project Blue Book, the Galileo Project, the UAP Task Force (UAPTF), the AARO Historical Record Report review.
 
 ### Place
 
 A named geographic location or region.
 
-Examples: Skinwalker Ranch, Area 51, the Nimitz operating area, Rendlesham Forest, Fukushima.
+- Place node names carry no locational qualifier: "USA, California, San Diego", never "San Diego (vicinity)" or "(offshore)". The vicinity nuance belongs in the claim text.
+- Names use largest-unit-first ordering ("USA, Nevada, Area 51"), the same "most important first" convention used for dates and person surnames.
+- Bare countries, regions, and military operating areas are not place nodes; that geography lives in the claim text.
+
+Examples: Skinwalker Ranch, Area 51, Rendlesham Forest, Fukushima.
 
 ### Event
 
@@ -101,61 +129,66 @@ A discrete thing that happened at a specific time. If you can put a single date 
 
 Examples: the 2004 Nimitz tic tac encounter, Grusch's 2023 congressional testimony, the 1947 Roswell crash, the 2017 New York Times AATIP disclosure.
 
-### Matter
-
-An ongoing situation, effort, or process that spans a period of time. Has a start and possibly an end, but is not a single moment. If it unfolds over weeks, months, or years, it is a matter.
-
-Examples: the push for congressional unidentified anomalous phenomena disclosure, the alleged craft retrieval cover-up, the Galileo Project's observation campaign, the All-domain Anomaly Resolution Office (AARO) investigation backlog.
-
-The distinction from Event is temporal scope: an event has a date, a matter has a date range. The distinction from Organisation is that a matter is a situation, not an actor. AATIP (the programme) is an Organisation. The investigation AATIP conducted is a Matter.
-
 ### Object
 
-A specific named physical thing. Craft, materials, devices, biological samples, sensor equipment.
+A specific named physical thing: craft, materials, devices, biological samples, sensor equipment, and named aircraft/vehicle/vessel types. Not for information artefacts - those are documents.
 
-Examples: the tic tac object, the Gimbal object, metamaterial samples, the Go Fast object.
+Examples: the tic tac object, the Gimbal object, metamaterial samples, the Go Fast object, the F/A-18.
 
-Not for documents or information artefacts. The Wilson-Davis memo is a Record, not an Object.
+### Document
 
-### Record
+A named information artefact: a book, report, Freedom of Information Act release, congressional transcript, news article, podcast episode, video, memo, testimony, patent, or case file. A document node is a pointer, not a copy - it describes how to find the original (URL, ISBN, archive identifier) but does not reproduce the content (some are copyrighted or confidential; the platform refers users to the original). A document links to the person or organisation that produced it - a producer is a source, which is a role, not a type.
 
-A specific artefact that contains information. A podcast episode, a Freedom of Information Act document, a congressional transcript, a news article, a book, a video, a case file. Records are what claims are extracted from.
+The public URL section is `/documents/`. (In code the type is `document`; it is distinct from the structural `record` type below - a referenced information artefact versus the ingested source a claim is extracted from.)
 
-A record node is a pointer, not a copy. It describes how to find the original material - a URL, book title, ISBN, archive identifier, Freedom of Information Act reference number - but does not reproduce the content. Some records are protected by copyright, some may be confidential. The platform refers users to the original rather than hosting copies.
+Examples: Lex Fridman Podcast #122 (David Fravor interview), the Nimitz encounter executive summary, Elizondo's resignation letter to Secretary Mattis, Coulthart's "In Plain Sight".
 
-A record links to the person or organisation that produced it. A person or organisation that produces records is a source - this is a role, not a separate node type.
+### Topic
 
-Examples: Lex Fridman Podcast #122 (David Fravor interview), the Nimitz encounter executive summary (AATIP report), Elizondo's resignation letter to Secretary Mattis, Coulthart's "In Plain Sight."
+A named idea, theory, framework, principle, or recurring theme that a document treats as a thing in its own right. Topics are referenced by claims, not derived from them: being referenced by a claim is sufficient for a topic to exist; it need not be the subject of an asserted claim. General relativity is referenced throughout the corpus ("Einstein's relativity predicts gravitational waves") but never itself asserted; it is still a topic node that many claims point at.
 
-### Concept
-
-A named idea, theory, framework, phenomenon, or recurring theme that a document treats as a thing in its own right. Concepts are referenced by claims, not derived from them: a concept is a first-class node like every other domain node, and being referenced by a claim is sufficient for it to exist - it does not need to be the subject of an asserted claim. General relativity is referenced throughout the corpus ("Einstein's relativity predicts gravitational waves") but never itself asserted; it is still a concept node that many claims point at.
+The public URL section is `/topics/`.
 
 Examples: general relativity, anti-gravity propulsion, reverse engineering of recovered craft, the simulation hypothesis, the Pais Effect.
 
 Boundary rule (controls over-extraction of every abstract noun):
 
-- The concept must be **recognised and exist independent of the document** - a reader could look it up and find it defined elsewhere (general relativity, superconductivity, zero-point energy). An ad-hoc theory named only within one document ("the test-flight theory") is not a concept; it is captured as the speaker's opinion claim.
-- Strict exclusions, do not emit a concept for: anything touchable (object - "room temperature superconductor" is an object, "room temperature superconductivity" the concept; "X device/reactor/craft" is the object, "X" the principle is the concept); anything tied to a specific time (event or matter); a person, place, or organisation; an effort people run over time - research, a programme, an investigation (matter); a vague catch-all where almost anything fits the label ("the big secret", "the phenomenon"); jargon or a mechanism lifted from quoted technical/patent text; a claimed capability or consequence.
-- A concept must be nameable and durable: someone reading only the node name should know which idea it is, and it should be the same idea wherever it recurs. Merge synonyms to one node (superluminal travel = faster-than-light travel = warp speed: one concept, the rest aliases). This is the concept analogue of the place rule (specific and durable) and the object rule (subject, not illustration).
+- The topic must be **recognised and exist independent of the document** - a reader could look it up and find it defined elsewhere (general relativity, superconductivity, zero-point energy). An ad-hoc theory named only within one document ("the test-flight theory") is not a topic; it is captured as the speaker's opinion claim.
+- Strict exclusions, do not emit a topic for: anything touchable (object - "room-temperature superconductor" is an object, "room-temperature superconductivity" the topic); anything tied to a specific time (event or project); a person, place, or organisation; an effort people run over time (project); a vague catch-all where almost anything fits the label ("the big secret", "the phenomenon"); jargon or a mechanism lifted from quoted technical/patent text; a claimed capability or consequence.
+- A topic must be nameable and durable: someone reading only the node name should know which idea it is, and it should be the same idea wherever it recurs. Merge synonyms to one node (superluminal travel = faster-than-light travel = warp speed: one topic, the rest aliases).
 
-Concepts carry no truth status. Whether anyone believes a concept is expressed through claims that reference it, with their own attestation and provenance, exactly as for every other node type.
+Topics carry no truth status. Whether anyone believes a topic is expressed through claims that reference it, with their own attestation and provenance, exactly as for every other node type.
 
-See [decision 0025](../decisions/0025-concept-as-ingestion-node-type.md) for why this is an ingestion type rather than a post-analysis one.
+## Structural types
+
+### Record
+
+The source artefact a claim is extracted from - a podcast episode, a document, a transcript, a video, or a case file as it exists in the ingest store. Every claim traces to exactly one record (its source) plus a location within it. A record is a pointer to the original material, not a copy.
+
+The record is distinct from the `document` domain type: a record is the ingested source a claim comes from; a document is a domain node for an information artefact referenced or discussed in the graph. The same real-world book can be both - a record (if it has been ingested) and a document (as a referenced entity). The producer of a record - the person or organisation behind it - is its source (a role, not a type).
 
 ### Claim
 
 An atomic assertion extracted from a record. The smallest unit of information in the knowledge graph, and the mechanism by which all other nodes are connected.
 
 A claim always has:
-- **Source record** - which Record node it was extracted from
-- **Location in record** - where in the record the assertion appears (timestamp, page number, paragraph, chapter)
-- **Speaker** - who made the assertion (a Person node, which may differ from the record's producer - e.g. a guest on a podcast)
-- **Attestation level** - how close the speaker was to what they are describing: first-hand, second-hand, or third-hand (see data model)
-- **Claim type** - the nature of the assertion (see below)
-- **Node references** - zero or more links to domain nodes the claim mentions
 
-A claim can reference any number of domain nodes, or none at all. "The universe is a simulation" is a valid claim with no domain node references. It still has provenance (who said it, in which record, on what date).
+- **Source record** - which record it was extracted from.
+- **Location in record** - where the assertion appears. For audio and video this is an `HH:MM:SS.D-HH:MM:SS.D` timestamp range (an assertion spans seconds, and a question-and-answer claim spans both turns); for documents, a page, section, paragraph, or chapter.
+- **Speaker** - the person who made the assertion (a Person node, which may differ from the record's producer - e.g. a guest on a podcast). Absent for claims that have no speaker (for example a reviewer's visual observation, which is attributed to the reviewer, not a speaker).
+- **Claim type** - the nature of the assertion (below).
+- **Node references** - zero or more links to domain nodes. A claim can reference any number, or none ("The universe is a simulation" is a valid claim with no domain-node references; it still has provenance).
+
+Optional:
+
+- **Attestation** - how close the speaker was to the events described: first-hand, second-hand, or third-hand. Set only when there is a genuine evidential stance about the events; omitted for plain narration, framing, or a bare fact with no stance.
+- **Claim role** - the narrative function the claim plays (below).
+
+Conventions for claim text:
+
+- **Units: SI, spelled out.** Claim text uses metric SI written in full ("kilometres per hour", "metres", "kilograms"), never abbreviations and never imperial. The original imperial value survives only in the verbatim excerpt. Preserve the source's precision and hedges ("about", "approximately"); never fabricate precision.
+- **Assertion, not reported speech.** The claim text is the fact; a reporting-verb anchor naming the speaker ("X stated/said/noted that ...") is forbidden, because the speaker is already in the structured speaker field. When the speaker merely relays a fact about something else, drop the name and state the bare fact; when the speaker is the actor, observer, or opinion-holder, name them as the subject with a substantive verb ("David Fravor observed ...", "Ryan Graves considers ...").
+- **Question and answer.** The claim is the answer, attributed to the answerer; a leading question that contains the fact does not make the interviewer the source. The verbatim quote for a Q&A claim contains both turns, each speaker named, and the location spans both.
 
 #### Claim types
 
@@ -168,49 +201,44 @@ A claim can reference any number of domain nodes, or none at all. "The universe 
 | **Measurement** | Instrument or sensor data. | "Radar showed an object descending from 24,000 metres in 0.78 seconds." |
 | **Administrative** | Dates, funding, personnel assignments, organisational facts. | "AATIP was funded at $22 million per year." |
 
-Claim type is orthogonal to attestation level. A claim can be first-hand opinion, second-hand testimony, or third-hand hearsay about a measurement.
+Claim type is orthogonal to attestation. A claim can be first-hand opinion, second-hand testimony, or third-hand hearsay about a measurement.
+
+#### Claim role
+
+A second axis, orthogonal to claim type, capturing the narrative function the claim plays in the story an article tells. Optional - many claims (background, definitional, administrative) leave it null; it is set only when a claim is structurally important to how an article presents a case. The assembler uses it to structure articles (what happened, then official accounts, then documented evidence the accounts were incomplete) - producing the contrast between official accounts and the record structurally, without instructing the model to treat any account as suspect.
+
+| Role | Definition |
+|------|-----------|
+| `official_explanation` | A statement from a government, military, or other official actor explaining or attributing an event - initial account or later revision. |
+| `witness_testimony` | A statement from a person directly present for the event, or directly involved in the matter. |
+| `investigation_finding` | A statement from a formal investigation's published output. |
+| `cover_up_evidence` | A statement documenting concealment, suppression, retraction, intimidation, or document destruction. |
+
+Example: a pilot's radar contact is `claim_type: measurement`, `claim_role: witness_testimony`; a Pentagon press release attributing Roswell to a balloon programme is `claim_type: administrative`, `claim_role: official_explanation`. The digester proposes the role; the reviewer confirms or overrides.
 
 #### How claims connect nodes
 
-Example: "Luis Elizondo ran AATIP from 2007 to 2012."
+Example: "Luis Elizondo ran AATIP from 2007 to 2012." Produces a Claim node with record (the Elizondo interview), location (timestamp range), speaker (Person: Luis Elizondo), claim type (administrative), temporal bounds (2007 to 2012), and references (Person: Luis Elizondo, Project: AATIP).
 
-This produces a Claim node with:
-- Record: Lex Fridman Podcast #2194 (Elizondo interview)
-- Location in record: timestamp 00:45:12
-- Speaker: Person:Luis Elizondo
-- Claim type: administrative
-- Attestation: first-hand
-- Temporal bounds: 2007 to 2012
-- References: Person:Luis Elizondo, Organisation:AATIP
+Example: "David Fravor observed a tic tac shaped object over the Nimitz operating area on 14 November 2004." Produces a Claim node with record (the Fravor interview), location (timestamp range), speaker (Person: David Fravor), claim type (observation), attestation (first-hand), date (2004-11-14), and references (Person: David Fravor, Object: tic tac object, Event: 2004 Nimitz encounter). The operating area is described in the claim text, not as a place node.
 
-Example: "David Fravor observed a tic tac shaped object over the Nimitz operating area on 14 November 2004."
+## Curator-populated types
 
-This produces a Claim node with:
-- Record: Lex Fridman Podcast #122 (Fravor interview)
-- Location in record: timestamp 01:23:45
-- Speaker: Person:David Fravor
-- Claim type: observation
-- Attestation: first-hand
-- Date: 2004-11-14
-- References: Person:David Fravor, Object:tic tac object, Place:Nimitz operating area, Event:2004 Nimitz encounter
+### Pattern
 
-## Post-analysis types
+A recurring phenomenon observed across multiple cases in the corpus. **Not emitted by extraction** - a pattern is created by a future cross-corpus curator pass over the populated graph and confirmed by human review. A pattern is justified when at least three independent cases exhibit the same shape, nameable in a sentence that does not depend on any one of them ("UAP observed near nuclear facilities" passes; "what happened over Malmstrom in 1967" is a single event, not a pattern). Patterns may be:
 
-These types are not populated during ingestion. They are added later through user contributions, editorial review, or analytical processes run over the existing graph. The schema supports adding new node types without structural changes.
+- **Morphological** - recurring object shapes (orb, triangle, tic tac, grey, mantis).
+- **Behavioural** - recurring UAP behaviour (hovering over restricted airspace, paralleling nuclear facilities).
+- **Procedural** - recurring patterns in the official response (shifting accounts, document destruction, denial followed by partial acknowledgement after independent disclosure).
+- **Phenomenal** - recurring effects on witnesses and equipment (biological effects, radiation exposure, electromagnetic disruption).
 
-Potential future types include:
+Lifecycle: cross-corpus discovery proposes candidate patterns; a human confirms, rejects, or names them; per-claim tagging suggests which claims support each pattern (pre-filtered by embedding similarity before any model call); the assembler generates the pattern page from the confirmed claim set. The human role is curation - proposing, confirming, naming - not narrative writing.
 
-- **Pattern** - a recurring observational category (orb, triangle, tic tac, grey, mantis). Individual observations and objects get classified into these.
-- **Classification** - broader taxonomic groupings of patterns or other nodes.
-
-These require subjective judgement to assign and are better suited to human curation, community tagging, or a separate analytical pipeline than to initial artificial intelligence extraction.
-
-(Concept was previously listed here. It is now an ingestion type - see the Concept section above and [decision 0025](../decisions/0025-concept-as-ingestion-node-type.md). The post-analysis layer may still refine concepts, but is no longer their source.)
+Status: the type exists; the discovery pass is not yet built, so there is currently zero pattern output.
 
 ## Non-human intelligence
 
-The current ingestion types are designed around the data as it exists today, which is overwhelmingly human testimony about anomalous phenomena. Person covers named human individuals.
+The current types are designed around the data as it exists today, which is overwhelmingly human testimony about anomalous phenomena. Person covers named human individuals.
 
-If a named non-human intelligence appears in the data (an entity that communicates, is individually identifiable, and warrants its own node), the schema supports adding a new type (such as Being or Intelligence) without restructuring. Claims link to nodes by universally unique identifier, so a new type plugs in the same way Person does. This is a deliberate design choice: account for the possibility without over-engineering for it now.
-
-Similarly, if distinct non-human groups or species emerge in the data, Organisation could potentially accommodate them, or a new type could be added.
+If a named non-human intelligence appears in the data (an entity that communicates, is individually identifiable, and warrants its own node), the schema supports adding a new type (such as Being or Intelligence) without restructuring. Claims link to nodes by universally unique identifier, so a new type plugs in the same way Person does. This is a deliberate design choice: account for the possibility without over-engineering for it now. Similarly, if distinct non-human groups or species emerge, Organisation could accommodate them, or a new type could be added.
