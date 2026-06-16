@@ -3,6 +3,8 @@
 Date: 2026-04-02
 Status: draft
 
+> **2026-06-16 (reorg review).** Not ratified - this design is not yet built and exposes an open decision. The review/verification system (`review.yaml` + `verification.yaml`) does not exist in the content repo yet (zero such files). The directory model also conflicts with reality: the assembler emits FLAT entity articles (`content/pages/<section>/<slug>.<lang>.md`, no sidecars), while hand-authored pages (about, contact, legal) use the document-first directories this record specifies. Ratifying requires deciding flat versus document-first for entity articles - a cross-cutting call (assembler output path and multi-language emission, the site's Hugo content structure, the workbench's `review.yaml` location), not a doc edit. **Recommendation: document-first**, so an entity's language versions plus `review.yaml`/`verification.yaml` sit together and entity articles match the hand-authored pages; the assembler's flat output would change to comply. To be converged with assembler/site/workbench as a separate design workstream. (Also: `architecture/assembler.md`'s review section is currently wrong - it states the assembler writes a flat `<slug>.review.yaml` verification sidecar; the assembler writes no YAML at all. To be fixed when this lands.)
+
 ## Context
 
 Anomalica publishes content before it has been reviewed by humans. This is deliberate - requiring review before publication would gate content behind reviewer availability and create bottlenecks. However, readers and contributors need to know whether content has been checked, and reviewers need a way to record their assessments.
