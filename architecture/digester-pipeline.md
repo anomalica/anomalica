@@ -1,5 +1,7 @@
 # Digester Pipeline
 
+> **Out of date (pre-0034 split).** This page predates the digester/assimilator split ([decision 0034](../decisions/0034-split-digester-extraction-from-assimilation.md)) and still describes extraction and graph-building as one pipeline. Extraction is now the digester ([digester.md](digester.md)); import, entity resolution, reconciliation, and graph merging are the assimilator ([assimilator.md](assimilator.md)). Treat those two as current until this page is refreshed.
+
 This document describes how the digester processes records and integrates them into the knowledge graph (a structured database of interconnected facts). See [digester.md](digester.md) for what the digester does; this document covers how it does it.
 
 ## Pipeline stages
