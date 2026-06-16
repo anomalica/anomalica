@@ -35,11 +35,11 @@ source_type: pdf
 | `title` | string | yes | Document or episode title. Always quoted. |
 | `date_published` | string or null | yes | When the original content was published. ISO 8601, precision varies: `2023`, `2023-07`, `2023-07-26`, or with time and zone. Set to `null` when the source is genuinely undated (e.g. an undated transcript or memo) - do not fabricate a fallback from file modification or ingestion dates, as a wrong date is worse provenance than an absent one. |
 | `source_type` | string | yes | One of: `pdf`, `audio`, `video`, `web`, `ebook` |
-| `publisher` | string | no | The entity that created the content (e.g. "CBS News", "The Debrief", "House Oversight Committee"). Not the hosting platform. |
+| `publisher` | string | no | The entity that created the content (e.g. "CBS News", "The Debrief", "House Oversight Committee"). Not the hosting platform; distinct from `creators` (the human creator(s)). |
 | `source_url` | string | no | URL where the source can be found |
 | `source_id` | string | no | Stable platform-specific identifier (e.g. `youtube:ZBtMbBPzqHY`) |
 | `fetched_url` | string | no | URL from which the content was actually retrieved, if different from source_url (e.g. a Wayback Machine archive URL) |
-| `authors` | list | no | Authors for written documents |
+| `creators` | list | no | The human creator(s) of the record - the document's author(s), the video or podcast host(s)/presenter(s), or a channel owner who is a named person. Person names, canonical "Last, First Middle" preferred (the assimilator's matcher tolerates either ordering). Medium-neutral; distinct from `publisher` (the entity). Optional and reviewer-fillable: platform metadata often gives the publishing entity reliably but not the human host. Replaces the former written-document-only `authors`. |
 | `content_hash` | string | no | SHA-256 that names the record's file in `store/` and identifies it. What it hashes is source-type dependent (see [Store](#store)): the source asset's bytes for `audio`/`video`/`pdf`, the extracted body text for `web`/`ebook`. |
 | `source_hash` | string | no | SHA-256 of the raw source asset (HTML bytes, original PDF, etc.), used to locate `sources/{source_hash}.{ext}`. For `web`/`ebook` it differs from `content_hash` (which hashes the extracted body); for `audio`/`video`/`pdf`, `content_hash` already hashes the source asset, so the two coincide. |
 | `snapshots` | list | no | Sibling capture artefacts produced alongside the main record. Each entry has `role` (well-known string), `hash` (sha256 of the artefact bytes), and `content_type` (MIME). Used for web records to expose PDF renders and frozen-page captures - see [Web record snapshots](#web-record-snapshots) below. |
@@ -315,8 +315,8 @@ Copyright status follows the parent record. If `copyright.status` is `licensed` 
 schema: anomalica/record/1
 title: "David Fravor Statement for the House Oversight Committee"
 date_published: 2023-07-26
-authors:
-  - David Fravor
+creators:
+  - Fravor, David
 source_url: https://oversight.house.gov/...
 source_type: pdf
 content_hash: sha256:7bf2c20d...

@@ -22,6 +22,16 @@ See also: [node types](node-types.md). This document is the canonical home for p
 - A **claim** references zero or more **domain nodes** (person, organisation, place, event, matter, object)
 - Domain nodes do not link directly to each other. Every relationship passes through a claim.
 
+## Record provenance: who made a record versus who made a claim
+
+A record's provenance is recorded in three fields:
+
+- **`publisher`** (record frontmatter) - the entity that created the content (a channel, outlet, or committee), not the hosting platform.
+- **`creators`** (record frontmatter) - the human creator(s): a document's author, a video or podcast host or presenter, a channel owner who is a named person. Person names in canonical "Last, First Middle" form.
+- **`speaker`** (per claim) - who asserted a specific claim, which may differ from the record's creator (a guest on a host's podcast; a witness quoted in an article).
+
+The **source** role (the person or organisation that produced the record) is the `publisher` and/or the `creators`. The `speaker` is claim-level, not record-level. All three may coincide (a solo essay) or all differ (a guest interviewed on a hosted show published by a channel).
+
 ## Source properties
 
 Properties that accumulate as data flows through the knowledge graph, derived from data rather than assigned by editors:
