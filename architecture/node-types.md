@@ -205,7 +205,9 @@ Claim type is orthogonal to attestation. A claim can be first-hand opinion, seco
 
 #### Claim role
 
-A second axis, orthogonal to claim type, capturing the narrative function the claim plays in the story an article tells. Optional - many claims (background, definitional, administrative) leave it null; it is set only when a claim is structurally important to how an article presents a case. The assembler uses it to structure articles (what happened, then official accounts, then documented evidence the accounts were incomplete) - producing the contrast between official accounts and the record structurally, without instructing the model to treat any account as suspect.
+A second axis, orthogonal to claim type, capturing the narrative function the claim plays in the story an article tells. Optional - many claims (background, definitional, administrative) leave it null; it is set only when a claim is structurally important to how an article presents a case.
+
+Intended use is to let the assembler structure articles by role (what happened, then official accounts, then documented evidence the accounts were incomplete - producing the contrast structurally, without instructing the model to treat any account as suspect). This is designed but NOT yet implemented: the assembler does not currently read `claim_role`; it assembles free-form prose from claims in chronological/document order (see [assembler.md](assembler.md)). Role-based structuring is a planned feature, not current behaviour.
 
 | Role | Definition |
 |------|-----------|

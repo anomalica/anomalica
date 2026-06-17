@@ -4,9 +4,21 @@ The assembler reads from the knowledge graph (a structured database of interconn
 
 ## Inputs
 
-- Knowledge graph (SQLite - a lightweight file-based database, rebuilt from digests, read-only)
+- Knowledge graph (SQLite - a lightweight file-based database, built by the assimilator from digests, read-only)
 - Directives (from the content hierarchy)
 - Existing articles (for incremental updates)
+
+### Input contract: assembling one entity article (`--node` mode)
+
+Grounded against the assembler's code. The assembler reads the assimilator's graph directly via `sqlite3` (raw SQL, no ORM) over `knowledge.db` (`--db`; host path currently `~/.local/share/digester/knowledge.db`, relocating to `~/.local/share/assimilator/`). It reads exactly four tables - `nodes`, `claims`, `records`, `claim_node_refs` - via three queries:
+
+1. **Load node** - the entity's `id`, `node_type`, `name`, `metadata`, matched by id or case-insensitive name.
+2. **Claims for node** - every claim where the entity is the `speaker_id` OR is referenced via `claim_node_refs`, left-joined to `records` (title, date, reference, content_hash, friendly_name - the citation and deep-link provenance) and to `nodes` (speaker name). Per claim it reads `id`, `content`, `original_excerpt`, `claim_type`, `attestation`, `location_in_record`, `date`, `date_end`. Ordered by record date then `location_in_record`; de-duplicated by claim id.
+3. **Related nodes** - nodes co-occurring in the same claims (a `claim_node_refs` self-join), ranked by shared-claim count, top 30 - the "related entities you may link to" prompt block.
+
+Selection and ordering: claims are selected by speaker-of OR referenced-by, with **no score/confidence threshold and no `claim_role` filter**, ordered chronologically by source then document order. The model then writes free-form encyclopaedic prose from those claims plus the related-node list - the assembler imposes no role-based sectioning and consults no `confidence`, `claim_role`, or `corroborations` in selection or ordering (those columns/tables exist but are not read). After the model returns, a deterministic pass re-attaches per-claim provenance (quote, claim_id, record_hash, workbench_url) to the references from the already-fetched claims - no extra query.
+
+(Record-mode assembly, used for the per-record inspection pages of 0031, reads the digest YAML rather than the database - a separate read-contract, to be documented when that work lands.)
 
 ## Outputs
 

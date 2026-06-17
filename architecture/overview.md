@@ -53,6 +53,7 @@ Digests are publicly readable on the git hosting platform but are not rendered a
 - [Ingester](ingester.md) - raw source material to structured text, speaker diarisation, voice identification
 - [Digester](digester.md) - per-record extraction from ingests, producing digests (no graph)
 - [Assimilator](assimilator.md) - builds and maintains the knowledge graph from digests (import, entity resolution, scoring, corroboration, search, export)
+- [Graph schema](graph-schema.md) - the knowledge-graph SQLite tables (the assimilator builds them; the assembler reads them)
 - [Digester pipeline](digester-pipeline.md) - end-to-end digestion, review, import, reconciliation (note: import, reconciliation, and graph merging now belong to the assimilator; this page predates the split and needs a refresh)
 - [Embeddings](embeddings.md) - vector generation, model selection, storage separation, re-embedding
 - [Data model](data-model.md) - sources, records, claims, attestation, terminology
