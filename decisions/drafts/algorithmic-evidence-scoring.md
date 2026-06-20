@@ -4,6 +4,8 @@ Date: 2026-03-20
 Updated: 2026-03-21
 Status: draft
 
+Related: [claims fusion as a robust SLAM back-end](../../knowledge/claims-fusion-as-robust-slam.md) - the robustness theory under this draft (how scores stay truth-tracking under adversarial flooding: weight by provenance and independence, not corroboration-frequency; high-breakdown-point estimators with per-source influence caps; provenance-lineage so correlated sources are not double-counted).
+
 ## Context
 
 Claims in the knowledge graph (a structured database of interconnected facts) need some form of quality assessment. Without it, a newcomer cannot distinguish between well-documented sensor data and an anonymous forum post. Existing platforms either present claims without assessment or rely on editorial judgement, which invites accusations of bias.
