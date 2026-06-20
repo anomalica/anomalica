@@ -120,4 +120,4 @@ Reasons for separate passes rather than a single combined pass:
 - **Different prompts.** Domain extraction looks for testimony, evidence, events, programmes. Infrastructure extraction looks for inter-source references, career context, sentiment, network connections. These are different tasks.
 - **Infrastructure is optional.** A Freedom of Information Act document probably contains zero infrastructure content. A podcast transcript contains lots. The infrastructure pass can be skipped for document types where it would produce nothing.
 
-Both categories live in the same single knowledge-graph database and share node identifiers, so domain and infrastructure claims can be joined when needed (see [graph-schema.md](graph-schema.md)).
+Each category is imported into its own database with the identical schema - domain claims to `knowledge.db`, infrastructure claims to `infrastructure.db` - sharing node identifiers so the two can be joined when needed (see [graph-schema.md](graph-schema.md)).

@@ -14,7 +14,7 @@ Digest YAML files (the interchange format, [decision 0027](../decisions/0027-dig
 
 ## Outputs
 
-The unified knowledge graph as a single SQLite database (currently `~/.local/share/digester/knowledge.db`; it relocates to `~/.local/share/assimilator/knowledge.db` when the split moves it, overridable via `ASSIMILATOR_DB`). The full table schema is in [graph-schema.md](graph-schema.md). The database is derived data: rebuilt deterministically from the digests, which remain the source of truth for the knowledge graph; if deleted, it can be rebuilt. Embedding vectors are a separate derived index (sqlite-vec), kept out of the relational contract and out of the primary download.
+Two SQLite databases at `~/.local/share/assimilator/` (overridable via `ASSIMILATOR_DB`), with identical schema, split by claim category at import: `knowledge.db` (domain claims - the publishable knowledge graph) and `infrastructure.db` (infrastructure claims - source-graph cross-references). The assembler reads `knowledge.db` only; "the knowledge graph" as a public artefact means the domain database. The full table schema is in [graph-schema.md](graph-schema.md). Both are derived data, rebuilt deterministically from the digests (the source of truth); if deleted, rebuilt from the digests. Embedding vectors are a separate derived index (sqlite-vec), kept out of the relational contract and out of the primary download.
 
 ## What it does
 

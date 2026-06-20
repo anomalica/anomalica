@@ -111,9 +111,12 @@ labels). The schema does not constrain its keys.
 ### Claims
 
 `domain_claims` and `infrastructure_claims` are two parallel lists with
-identical item shapes. They are kept separate in the digest because the
-two extraction passes run independently; on import both feed the single
-knowledge-graph database (see [graph-schema.md](graph-schema.md)).
+identical item shapes. The list a claim is in is its category
+(`ClaimCategory`: `domain` | `infrastructure`). They are kept separate
+because the two extraction passes run independently and, on import, the
+assimilator routes each category to its own database - `domain_claims`
+to `knowledge.db`, `infrastructure_claims` to `infrastructure.db` (see
+[graph-schema.md](graph-schema.md)).
 
 Field order per claim: `id`, `type`, `attestation`, `speaker?`,
 `location?`, `date?` or `date_range?`, `refs?`, `quote?`, `text`.

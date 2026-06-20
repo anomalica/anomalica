@@ -77,20 +77,19 @@ The workbench may serve extracted text from copyrighted source material to users
 2. **Hash-gated API** - ingest retrieval requires the full 64-character SHA-256 hash of the original source file, which can only be obtained by hashing the file itself (no login required - possession of the file is the proof)
 3. **Manual access grants** - for cases where hash verification is impractical (physical book owners, different editions), an Anomalica member can grant per-user per-record access to authenticated users
 4. **Rate limiting** - prevents brute-force attempts to guess the missing hash characters
-5. **Partial hashes in public references** - the public digests repository references ingests using a truncated hash; the full hash required to fetch an ingest can only be obtained by hashing the original source file
+5. **Public references expose only the identifier** - the public digests repository references ingests by `public_hash` (the content-derived identifier), which does not unlock an ingest; the possession key required to fetch is the source-asset SHA-256, obtained only by hashing the source file
 
-### Full hashes and public hashes
+### Two hashes: the public identifier and the possession key
 
-Every ingest is identified by the SHA-256 of its source file, a 64-character hex string. Two forms are used:
+The workbench uses two distinct SHA-256 hashes. They coincide for `audio`/`video`/`pdf` and differ for `web`/`ebook`:
 
-- **Full hash** (64 hex chars) - the actual SHA-256. Appears in the ingest file's `content_hash` frontmatter field. Required by the workbench API to fetch an ingest.
-- **Public hash** (56 hex chars) - the first 56 characters of the full hash. Used as the identifier in the public digests repository and in any public-facing workbench UI. Not sufficient on its own to fetch an ingest.
+- **Public identifier** - `public_hash`, the first 56 hex chars of the record's `content_hash`. Per record-format.md, `content_hash` is the source-asset hash for `audio`/`video`/`pdf` and the extracted-body hash for `web`/`ebook`. The public identifier is used in the public digests repository, in public-facing URLs, and in per-claim deep-links (decision 0031). It is an identifier, not a secret - it does not unlock an ingest.
+- **Possession key** - the SHA-256 of the raw SOURCE ASSET (the file a reviewer would hold). It is carried in the verification sidecar's `sha256` field and is the `sources/{hash}.{ext}` filename (for `web`/`ebook` it is not a frontmatter field). The hash-verification gate matches the reviewer's locally-computed file hash against this. For `audio`/`video`/`pdf` it equals `content_hash`; for `web`/`ebook` it is a different hash from the body-derived `content_hash`.
 
-The 32 bits dropped from the public hash mean that an attacker who has harvested every public hash from the digests repository still cannot fetch the corresponding ingests. Their options are:
+Possession is proven against the source-asset hash, so a reviewer hashing their own copy of the file unlocks the ingest. Harvesting the public identifier does not help:
 
-- **Hash the original source file** - the intended path. Takes milliseconds for a reviewer who legitimately has the file
-- **Brute-force via the API** - 2^32 (4.3 billion) requests per ingest, defeated by rate limiting
-- **Find a SHA-256 pre-image with a matching 224-bit prefix** - computationally infeasible
+- For `audio`/`video`/`pdf`, the public identifier is only the first 56 of the 64 hex chars of the source-asset hash; the dropped 32 bits cannot be brute-forced past rate limiting (2^32 requests per ingest), and finding a SHA-256 pre-image with a matching 224-bit prefix is computationally infeasible.
+- For `web`/`ebook`, the public identifier is a different hash entirely (the body hash), so it reveals nothing about the source-asset possession key.
 
 This means the protection is not a social convention ("please only fetch ingests you already have"): it is a technical requirement that you possess the source file, or find another path to its hash.
 
@@ -149,7 +148,7 @@ The git history provides the full audit trail: who changed what, when, and why. 
 
 ## Review identity across re-ingestion
 
-The ingester improves continually: capture pipelines get better, parsers find bugs, post-processing rules tighten. When the ingester re-ingests a record, the record's body changes - which changes its `content_hash`, which is the SHA-256 of the body in the canonical store layout.
+The ingester improves continually: capture pipelines get better, parsers find bugs, post-processing rules tighten. When the ingester re-ingests a record, the body may change. For `web`/`ebook` records (whose `content_hash` hashes the extracted body) that rotates `content_hash`; for `audio`/`video`/`pdf` (whose `content_hash` hashes the source asset) `content_hash` is stable across re-extraction (see record-format.md).
 
 Naive binding of reviews to `content_hash` orphans every prior review when the ingester re-runs. A reviewer who approved a record yesterday would find the same record back in the unreviewed queue today, with no signal that they had already approved its previous form. The friction compounds: a single ingester improvement that touches one file format can invalidate the entire review backlog for that format.
 
@@ -162,8 +161,8 @@ A record can carry up to three identities at any given time:
 | Kind | Source | Stable across | Available for |
 |------|--------|---------------|----------------|
 | `url` | The `source_url` frontmatter field. The URL the ingester fetched. | Re-ingestion. Publisher byte-level changes. Re-extraction. | Web records, YouTube videos, anything fetched by URL. |
-| `sha256` | The `source_hash` frontmatter field. SHA-256 of the original source-file bytes. | Re-extraction. Parser improvements. Post-processing changes. | PDFs, ebooks, audio files, video files, any record sourced from a file. |
-| `content` | The `content_hash` (record body SHA-256). | Nothing - any body change rotates it. | All records (always present). |
+| `sha256` | The source asset's SHA-256 - the verification sidecar's `sha256` and the `sources/` filename (a `source_hash` frontmatter field where present). | Re-extraction. Parser improvements. Post-processing changes. | PDFs, ebooks, audio files, video files, any record sourced from a file. |
+| `content` | The `content_hash` (per record-format.md: source-asset hash for `audio`/`video`/`pdf`, extracted-body hash for `web`/`ebook`). | For `web`/`ebook`, any body change rotates it; for `audio`/`video`/`pdf`, stable across re-extraction. | All records (always present). |
 
 `url` is preferred over `sha256` is preferred over `content`. A given record may have any subset of the three. Web records have `url` and `content`. File-sourced records have `sha256` and `content`. Web records that the ingester also archives by file (a SingleFile snapshot for offline reading) carry all three.
 
