@@ -76,7 +76,7 @@ The workbench may serve extracted text from copyrighted source material to users
 1. **Access-controlled ingests repository** - only the workbench backend service account has direct read access; record-level access is then gated by copyright status
 2. **Hash-gated API** - ingest retrieval requires the full 64-character SHA-256 hash of the original source file, which can only be obtained by hashing the file itself (no login required - possession of the file is the proof)
 3. **Manual access grants** - for cases where hash verification is impractical (physical book owners, different editions), an Anomalica member can grant per-user per-record access to authenticated users
-4. **Rate limiting** - prevents brute-force attempts to guess the missing hash characters
+4. **Rate limiting (pre-public requirement, not yet implemented)** - the verification-submit endpoint must throttle and cap attempts so the missing hash bits cannot be brute-forced; not live today (see [Pre-public hardening](#pre-public-hardening))
 5. **Public references expose only the identifier** - the public digests repository references ingests by `public_hash` (the content-derived identifier), which does not unlock an ingest; the possession key required to fetch is the source-asset SHA-256, obtained only by hashing the source file
 
 ### Two hashes: the public identifier and the possession key
@@ -88,10 +88,19 @@ The workbench uses two distinct SHA-256 hashes. They coincide for `audio`/`video
 
 Possession is proven against the source-asset hash, so a reviewer hashing their own copy of the file unlocks the ingest. Harvesting the public identifier does not help:
 
-- For `audio`/`video`/`pdf`, the public identifier is only the first 56 of the 64 hex chars of the source-asset hash; the dropped 32 bits cannot be brute-forced past rate limiting (2^32 requests per ingest), and finding a SHA-256 pre-image with a matching 224-bit prefix is computationally infeasible.
-- For `web`/`ebook`, the public identifier is a different hash entirely (the body hash), so it reveals nothing about the source-asset possession key.
+- For `audio`/`video`/`pdf`, the public identifier IS the first 56 of the 64 hex chars of the source-asset possession key - so it leaks 224 of its 256 bits. The gate string-compares a submitted hash (no file is involved server-side), so an attacker holding the public identifier need only guess the remaining 32 bits and submit each guess - 2^32 cheap attempts. The only barrier is rate-limiting the submit endpoint, which is not yet implemented. Until it lands, the possession proof for these types is materially weak.
+- For `web`/`ebook`, the public identifier is a different hash entirely (the body hash), independent of the source-asset possession key, so it leaks nothing - an attacker would have to possess the file or brute-force a full 256-bit hash. These types are materially stronger here than `audio`/`video`/`pdf`.
 
-This means the protection is not a social convention ("please only fetch ingests you already have"): it is a technical requirement that you possess the source file, or find another path to its hash.
+The protection is designed to be technical rather than a social convention - but two pieces of that enforcement are not yet built.
+
+### Pre-public hardening
+
+Two server-side protections this design assumes are NOT implemented today (the gate is computed but not enforced), and are pre-public launch requirements:
+
+- **Rate-limiting** on the verification-submit endpoint. Without it, the 32-bit guess space for `audio`/`video`/`pdf` possession (above) is brute-forceable by repeated string submission.
+- **Gate-enforced fetch.** `GET /api/ingests/{hash}` and `GET /api/sources/{hash}` are not gate-enforced server-side today (dev-mode ungated); until they are, the hash gate and copyright gating are advisory, not enforced.
+
+Both must land before any public exposure.
 
 ### Flow
 
