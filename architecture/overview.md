@@ -5,13 +5,16 @@ This is a living document. It reflects the current state of the system architect
 ## Pipeline
 
 ```
-raw sources --> ingester --> ingests (private git repo)
+raw sources --> ingester --> ingests (access-gated git repo)
 (audio, video,                   |
  ebooks, PDFs,                   v
  scanned docs,               digester --> digests (public git repo)    [human review via workbench]
  web pages)                      |
                                  v
                              assimilator --> knowledge graph (SQLite)
+                                 |
+                                 v
+                             synthesiser --> briefs (one per page, language-neutral)
                                  |
                                  v
                              assembler --> content (articles, media) --> site (static HTML)
@@ -27,7 +30,7 @@ raw sources --> ingester --> ingests (private git repo)
 |-----------|---------|
 | **anomalica** | Organisation-level decisions, architecture, and documentation |
 | **ingester** | Raw source material to structured text (audio, video, ebooks, PDFs, scanned documents) |
-| **ingests** | Ingester output (private - contains copyrighted source material) |
+| **ingests** | Ingester output, access-gated per record by the source's copyright status (some records are copyrighted, others public domain or openly licensed) |
 | **digester** | Artificial intelligence extraction from ingests, producing one digest per record (no graph) |
 | **digests** | Reviewed digests - the source of truth for the knowledge graph (a structured database of interconnected facts) |
 | **assimilator** | Builds and maintains the unified SQLite knowledge graph from digests: import, entity resolution, scoring, corroboration, embeddings, search, export |
@@ -40,11 +43,13 @@ raw sources --> ingester --> ingests (private git repo)
 
 ## Data flow
 
-The ingester writes ingests to the private ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public digests repository. Both the ingester and digester need access to the private repository.
+The ingester writes ingests to the access-controlled ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public digests repository. Both the ingester and digester need access to the ingests repository; public exposure of any individual ingest is then gated by that record's copyright status.
 
 Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
 
 The assimilator reads the digests and builds and maintains the unified knowledge graph database (SQLite, a lightweight file-based database) from them. The database is derived data, not the source of truth - if it is deleted, the assimilator rebuilds it from the digests.
+
+The synthesiser reads the graph, decides which pages should exist, and emits one language-neutral brief per page (the graph slice that feeds that page). The assembler writes each page's prose from its brief alone - it does not read the graph (decision 0036). The brief's input hash is the per-page staleness unit and the audit hash 0010 mandates.
 
 Digests are publicly readable on the git hosting platform but are not rendered as pages on the site. The site presents assembled articles only. Each article's references link back to both the original source material and the digest, giving readers a path to verify claims or report errors via the repository's issue tracker. Corrections to digests trigger a database rebuild and article reassembly.
 
@@ -58,7 +63,8 @@ Digests are publicly readable on the git hosting platform but are not rendered a
 - [Embeddings](embeddings.md) - vector generation, model selection, storage separation, re-embedding
 - [Data model](data-model.md) - sources, records, claims, attestation, terminology
 - [Node types](node-types.md) - knowledge graph node type definitions and classification rules
-- [Assembler](assembler.md) - article assembly, directives, languages
+- [Brief format](brief-format.md) - the synthesise -> assemble interchange (one brief per page; the writer's sole input)
+- [Assembler](assembler.md) - the writer: brief -> per-language prose + directives
 - [Artificial intelligence constraints](ai-constraints.md) - boundaries on artificial intelligence involvement across all components
 - [Review workbench](review-workbench.md) - separate application for reviewing and correcting ingests and digests
 - [Test corpus](../context/test-corpus.md) - focused record set for testing the pipeline

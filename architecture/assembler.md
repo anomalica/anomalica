@@ -10,6 +10,8 @@ The assembler reads from the knowledge graph (a structured database of interconn
 
 ### Input contract: assembling one entity article (`--node` mode)
 
+> **Transitional.** Per [decision 0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md) the assembler becomes a pure writer whose sole input is a brief (the synthesiser selects the facts; the writer no longer reads the graph). The direct-graph-read contract below is the current/interim behaviour, superseded by brief-input once the synthesiser lands.
+
 Grounded against the assembler's code. The assembler reads the assimilator's graph directly via `sqlite3` (raw SQL, no ORM) over `knowledge.db` (`--db`; host path currently `~/.local/share/digester/knowledge.db`, relocating to `~/.local/share/assimilator/`). It reads exactly four tables - `nodes`, `claims`, `records`, `claim_node_refs` - via three queries:
 
 1. **Load node** - the entity's `id`, `node_type`, `name`, `metadata`, matched by id or case-insensitive name.
