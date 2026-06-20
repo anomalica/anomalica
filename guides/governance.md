@@ -47,6 +47,12 @@ Genuinely multilingual from the start - not English-first with translations bolt
 
 The language count is the primary driver of several architectural choices (Hugo for build performance at hundreds of thousands of pages; multi-script and right-to-left support; translation quality flagged per language and corrected via the directive system) - see the architecture docs and the translation-directives record.
 
+### Rollout is staged
+
+The set above is the destination, not the day-one output. Translation rolls out in stages: a **core language set first, then propagation outward by capacity**, rather than all languages at once. This refines the earlier "translate into all languages" intent - the full set remains the goal, the path to it is now incremental.
+
+The core set is drawn from the top of the coverage ranking (the highest-coverage languages, English first); its exact membership is pinned when the rollout begins, and the remainder propagate as translation capacity allows. This shapes the scheduler's translate job, which targets the core set first rather than every language for every page.
+
 ## Disclosure: what is published, private, or secret
 
 Transparency is most valuable as a deliberate act on the things that earn trust, not as a blanket setting on everything. The project's credibility rests on a narrow set of things being open; it does not rest on the founder publishing every operational and strategic decision. Three tiers:
