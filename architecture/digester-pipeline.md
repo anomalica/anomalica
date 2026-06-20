@@ -100,7 +100,7 @@ The digester extracts two categories of claim from the same source records: doma
 
 Claims about anomalous phenomena: what happened, who witnessed it, what was investigated, what was covered up, who was involved and what qualifies them. This is the public-facing knowledge graph that feeds the assembler and becomes the website content.
 
-The test for whether a claim belongs in the domain database: would it appear on the website? If someone visits a page about a person, event, or organisation, is this information that helps them understand the phenomena? If yes, it's domain.
+The test for whether a claim is a domain claim: would it appear on the website? If someone visits a page about a person, event, or organisation, is this information that helps them understand the phenomena? If yes, it's domain.
 
 Career histories, credibility-establishing facts, and programme details are domain even though they aren't directly about anomalous events. "Brown held a top secret Sensitive Compartmented Information clearance from the Defence Intelligence Agency" goes on Brown's page because it establishes why his testimony matters.
 
@@ -116,7 +116,7 @@ Domain and infrastructure extraction run as separate passes over the same source
 
 Reasons for separate passes rather than a single combined pass:
 
-- **No forced binary.** Something genuinely borderline can appear in both databases independently, which is useful signal rather than a forced classification.
+- **No forced binary.** Something genuinely borderline can appear in both categories independently, which is useful signal rather than a forced classification.
 - **Different prompts.** Domain extraction looks for testimony, evidence, events, programmes. Infrastructure extraction looks for inter-source references, career context, sentiment, network connections. These are different tasks.
 - **Infrastructure is optional.** A Freedom of Information Act document probably contains zero infrastructure content. A podcast transcript contains lots. The infrastructure pass can be skipped for document types where it would produce nothing.
 
