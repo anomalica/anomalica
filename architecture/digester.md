@@ -4,7 +4,7 @@ The digester takes a reviewed ingest and runs two-pass artificial-intelligence e
 
 ## Inputs
 
-Reviewed ingests from the private ingests repository - markdown files with YAML frontmatter and annotation blocks in the record interchange format ([decision 0019](../decisions/0019-record-interchange-format.md)). The digester reads them (`record_parser`) and checks digestibility via `review_gate` (the observed-coverage check behind the `coverage` command); it does not process raw source material (the ingester does that).
+Reviewed ingests from the access-controlled ingests repository - markdown files with YAML frontmatter and annotation blocks in the record interchange format ([decision 0019](../decisions/0019-record-interchange-format.md)). The digester reads them (`record_parser`) and checks digestibility via `review_gate` (the observed-coverage check behind the `coverage` command); it does not process raw source material (the ingester does that).
 
 Each ingest may have associated media at `media/{record_hash}/` (extracted images). When the digester reaches an image annotation with a `file` field, it loads the image bytes and passes them to a vision-capable model alongside the surrounding text, so claims can be extracted from charts, photographs, and figures, not just prose. The digester also populates the `description` field on image annotations (a factual description for consumers that lack vision), writing it back into the ingest.
 

@@ -20,7 +20,7 @@ A separate web application that serves two purposes: reviewing and correcting in
 
 **Storage:** Two git repositories hold the pipeline output:
 
-- **ingests** (private) - contains the structured text output from the ingester. These files contain copyrighted source material and are never publicly accessible. The workbench backend has a service account with access to this repository and serves individual ingests to authenticated reviewers one at a time, gated by the hash verification described below.
+- **ingests** (access-gated) - the structured text output from the ingester. Access is gated per record by the source's copyright status, not blanket-secret: public-domain and openly-licensed records are freely accessible, while copyrighted records are released only to someone who proves possession of the original. The repository itself is access-controlled (only the workbench backend service account has direct read access); the workbench serves individual ingests one at a time, gated by the hash verification described below for records that need it.
 - **digests** (public) - contains the extracted claims and nodes. No copyrighted content. The backend commits digest corrections here on behalf of reviewers.
 
 The backend has no database of its own. The git repositories are the storage.
@@ -73,7 +73,7 @@ The three panels are resizable using PaneForge, which supports nested panel grou
 
 The workbench may serve extracted text from copyrighted source material to users who demonstrate they have a legitimate copy. It is not a distribution channel. What is shown depends on the copyright status of each record (see the [source types and copyright decision](../decisions/drafts/source-types-and-copyright.md) for the full display rules and metadata schema). Protection is layered:
 
-1. **Private ingests repository** - only the workbench backend service account has read access
+1. **Access-controlled ingests repository** - only the workbench backend service account has direct read access; record-level access is then gated by copyright status
 2. **Hash-gated API** - ingest retrieval requires the full 64-character SHA-256 hash of the original source file, which can only be obtained by hashing the file itself (no login required - possession of the file is the proof)
 3. **Manual access grants** - for cases where hash verification is impractical (physical book owners, different editions), an Anomalica member can grant per-user per-record access to authenticated users
 4. **Rate limiting** - prevents brute-force attempts to guess the missing hash characters
@@ -126,7 +126,7 @@ Video and audio playback uses the browser's built-in HTML5 media elements. Synci
 ## Review tasks for all record types
 
 - **Claim review** - verifying that extracted claims accurately represent what the source says. Correcting misinterpretations, wrong speakers, incorrect claim types or attestation levels.
-- **Node review** - verifying that people, organisations, places, events, matters, and objects were correctly identified and linked. Correcting misidentifications or creating new nodes.
+- **Node review** - verifying that people, organisations, projects, places, events, objects, documents, and topics were correctly identified and linked. Correcting misidentifications or creating new nodes.
 - **Flagging missing claims** - noting claims that the digester missed and should have extracted.
 - **Removing irrelevant claims** - marking claims that were extracted but add no value (pleasantries, filler, off-topic asides).
 
@@ -141,7 +141,7 @@ When a reviewer submits corrections, the workbench backend commits the changes t
 
 This is the same convention used by git hosting platforms when merging pull requests - the author did the work, the committer applied it. Any git client displays both fields.
 
-**Ingest corrections** (speaker merges, timestamp adjustments, marking irrelevant sections) are committed to the private ingests repository. Reviewers cannot access this repository directly - they interact with ingests only through the workbench, which serves one file at a time after hash verification. The project maintainer has full access to the repository and can review, revert, or approve changes.
+**Ingest corrections** (speaker merges, timestamp adjustments, marking irrelevant sections) are committed to the access-controlled ingests repository. Reviewers cannot access this repository directly - they interact with ingests only through the workbench, which serves one file at a time, applying hash verification for records gated by copyright status. The project maintainer has full access to the repository and can review, revert, or approve changes.
 
 **Digest corrections** (claim type changes, speaker reattribution, node corrections) are committed to the public digests repository. These corrections are visible to anyone and tracked in the public commit history.
 

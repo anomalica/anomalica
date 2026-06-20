@@ -56,7 +56,7 @@ Only `restricted` gates any content. All other statuses show everything freely.
 
 For copyrighted sources, there are two independent paths to unlock the ingested markdown view:
 
-1. **Hash verification (no login required).** The viewer drags their copy of the source file into the browser. The workbench computes the file's SHA-256 hash client-side (using hash-wasm in a Web Worker, streaming so large files are handled without loading them fully into memory). The full 64-character hash is sent to the workbench API, which returns the ingest if the hash matches. The original file never leaves the viewer's browser and is never uploaded. This works without authentication - possession of the source file is the proof. See the [review workbench architecture](../architecture/review-workbench.md) for the truncated-hash system that makes provenance references publicly visible without exposing the full hash needed to fetch ingests.
+1. **Hash verification (no login required).** The viewer drags their copy of the source file into the browser. The workbench computes the file's SHA-256 hash client-side (using hash-wasm in a Web Worker, streaming so large files are handled without loading them fully into memory). The full 64-character hash is sent to the workbench API, which returns the ingest if the hash matches. The original file never leaves the viewer's browser and is never uploaded. This works without authentication - possession of the source file is the proof. See the [review workbench architecture](../../architecture/review-workbench.md) for the truncated-hash system that makes provenance references publicly visible without exposing the full hash needed to fetch ingests.
 
 2. **Manual access grant (login required).** A viewer with an account can request access. An Anomalica member approves it. The grant is per user per record, stored in the workbench's grants file (see below). This covers cases where hash verification is impractical (physical book owners, different digital editions with different hashes).
 
@@ -126,11 +126,11 @@ For `licensed` status, the `reference` field points to evidence of the permissio
 
 ## Original file storage
 
-The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the source file's SHA-256 content hash. The content hash already exists in the ingest's frontmatter, so it doubles as the storage key.
+The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the raw source asset's SHA-256 (`source_hash` in the ingest's frontmatter, which coincides with `content_hash` for `audio`/`video`/`pdf` but differs for `web`/`ebook`, where `content_hash` hashes the extracted body). The hash already exists in the frontmatter, so it doubles as the storage key.
 
 Two storage zones are used:
 
-- **Public zone** (CDN-backed) - public domain and open-licence originals. Served directly to anyone. URL pattern: `https://cdn.anomalica.is/sources/{hash}.{ext}`
+- **Public zone** (CDN-backed) - public domain and open-licence originals. Served directly to anyone. URL pattern: `https://cdn.anomalica.is/sources/{source_hash}.{ext}`
 - **Private zone** (no public access) - copyrighted originals. Only accessible via the workbench API, which checks hash verification or manual grant before proxying the file. No direct public URL exists.
 
 For publicly available sources (YouTube, podcasts, news articles), the original is not stored - the workbench embeds or links to it at its source URL.

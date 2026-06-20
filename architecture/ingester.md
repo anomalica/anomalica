@@ -4,7 +4,7 @@ The ingester converts raw source material into structured text that the digester
 
 ## Source material and copyright
 
-The ingester processes privately acquired source material. Original text, audio, and video are not stored in the knowledge graph (a structured database of interconnected facts), published on the site, or made available to users. Only extracted claims with source attribution appear in the output.
+The ingester processes source material whose copyright status varies - some public domain or openly licensed, some copyrighted. Original text, audio, and video are not stored in the knowledge graph (a structured database of interconnected facts) or published on the site; only extracted claims with source attribution appear in that output. Access to an ingested record itself is gated by its copyright status: openly-available material is served freely through the workbench, copyrighted material only to someone who proves possession of the original. Anomalica is not a redistribution channel for copyrighted works.
 
 This is analogous to academic referencing. A researcher reads sources, extracts facts, cites them, and writes new work. The facts themselves are not copyrightable - the specific expression an author uses is, but an atomic factual claim ("radar contact was maintained for 12 minutes") is a fact, not expression. The assembled articles are new works that cite their sources, not reproductions or derivatives of the source material.
 

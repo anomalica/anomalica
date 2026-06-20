@@ -13,7 +13,7 @@ Use claims as the fundamental unit of knowledge, not articles. A claim is a sing
 
 Articles are generated from the knowledge graph by assembling related claims, not written as prose by editors. Every assertion in a generated article traces back to a specific claim in the graph.
 
-All nodes use universally unique identifiers as primary keys, and domain nodes do not link directly to each other - every relationship passes through a claim. The node types and their current taxonomy are defined in [node types](../../architecture/node-types.md).
+All nodes use universally unique identifiers as primary keys, and domain nodes do not link directly to each other - every relationship passes through a claim. The node types and their current taxonomy are defined in [node types](../architecture/node-types.md).
 
 ## Consequences
 

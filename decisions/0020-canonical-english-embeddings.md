@@ -13,7 +13,7 @@ Using a multilingual embedding model introduces a dependency on an external serv
 
 All claims will be normalised to a canonical English representation before embedding, regardless of the source language. The original-language excerpt will be preserved in provenance metadata.
 
-The embedding model will be English-optimised rather than multilingual, running locally with no dependency on an external service. The specific model and runtime are implementation details documented in [architecture/embeddings.md](../../architecture/embeddings.md).
+The embedding model will be English-optimised rather than multilingual, running locally with no dependency on an external service. The specific model and runtime are implementation details documented in [architecture/embeddings.md](../architecture/embeddings.md).
 
 ## Consequences
 

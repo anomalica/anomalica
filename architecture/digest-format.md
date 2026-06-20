@@ -100,9 +100,9 @@ same real-world person may appear with different ids across digests;
 the deterministic import step resolves duplicates via name and alias
 matching.
 
-`type` is one of the eight ingestion types defined in
-[`node-types.md`](node-types.md): `person`, `organisation`, `place`,
-`event`, `matter`, `object`, `document`, `concept`.
+`type` is one of the eight domain node types defined in
+[`node-types.md`](node-types.md): `person`, `organisation`, `project`,
+`place`, `event`, `object`, `document`, `topic`.
 
 `metadata` is an optional mapping for type-specific extra data
 (sentiment markers on organisations, date ranges on documents, role
@@ -111,8 +111,9 @@ labels). The schema does not constrain its keys.
 ### Claims
 
 `domain_claims` and `infrastructure_claims` are two parallel lists with
-identical item shapes. They are kept separate because the two
-extraction passes run independently and feed two separate databases.
+identical item shapes. They are kept separate in the digest because the
+two extraction passes run independently; on import both feed the single
+knowledge-graph database (see [graph-schema.md](graph-schema.md)).
 
 Field order per claim: `id`, `type`, `attestation`, `speaker?`,
 `location?`, `date?` or `date_range?`, `refs?`, `quote?`, `text`.

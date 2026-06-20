@@ -3,6 +3,8 @@
 Date: 2026-03-24
 Status: accepted
 
+Amendment (2026-06-20): block-level annotations are YAML inside HTML comments (`<!-- ... -->`), not `---`-fenced blocks - this removed the `---` overloading the original format carried. See [decisions/drafts/inline-metadata-format.md](drafts/inline-metadata-format.md) and [architecture/record-format.md](../architecture/record-format.md); the Decision and Consequences below are updated to match.
+
 ## Context
 
 The ingester converts raw source material (PDFs, audio, video, ebooks, web pages) into a normalised format that the digester consumes. This format must handle:
@@ -18,9 +20,9 @@ We evaluated DoclingDocument (IBM), Unstructured.io's element model, TEI (Text E
 
 Use markdown files with YAML frontmatter and inline YAML annotation blocks. The format is:
 
-- **YAML frontmatter** for document-level metadata (title, date, authors, source, content hash)
+- **YAML frontmatter** for document-level metadata (title, date, creators, source, content hash)
 - **Markdown body** for content as it naturally reads
-- **YAML annotation blocks** (fenced with `---`) for block-level markers: page boundaries, speaker turns, image descriptions, block-level redactions
+- **YAML annotation blocks** (inside HTML comments, e.g. `<!-- speaker: ... -->`) for block-level markers: page boundaries, speaker turns, image descriptions, block-level redactions
 - **Double curly brace inline annotations** (`{{YAML}}`) for the rare cases where an annotation falls mid-sentence, such as `{{redacted: ~3 words}}` or `{{illegible}}`
 
 The full specification lives in `architecture/record-format.md`.
@@ -41,6 +43,6 @@ Markdown with YAML annotations is human-readable, git-friendly, trivially parsea
 - The format is inspectable by humans without tooling
 - The specification is controlled by the project and can be extended as needed
 - No external dependency on any other project's schema
-- The parser is simple: split on `---` fences, try YAML parse, everything else is content
+- The parser is simple: the frontmatter is the leading `---` block; block annotations are HTML comments parsed as YAML; inline annotations are `{{YAML}}`; everything else is content
 - Inline annotations use double curly braces (`{{YAML}}`) to avoid collisions with single braces in source text. The content inside is valid YAML, keeping the format consistent throughout.
-- The `---` fence is overloaded (frontmatter, annotations, and potentially content that contains triple dashes). The spec addresses this with normalisation rules but it remains a source of ambiguity
+- Moving block annotations into HTML comments removed the `---` overloading the original format carried; `---` now marks only the frontmatter fence (content that itself contains a triple-dash line is still handled by the spec's normalisation rules)

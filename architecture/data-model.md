@@ -19,7 +19,7 @@ See also: [node types](node-types.md). This document is the canonical home for p
 - A **claim** has a **speaker** (the person who made the assertion, which may differ from the record's producer)
 - A **claim** has a location within its record (timestamp, page number, paragraph)
 - A **claim** is attributed to one or more **records** (the same claim may appear in multiple records, which may constitute corroboration if the provenance chains are independent)
-- A **claim** references zero or more **domain nodes** (person, organisation, place, event, matter, object)
+- A **claim** references zero or more **domain nodes** (person, organisation, project, place, event, object, document, topic)
 - Domain nodes do not link directly to each other. Every relationship passes through a claim.
 
 ## Record provenance: who made a record versus who made a claim

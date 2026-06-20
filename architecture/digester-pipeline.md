@@ -94,9 +94,9 @@ Embedding similarity works well for comparing claims (full sentences) but poorly
 
 ## Domain and infrastructure extraction
 
-The digester produces two separate databases from the same source records.
+The digester extracts two categories of claim from the same source records: domain and infrastructure.
 
-### Domain database
+### Domain claims
 
 Claims about anomalous phenomena: what happened, who witnessed it, what was investigated, what was covered up, who was involved and what qualifies them. This is the public-facing knowledge graph that feeds the assembler and becomes the website content.
 
@@ -104,7 +104,7 @@ The test for whether a claim belongs in the domain database: would it appear on 
 
 Career histories, credibility-establishing facts, and programme details are domain even though they aren't directly about anomalous events. "Brown held a top secret Sensitive Compartmented Information clearance from the Defence Intelligence Agency" goes on Brown's page because it establishes why his testimony matters.
 
-### Infrastructure database
+### Infrastructure claims
 
 Claims about the information ecosystem: who interviewed whom, which podcasts discuss which topics, who recommends or dismisses what sources, sentiment about other media, casual mentions of other records or sources. This is operational intelligence used for deciding what to ingest next, understanding biases, and mapping the network of information flow.
 
@@ -120,4 +120,4 @@ Reasons for separate passes rather than a single combined pass:
 - **Different prompts.** Domain extraction looks for testimony, evidence, events, programmes. Infrastructure extraction looks for inter-source references, career context, sentiment, network connections. These are different tasks.
 - **Infrastructure is optional.** A Freedom of Information Act document probably contains zero infrastructure content. A podcast transcript contains lots. The infrastructure pass can be skipped for document types where it would produce nothing.
 
-Both databases use the same schema and share node identifiers so they can be joined when needed.
+Both categories live in the same single knowledge-graph database and share node identifiers, so domain and infrastructure claims can be joined when needed (see [graph-schema.md](graph-schema.md)).

@@ -29,7 +29,7 @@ A new decision goes to the home that matches its concern. When a decision spans 
 
 ### Numbered ADRs keep their numbers
 
-Architecture ADRs retain their existing numbers. Gaps left where records moved to another home are expected and fine; renumbering would break cross-references for no gain. New architecture ADRs continue the sequence.
+Architecture ADRs retain their existing numbers. Gaps left where records moved to another home are expected and fine; renumbering would break cross-references for no gain. New architecture ADRs continue the sequence. A numbered ADR may carry `Status: draft` in place while its decision is still being settled (for example 0021, 0031); `decisions/drafts/` holds only unnumbered in-progress drafts not yet promoted to a number.
 
 ### Maintenance policy depends on release state
 
