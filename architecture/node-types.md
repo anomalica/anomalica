@@ -239,6 +239,10 @@ Lifecycle: cross-corpus discovery proposes candidate patterns; a human confirms,
 
 Status: the type exists; the discovery pass is not yet built, so there is currently zero pattern output.
 
+## Node slugs
+
+Every node maps to a URL slug for its page. The slug is `metadata.explicit_slug` if the node carries one, otherwise `slugify(title)`. It is resolved once, by the synthesiser, into the brief it emits (`page.slug` and `related_nodes[].slug`) - the assembler is a writer only and does not read node metadata, so a slug not pre-resolved into the brief would silently break pattern-slug URLs and their cross-links. See the [brief format](brief-format.md) and [decision 0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md).
+
 ## Non-human intelligence
 
 The current types are designed around the data as it exists today, which is overwhelmingly human testimony about anomalous phenomena. Person covers named human individuals.
