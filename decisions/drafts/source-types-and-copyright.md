@@ -126,11 +126,11 @@ For `licensed` status, the `reference` field points to evidence of the permissio
 
 ## Original file storage
 
-The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the raw source asset's SHA-256 (`source_hash` in the ingest's frontmatter, which coincides with `content_hash` for `audio`/`video`/`pdf` but differs for `web`/`ebook`, where `content_hash` hashes the extracted body). The hash already exists in the frontmatter, so it doubles as the storage key.
+The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the raw source asset's SHA-256 - the hash that names the file in `sources/`. Which field carries that hash is per-type: `source_hash` (frontmatter) for `web`; `content_hash` (frontmatter, which hashes the source bytes) for `audio`/`video`/`pdf`; and for `ebook` only the verification sidecar's `sha256` (no frontmatter field). See record-format.md's `source_hash` row.
 
 Two storage zones are used:
 
-- **Public zone** (CDN-backed) - public domain and open-licence originals. Served directly to anyone. URL pattern: `https://cdn.anomalica.is/sources/{source_hash}.{ext}`
+- **Public zone** (CDN-backed) - public domain and open-licence originals. Served directly to anyone. URL pattern: `https://cdn.anomalica.is/sources/{asset_hash}.{ext}` (the source-asset hash, per type as above)
 - **Private zone** (no public access) - copyrighted originals. Only accessible via the workbench API, which checks hash verification or manual grant before proxying the file. No direct public URL exists.
 
 For publicly available sources (YouTube, podcasts, news articles), the original is not stored - the workbench embeds or links to it at its source URL.
