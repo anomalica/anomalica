@@ -20,6 +20,8 @@ For each assembled article, the following are recorded:
 
 All prompt components (knowledge graph data, directives, system template, previous article version) are independently versioned. A reader can reconstruct the full prompt from these components, hash it, and compare against the stored prompt hash. A match proves the article was produced from exactly those inputs.
 
+The knowledge-graph-data component is realised as the **brief** - the per-page graph slice the synthesiser emits and the writer's sole input ([decision 0036](0036-synthesise-stage-brief-as-writer-input.md)). The brief's input hash is this component's audit hash, so one object serves as the writer's input, the per-page staleness unit, and this audit record.
+
 After assembly, a different AI model from a different provider independently verifies that every factual assertion in the article traces to the knowledge graph. The verification report is stored alongside the article, including which model performed the check, when, and what it found.
 
 The verification status is visible on the site. Articles can be published before verification - the status is informational, not a gate.
