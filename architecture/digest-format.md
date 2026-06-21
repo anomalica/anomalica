@@ -4,6 +4,10 @@ The output of the digester for each record is a single YAML file at
 `digests/records/{friendly-name}.yaml`. This file is the canonical
 intermediate between the artificial-intelligence extraction step and every
 downstream consumer (the SQLite database, the workbench, the assembler).
+Today the relationship is 1:1 (one model, one digest). A planned direction
+makes it 1:N - several models per ingest, reconciled into this single
+canonical digest - see [Planned: multi-model digestion](#planned-multi-model-digestion-and-canonical-reconciliation)
+and [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md).
 
 The companion document on the ingester side is
 [`record-format.md`](record-format.md). This document covers the digester
@@ -182,6 +186,15 @@ Producers (the digester, the converter, future tooling) must:
   scripts appear as their script.
 - Universally unique identifiers are RFC 4122 version 4 in lowercase
   hex form.
+
+## Planned: multi-model digestion and canonical reconciliation
+
+Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md); not yet built. Today the relationship is 1:1 (one model, one digest, `model: <alias>`). The planned direction:
+
+- **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored version-named at `digests/variants/{friendly-name}/{model-id}-{version}.yaml` (a top-level `variants/` tree, NOT under `records/`, because the assimilator globs `records/` recursively and would otherwise import them). The version in the filename means a new model release never overwrites a prior file.
+- **One canonical** at the unchanged `digests/records/{friendly-name}.yaml` - DERIVED by a reconciliation stage that clusters equivalent claims across the variants, dedups same-fact-different-words, and picks the best phrasing. Recomputed from all current variants when the set changes (order-independent, idempotent). It is the only digest the assimilator imports; the variants are inert.
+- **Schema `anomalica/digest/2`** (lands with the build): `model` carries the versioned id; the canonical gains `reconciled_from` (the variants it was built from); optionally per-claim variant provenance.
+- **Independence**: multiple models on one source are alternatives, not corroboration - zero added independence. The evidence model counts independence by provenance-root, not claim-count (decision 0039).
 
 ## Legacy markdown format
 

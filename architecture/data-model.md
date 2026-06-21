@@ -85,7 +85,7 @@ Each pipeline stage has a named output:
 | Stage | Output | Shareable | Description |
 |-------|--------|-----------|-------------|
 | Ingester | **Ingest** | No (copyright) | The record converted to structured text with metadata, plus any extracted media (images today; figures from PDFs and video keyframes later). Contains the actual content. |
-| Digester | **Digest** | Yes | Claims, nodes, and provenance extracted from one ingest. No copyrighted content. |
+| Digester | **Digest** | Yes | Claims, nodes, and provenance extracted from one ingest. No copyrighted content. Planned: N model-variants reconciled into one derived canonical digest per ingest; only the canonical is assimilated ([decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)). |
 | Assimilator | **Knowledge graph** | Yes (derived) | The unified SQLite graph built from all digests: cross-record entity resolution, provenance, scoring, embeddings. Derived data, rebuildable from the digests. |
 | Assembler | **Article** | Yes | Readable prose assembled from knowledge graph data in a specific language. Public-eligible images from ingests are copied into the assembler's output for serving on the site. |
 

@@ -31,7 +31,7 @@ raw sources --> ingester --> ingests (access-gated git repo)
 | **anomalica** | Organisation-level decisions, architecture, and documentation |
 | **ingester** | Raw source material to structured text (audio, video, ebooks, PDFs, scanned documents) |
 | **ingests** | Ingester output, access-gated per record by the source's copyright status (some records are copyrighted, others public domain or openly licensed) |
-| **digester** | Artificial intelligence extraction from ingests, producing one digest per record (no graph) |
+| **digester** | Artificial intelligence extraction from ingests, producing one digest per record (no graph). Planned: N model-variants per ingest reconciled into one canonical digest ([decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)) |
 | **digests** | Reviewed digests - the source of truth for the knowledge graph (a structured database of interconnected facts) |
 | **assimilator** | Builds and maintains the unified SQLite knowledge graph from digests: import, entity resolution, scoring, corroboration, embeddings, search, export |
 | **anomalica-common** | Shared library: the digest interchange (data model + YAML I/O) and the Claude transport + spend gate, single-sourced so the digester and assimilator cannot drift |
@@ -43,7 +43,7 @@ raw sources --> ingester --> ingests (access-gated git repo)
 
 ## Data flow
 
-The ingester writes ingests to the access-controlled ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public digests repository. Both the ingester and digester need access to the ingests repository; public exposure of any individual ingest is then gated by that record's copyright status.
+The ingester writes ingests to the access-controlled ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public digests repository. Both the ingester and digester need access to the ingests repository; public exposure of any individual ingest is then gated by that record's copyright status. (Planned direction: the digester may run several models per ingest and a reconciliation stage builds one canonical digest from them; only the canonical is assimilated - [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md).)
 
 Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
 

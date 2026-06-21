@@ -17,7 +17,7 @@ Evidence scoring will be algorithmic, computed from properties of the knowledge 
 Initial scoring factors (expected to evolve):
 
 - **Source type weight** - different types of sources carry different weight. For example, sworn testimony carries more weight than a podcast interview, and a declassified government document carries more weight than an anonymous claim. The specific weights will be published and subject to revision.
-- **Corroboration count** - the number of sources making the same or supporting claims.
+- **Corroboration count** - the number of INDEPENDENT sources making the same or supporting claims, counted by provenance-root, NOT by raw claim-count. This is a hard requirement: multiple models digesting one source are alternatives, not corroboration (zero added independence), and one wire story reprinted across many outlets is a single independent source, not many. Correlated sources are not double-counted (see the provenance-lineage theory above and [decision 0039](0039-multi-model-digestion-canonical-reconciliation.md)).
 - **Contradiction count** - the number of sources contradicting the claim.
 - **Temporal consistency** - whether the claim has remained stable over time or has shifted.
 
