@@ -37,6 +37,12 @@ The platform's model is wire-service reporting, not a magazine: report what sour
 
 Human directive contributions follow the same rules: corrections and additions must cite sources; the directive system is for factual input, not opinion.
 
+## Quotation
+
+Quotes are as long as they need to be to convey their point. The platform does not artificially truncate quotations or enforce a quote-length cap - a supporting quote runs to the length that conveys the fact, no more. Every quote is attributed to its source record.
+
+This is lawful quotation (Japan's Copyright Act Article 32, with attribution under Article 48) and standard editorial practice, not a liberty the platform takes. It applies to the short evidential quotes that substantiate claims - NOT to full source bodies or transcripts, which stay behind the proof-of-possession gate (quote is not body). The copyright basis and the substantiality line are in [source types and copyright](../decisions/drafts/source-types-and-copyright.md#quotation-policy).
+
 ## Disclosing AI's role
 
 AI is central to the platform and its use is communicated openly - never hidden, minimised, or apologised for. The methodology page on the website explains, in accessible terms:

@@ -39,6 +39,14 @@ From the digestion stage onwards, the platform publishes only extracted facts, c
 
 The platform does not publish copyrighted source material or ingested reproductions of copyrighted source material.
 
+### Quotation policy
+
+Short attributed quotations are published in full - as long as they need to be to convey their point - and are NOT capped, truncated to a length limit, or gated. This is best-effort, not enforced: the digester uses Haiku, which already produces small, targeted quotes, and the platform builds no quote-length enforcement. If a rightsholder raises a specific concern, the platform complies on request (takedown or adjustment); it does not pre-restrict.
+
+The legal basis is Japan's Copyright Act Article 32, which makes quotation (引用 (いんよう)) of a published work a lawful affirmative right where the use is fair and the quotation subordinate to the quoting work, with mandatory source attribution under Article 48. This is the distinct right covering the PUBLISHED quotes; Article 30-4 (above) covers the extraction step, not publication. Short attributed quotation is also standard practice across journalism, scholarship, and reference works (Wikipedia treats short attributed text quotes as its most permissive category). Anomalica is educational: quotes substantiate claims and link back to the source record.
+
+The line is SUBSTANTIALITY. A supporting quote is evidence and is published; a full body or transcript is redistribution and stays behind the proof-of-possession gate (see below). Quote is not body - this policy does not un-gate full bodies or transcripts.
+
 ### What the workbench displays
 
 The workbench is publicly accessible. Anyone can use it to audit the full provenance chain of any claim - from the original source, through ingestion, to digestion. This transparency is fundamental to the platform's credibility.
@@ -141,7 +149,7 @@ For local development, the workbench backend serves originals from a local direc
 
 ## Consequences
 
-The platform can draw on a broad range of sources including books and copyrighted journalism without infringing copyright. The legal basis is threefold: facts are not copyrightable (universal), Japan's Article 30-4 permits the information analysis that produces those facts, and the platform never distributes copyrighted source material to the public.
+The platform can draw on a broad range of sources including books and copyrighted journalism without infringing copyright. The legal basis is fourfold: facts are not copyrightable (universal), Japan's Article 30-4 permits the information analysis that produces those facts, Article 32 makes short attributed quotation a lawful right (covering the published evidential quotes; see [Quotation policy](#quotation-policy)), and the platform never distributes copyrighted source material to the public.
 
 The workbench provides full transparency into the extraction pipeline while respecting copyright. Anyone can audit the digested claims and their provenance. For copyrighted sources, viewing the ingested reproduction requires demonstrating access to the original (via hash match or manual grant).
 
