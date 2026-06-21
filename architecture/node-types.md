@@ -241,7 +241,7 @@ Status: the type exists; the discovery pass is not yet built, so there is curren
 
 ## Node slugs
 
-Every node maps to a URL slug for its page. The slug is `metadata.explicit_slug` if the node carries one, otherwise `slugify(title)`. It is resolved once, by the synthesiser, into the brief it emits (`page.slug` and `related_nodes[].slug`) - the assembler is a writer only and does not read node metadata, so a slug not pre-resolved into the brief would silently break pattern-slug URLs and their cross-links. See the [brief format](brief-format.md) and [decision 0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md).
+Every node maps to a URL slug for its page. The slug is `metadata.explicit_slug` if the node carries one, otherwise the output of the canonical slugifier in `anomalica-common` - a single-producer helper (the discipline used for claim_hash) imported by both the assimilator and the assembler so the two cannot diverge. The slugifier uses **first-last order for persons** (`david-fravor`) - note this differs from the last-first canonical node name (`Fravor, David`) - and applies deterministic disambiguation for genuinely-distinct same-name entities. The slug is resolved once, by the synthesiser, into the brief (`page.slug` and `related_nodes[].slug`); the assembler is writer-only and does not read node metadata, so a slug not pre-resolved into the brief would silently break pattern-slug URLs and their cross-links. (The shared slugifier is landing now in anomalica-common, resolving a brief-vs-deployed slug divergence; it supersedes the earlier per-caller `slugify(title)`.) See the [brief format](brief-format.md) and [decision 0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md).
 
 ## Non-human intelligence
 

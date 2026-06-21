@@ -6,9 +6,9 @@ The v1 field set below is live, grounded against the synthesiser's first-cut bri
 
 ## Shape
 
-Markdown + YAML frontmatter, a self-contained bundle. The frontmatter carries the page identity, the brief's hash, and the related-node candidates; the body carries the ordered, selected claims with their provenance. Language-neutral throughout - facts, not prose; one brief feeds all N language articles for its page.
+A YAML document (`.yaml`) - the same serialisation as the digest interchange (0027), not markdown with frontmatter. Top-level keys carry the page identity, the brief hash, the generated stamp, and the related-node candidates; a `claims` list carries the ordered, selected claims with their provenance. Language-neutral throughout - facts, not prose; one brief feeds all N language articles for its page. The fields below are the locked `anomalica/brief/1` contract; YAML is the serialisation.
 
-## Frontmatter
+## Top-level fields
 
 | Field | Description |
 |-------|-------------|
@@ -18,9 +18,9 @@ Markdown + YAML frontmatter, a self-contained bundle. The frontmatter carries th
 | `generated` | `{ graph_version }` - the knowledge-graph version the brief was generated from (the coarse "knowledge-graph version used" stamp 0010 records). |
 | `related_nodes` | Nodes co-occurring with the page entity, ranked by shared-claim count - the candidate entities the writer may link to. Each carries its resolved `slug` for cross-links. |
 
-`page.slug` and `related_nodes[].slug` are resolved by the synthesiser at emission (`metadata.explicit_slug` if present, else `slugify(title)` - see [node slugs](node-types.md#node-slugs)). They are pre-resolved into the brief because the assembler is writer-only and does not read node metadata; an unresolved slug would silently break pattern-slug URLs and their cross-links.
+`page.slug` and `related_nodes[].slug` are resolved by the synthesiser at emission via the canonical slugifier (`metadata.explicit_slug` if present, else the shared anomalica-common slugifier - first-last for persons, with deterministic disambiguation; see [node slugs](node-types.md#node-slugs)). They are pre-resolved into the brief because the assembler is writer-only and does not read node metadata; an unresolved slug would silently break pattern-slug URLs and their cross-links.
 
-## Body: the selected claims
+## `claims` (the selection)
 
 An ordered list of claims - the selection, and the only facts the writer may use. Nothing outside it can enter the prose; this is what makes 0008 enforceable by construction. Order is the synthesiser's. Each claim carries:
 

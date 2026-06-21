@@ -29,7 +29,7 @@ Selection is deterministic and produces no prose. The synthesiser, not the write
 
 ### The brief
 
-A brief is a language-neutral markdown + frontmatter bundle (schema `anomalica/brief/1`) holding exactly the graph slice that feeds ONE page - the nodes, the selected claims with their provenance, and the relationships - before any prose. The field-level format is specified in [architecture/brief-format.md](../architecture/brief-format.md).
+A brief is a language-neutral YAML document (schema `anomalica/brief/1`, the same serialisation as the digest) holding exactly the graph slice that feeds ONE page - the nodes, the selected claims with their provenance, and the relationships - before any prose. The field-level format is specified in [architecture/brief-format.md](../architecture/brief-format.md).
 
 ### The brief is the writer's sole input
 
