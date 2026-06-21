@@ -26,11 +26,26 @@ The canonical is DERIVED: recomputed from all current model-variants whenever th
 
 ### Only the canonical is assimilated
 
-The assimilator imports ONLY the canonical. Model-variants stay linked to the ingest and are inspectable (workbench, audit) but are INERT - they never add claims, nodes, or evidence to the graph. Assimilation stays mechanical: replace-by-record (a changed canonical drops that record's old claims and imports the new); claim_hash content-addressing plus the staleness loop propagate improvements to articles automatically. The "genuinely better" judgement lives in reconciliation, not assimilation.
+The assimilator imports ONLY the canonical. Model-variants stay linked to the ingest and are inspectable (workbench, audit) but are INERT - they never add claims, nodes, or evidence to the graph. IMPORT stays mechanical: replace-by-record (a changed canonical drops that record's old claims and imports the new); claim_hash content-addressing plus the staleness loop propagate improvements to articles automatically. But the assimilator MAINTAINS the graph, it is not merely an importer: claim dedup, supersede, and corroboration-linking are a curation pass over the graph (see [Claim dedup](#claim-dedup-provenance-overlap-not-hash)). The "genuinely better" judgement lives in reconciliation (across model-variants) and graph maintenance (across claims), not in import.
 
 ### The independence rule (load-bearing)
 
 Multi-model extraction of ONE source produces ALTERNATIVES, not corroboration - it adds ZERO independence. The evidence/corroboration score must count independence by SOURCE / provenance-root, never by claim-count. The same rule kills wire-story-reprint inflation (one wire report reprinted across fifty outlets is one independent source, not fifty). This is a hard requirement on the evidence-scoring model (still undefined - [algorithmic-evidence-scoring draft](drafts/algorithmic-evidence-scoring.md), where it is also recorded).
+
+### Claim dedup: provenance-overlap, not hash
+
+How does the graph dedup semantically-equivalent claims, when a content hash cannot (different phrasing, same fact)? The PRIMARY signal is PROVENANCE OVERLAP, not semantics. Each claim already carries its `record_id` and `location_in_record` (the lines/timestamp it was extracted from); these are the inputs:
+
+- **Same source + overlapping location = a DUPLICATE.** Same extraction, different phrasing - including the multi-model variants of one source. Collapse by SUPERSEDE (the worse claim retired, the better kept as canonical). This is NOT corroboration; it adds zero independence.
+- **Different sources, same fact = CORROBORATION.** Keep BOTH claims, both linked to their entity nodes, counting as independent support. Must NOT be collapsed. (This already has a home: the `corroborations` table, populated by the `corroborate` pass, and `scoring.py` already counts independent RECORDS, not raw claims.)
+
+Provenance overlap thus deterministically separates dedup (same-source) from corroboration (cross-source) - this IS the independence rule operationalised (count independence by provenance root). It is cheap and needs no model for the common case.
+
+For the cases provenance cannot settle - same source, different lines, but the same fact; or judging whether two cross-source claims are the same fact for linking - a cheap-model judge surfaces candidate claim-duplicate CLUSTERS, which go through the SAME curation machinery as entity merges, pointed at claims (propose -> confirm -> supersede), recorded as reversible curation in the ledger and replayed on rebuild ([0038](0038-graph-curation-replayable-ledger.md), extended from nodes to claims).
+
+SUPERSEDE semantics: a superseded claim is retired like a merged node - kept linked and inert for audit, never feeding the synthesiser. (Claims have no retired/superseded column today; it is net-new, landing with the build, mirroring nodes' `retired_at`.) The synthesiser also guards at SELECTION - it refuses two same-source-overlapping claims on one page - belt-and-braces over the maintenance pass.
+
+This is also what reconciliation (above) IS for the multi-model case: the model-variants of one source are same-source + overlapping-location, so they are duplicates, superseded down to the one canonical.
 
 ## Naming and storage (reconciled with the live contract)
 
