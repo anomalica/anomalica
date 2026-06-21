@@ -102,23 +102,25 @@ directives:
 ---
 ```
 
-**Broader directives** live in `_directives.yaml` files in the content folder hierarchy:
+**Broader directives** live in `_directives.yaml` files in the content folder hierarchy. The content layout is flat with a language *suffix* (`pages/<section>/<slug>.<lang>.md`), not a per-language directory tree, so the hierarchy is the folder chain and language is itself a file suffix (`_directives.<lang>.yaml`):
 
 ```
 content/
-  _directives.yaml              (global - all languages, all content)
-  en/
-    _directives.yaml            (all English content)
+  _directives.yaml                     (global - all languages, all content)
+  _directives.en.yaml                  (global, English only)
+  pages/
+    _directives.yaml                   (all pages, all languages)
     people/
-      _directives.yaml          (all English people articles)
-      david-fravor.md           (article with its own directives in frontmatter)
-  ja/
-    _directives.yaml            (all Japanese content)
-    events/
-      _directives.yaml          (all Japanese events articles)
+      _directives.yaml                 (all people articles, all languages)
+      _directives.en.yaml              (English people articles)
+      david-fravor.en.md               (article with its own directives in frontmatter)
+    records/
+      _directives.yaml                 (all record inspection pages)
 ```
 
-When assembling an article, the assembler collects directives from the bottom up: article frontmatter, then the nearest `_directives.yaml`, then parent folders up to the root. More specific directives take precedence over more general ones.
+A `_directives.yaml` file is a list of presentational instruction strings (or a mapping carrying a `directives:` list).
+
+When assembling an article, the assembler collects directives most-specific-first: the article's own frontmatter, then at each folder from the article's directory up to the content root, the `_directives.<lang>.yaml` (this language) followed by the `_directives.yaml` (all languages). Duplicates collapse to their most-specific position; on conflict the earlier (more specific) directive wins. A directive can only ever affect presentation - one that asks for a factual change is ignored.
 
 If an article is renamed or moved, its frontmatter directives travel with it. If a content folder is restructured, the `_directives.yaml` files move with their folders. Nothing gets orphaned.
 
