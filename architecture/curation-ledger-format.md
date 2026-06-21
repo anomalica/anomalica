@@ -37,7 +37,7 @@ An append-only sequence, one entry per curation operation. Entries are NEVER edi
 
 After import, for each live (not later reversed) merge entry, in order:
 
-1. Resolve the survivor and victim nodes by their stable identity (the synthetic `id` if node identity is rebuild-stable, else the natural key - `name` + `node_type` - verified against the snapshot).
+1. Resolve the survivor and victim nodes by natural identity (`name` + `node_type`, against the recorded `prior_names`) - the authoritative replay key (see Identity keying).
 2. Reattach the victims' `claim_node_refs` and `aliases` to the survivor.
 3. Add the victims' names and the entry's `prior_names` as aliases on the survivor.
 4. Set the victims' `retired_at` (this is the writer for that field, which is read everywhere but written nowhere today).
@@ -46,7 +46,7 @@ Same digests + same ledger => identical graph. Chained merges (a victim of one e
 
 ## Identity keying
 
-Per [0038](../decisions/0038-graph-curation-replayable-ledger.md), node identity is currently an import-order artefact (a node's id is the `md_id` of whichever digest first introduced it), so synthetic ids are not guaranteed rebuild-stable. Until node identity is made deterministic-from-content, the AUTHORITATIVE replay key is the natural identity (`canonical_name` / `prior_names` + `node_type`); the synthetic ids in `survivor`/`victims` are an at-merge-time snapshot for audit and direct application. Once node identity is content-deterministic, replay keys directly on the ids.
+Per [0038](../decisions/0038-graph-curation-replayable-ledger.md), the authoritative replay key is the natural identity - `canonical_name` + `node_type` + `prior_names` - because synthetic node ids are not rebuild-stable (a per-extraction `uuid4`, first-importer-wins) and the importer already resolves entities by name. The synthetic ids in `survivor`/`victims` are an at-merge-time audit snapshot, not the replay key. (Content-deterministic ids were considered and parked - see 0038.)
 
 ## Extensibility
 

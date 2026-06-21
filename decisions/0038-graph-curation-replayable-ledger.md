@@ -37,16 +37,13 @@ The ledger is a dedicated, git-versioned store - its own data repo (`curation`),
 
 It is git-tracked human-readable text (YAML), NOT SQLite: the decisions must be diffable and reviewable, and reversibility, versioning, and actor/timestamp come from git plus in-band fields. (Contrast the AI-operation ledger, [0037](0037-ai-operation-ledger.md), which is local operational telemetry in SQLite; this is durable human source.)
 
-## Prerequisite: rebuild-stable node identity
+## Node identity: the replay key
 
-Replay references the entities a merge acted on, so those entities must be re-identifiable after a fresh import. Today they are NOT reliably so. Grounding the assimilator: a node's `id` is the `md_id` minted by whichever digest FIRST introduced the entity; later digests naming the same entity match by name/fuzzy/acronym and inherit that id (the variant name becomes an alias). So node identity depends on import ORDER and on matching - and at least one import loop iterates an unsorted `glob`. A merge keyed purely on these synthetic ids could reference different entities after a rebuild.
+Replay references the entities a merge acted on, so those entities must be re-identifiable after a fresh import. Synthetic node ids are NOT rebuild-stable: a node's id is a per-extraction `uuid4` (minted fresh each time the digester runs), and the importer keeps whichever id the FIRST digest to introduce the entity carried, with later mentions matching by name/fuzzy/acronym and inheriting it (the variant name becomes an alias). Identity has therefore always been carried by NAME, not id - and import order is order-sensitive on top (at least one import loop iterates an unsorted `glob`). A merge keyed purely on synthetic ids could reference different entities after a rebuild.
 
-Correct replay therefore requires rebuild-stable node identity. Two ways (the assimilator's implementation call):
+Resolved (the assimilator's call): the authoritative replay key is the **natural identity** - `canonical_name` + `node_type` + the recorded `prior_names`. This is what the importer already resolves on, so it adds no new scheme. The synthetic ids are recorded too, but as an at-merge-time AUDIT snapshot only, not the replay key. Content-deterministic ids (deriving the id from name + type) were considered and parked: they would be a new parallel identity scheme with its own collision handling and a schema-wide id ripple, for no benefit - fragmentation is name-based and names already carry identity. They remain a possible later improvement only if ever needed.
 
-- **Preferred: make node identity deterministic from content** - derive the id from the canonical name + node_type, so the same entity gets the same id on every rebuild regardless of import order. Then the ledger keys cleanly on ids.
-- **Fallback: key replay on the rebuild-stable natural identity** - canonical name + node_type + the recorded prior names - rather than the synthetic id.
-
-Either way the ledger records BOTH the synthetic ids (an at-merge-time snapshot, for audit and direct application) AND the canonical name + prior names (the rebuild-stable key and the human-meaningful record). This is a hard dependency: the merge backend cannot replay correctly until node identity is rebuild-stable.
+Independently of the keying choice, the import `glob` should be sorted so import order is deterministic.
 
 ## Why
 
