@@ -2,7 +2,7 @@
 
 The curation ledger is the durable, replayable record of human graph-curation decisions - initially node merges. Its producer is the workbench's merge tool; its consumer is the assimilator, which replays it on every graph rebuild, after import. See [decision 0038](../decisions/0038-graph-curation-replayable-ledger.md) for the why.
 
-It is git-tracked human-readable YAML in a dedicated curation store (a data repo, sibling to `ingests`/`digests`/`content`) - NOT SQLite. The decisions must be diffable and reviewable; reversibility, versioning, and the who/when audit come from git commits plus the in-band `actor`/`timestamp` fields. (Contrast the operational AI-ledger in [0037](../decisions/0037-ai-operation-ledger.md), which is local SQLite telemetry.)
+It is git-tracked human-readable YAML in the `curation` repo (a dedicated data repo, sibling to `ingests`/`digests`/`content`) - NOT SQLite. The decisions must be diffable and reviewable; reversibility, versioning, and the who/when audit come from git commits plus the in-band `actor`/`timestamp` fields. (Contrast the operational AI-ledger in [0037](../decisions/0037-ai-operation-ledger.md), which is local SQLite telemetry.)
 
 ## Shape
 

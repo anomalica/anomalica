@@ -27,13 +27,13 @@ The project already persists downstream human edits as durable artefacts at the 
 
 ### Physical home: a dedicated curation store, NOT the digests
 
-The ledger is a dedicated, git-versioned store - its own data repo, a sibling of `ingests`/`digests`/`content` - written by the workbench's merge tool and read+replayed by the assimilator. It does NOT go inside per-record digests, for three reasons:
+The ledger is a dedicated, git-versioned store - its own data repo (`curation`), a sibling of `ingests`/`digests`/`content` - written by the workbench's merge tool and read+replayed by the assimilator. It does NOT go inside per-record digests, for three reasons:
 
 - A merge is a CROSS-record, graph-level decision; it has no natural per-record digest home.
 - It is a distinct data lifecycle - human-authored graph curation, applied at the graph-build boundary - so it follows the established pattern of its own data-artefact repo.
 - Keeping it out of `digests` keeps that repo's contract clean (a digest is per-record extraction) and removes any chance of a digest regeneration touching irreplaceable human curation.
 
-(The lighter alternative - a top-level `curation/` directory inside the digests repo, since the assimilator already reads that repo - is workable but mixes per-record extraction with cross-record curation. The exact repo is a structural call; the contract here is what is pinned.)
+(The lighter alternative - a top-level curation directory inside the digests repo, since the assimilator already reads that repo - is workable but mixes per-record extraction with cross-record curation, and was rejected in favour of the dedicated `curation` repo.)
 
 It is git-tracked human-readable text (YAML), NOT SQLite: the decisions must be diffable and reviewable, and reversibility, versioning, and actor/timestamp come from git plus in-band fields. (Contrast the AI-operation ledger, [0037](0037-ai-operation-ledger.md), which is local operational telemetry in SQLite; this is durable human source.)
 
