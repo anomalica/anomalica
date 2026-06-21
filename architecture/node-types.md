@@ -2,7 +2,7 @@
 
 The knowledge graph (a structured database of interconnected facts) contains typed nodes (entries) connected by relationships. This document is the current contract for what the extraction pipeline produces; it is edited in place as the taxonomy evolves (git is the history). Each node uses a universally unique identifier as its primary key, consistent across all languages.
 
-> **Taxonomy status.** This documents the live extraction contract (the two-pass nodes prompt). Digests produced before this taxonomy landed still carry the older types (matter, concept, programme, investigation) and only match this contract after reclassification or re-digestion. Document the contract here, not the stale data.
+> **Taxonomy status.** This documents the live extraction contract (the two-pass nodes prompt). Digests produced before this taxonomy landed still carry the older types: as of 2026-06-21 the live graph holds 217 such nodes (matter 134, concept 58, programme 16, investigation 9) across 18 of 23 records, plus 112 names with old framing ("...Detection Matter"). The chosen cleanup is **re-digestion, not reclassification**: re-extraction reclassifies from the source (handling matter's four-way fold, which no mechanical remap can) and regenerates the names, and a full rebuild then clears the dead-type nodes. A mechanical reclassify has already failed here - a node retyped matter->event kept its "Matter" name and left a same-typed duplicate. Re-digestion runs BEFORE any graph-curation merges ([decision 0038](../decisions/0038-graph-curation-replayable-ledger.md)), since the merge ledger keys on names that re-digestion rewrites; timing is a paced subscription run. Document the contract here, not the stale data.
 
 ## Node type summary
 
