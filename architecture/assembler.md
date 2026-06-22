@@ -113,14 +113,20 @@ content/
     people/
       _directives.yaml                 (all people articles, all languages)
       _directives.en.yaml              (English people articles)
-      david-fravor.en.md               (article with its own directives in frontmatter)
+      david-fravor.directives.yaml     (THIS article, ALL languages - the sidecar)
+      david-fravor.en.md               (this article, English - frontmatter directives)
+      david-fravor.ja.md               (this article, Japanese - frontmatter directives)
     records/
       _directives.yaml                 (all record inspection pages)
 ```
 
-A `_directives.yaml` file is a list of presentational instruction strings (or a mapping carrying a `directives:` list).
+A `_directives.yaml` (or a per-article `<slug>.directives.yaml` sidecar) is a list of presentational instruction strings (or a mapping carrying a `directives:` list).
 
-When assembling an article, the assembler collects directives most-specific-first: the article's own frontmatter, then at each folder from the article's directory up to the content root, the `_directives.<lang>.yaml` (this language) followed by the `_directives.yaml` (all languages). Duplicates collapse to their most-specific position; on conflict the earlier (more specific) directive wins. A directive can only ever affect presentation - one that asks for a factual change is ignored.
+The per-article sidecar `<slug>.directives.yaml` is the home for a single-article directive that should shape **every** language render (e.g. "use the full name Luis Elizondo, never the surname alone") - written once, not duplicated into every `<slug>.<lang>.md` frontmatter. A directive that is genuinely language-specific (a phrasing rule that only makes sense in one language) goes in that language's `<slug>.<lang>.md` frontmatter instead.
+
+When assembling an article, the assembler collects directives most-specific-first: (1) the article's own frontmatter (article + this language); (2) the per-article `<slug>.directives.yaml` sidecar (article, all languages); (3) at each folder from the article's directory up to the content root, the `_directives.<lang>.yaml` (this language) then the `_directives.yaml` (all languages). Duplicates collapse to their most-specific position; on conflict the earlier (more specific) directive wins. A directive can only ever affect presentation - one that asks for a factual change is ignored.
+
+These directive files (`_directives*.yaml`, `<slug>.directives.yaml`) are assembler inputs, not content - the site must exclude them from rendering.
 
 If an article is renamed or moved, its frontmatter directives travel with it. If a content folder is restructured, the `_directives.yaml` files move with their folders. Nothing gets orphaned.
 
