@@ -127,7 +127,7 @@ The brackets are part of the value. The ingester does not emit these tokens itse
 
 ### Sentence-level timestamps
 
-In audio and video transcripts, each sentence starts on its own line prefixed with a `HH:MM:SS.D` timestamp (fixed 10 characters, one decimal place). An empty line indicates a paragraph break.
+In `record/1` audio and video transcripts, each sentence starts on its own line prefixed with a `HH:MM:SS.D` timestamp (fixed 10 characters, one decimal place). An empty line indicates a paragraph break. Word-level `record/2` transcripts carry inline per-word markers instead and omit this line-start prefix - see [Word-level timestamps](#word-level-timestamps) below.
 
 ```markdown
 <!-- speaker: David Fravor -->
@@ -139,6 +139,17 @@ In audio and video transcripts, each sentence starts on its own line prefixed wi
 ```
 
 The timestamp format is always `HH:MM:SS.D` - hours, minutes, seconds, and one decimal place (tenths of a second). This lines up in a fixed-width column for readability.
+
+### Word-level timestamps
+
+Records with `word_timestamps: true` (schema `anomalica/record/2`) carry timing on every word, not every sentence: an inline `{{t:SECONDS}}` marker (seconds from media start, two decimal places) sits immediately before each word.
+
+```markdown
+<!-- speaker: David Fravor -->
+{{t:105.20}}We {{t:105.38}}had {{t:105.55}}been {{t:105.71}}at {{t:105.83}}sea {{t:106.10}}for {{t:106.34}}roughly {{t:106.78}}two {{t:107.01}}weeks.
+```
+
+These records do **not** carry the sentence-level `HH:MM:SS.D` line-start prefix: each line's first `{{t:}}` already gives its start, so the prefix is redundant. The one exception is a transcript segment for which the aligner produced no word-level timing - that line keeps a `HH:MM:SS.D` line-start stamp as its only timing and has no `{{t:}}` markers. Consumers that want plain prose strip the `{{t:}}` markers like any other annotation.
 
 ### Image
 
