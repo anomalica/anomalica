@@ -126,7 +126,7 @@ The per-article sidecar `<slug>.directives.yaml` is the home for a single-articl
 
 When assembling an article, the assembler collects directives most-specific-first: (1) the article's own frontmatter (article + this language); (2) the per-article `<slug>.directives.yaml` sidecar (article, all languages); (3) at each folder from the article's directory up to the content root, the `_directives.<lang>.yaml` (this language) then the `_directives.yaml` (all languages). Duplicates collapse to their most-specific position; on conflict the earlier (more specific) directive wins. A directive can only ever affect presentation - one that asks for a factual change is ignored.
 
-These directive files (`_directives*.yaml`, `<slug>.directives.yaml`) are assembler inputs, not content - the site must exclude them from rendering.
+These directive files (`_directives*.yaml`, `<slug>.directives.yaml`) are assembler inputs, not content. Hugo does **not** ignore them by default - verified on Hugo 0.152.2 extended, a `.yaml` file under `content/pages/` is copied verbatim into `public/` and served raw at its URL, exposing the directive text. The site excludes them with an `ignoreFiles` rule in `hugo.toml` matching the `directives` stem (`ignoreFiles = ['directives(\.[A-Za-z-]+)?\.ya?ml$']`). Naming contract: keep the stem `directives` with a `.yaml`/`.yml` extension (and an optional `.<lang>` segment) so the site's rule covers every file the assembler reads; if the stem or extension ever changes, tell the site to widen the rule.
 
 If an article is renamed or moved, its frontmatter directives travel with it. If a content folder is restructured, the `_directives.yaml` files move with their folders. Nothing gets orphaned.
 
