@@ -55,4 +55,4 @@ Cross-corpus passes that maintain the digests and graph as conventions evolve - 
 The assimilator depends on `anomalica-common`:
 
 - `anomalica_common.digest` (`models.py`, `yaml_format.py`) - the digest data model and YAML read/write (0027), used to read digests. Single-sourced so the format cannot drift between the digester and the assimilator.
-- `anomalica_common.llm` (`transport.py`, `cost.py`, `gate.py`) - the Claude transport with the subscription-default / metered-API toggle, the cost estimator, and the spend gate. The AI-assisted passes (corroborate, and consolidate once wired) call through it, so the assimilator enforces the same billing policy and spend gate as the digester.
+- `anomalica_common.llm` (`transport.py`) - the shared Claude transport. The AI-assisted passes (corroborate, and consolidate once wired) call through it, so the assimilator uses the same transport as the digester.

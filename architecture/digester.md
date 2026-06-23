@@ -32,7 +32,7 @@ One digest YAML file per ingest ([decision 0027](../decisions/0027-digest-interc
 
 Modules: `extract` (two-pass extraction), `record_parser` (reads records), `realign` (quote-to-timestamp re-alignment), `review_gate` (the digestibility / observed-coverage gate behind the `coverage` command), and `cli`. Command-line surface: `extract`, `batch-extract`, `coverage`.
 
-The data model and the transport are not the digester's own: it reads and writes digests through `anomalica_common.digest`, and calls the model through `anomalica_common.llm` (the Claude transport with the subscription-default / metered-API toggle, the cost estimator, and the spend gate), so the format and the billing gate stay identical to the assimilator's.
+The data model and the transport are not the digester's own: it reads and writes digests through `anomalica_common.digest`, and calls the model through `anomalica_common.llm` (the shared Claude transport), so the format and the transport stay identical to the assimilator's.
 
 ## Testing
 

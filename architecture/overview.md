@@ -34,7 +34,7 @@ raw sources --> ingester --> ingests (access-gated git repo)
 | **digester** | Artificial intelligence extraction from ingests, producing one digest per record (no graph). Planned: N model-variants per ingest reconciled into one canonical digest ([decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)) |
 | **digests** | Reviewed digests - the source of truth for the knowledge graph (a structured database of interconnected facts) |
 | **assimilator** | Builds and maintains the unified SQLite knowledge graph from digests: import, entity resolution, scoring, corroboration, embeddings, search, export |
-| **anomalica-common** | Shared library: the digest interchange (data model + YAML I/O) and the Claude transport + spend gate, single-sourced so the digester and assimilator cannot drift |
+| **anomalica-common** | Shared library: the digest interchange (data model + YAML I/O) and the shared Claude transport, single-sourced so the digester and assimilator cannot drift |
 | **assembler** | Article assembly from knowledge graph data, directive application |
 | **content** | Output: assembled articles and associated media |
 | **site** | Hugo static site, consumes content |

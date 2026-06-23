@@ -1,6 +1,6 @@
 # AI-operation ledger format
 
-The ledger is the operational record of every AI or compute call the pipeline makes - one append-only row per call, recording its cost and its provenance. Schema `anomalica/ai-ledger/1`. SQLite, at `~/.local/share/anomalica/ai-ledger.db` (env-overridable via `ANOMALICA_LEDGER_DB`, or `ANOMALICA_DATA_DIR` for the directory). See [decision 0037](../decisions/0037-ai-operation-ledger.md) for the why.
+The ledger is the operational record of every AI or compute call the pipeline makes - one append-only row per call, recording its provenance and usage. Schema `anomalica/ai-ledger/1`. SQLite, at `~/.local/share/anomalica/ai-ledger.db` (env-overridable via `ANOMALICA_LEDGER_DB`, or `ANOMALICA_DATA_DIR` for the directory). See [decision 0037](../decisions/0037-ai-operation-ledger.md) for the why.
 
 The producer is a single shared writer in anomalica-common, called at each emission boundary - the pipeline has no single AI call-path, so the uniformity guarantee is held at the writer, not the transport (0037). Like the other interchanges (record format [0019](../decisions/0019-record-interchange-format.md), digest format [0027](../decisions/0027-digest-interchange-format.md), brief format [0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md)), it is versioned: a breaking change bumps the integer. Because the store is append-only, `schema_version` is a per-row column - rows written under different versions coexist, so a bump needs no migration.
 
@@ -24,22 +24,13 @@ The producer is a single shared writer in anomalica-common, called at each emiss
 | `tokens_out` | usage | `output_tokens`. Null on GPU/CPU. |
 | `cache_read` | usage | `cache_read_input_tokens`. |
 | `cache_write` | usage | `cache_creation_input_tokens`. |
-| `reported_cost_usd` | cost | The cost the provider reported (subscription `total_cost_usd`); null when the path reports none (API, GPU, CPU). |
-| `billed_usd` | cost | Dollars actually charged to a metered account. API: `tokens x MODEL_PRICING`. Subscription, GPU, CPU: 0. |
 | `rate_limit_consumed` | reserved | Nullable. Populated when the subscription CLI wrapper exposes a rate-limit/allowance field; nothing reports it today. |
 
-## Cost: two fields, by transport
+The row also carries per-call billing columns; their definition and the rate detail are tracked privately in the `operations` repository and are not documented here.
 
-The two cost fields separate "what this call would have cost" from "what was actually billed". The published metered spend is `SUM(billed_usd)` per component; `reported_cost_usd` makes subscription usage visible without implying money changed hands.
+## Usage, by transport
 
-| Transport | `reported_cost_usd` | `billed_usd` | Tokens | `duration_s` |
-|-----------|---------------------|--------------|--------|--------------|
-| `subscription` (`claude -p`) | `total_cost_usd` (would-be) | 0 (founder-funded flat-rate) | yes | wall-time |
-| `api` (metered) | null | `tokens x MODEL_PRICING` | yes | wall-time |
-| `gpu` (whisperx / pyannote) | null | 0 (local) | none | wall-time (new instrumentation) |
-| `cpu` (fastembed) | null | 0 (local) | none | wall-time (if instrumented) |
-
-The metered API path reports no cost figure, so the writer computes `billed_usd` from the rate table (`MODEL_PRICING`, USD per million: haiku 1/5, sonnet 3/15, opus 5/25). On the subscription path the dollar value is lifted from the CLI's `total_cost_usd`.
+Each row records the call's usage and wall-time. Tokens are recorded on the Claude paths (`subscription`, `api`) and are null on the local `gpu` (whisperx / pyannote) and `cpu` (fastembed) paths; `duration_s` is wall-time across all paths (new instrumentation on the GPU/CPU paths). Per-call billing is derived from these and the private `operations` rate detail.
 
 ## Enums
 

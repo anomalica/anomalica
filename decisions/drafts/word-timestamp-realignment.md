@@ -15,9 +15,9 @@ Two problems follow for the digester:
 1. **The tokens are noise the model should never see.** Measured on a 39-minute
    record/2 (StarGate, content_hash 2399fe4e...): 5,424 `{{t:}}` tokens make up
    **64% of the body characters**. Today `record_parser.parse_record` does not
-   strip them, so the model reads - and we pay for - roughly 2.8x the real
-   content as pure noise. The cost pre-flight gate (operations repo) sizes the run on body
-   length, so it also over-estimates 2-3x for word-timestamp records.
+   strip them, so the model reads roughly 2.8x the real
+   content as pure noise - and any body-length-based run sizing
+   over-estimates by 2-3x for word-timestamp records as a result.
 
 2. **We still want the timing.** Per-claim and per-quote timestamps let the
    workbench and site deep-link to the exact moment in the audio/video, and feed
@@ -65,8 +65,8 @@ fuzzy token-LCS, measure agreement.
 ## Decision
 
 1. **Strip `{{t:}}` word tokens before extraction; preserve a word->timestamp
-   map.** The digester never sees the tokens. The cost estimate then reflects the
-   clean body automatically. Two carriers are on the table (see open questions):
+   map.** The digester never sees the tokens; its input is the clean body
+   automatically. Two carriers are on the table (see open questions):
    (a) strip inline in the digester, building the map in memory; (b) the ingester
    emits a clean body plus a committed `words.json` sidecar. (b) is the converged
    direction and moots the in-memory map and chunk-offset bookkeeping; (a) is the
@@ -162,7 +162,7 @@ fuzzy token-LCS, measure agreement.
 
 ## Consequences
 
-- Cost gate (operations repo) auto-corrects for record/2 once stripping lands.
+- Extraction input for record/2 shrinks once stripping lands (the `{{t:}}` markers no longer inflate the body the digester processes).
 - Workbench and site gain jump-to-moment deep-links into audio/video.
 - New per-claim timing feeds evidence scoring.
 - Byte-consistency with the cloze source is handled by the shared `clean_body()`
