@@ -279,12 +279,13 @@ Three orthogonal axes describe a record's generation, defined in full in
 - `schema` (`anomalica/record/N`) is the on-disk FORMAT. A record/1 is not stale
   merely because record/2 exists as a format.
 - `processing.pipeline_version` (an integer, per media type) is the extraction
-  GENERATION. A record whose value is below the current version for its media
-  type (or absent, treated as 0) is STALE: a consumer badges it "outdated
-  (vN of M)" and it is a backfill target, but it is still shown - it is the best
-  available until re-ingested. The current version per media type is published in
-  `store/_pipeline_versions.yaml` (`{media_type: current_version}`), upserted by
-  the ingester on every run.
+  GENERATION. A record whose value is PRESENT and below the current version for
+  its media type is STALE: a consumer badges it "outdated (vN of M)" and it is a
+  backfill target, but it is still shown - it is the best available until
+  re-ingested. An ABSENT value means "generation not declared" - no badge, not
+  treated as 0 (so introducing the field does not flag the whole corpus). The
+  current version per media type is published in `store/_pipeline_versions.yaml`
+  (`{media_type: current_version}`), upserted by the ingester on every run.
 - `processing.version` (the ingester's git short-hash) is fine-grained
   provenance, unchanged.
 

@@ -57,10 +57,17 @@ per media type is a hand-maintained registry in the ingester
 the extraction OUTPUT changes in a way that warrants re-ingesting existing
 records - a new annotation type, a better model, a different segmentation - NOT
 on every commit, so it cannot be derived from git. A record whose
-`pipeline_version` is less than the current value for its media type (or absent,
-treated as 0) is STALE: a consumer shows it with an "outdated (vN of M)" badge
-and it is a backfill target. Staleness does not hide a record - it is the best
-available until re-ingested.
+`pipeline_version` is PRESENT and less than the current value for its media type
+is STALE: a consumer shows it with an "outdated (vN of M)" badge and it is a
+backfill target. Staleness does not hide a record - it is the best available
+until re-ingested. An ABSENT `pipeline_version` means "generation not declared":
+a consumer makes no staleness judgement and shows no badge (NOT treated as 0).
+This keeps the field's introduction clean - existing records read as
+unversioned, not as a corpus-wide flood of false "outdated (v0 of M)" - and the
+metadata backfill (stamping existing records to their generation) assigns the
+versions that later bumps measure against. Absent never coincides with a real
+bump because the backfill precedes any bump, so present-and-less-than-M is the
+only staleness signal in steady state.
 
 ### Current-version manifest
 
@@ -118,8 +125,9 @@ canonical audio/video output; until then a consumer's dedup (hide
 
 - `superseded_by` present -> HIDE the record (a newer extraction exists). One
   visible record per source.
-- `pipeline_version < manifest[media_type]` -> the visible record gets an
-  "outdated" badge and is a backfill target, but is still shown.
+- `pipeline_version` PRESENT and `< manifest[media_type]` -> the visible record
+  gets an "outdated" badge and is a backfill target, but is still shown.
+- `pipeline_version` ABSENT -> no badge (generation not declared), still shown.
 
 ### What is explicitly NOT changed
 
