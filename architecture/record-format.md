@@ -249,6 +249,9 @@ store/          # hash-named record files (source of truth)
   7bf2c20d...md
   7bf2c20d...verification.json
   e27169e8...md
+  _pipeline_versions.yaml   # {media_type: current_version} manifest
+  v1/                       # superseded records, retired here
+    3211a96e...md
 records/        # human-readable symlinks
   2023-07-26-pdf-fravor-written-statement.md -> ../store/7bf2c20d...md
   2020-09-08-video-lex-fridman-122-david-fravor.md -> ../store/e27169e8...md
@@ -267,6 +270,41 @@ The `store/` directory contains the actual record files, named by `content_hash`
 Two behaviours follow from that per-type hashing. It deduplicates - the same input always produces the same store path. And it makes the source-anchored types stable across re-extraction (reprocessing with an improved transcriber keeps the same identity and does not orphan reviews), whereas the body-anchored types get a new `content_hash` whenever a re-extraction changes the body. Making this consistent across types is under reconciliation.
 
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
+
+### Versioning and supersession
+
+Three orthogonal axes describe a record's generation, defined in full in
+[0040](../decisions/0040-pipeline-versioning-and-supersession.md):
+
+- `schema` (`anomalica/record/N`) is the on-disk FORMAT. A record/1 is not stale
+  merely because record/2 exists as a format.
+- `processing.pipeline_version` (an integer, per media type) is the extraction
+  GENERATION. A record whose value is below the current version for its media
+  type (or absent, treated as 0) is STALE: a consumer badges it "outdated
+  (vN of M)" and it is a backfill target, but it is still shown - it is the best
+  available until re-ingested. The current version per media type is published in
+  `store/_pipeline_versions.yaml` (`{media_type: current_version}`), upserted by
+  the ingester on every run.
+- `processing.version` (the ingester's git short-hash) is fine-grained
+  provenance, unchanged.
+
+**Supersession** retires a prior record when a source is re-ingested, keyed on
+LOGICAL source identity (`source_id`, then `source_url` - the only identity
+stable across re-downloads; a per-download `content_hash` is not). The new record
+carries `supersedes: <old_content_hash>`; the prior record is stamped
+`superseded_by: <new_content_hash>`, moved from `store/{hash}.md` to
+`store/v1/{hash}.md`, and its `records/` symlink removed. The frontmatter flag is
+the source of truth - a consumer HIDES any record carrying `superseded_by` (one
+visible record per source); the `store/v1/` location is a derived convenience so
+a non-recursive `store/*.md` glob excludes retired records. Supersession is
+stamped across schema boundaries (a record/2 supersedes a record/1 of the same
+source). It applies only when re-acquisition changes the `content_hash` (a fresh
+download, or a web/ebook body change); re-extraction from the SAME asset keeps
+the hash and is an in-place update at `store/{hash}.md`, not a second record. So
+the browse list is always one-per-source. The `.v2`-suffixed word-timestamp
+files are vestigial migration scaffolding, collapsed to the canonical
+`store/{hash}.md` as a follow-up; see
+[0040](../decisions/0040-pipeline-versioning-and-supersession.md).
 
 ### Records
 

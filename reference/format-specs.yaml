@@ -29,46 +29,105 @@ types:
     # `formats` on a field lists the source_types it applies to, ONLY where the spec states
     # it. A field with no `formats` key applies to all source_types (or is reviewer-optional).
     fields:
-      - {name: schema, type: string, required: true, description: "Format version. `anomalica/record/1`, or `anomalica/record/2` when word-level timestamps are present."}
-      - {name: title, type: string, required: true, description: "Document or episode title. Always quoted. Lives only in frontmatter, never injected into the body."}
-      - {name: date_published, type: string|null, required: true, description: "When the original content was published. ISO 8601, precision varies (2023, 2023-07, 2023-07-26). null when genuinely undated - never fabricated from file/ingest dates."}
+      - {name: schema, type: string, required: true, description: "Format version. `anomalica/record/1`, or `anomalica/record/2`
+          when word-level timestamps are present."}
+      - {name: title, type: string, required: true, description: "Document or episode title. Always quoted. Lives only in
+          frontmatter, never injected into the body."}
+      - {name: date_published, type: string|null, required: true, description: "When the original content was published. ISO
+          8601, precision varies (2023, 2023-07, 2023-07-26). null when genuinely undated - never fabricated from file/ingest
+          dates."}
       - {name: source_type, type: string, required: true, description: "One of pdf, audio, video, web, ebook."}
-      - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts that carry per-word `{{t:}}` markers."}
-      - {name: publisher, type: string, required: false, description: "The entity that created the content (e.g. CBS News, House Oversight Committee). Not the hosting platform; distinct from creators."}
+      - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts
+          that carry per-word `{{t:}}` markers."}
+      - {name: publisher, type: string, required: false, description: "The entity that created the content (e.g. CBS News,
+          House Oversight Committee). Not the hosting platform; distinct from creators."}
       - {name: source_url, type: string, required: false, description: "URL where the source can be found."}
       - {name: source_id, type: string, required: false, description: "Stable platform-specific identifier (e.g. youtube:ZBtMbBPzqHY)."}
-      - {name: fetched_url, type: string, required: false, description: "URL actually retrieved from, if different from source_url (e.g. a Wayback Machine archive URL)."}
-      - {name: source_file, type: string, required: false, description: "Original filename for a record ingested from a local file with no URL. Bytes archived at sources/{content_hash}.{ext}."}
-      - {name: provenance, type: string, required: false, description: "`unknown` when a record has no recoverable acquisition origin (no source_url and no source_file). Absent when the origin is known."}
-      - {name: creators, type: list, required: false, description: "Human creator(s) - author(s), host(s)/presenter(s). Person names, canonical 'Last, First Middle' preferred. Distinct from publisher (the entity)."}
-      - {name: content_hash, type: string, required: false, description: "SHA-256 naming the record's file in store/. Hashes source bytes for audio/video/pdf, extracted body text for web/ebook. See hashes below."}
-      - {name: source_hash, type: string, required: false, formats: [web, ebook], description: "SHA-256 of the raw source asset (post-render HTML for web, EPUB bytes for ebook), locating sources/{source_hash}.{ext}. Not emitted for audio/video/pdf (their content_hash already hashes the source bytes)."}
-      - {name: snapshots, type: list, required: false, formats: [web], description: "Sibling capture artefacts. Each: role (page_render | single_file), hash (sha256 of bytes), content_type (MIME). Exposes PDF renders and frozen-page captures for web records."}
+      - {name: fetched_url, type: string, required: false, description: "URL actually retrieved from, if different from source_url
+          (e.g. a Wayback Machine archive URL)."}
+      - {name: source_file, type: string, required: false, description: "Original filename for a record ingested from a local
+          file with no URL. Bytes archived at sources/{content_hash}.{ext}."}
+      - {name: provenance, type: string, required: false, description: "`unknown` when a record has no recoverable acquisition
+          origin (no source_url and no source_file). Absent when the origin is known."}
+      - {name: creators, type: list, required: false, description: "Human creator(s) - author(s), host(s)/presenter(s). Person
+          names, canonical 'Last, First Middle' preferred. Distinct from publisher (the entity)."}
+      - {name: content_hash, type: string, required: false, description: "SHA-256 naming the record's file in store/. Hashes
+          source bytes for audio/video/pdf, extracted body text for web/ebook. See hashes below."}
+      - {name: source_hash, type: string, required: false, formats: [web, ebook], description: "SHA-256 of the raw source
+          asset (post-render HTML for web, EPUB bytes for ebook), locating sources/{source_hash}.{ext}. Not emitted for audio/video/pdf
+          (their content_hash already hashes the source bytes)."}
+      - {name: snapshots, type: list, required: false, formats: [web], description: "Sibling capture artefacts. Each: role
+          (page_render | single_file), hash (sha256 of bytes), content_type (MIME). Exposes PDF renders and frozen-page captures
+          for web records."}
       - {name: pages, type: integer, required: false, formats: [pdf], description: "Page count for documents."}
       - {name: duration, type: number, required: false, formats: [audio, video], description: "Duration in seconds for audio/video."}
-      - {name: date_accessed, type: string, required: false, description: "When the source was fetched. ISO 8601 with timezone (Zulu)."}
-      - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. ISO 8601 with timezone (Zulu)."}
-      - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright draft). status is one of public_domain, open_licence, publicly_accessible, licensed, restricted."}
-      - {name: classification, type: string, required: false, formats: [pdf], description: "Original security classification banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying a marking."}
-      - {name: processing, type: object, required: false, description: "Processing metadata: handler, version, tools used, source characteristics."}
-      - {name: media, type: object, required: false, description: "Summary of extracted media stored at media/{record_hash}/. Currently {count, total_bytes}. Omitted when the record has no extracted media."}
-      - {name: ai_usage, type: object, required: false, status: provisional, description: "PROVENANCE-ONLY record of AI processing that produced this record (model, version, token counts). No cost fields. Exact sub-field shape pending confirmation from the ingester workspace - emitted by the pipeline but not yet in record-format.md."}
+      - {name: date_accessed, type: string, required: false, description: "When the source was fetched. ISO 8601 with timezone
+          (Zulu)."}
+      - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. ISO 8601 with
+          timezone (Zulu)."}
+      - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright
+          draft). status is one of public_domain, open_licence, publicly_accessible, licensed, restricted."}
+      - {name: classification, type: string, required: false, formats: [pdf], description: "Original security classification
+          banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
+          a marking."}
+      - {name: processing, type: object, required: false, description: "Processing metadata: handler, version (git short-hash),
+          pipeline_version (monotonic per-media-type extraction generation; see 0040), tools used, source characteristics."}
+      - {name: supersedes, type: string, required: false, description: "content_hash of the prior record this one retired,
+          when a re-ingest of the same logical source (source_id/source_url) superseded an earlier extraction. Stamped across
+          schema boundaries. See 0040."}
+      - {name: superseded_by, type: string, required: false, description: "content_hash of the record that superseded this
+          one. Present only on retired records (moved to store/v1/). Consumers HIDE any record carrying this. The source of
+          truth for supersession; see 0040."}
+      - {name: media, type: object, required: false, description: "Summary of extracted media stored at media/{record_hash}/.
+          Currently {count, total_bytes}. Omitted when the record has no extracted media."}
+      - {name: ai_usage, type: object, required: false, status: provisional, description: "PROVENANCE-ONLY record of AI processing
+          that produced this record (model, version, token counts). No cost fields. Exact sub-field shape pending confirmation
+          from the ingester workspace - emitted by the pipeline but not yet in record-format.md.",}
 
-  digest:
+  raw_digest:
     schema: anomalica/digest/1
     status: stable
     serialisation: YAML
     spec_doc: architecture/digest-format.md
-    summary: One file per record - the digester's extraction output; canonical input to the assimilator, workbench, and assembler.
+    summary: One model's extraction of a source - a full set of nodes + claims. One or more per source (several models, or
+      re-digestions over time); these are the inputs the fuser merges.
     fields:  # top-level metadata ("header"); the body is nodes + claims (see body)
       - {name: schema, type: string, required: true, description: "`anomalica/digest/1`."}
       - {name: extracted_at, type: string, required: true, description: "ISO 8601 timestamp of the extraction run."}
-      - {name: model, type: string, required: true, description: "Model alias that produced this digest (1:1 today; digest/2 will carry the versioned id when multi-model reconciliation lands - decision 0039)."}
-      - {name: record, type: object, required: true, description: "The source record: {id (graph UUID, the join key against ingests), title, producer ('Last, First Middle' or org name), date (YYYY or YYYY-MM-DD), reference (ISBN/report no./null)}."}
+      - {name: model, type: string, required: true, description: "The model that produced this digest (digest/2 carries the
+          versioned id)."}
+      - {name: record, type: object, required: true, description: "The source record: {id (graph UUID, the join key against
+          ingests), title, producer, date, reference}. Same value across every raw digest of one source - the constant the
+          source-trace rides on."}
     body:
-      nodes: "List of every node mentioned by any claim. Each: {id (UUID, fresh per digest), type (one of person, organisation, project, place, event, object, document, topic), name, metadata?}."
-      domain_claims: "Claims routed to knowledge.db. Each: {id, type (observation|testimony|hearsay|opinion|measurement|administrative), attestation (first_hand|second_hand|third_hand), speaker?, location?, date? | date_range?, refs?, quote?, text}."
-      infrastructure_claims: "Same shape as domain_claims, routed to infrastructure.db. Omitted when empty."
+      nodes: "List of every node mentioned by any claim. Each: {id (UUID, fresh per digest), type (one of person, organisation,
+        project, place, event, object, document, topic), name, metadata?}."
+      domain_claims: "Claims routed to the knowledge graph. Each: {id, type (observation|testimony|hearsay|opinion|measurement|administrative),
+        attestation (first_hand|second_hand|third_hand), speaker?, location_in_record (where in the SOURCE the claim came
+        from - the trace), date? | date_range?, refs?, quote (verbatim SOURCE text), text}."
+      infrastructure_claims: "Same shape as domain_claims, routed to the infrastructure graph. Omitted when empty."
+
+  fused_digest:
+    schema: anomalica/digest/2
+    status: provisional
+    serialisation: YAML
+    spec_doc: decisions/0039-multi-model-digestion-canonical-reconciliation.md
+    summary: The canonical digest per source - the fuser collapses the raw digests' equivalent nodes and claims into one.
+      The only digest assimilated; always rebuildable from the raw digests.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/digest/2`."}
+      - {name: generated_at, type: string, required: true, description: "ISO 8601 timestamp of the fusion run."}
+      - {name: reconciled_from, type: list, required: true, description: "The raw digests merged into this one - each {model,
+          version} (+ its source path/hash). The digest-level audit: which models' extractions went in."}
+      - {name: record, type: object, required: true, description: "The source record - same shape and same value as the raw
+          digests' (one source). The source-trace rides on this being constant across raw and fused."}
+    body:
+      nodes: "Merged nodes; each carries which raw digests contributed it."
+      domain_claims: "Fused claims. Each keeps the SOURCE pointer unchanged (quote + location_in_record into `record`) AND
+        adds `sources` - the raw claims it collapsed in: {model, version, claim_id, won_text?} - so a fused claim traces both
+        to the original source and to which models produced it. Models on one source are alternatives, not corroboration:
+        `sources` is audit, never an evidence boost (0039 independence rule)."
+      infrastructure_claims: "Same shape, routed to the infrastructure graph."
 
   brief:
     schema: anomalica/brief/1
@@ -78,36 +137,50 @@ types:
     summary: The graph slice feeding ONE page - language-neutral, pre-prose; the writer's sole input (decision 0036).
     fields:  # top-level; the body is the ordered `claims` selection (see body)
       - {name: schema, type: string, required: true, description: "`anomalica/brief/1`."}
-      - {name: brief_hash, type: string, required: true, description: "SHA-256 over the ordered [(claim_id, claim_hash)] plus the page identity. The brief's fingerprint - staleness diff unit, assembler freeze (built_from), and 0010 audit hash."}
-      - {name: page, type: object, required: true, description: "The page this brief builds: {kind: entity, node_id, node_type, title, slug}. slug pre-resolved by the synthesiser."}
-      - {name: generated, type: object, required: true, description: "{graph_version} - the knowledge-graph version the brief was generated from (0010's coarse stamp)."}
-      - {name: related_nodes, type: list, required: false, description: "Nodes co-occurring with the page entity, ranked by shared-claim count; each carries its resolved slug for cross-links."}
+      - {name: brief_hash, type: string, required: true, description: "SHA-256 over the ordered [(claim_id, claim_hash)] plus
+          the page identity. The brief's fingerprint - staleness diff unit, assembler freeze (built_from), and 0010 audit
+          hash."}
+      - {name: page, type: object, required: true, description: "The page this brief builds: {kind: entity, node_id, node_type,
+          title, slug}. slug pre-resolved by the synthesiser."}
+      - {name: generated, type: object, required: true, description: "{graph_version} - the knowledge-graph version the brief
+          was generated from (0010's coarse stamp)."}
+      - {name: related_nodes, type: list, required: false, description: "Nodes co-occurring with the page entity, ranked by
+          shared-claim count; each carries its resolved slug for cross-links."}
     body:
-      claims: "Ordered selection - the only facts the writer may use. Each: {claim_id, claim_hash, content, original_excerpt, claim_type, attestation?, speaker {node_id,title}, node_refs, date, date_end, location_in_record, evidence {score, independent_sources}, provenance {record_id, record_title, record_date, record_reference, content_hash, friendly_name}}."
+      claims: "Ordered selection - the only facts the writer may use. Each: {claim_id, claim_hash, content, original_excerpt,
+        claim_type, attestation?, speaker {node_id,title}, node_refs, date, date_end, location_in_record, evidence {score,
+        independent_sources}, provenance {record_id, record_title, record_date, record_reference, content_hash, friendly_name}}."
 
   content:
-    schema: null   # no schema identifier defined yet
+    schema: null  # no schema identifier defined yet
     status: provisional
     serialisation: markdown + YAML frontmatter
     spec_doc: architecture/content-format.md
     summary: The assembler's output - one rendered article per language, consumed by the Hugo site. UNSETTLED - see warning.
     warning: >-
-      Content's layout (flat `<slug>.<lang>.md` vs document-first directories) is an unratified
-      decision (assembler.md flags its own layout section as out of date), and the audit-field
-      shape is not settled. Only the fields both current docs agree on are listed; do not treat
-      content as final until content-format.md is ratified and the assembler workspace confirms
+      Content's layout (flat `<slug>.<lang>.md` vs document-first directories) is an unratified decision (assembler.md flags
+      its own layout section as out of date), and the audit-field shape is not settled. Only the fields both current docs
+      agree on are listed; do not treat content as final until content-format.md is ratified and the assembler workspace confirms
       what it emits.
     fields:  # frontmatter is human-controlled; the assembler preserves it and writes only the body
       - {name: title, type: string, required: true, description: "Article/page title."}
       - {name: description, type: string, required: false, description: "Short description."}
-      - {name: directives, type: list, required: false, description: "Article-level presentational instructions to the assembler (style/formatting/naming only - never factual). Also sourced from `_directives.yaml` folder hierarchy and per-article `<slug>.directives.yaml` sidecars."}
-      - {name: metadata, type: object, required: false, description: "Optional metadata the assembler reads but does not modify. Sub-shape not yet specified."}
+      - {name: directives, type: list, required: false, description: "Article-level presentational instructions to the assembler
+          (style/formatting/naming only - never factual). Also sourced from `_directives.yaml` folder hierarchy and per-article
+          `<slug>.directives.yaml` sidecars."}
+      - {name: metadata, type: object, required: false, description: "Optional metadata the assembler reads but does not modify.
+          Sub-shape not yet specified."}
     open_questions:
-      - "Layout: flat `<slug>.<lang>.md` (assembler.md) vs document-first `index.{lang}.md` directories (content-lifecycle.md) - unratified."
-      - "Audit/provenance binding (built_from/brief_hash, article/body hash, prompt hash) - where it is carried for content (frontmatter is assembler-preserved; review.yaml/verification.yaml sidecars hold review/verification). Needs the assembler workspace to confirm what is emitted."
+      - "Layout: flat `<slug>.<lang>.md` (assembler.md) vs document-first `index.{lang}.md` directories (content-lifecycle.md)
+        - unratified."
+      - "Audit/provenance binding (built_from/brief_hash, article/body hash, prompt hash) - where it is carried for content
+        (frontmatter is assembler-preserved; review.yaml/verification.yaml sidecars hold review/verification). Needs the assembler
+        workspace to confirm what is emitted."
     sidecars:
-      review.yaml: "Append-only human-review log. Each entry: {date, language, reviewer, body_hash (sha256 of the markdown body), comment}. Informational, never a publication gate."
-      verification.yaml: "AI verification report (a different model checks every assertion traces to the graph). Informational, never a gate."
+      review.yaml: "Append-only human-review log. Each entry: {date, language, reviewer, body_hash (sha256 of the markdown
+        body), comment}. Informational, never a publication gate."
+      verification.yaml: "AI verification report (a different model checks every assertion traces to the graph). Informational,
+        never a gate."
 
 # The hash / identity chain, source -> published article. Follows one fact end to end.
 chain:
@@ -115,20 +188,19 @@ chain:
     detail: "Raw bytes (pdf/audio/video) or rendered page/EPUB (web/ebook), archived under sources/."
   - stage: ingest
     detail: >-
-      content_hash names store/{content_hash}.md. For audio/video/pdf it hashes the SOURCE BYTES
-      (stable across re-extraction; asset at sources/{content_hash}.{ext}). For web/ebook it hashes
-      the EXTRACTED BODY, and source_hash separately names the raw asset at sources/{source_hash}.{ext}.
-      (Per-type source-anchored vs body-anchored split is current behaviour, under reconciliation.)
+      content_hash names store/{content_hash}.md. For audio/video/pdf it hashes the SOURCE BYTES (stable across re-extraction;
+      asset at sources/{content_hash}.{ext}). For web/ebook it hashes the EXTRACTED BODY, and source_hash separately names
+      the raw asset at sources/{source_hash}.{ext}. (Per-type source-anchored vs body-anchored split is current behaviour,
+      under reconciliation.)
   - stage: digest
     detail: >-
-      One digest per record at digests/records/{friendly-name}.yaml, paired to the ingest by the
-      shared friendly name ({date}-{source_type}-{slug}). record.id is the graph UUID join key.
+      One digest per record at digests/records/{friendly-name}.yaml, paired to the ingest by the shared friendly name ({date}-{source_type}-{slug}).
+      record.id is the graph UUID join key.
   - stage: brief
     detail: >-
-      Per page. Each selected claim carries provenance.content_hash + friendly_name, linking the
-      claim back to its ingest. brief_hash fingerprints the whole selection.
+      Per page. Each selected claim carries provenance.content_hash + friendly_name, linking the claim back to its ingest.
+      brief_hash fingerprints the whole selection.
   - stage: content (article)
     detail: >-
-      Assembled from exactly one brief. 0010's audit binds the article to brief_hash (built_from)
-      so an article is reconstructable to the precise graph slice it was built from. (Content-side
-      binding location is provisional - see types.content.open_questions.)
+      Assembled from exactly one brief. 0010's audit binds the article to brief_hash (built_from) so an article is reconstructable
+      to the precise graph slice it was built from. (Content-side binding location is provisional - see types.content.open_questions.)
