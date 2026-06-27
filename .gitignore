@@ -2,3 +2,9 @@ CLAUDE.md
 .obsidian/
 .workspace-layout.yaml
 worklog/
+
+# Local working notes and scaffolding - not part of the published documentation
+/context.md
+/context/
+.ai/
+*.context.md
