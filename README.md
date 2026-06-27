@@ -70,4 +70,4 @@ Living, freely-edited guides for the non-architecture concerns:
 
 ## Contact
 
-mark@anomalica.is
+support@anomalica.is
