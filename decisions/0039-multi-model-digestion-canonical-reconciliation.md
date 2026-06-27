@@ -85,3 +85,14 @@ Direction accepted; build deferred. Order: the model-comparison feature and sing
 ## Scope
 
 A pipeline-contract change (digester->digest becomes 1:N plus a reconciliation stage), a derived canonical with rebuildable-from-parts semantics, a storage layout reconciled with the live digest contract, a deferred `anomalica/digest/2` bump, and a hard independence requirement on evidence scoring. The living docs (overview, data-model, digest-format) carry the direction; this record carries the decision.
+
+## Amendment (2026-06-27): the digest fuser - naming, model-based matching, supersession-as-diff
+
+Refinements from a design review; they sharpen the mechanism above, they do not reverse it.
+
+- **Naming.** The reconciliation stage is the **digest fuser**; the canonical is the **fused digest**; the per-model inputs are **raw digests**. (Reconciliation / canonical remain valid synonyms above; the architecture diagram uses fuser / fused.)
+- **The match is a model judgement, not a key join.** Provenance overlap (`record_id` + `location_in_record`) is a cheap prefilter, not a stable cross-version identity: ingests are editable in the workbench, so a reviewer relabelling paragraph 3 to paragraph 2 drifts the location, exactly as a different model's rephrasing drifts the text hash. Neither a hash nor a raw location survives an edit or a model swap. So fusion is fundamentally a model judging same-fact equivalence, with provenance only narrowing the candidates it compares (same source + nearby location -> a small cluster to judge, never the whole graph).
+- **Supersession is a diff, and stays rebuildable.** The fused digest is a pure function of the current raw digests - recomputed, idempotent, never a stateful in-place merge - so the whole fused pool is always rebuildable from the raw digests. The supersession list (X became Y / new / deleted) is the fuser model diffing the previous fused digest against the new one; both are derived artefacts, so that diff is itself reproducible. Explicit old->new lineage, nothing stateful.
+- **The fuser's materiality judgement is the staleness signal.** When the fuser rules a change material (meaning moved) versus cosmetic (rephrase), that decides whether a downstream page regenerates - a staleness *degree*, not a binary changed/unchanged. It falls out of the same diff pass and feeds the brief-hash staleness loop.
+
+Architecture diagram source (the planned fuser node): `reference/pipeline.mmd` + `reference/architecture.yaml` in the meta-repo.
