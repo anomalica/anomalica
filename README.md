@@ -42,9 +42,9 @@ Gaps in the numbering are expected: records that moved to another home keep thei
 
 ## Architecture
 
-Living documents that reflect the current state of the system. See [architecture/](architecture/).
+Living documents that reflect the current state of the system. See [architecture/](architecture/). The interactive architecture diagram is on the site (`/architecture/`), rendered from `site/assets/architecture/pipeline.mmd` + `site/data/architecture.yaml` - the single source for the pipeline shape.
 
-- [Overview](architecture/overview.md) - pipeline, repositories, component index
+- [Overview](architecture/overview.md) - how the pipeline fits together (data flow)
 - [Ingester](architecture/ingester.md) - raw source material to ingests (structured text)
 - [Digester](architecture/digester.md) - ingests to digests (claims, nodes, provenance)
 - [Data model](architecture/data-model.md) - sources, records, claims, terminology

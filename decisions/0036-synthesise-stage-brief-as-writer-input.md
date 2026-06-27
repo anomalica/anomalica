@@ -53,7 +53,7 @@ The page-existence threshold ("enough corroborated information across enough ind
 ## Consequences
 
 - **The assembler shrinks to a pure writer**: brief -> per-language prose + directives. It no longer selects, clusters, or reads the graph directly. Its current direct-graph-read input contract (documented in assembler.md) is the interim behaviour, superseded by brief-input once the synthesiser lands.
-- **The pipeline diagram (overview.md) gains the synthesise node**; the site's data-flow diagram is updated to match (handled by the site/master).
+- **The site's architecture diagram (`pipeline.mmd` + `architecture.yaml`) gains the synthesise node** - that is the single source for the pipeline shape (handled by the site workspace).
 - **A new versioned interchange** (the brief, `anomalica/brief/1`) joins the record format (0019) and digest format (0027) - here between synthesise (producer) and assemble (consumer).
 - **0010 is unchanged in policy.** The brief realises 0010's "knowledge-graph data" prompt component; its hash is 0010's audit hash. No new staleness scheme.
 - **0031 (per-record inspection pages) is distinct.** Those are per-record QA surfaces (every record, no threshold); the synthesise stage decides ENTITY pages via briefs. The two do not conflict.
