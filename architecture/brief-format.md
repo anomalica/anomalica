@@ -12,34 +12,13 @@ A YAML document (`.yaml`) - the same serialisation as the digest interchange (00
 
 ## Top-level fields
 
-| Field | Description |
-|-------|-------------|
-| `schema` | `anomalica/brief/1`. |
-| `brief_hash` | SHA-256 over the ordered `[(claim_id, claim_hash)]` plus the page identity - the brief's fingerprint. One value, three uses (see [Identity and audit](#identity-and-audit)). |
-| `page` | The page this brief builds: `{ kind: entity, node_id, node_type, title, slug }`. |
-| `generated` | `{ graph_version }` - the knowledge-graph version the brief was generated from (the coarse "knowledge-graph version used" stamp 0010 records). |
-| `related_nodes` | Nodes co-occurring with the page entity, ranked by shared-claim count - the candidate entities the writer may link to. Each carries its resolved `slug` for cross-links. |
+The top-level fields - `schema`, `brief_hash`, `page`, `generated`, `related_nodes` - are listed with their descriptions in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief`. This document does not repeat them; the narrative below covers what a field list cannot (slug resolution, the `brief_hash` audit role).
 
 `page.slug` and `related_nodes[].slug` are resolved by the synthesiser at emission via the canonical slugifier (`metadata.explicit_slug` if present, else the shared anomalica-common slugifier - first-last for persons, with deterministic disambiguation; see [node slugs](node-types.md#node-slugs)). They are pre-resolved into the brief because the assembler is writer-only and does not read node metadata; an unresolved slug would silently break pattern-slug URLs and their cross-links.
 
 ## `claims` (the selection)
 
-An ordered list of claims - the selection, and the only facts the writer may use. Nothing outside it can enter the prose; this is what makes 0008 enforceable by construction. Order is the synthesiser's. Each claim carries:
-
-| Field | Description |
-|-------|-------------|
-| `claim_id` | The claim's id in the graph. |
-| `claim_hash` | The per-claim fingerprint, verbatim from the claims table - the unit `brief_hash` is built from. |
-| `content` | The claim text. |
-| `original_excerpt` | The verbatim source quote. |
-| `claim_type` | observation / testimony / hearsay / opinion / measurement / administrative (see [node-types.md](node-types.md)). |
-| `attestation` | first / second / third-hand, or absent (nullable). |
-| `speaker` | `{ node_id, title }` - who asserted the claim. |
-| `node_refs` | The domain nodes the claim references. |
-| `date`, `date_end` | The claim's date or date range. |
-| `location_in_record` | Where in the source record the claim appears (timestamp range, page, paragraph). |
-| `evidence` | `{ score, independent_sources }` - neutral until evidence scoring is pinned (see [Intended but deferred](#intended-but-deferred)). |
-| `provenance` | `{ record_id, record_title, record_date, record_reference, content_hash, friendly_name }` - the citation and deep-link source for the claim. |
+An ordered list of claims - the selection, and the only facts the writer may use. Nothing outside it can enter the prose; this is what makes 0008 enforceable by construction. Order is the synthesiser's. Each claim's fields - `claim_id`, `claim_hash`, `content`, `original_excerpt`, `claim_type`, `attestation`, `speaker`, `node_refs`, `date`/`date_end`, `location_in_record`, `evidence`, `provenance` - are listed in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief` (`body.claims`). Note `provenance.content_hash` and `friendly_name`: they link each claim back to its source ingest.
 
 ## Identity and audit
 

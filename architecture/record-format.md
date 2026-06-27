@@ -31,30 +31,7 @@ source_type: pdf
 ---
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `schema` | string | yes | Format version. Always `anomalica/record/1` for this version. |
-| `title` | string | yes | Document or episode title. Always quoted. |
-| `date_published` | string or null | yes | When the original content was published. ISO 8601, precision varies: `2023`, `2023-07`, `2023-07-26`, or with time and zone. Set to `null` when the source is genuinely undated (e.g. an undated transcript or memo) - do not fabricate a fallback from file modification or ingestion dates, as a wrong date is worse provenance than an absent one. |
-| `source_type` | string | yes | One of: `pdf`, `audio`, `video`, `web`, `ebook` |
-| `publisher` | string | no | The entity that created the content (e.g. "CBS News", "The Debrief", "House Oversight Committee"). Not the hosting platform; distinct from `creators` (the human creator(s)). |
-| `source_url` | string | no | URL where the source can be found |
-| `source_id` | string | no | Stable platform-specific identifier (e.g. `youtube:ZBtMbBPzqHY`) |
-| `fetched_url` | string | no | URL from which the content was actually retrieved, if different from source_url (e.g. a Wayback Machine archive URL) |
-| `source_file` | string | no | For a record ingested from a local file (no URL), the original filename - the traceable origin where there is no `source_url` (e.g. an agency/FOIA filename like `DOW-UAP-D57-Mission-Report-Gulf-of-Aden-September-2020.pdf`). The file's bytes are archived at `sources/{content_hash}.{ext}`. |
-| `provenance` | string | no | Set to `unknown` when a record has no recoverable acquisition origin (neither `source_url` nor `source_file`) - distinguishes a genuinely untraceable record from one merely not yet annotated. Absent when the origin is known. |
-| `creators` | list | no | The human creator(s) of the record - the document's author(s), the video or podcast host(s)/presenter(s), or a channel owner who is a named person. Person names, canonical "Last, First Middle" preferred (the assimilator's matcher tolerates either ordering). Medium-neutral; distinct from `publisher` (the entity). Optional and reviewer-fillable: platform metadata often gives the publishing entity reliably but not the human host. Replaces the former written-document-only `authors`. |
-| `content_hash` | string | no | SHA-256 that names the record's file in `store/` and identifies it. What it hashes is source-type dependent (see [Store](#store)): the source asset's bytes for `audio`/`video`/`pdf`, the extracted body text for `web`/`ebook`. |
-| `source_hash` | string | no | Emitted by the `web` and `ebook` handlers: SHA-256 of the raw source asset (the post-render HTML for web, the EPUB bytes for ebook), locating `sources/{source_hash}.{ext}`. Differs from `content_hash`, which for these two types hashes the extracted body rather than the source bytes. `audio`/`video`/`pdf` do not emit it: their `content_hash` already hashes the source bytes, so the asset is at `sources/{content_hash}.{ext}`. (For ebook the same hash is also recorded in the verification sidecar's `sha256`; `source_hash` surfaces it in frontmatter so consumers need not open the gated sidecar.) |
-| `snapshots` | list | no | Sibling capture artefacts produced alongside the main record. Each entry has `role` (well-known string), `hash` (sha256 of the artefact bytes), and `content_type` (MIME). Used for web records to expose PDF renders and frozen-page captures - see [Web record snapshots](#web-record-snapshots) below. |
-| `pages` | integer | no | Page count for documents |
-| `duration` | number | no | Duration in seconds for audio/video |
-| `date_accessed` | string | no | When the source was fetched. ISO 8601 with timezone (always Zulu). |
-| `date_extracted` | string | no | When the ingestion pipeline ran. ISO 8601 with timezone (always Zulu). |
-| `copyright` | object | no | Copyright status (see the [copyright decision](../decisions/drafts/source-types-and-copyright.md)) |
-| `classification` | string | no | Original security classification banner of the source, verbatim with surrounding parentheses stripped (e.g. `SECRET//REL TO USA, FVEY`). Present only for documents carrying a classification marking; absent otherwise. Portion-level markings that differ from the document banner are captured inline - see [Classification markings](#classification-markings). |
-| `processing` | object | no | Processing metadata: handler, version, tools used, source characteristics |
-| `media` | object | no | Summary of extracted media stored at `media/{record_hash}/`. Currently `{ count, total_bytes }`. Omitted when the record has no extracted media. |
+Every frontmatter field - its type, whether it is required, which source types it applies to, and a description - is listed once in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.ingest`. That YAML is the canonical field list; this document does not repeat it. The hash fields (`content_hash`, `source_hash`) are explained in narrative under [Store](#store); the body-annotation sub-fields (image, chapter, snapshot roles) are specified in their sections below.
 
 ### Web record snapshots
 
@@ -285,7 +262,7 @@ media/          # extracted images, per-record subdirectories
 
 ### Store
 
-The `store/` directory contains the actual record files, named by `content_hash` (see the frontmatter table). What `content_hash` hashes is source-type dependent: for `audio`/`video`/`pdf` it is the source file's bytes; for `web`/`ebook` it is the extracted body text. This provides deduplication: the same input always produces the same output path, regardless of where it was ingested from or what it was called.
+The `store/` directory contains the actual record files, named by `content_hash` (listed in [`format-specs.yaml`](../reference/format-specs.yaml)). What `content_hash` hashes is source-type dependent: for `audio`/`video`/`pdf` it is the source file's bytes; for `web`/`ebook` it is the extracted body text. This provides deduplication: the same input always produces the same output path, regardless of where it was ingested from or what it was called.
 
 Because `audio`/`video`/`pdf` hash the source bytes, their `content_hash` is stable across re-extraction - reprocessing the same source (for example an improved transcriber) keeps the same identity and does not orphan reviews. `web`/`ebook` hash the extracted body, so a re-extraction that changes the body changes `content_hash` and the store path. This source-anchored/body-anchored split is current behaviour, not a settled design; making it consistent across types is under reconciliation.
 
