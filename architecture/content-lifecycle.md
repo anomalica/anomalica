@@ -85,7 +85,7 @@ Human reviews are an audit trail recorded in `review.yaml` within each document 
 ```yaml
 - date: 2026-04-02
   language: en
-  reviewer: Mark Willard
+  reviewer: Dana Okafor
   body_hash: "sha256:a1b2c3d4e5f6..."
   comment: "Verified GoatCounter section is accurate"
 

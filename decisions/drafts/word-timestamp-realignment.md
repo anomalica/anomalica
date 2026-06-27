@@ -32,7 +32,7 @@ an emitted string is rarely a verbatim substring of the source.
 ## Evidence (zero-spend prototype)
 
 `digester/workspace/benchmarks/align_prototype.py` tested the matching in
-isolation with no metered run, reusing the navy digest's existing model-assigned
+isolation with no model re-run, reusing the navy digest's existing model-assigned
 `location` per claim as a reference: strip it, re-align the quote with unanchored
 fuzzy token-LCS, measure agreement.
 
@@ -44,7 +44,7 @@ fuzzy token-LCS, measure agreement.
   and 10.5% within 2s. So alignment must use the quote, never the paraphrase.
 - **Every claim carries a quote.** All 98 navy claims have both a verbatim quote
   and a location. The quote IS the anchor; no anchor-span prompt change and no
-  metered re-extraction are needed to align.
+  re-extraction are needed to align.
 - **Model-independent.** The verbatim-excerpt field is 100% coverage>=0.9
   (mean 1.00) for Haiku, Sonnet and Opus alike (imminent ch8 compare set); the
   paraphrase is unalignable for all three. Haiku copies quotes as faithfully as
@@ -148,7 +148,7 @@ fuzzy token-LCS, measure agreement.
    - `coverage` is a SOFT confidence signal, not a gate and not a reviewer chore.
      The workbench renders the jump normally at >=0.9, shows an unobtrusive
      "approximate" hint below 0.9, and only flags prominently below ~0.7. It does
-     NOT enter Mark's review queue or the digestibility gate.
+     NOT enter the reviewer's queue or the digestibility gate.
    - Both readers degrade gracefully: they emit a precise jump-to-moment (the
      workbench seeks its existing player; the assembler builds a `source_url`
      `?t=int(start)` deep-link) only when `coverage` is high and `resolution` is
@@ -176,7 +176,7 @@ fuzzy token-LCS, measure agreement.
 
 - **Strip inline (digester) vs clean-body + `words.json` sidecar (ingester).**
   The one remaining open question, and not a separate decision: it is the same
-  call as the pending v2 record-format question with Mark (the clean-body +
+  call as the pending v2 record-format question for the maintainer (the clean-body +
   committed `words.json` sidecar recommendation). Decision 1's carrier resolves
   when that is answered - the sidecar is the converged direction (the ingester
   has the `anomalica/words/1` schema ready); inline strip is the fallback only if

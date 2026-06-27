@@ -97,7 +97,7 @@ grants:
     records:
       - pentagon-uap-report-2021
       - kean-ufos-generals-2010
-    granted_by: mark-anomalica
+    granted_by: anomalica-admin
     granted_at: 2026-04-11
 ```
 

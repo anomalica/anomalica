@@ -1,6 +1,6 @@
 # Claims fusion as a robust SLAM back-end
 
-Internal design knowledge (a reference note, not public-facing copy). A deliberate design lens for the claims pipeline, relayed from Mark, whose professional background is robotics perception - sensor fusion for SLAM (simultaneous localisation and mapping). It is borrowed on purpose, not a loose metaphor, and bears directly on the assimilator's corroboration and evidence-scoring work and on the [algorithmic-evidence-scoring draft](../decisions/drafts/algorithmic-evidence-scoring.md) - it is the robustness theory under that draft.
+Internal design knowledge (a reference note, not public-facing copy). A deliberate design lens for the claims pipeline, drawn from robotics perception - sensor fusion for SLAM (simultaneous localisation and mapping). It is borrowed on purpose, not a loose metaphor, and bears directly on the assimilator's corroboration and evidence-scoring work and on the [algorithmic-evidence-scoring draft](../decisions/drafts/algorithmic-evidence-scoring.md) - it is the robustness theory under that draft.
 
 ## The core claim
 
@@ -37,7 +37,7 @@ Every one is a mechanism for: let possibly-false constraints in, then down-weigh
 
 ## Trusted sources: by properties, not identity
 
-Examples Mark raised: Ross Coulthart, Chris Ramsay / Area 52, George Knapp. Encode trust as the design already demands - by measurable **properties**, not named identity. Hard-coding named people contradicts the charter (confidence from measurable properties of the sources, not human editorial judgement; jurisdiction-independent). Score the properties that make a source reliable - shows primary documents, names sources, original investigation versus aggregation, verifiable track record - so any source worldwide that scores high gets weight automatically.
+Examples: Ross Coulthart, Chris Ramsay / Area 52, George Knapp. Encode trust as the design already demands - by measurable **properties**, not named identity. Hard-coding named people contradicts the charter (confidence from measurable properties of the sources, not human editorial judgement; jurisdiction-independent). Score the properties that make a source reliable - shows primary documents, names sources, original investigation versus aggregation, verifiable track record - so any source worldwide that scores high gets weight automatically.
 
 Treat such sources as **strong, calibratable sensors with bounded influence**: high prior weight, but never breakdown-point-zero influence (even excellent journalists are prime disinformation targets - feeding a credible reporter is the classic operation). Their best use is **calibration**: their track record is labelled data to tune the scorer. Use them to train the model, not to be the model.
 

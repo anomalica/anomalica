@@ -1,6 +1,6 @@
 # Anomalica governance charter
 
-A living statement of what Anomalica is, how it is funded and licensed, what languages it commits to, and what it discloses. This consolidates the founding and governance decisions (formerly ADRs 0002 founding, 0003 name, 0004 transparency, 0005 licensing, 0022 languages) and the disclosure policy (formerly the operational-decision-visibility draft amending 0004). It is edited in place; git is the history. See [decisions/0001](../decisions/0001-record-decisions.md) for how decisions are routed across homes.
+A living statement of what Anomalica is, how it is funded and licensed, and what languages it commits to. This consolidates the founding and governance decisions (formerly ADRs 0002 founding, 0003 name, 0004 transparency, 0005 licensing, 0022 languages). It is edited in place; git is the history.
 
 Anomalica was founded by a single person. "We" is editorial.
 
@@ -53,20 +53,8 @@ The set above is the destination, not the day-one output. Translation rolls out 
 
 The core set is drawn from the top of the coverage ranking (the highest-coverage languages, English first); its exact membership is pinned when the rollout begins, and the remainder propagate as translation capacity allows. This shapes the scheduler's translate job, which targets the core set first rather than every language for every page.
 
-## Disclosure: what is published, private, or secret
+## Privacy and security
 
-Transparency is most valuable as a deliberate act on the things that earn trust, not as a blanket setting on everything. The project's credibility rests on a narrow set of things being open; it does not rest on the founder publishing every operational and strategic decision. Three tiers:
-
-- **Published** (public meta-repo + website): the product - all code, data, and the architecture decision records that govern them - plus the things that let a reader trust the platform is not captured or biased: money (where it comes from and goes), editorial independence, neutrality, methodology, governance, and legal structure.
-- **Private but tracked** (the private `operations` repository): operational and strategic decisions - provider choices and negotiations, account management, business development, positioning, growth strategy, half-formed ideas, and the operational-security detail of hosting and domains. The founder may graduate a specific item to the published tier when it serves the mission.
-- **Secret** (a password manager, never in any repository): credentials and API keys.
-
-Security never relies on obscurity: the submission system, encryption, and conditional release are designed to be secure with full source visibility.
-
-### Principle-level transparency for relocated operational records
-
-Some decisions whose operational detail now lives privately in `operations` keep a thin, principle-level statement public here, so relocating them does not quietly reduce transparency:
-
-- **AI-spend transparency** - AI processing runs on paid Anthropic services and local compute, met from the project's donation funding (see Funding above). Which services each component uses, and the billing detail, are tracked privately in `operations`.
-- **Resilience and jurisdictional spread** - the platform is designed to survive adversarial pressure: domains and hosting are spread across resilient jurisdictions, the static site degrades gracefully (see the architecture record for the technical three-layer design), and the backend that holds reviewer-identity data runs in an EU, non-Five-Eyes jurisdiction with its encryption keys never written to disk - a choice made to protect reviewers. The specific registrars, defensive registrations, hosting providers, and backend location are operational-security detail, tracked privately in `operations`.
-- **Privacy-respecting analytics** - site analytics are cookieless and aggregate: no personal data, no device fingerprinting, no cross-site tracking, and no consent banner required (compliant with the General Data Protection Regulation and the ePrivacy Directive). The specific analytics tool and its hosting are tracked privately in `operations`.
+- Site analytics are cookieless and aggregate: no personal data, no device fingerprinting, no cross-site tracking, and no consent banner required (compliant with the General Data Protection Regulation and the ePrivacy Directive).
+- The platform is designed to survive adversarial pressure: hosting is spread across resilient jurisdictions, the static site degrades gracefully, and the backend that holds reviewer-identity data runs in a privacy-protective, non-Five-Eyes jurisdiction with its encryption keys never written to disk - a deliberate choice to protect contributors.
+- Security never relies on obscurity: the submission system, encryption, and conditional release are designed to be secure with full source visibility.

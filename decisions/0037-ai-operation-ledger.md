@@ -9,26 +9,26 @@ Every AI or compute call the pipeline makes - a digester extraction, an assimila
 
 Two needs converge on one store:
 
-- **Usage.** Per-call usage (tokens, cache, duration) has no durable record today; billing and cost accounting are tracked privately in `operations` and need a data source.
+- **Usage.** Per-call usage (tokens, cache, duration) has no durable record today and needs a data source.
 - **Provenance.** [0008](0008-content-traceable-to-sources.md) and [0010](0010-auditable-assembly.md) trace a page to its source claims; neither records WHICH model (and version) produced each extraction. Reproducibility and audit need that.
 
 A grounding sweep of the actual code established the shape of the problem - in particular that the pipeline has no single AI call-path (see Consequences).
 
 ## Decision
 
-A single append-only **AI-operation ledger**: one row per AI/compute call, recording its cost and its provenance. Schema `anomalica/ai-ledger/1`. SQLite (per [0016](0016-sqlite-storage.md)), at `~/.local/share/anomalica/ai-ledger.db`. The field-level contract is [architecture/ai-ledger-format.md](../architecture/ai-ledger-format.md).
+A single append-only **AI-operation ledger**: one row per AI/compute call, recording its usage and its provenance. Schema `anomalica/ai-ledger/1`. SQLite (per [0016](0016-sqlite-storage.md)), at `~/.local/share/anomalica/ai-ledger.db`. The field-level contract is [architecture/ai-ledger-format.md](../architecture/ai-ledger-format.md).
 
 ### One shared writer, many call sites (the single-producer discipline)
 
 The pipeline does NOT have a single AI call-path. Grounding confirmed five distinct emission sites (listed under Consequences). The single-producer guarantee is therefore held at the **writer**, not the transport: one shared ledger-append helper in anomalica-common, imported and called at each emission boundary - the same discipline applied to the shared `claim_hash` and the canonical slugifier. Every site emits through the one writer, so rows are uniform no matter which path produced the call.
 
-### Usage and billing
+### Usage
 
-Per call, the ledger records usage (tokens in/out, cache, duration). Billing and cost-accounting columns are carried for the `operations` layer and defined privately there, not in this public record.
+Per call, the ledger records usage (tokens in/out, cache, duration).
 
 ### Model identity and provenance
 
-`model_id` + `model_version` per row. For Claude: the alias on the subscription path (the only identity the CLI is given), the versioned id on the metered path (`API_MODEL_MAP`), with `model_version` the dated pin where one exists (haiku is dated; sonnet and opus are version-pinned but undated). For GPU/CPU: the local model and version (e.g. `whisperx-large-v3`, `pyannote-3.1`, the fastembed model). Together with `target` and `operation`, this answers "which model version produced this claim/record" - the provenance half of the ledger.
+`model_id` + `model_version` per row. For Claude: the alias on the subscription path (the only identity the CLI is given), the versioned id on the API path (`API_MODEL_MAP`), with `model_version` the dated pin where one exists (haiku is dated; sonnet and opus are version-pinned but undated). For GPU/CPU: the local model and version (e.g. `whisperx-large-v3`, `pyannote-3.1`, the fastembed model). Together with `target` and `operation`, this answers "which model version produced this claim/record" - the provenance half of the ledger.
 
 ### Attribution columns must be threaded from callers
 

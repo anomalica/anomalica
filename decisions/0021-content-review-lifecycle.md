@@ -32,7 +32,7 @@ Each document has a `review.yaml` sidecar file that sits alongside the content f
 ```yaml
 - date: 2026-04-02
   language: en
-  reviewer: Mark Willard
+  reviewer: Dana Okafor
   body_hash: "sha256:abc123..."
   comment: "Verified analytics section is accurate"
 

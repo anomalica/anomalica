@@ -17,7 +17,7 @@ Decisions are routed by concern - see [0001](decisions/0001-record-decisions.md)
 - **Governance & founding** (aims, name, funding, licensing, languages, disclosure policy): [guides/governance.md](guides/governance.md)
 - **Editorial & voice** (plain language, neutral voice, AI-use disclosure): [guides/editorial-style.md](guides/editorial-style.md)
 - **Data model, terminology & taxonomy** (node types, naming, claim and extraction conventions): [architecture/data-model.md](architecture/data-model.md) and [architecture/node-types.md](architecture/node-types.md)
-- **Operations & infrastructure** (domains, hosting, analytics, AI billing and cost): the private `operations` repository
+- **Operations & infrastructure** (domains, hosting, analytics): the `operations` repository
 - **Visual identity** (logos, palette, design tokens): the `brand` repository (`brand/visual-identity.md`)
 
 Architecture decision records follow the format context / decision / consequences, and are maintained rather than frozen: corrections and clarifications are edited in place (git tracks the history); a material change is a dated amendment or a superseding record.

@@ -33,7 +33,7 @@ The credible, scored encyclopaedia launch. It requires the evidence-scoring meth
 - The honesty line is structural: a provisional "in development" score is shown, never a fabricated number.
 - Phase 1's critical path (per the launch audit): re-digest the chosen source onto the current taxonomy; confirm the site renders a Person or Event article; ensure the inspection page (0031) and the references resolve. None of it needs scoring.
 - Phase 2 keeps the bar high: the distinguishing claim (data-derived credibility) is made only when it is real.
-- The actual publish and deploy of Phase 1 remain Mark's gate; this record defines the target, not the go-live.
+- The actual publish and deploy of Phase 1 remain the maintainer's decision; this record defines the target, not the go-live.
 
 ## Scope
 

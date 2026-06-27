@@ -22,7 +22,7 @@ This record defines where each kind of decision now lives, and how records are m
 | **Data model, terminology, taxonomy** - node types, naming conventions, claim/extraction conventions, the shared vocabulary | living docs in `architecture/` (`data-model.md`, `node-types.md`, `record-format.md`) | edit-in-place, current state only |
 | **Editorial and voice** - how content reads: plain language, neutral voice, AI-authorship disclosure | `guides/editorial-style.md` | living guide |
 | **Governance and founding** - what the project is and how it is run: founding aims, name, licensing, funding, scope commitments, disclosure policy | `guides/governance.md` | living charter |
-| **Operations and infrastructure** - running the service: domains, hosting, analytics, AI billing and cost controls, jurisdiction | the `operations` repo | operations' call |
+| **Operations and infrastructure** - running the service: domains, hosting, analytics, jurisdiction | the `operations` repo | operations' call |
 | **Visual identity** - logos, palette, design tokens | the `brand` repo | brand's call |
 
 A new decision goes to the home that matches its concern. When a decision spans two (for example, a principle with an operational consequence), the load-bearing half goes to its natural home and the other is a cross-reference, not a copy.

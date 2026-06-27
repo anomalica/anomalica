@@ -16,7 +16,7 @@ The producer is a single shared writer in anomalica-common, called at each emiss
 | `operation` | attribution | The AI/compute operation (enum below). Threaded from the caller. |
 | `target` | attribution | What the call acted on - `content_hash` / record `friendly_name` / `node_id` / page slug, as applicable. Threaded from the caller. |
 | `transport` | execution | `subscription` / `api` / `gpu` / `cpu` (enum below). |
-| `model_id` | execution | Claude alias on the subscription path; versioned id on the metered path (`API_MODEL_MAP`); local model name on GPU/CPU. |
+| `model_id` | execution | Claude alias on the subscription path; versioned id on the API path (`API_MODEL_MAP`); local model name on GPU/CPU. |
 | `model_version` | execution | Dated/version pin where one exists, else null. |
 | `outcome` | execution | `ok` / `error`. |
 | `retries` | execution | Retries before this outcome. |
@@ -26,11 +26,9 @@ The producer is a single shared writer in anomalica-common, called at each emiss
 | `cache_write` | usage | `cache_creation_input_tokens`. |
 | `rate_limit_consumed` | reserved | Nullable. Populated when the subscription CLI wrapper exposes a rate-limit/allowance field; nothing reports it today. |
 
-The row also carries per-call billing columns; their definition and the rate detail are tracked privately in the `operations` repository and are not documented here.
-
 ## Usage, by transport
 
-Each row records the call's usage and wall-time. Tokens are recorded on the Claude paths (`subscription`, `api`) and are null on the local `gpu` (whisperx / pyannote) and `cpu` (fastembed) paths; `duration_s` is wall-time across all paths (new instrumentation on the GPU/CPU paths). Per-call billing is derived from these and the private `operations` rate detail.
+Each row records the call's usage and wall-time. Tokens are recorded on the Claude paths (`subscription`, `api`) and are null on the local `gpu` (whisperx / pyannote) and `cpu` (fastembed) paths; `duration_s` is wall-time across all paths (new instrumentation on the GPU/CPU paths).
 
 ## Enums
 
