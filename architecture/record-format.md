@@ -262,9 +262,9 @@ media/          # extracted images, per-record subdirectories
 
 ### Store
 
-The `store/` directory contains the actual record files, named by `content_hash` (listed in [`format-specs.yaml`](../reference/format-specs.yaml)). What `content_hash` hashes is source-type dependent: for `audio`/`video`/`pdf` it is the source file's bytes; for `web`/`ebook` it is the extracted body text. This provides deduplication: the same input always produces the same output path, regardless of where it was ingested from or what it was called.
+The `store/` directory contains the actual record files, named by `content_hash`. What `content_hash` hashes per source type, and how it links back to `sources/`, is defined once in the canonical hash chain ([`format-specs.yaml`](../reference/format-specs.yaml), `chain:`) and is not restated here.
 
-Because `audio`/`video`/`pdf` hash the source bytes, their `content_hash` is stable across re-extraction - reprocessing the same source (for example an improved transcriber) keeps the same identity and does not orphan reviews. `web`/`ebook` hash the extracted body, so a re-extraction that changes the body changes `content_hash` and the store path. This source-anchored/body-anchored split is current behaviour, not a settled design; making it consistent across types is under reconciliation.
+Two behaviours follow from that per-type hashing. It deduplicates - the same input always produces the same store path. And it makes the source-anchored types stable across re-extraction (reprocessing with an improved transcriber keeps the same identity and does not orphan reviews), whereas the body-anchored types get a new `content_hash` whenever a re-extraction changes the body. Making this consistent across types is under reconciliation.
 
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
 
