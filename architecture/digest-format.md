@@ -13,6 +13,8 @@ The companion document on the ingester side is
 [`record-format.md`](record-format.md). This document covers the digester
 side.
 
+The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.digest`); this document is its narrative companion.
+
 ## Schema identifier
 
 Every digest carries `schema: anomalica/digest/1` at the top. A future

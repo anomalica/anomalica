@@ -4,6 +4,8 @@ The record format is the interchange format between the ingester and the digeste
 
 See [architecture decision record 0019](../decisions/0019-record-interchange-format.md) for why this format was chosen.
 
+The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.ingest`); this document is its narrative companion (body grammar, parser behaviour, examples).
+
 ## Structure
 
 A record file has three parts:
