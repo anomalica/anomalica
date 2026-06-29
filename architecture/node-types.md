@@ -40,9 +40,38 @@ The subject matter is heavy with acronyms (AATIP, AARO, VFA-41, CSG-11, FLIR, AA
 
 The rule: acronyms in node names are written as "Full Name (ACRONYM)". "Strike Fighter Squadron 41 (VFA-41)" beats "VFA-41". "Carrier Strike Group 11 (CSG-11)" beats "CSG-11". "Anomalous Aerial Vehicle (AAV)" beats "AAV". The expanded form makes the node identifiable; the acronym in parentheses preserves searchability for readers who only know the short form.
 
-Inside claim text, acronyms are expanded on first use the same way: "forward-looking infrared (FLIR) pod", "weapons systems officer (WSO)". Subsequent uses within the same claim may use the acronym alone.
+> **Amendment 2026-06-29: no bare-acronym exception.** There is NO safe-acronyms exception for node names. Even universally-known acronyms get the full name: "Central Intelligence Agency (CIA)", "Unidentified Flying Object (UFO)", "National Aeronautics and Space Administration (NASA)", "Federal Bureau of Investigation (FBI)" - never bare "CIA"/"UFO"/"NASA"/"FBI". The audience is international; what is obvious to one reader is not to another. This supersedes the prior bare-exception for well-known acronyms (which lived in the digester's extraction code, `extract.py`); that exception is dropped in sync.
+
+**Country prefix** only for cross-nationally AMBIGUOUS bodies: "United States Department of Defense (DoD)" vs "Australian Department of Defence", because both exist. Do NOT prefix a uniquely-named, globally-known organisation - plain "Central Intelligence Agency (CIA)", never "US Central Intelligence Agency".
+
+Inside claim text, acronyms are expanded on first use the same way: "forward-looking infrared (FLIR) pod", "weapons systems officer (WSO)". Subsequent uses within the same claim may use the acronym alone. (This claim-text rule is unchanged.)
 
 The original-excerpt field preserves the source's exact wording, which often uses the acronym alone. Normalisation lives in the node name and the claim text, not in the excerpt.
+
+#### Canonical acronym to full-name map
+
+The single source for the expansions the assimilator's deterministic normaliser applies - the doc, not hard-coded code. Starting set; extend with the assimilator as the corpus grows (ambiguous expansions, e.g. UAP "aerial" vs "anomalous", confirmed against the corpus before adding):
+
+| Acronym | Full name |
+|---------|-----------|
+| CIA | Central Intelligence Agency |
+| FBI | Federal Bureau of Investigation |
+| NASA | National Aeronautics and Space Administration |
+| DoD | United States Department of Defense (country-qualified - ambiguous cross-nationally) |
+| USAF | United States Air Force |
+| USN | United States Navy |
+| UFO | Unidentified Flying Object |
+| UAP | Unidentified Anomalous Phenomena |
+| AATIP | Advanced Aerospace Threat Identification Program |
+| AAWSAP | Advanced Aerospace Weapon System Applications Program |
+| AARO | All-domain Anomaly Resolution Office |
+| UAPTF | Unidentified Aerial Phenomena Task Force |
+| TTSA | To the Stars Academy of Arts and Science |
+| NIDS | National Institute for Discovery Science |
+
+**UAP expansion is a deliberate call.** Canonical: "Unidentified Anomalous Phenomena (UAP)" - the post-2022 official US term (NDAA / AARO rebrand, covering transmedium), and matching the platform's own name rationale (Anomalica covers anomalous phenomena broadly, explicitly NOT narrowed to aerial; see [governance, Name](../guides/governance.md)). "Unidentified Aerial Phenomena (UAP)" is the alias - dominant in older corpus sources (the source wording also survives verbatim in claim excerpts, so corpus faithfulness is not lost). Both expansions are stored as aliases on the node so matching resolves either. The one-time re-slug + re-assemble of the existing UAP topic page is acceptable pre-launch.
+
+The 2020 **Unidentified Aerial Phenomena Task Force (UAPTF)** keeps "Aerial" - that is the proper name of that specific 2020 entity, predating the 2022 rebrand - so a UAP-"Anomalous" / UAPTF-"Aerial" split is intentional and historically accurate, not an inconsistency to reconcile. (Likewise AARO is "All-domain Anomaly Resolution Office", lowercase "d", per official DoD usage.)
 
 ### Redacted and anonymous people
 
@@ -87,17 +116,22 @@ A single real-world thing may produce multiple nodes of different types. This is
 
 A named human individual.
 
-**Canonical form: "Last, First Middle", plain legal name only - no titles, ranks, honourifics, or suffixes.** "Fravor, David", not "Commander David Fravor"; "Rubio, Marco", not "Senator Marco Rubio".
+**Canonical form: natural order, plain legal name only - "David Fravor", "Marco Rubio" - no titles, ranks, honourifics, or suffixes.**
+
+> **Amendment 2026-06-29: natural order, superseding the prior "Last, First Middle" rule.** Person names are stored in natural order ("David Fravor"), not surname-first ("Fravor, David"). Surname-first / surname-sort is at most an optional WEBSITE DISPLAY feature (a final render step), never a stored or processed form; the pipeline does not separate first from last. Rationale: last-first throughout the pipeline is needless complexity. The matcher already tolerates either ordering, so matching is unaffected; the slug stays first-last (`david-fravor`, already natural); the no-titles/ranks rule below is unchanged.
 
 - **No titles or ranks.** A title or rank is a property of a person at a point in time, not part of their identity, so it is captured as a dated claim ("David Fravor held the rank of Commander in the US Navy") rather than baked into the name. Names stay stable as people change roles, and the graph accumulates a career history as records are ingested.
-- **Surname first.** The surname is the durable identifier (first names vary: Lue/Luis, Dave/David), is often the only part initially known ("Captain Fravor" before any first name appears), sorts usefully, matches official identification, and follows the project's "most important first" convention (cf. dates YYYY-MM-DD, places largest-unit-first).
-- **Aliases.** Informal names, shortened forms, transliterations, and the reverse "First Last" order are stored as aliases on the node, not as the canonical name (canonical "Elizondo, Luis"; aliases "Lue Elizondo", "Luis Elizondo"). The digester's matcher tolerates either ordering during integration.
+- **Middle names.** Include middle name(s) in the canonical when reliably attested or needed to disambiguate ("David Charles Grusch"); do not pad with a middle a source never uses. Forms without the middle ("David Grusch") are aliases; curation settles the fullest reliable form as canonical.
+- **Suffixes: generational kept, honorific dropped.** Generational suffixes that distinguish individuals stay inline ("Harold Smith Jr", "Luis Elizondo III") - dropping them conflates father and son. Honorific/credential suffixes (PhD, Esq, KBE) are dropped and captured as claims, like titles. (This refines the prior blanket "no suffixes".)
+- **Aliases, and the retained surname-first form.** Informal names, shortened forms, and transliterations are aliases, not the canonical name (canonical "Luis Elizondo"; aliases "Lue Elizondo"). The old surname-first order ("Elizondo, Luis") is ALSO retained as an alias - deliberately: it carries migration (pre-re-digest digests are last-first) and preserves the comma structure the importer's matching precision keys on. The importer accepts last-first INPUT and normalises it to the natural canonical; the matcher stays order-tolerant permanently (real names arrive both ways), not dropped after re-digestion.
 - **Non-Latin names** use the person's own script as canonical, with romanisations as aliases (canonical 岸田文雄; aliases Kishida Fumio, Fumio Kishida).
 - **Single-name figures and pseudonyms** remain as-is (Madonna, Whiskey-99).
 
-Presentation reordering and culturally appropriate titles ("Commander David Fravor", "フレーバー司令官", "le commandant Fravor") are the assembler's job, drawn from claims and language directives; storage uses the one canonical form.
+Culturally appropriate titles ("Commander David Fravor", "フレーバー司令官", "le commandant Fravor") are the assembler's job, drawn from claims and language directives; storage uses the one canonical natural-order name.
 
-Examples: Fravor, David; Elizondo, Luis; Reid, Harry; Kean, Leslie.
+**Coordinated implementation - do all in one pass or names mangle:** (1) node-types.md (this) specs natural order; (2) the digester emits natural order; (3) the assimilator normalises the current graph's person names ("Fravor, David" -> "David Fravor"); (4) the assembler DROPS its reorder-for-display step (it currently reorders Last,First -> natural, which would double-reorder an already-natural stored name). The matcher is unaffected (already order-tolerant). Not visible to users - the site already displays natural names today via the assembler's reorder - so not urgent, but the four steps land together.
+
+Examples: David Fravor; Luis Elizondo; Harry Reid; Leslie Kean.
 
 ### Organisation
 
@@ -158,6 +192,28 @@ Boundary rule (controls over-extraction of every abstract noun):
 - A topic must be nameable and durable: someone reading only the node name should know which idea it is, and it should be the same idea wherever it recurs. Merge synonyms to one node (superluminal travel = faster-than-light travel = warp speed: one topic, the rest aliases).
 
 Topics carry no truth status. Whether anyone believes a topic is expressed through claims that reference it, with their own attestation and provenance, exactly as for every other node type.
+
+## Page-worthiness: which node types earn a page
+
+Existing in the graph and earning a published page are different thresholds. Extraction sweeps every node a claim references; a page is a much higher bar. The v2 article-proposals gate - the assimilator decides which nodes earn a page - replaces a pure claim-count floor, which produced ~350 junk proposals (an object cited once, a place mentioned in passing, a person quoted once), because a raw count cannot tell "subject of the corpus" from "mentioned in it". Two things fix it: node **type** and source **independence**.
+
+**This is the editorial call (with Mark); the default below is what folds into the v2 proposals spec, pending sign-off on the overall v2 shape.**
+
+**1. Type tier.** Two tiers; no type is permanently barred (any type can be a central subject, and `/projects/`, `/documents/`, `/topics/` sections already exist):
+
+- **Page-worthy at a modest floor:** person, organisation, project, event, topic - usually subjects when they recur.
+- **High-bar (central-subject only):** place, object, document - usually mentioned in passing; only the central one earns a page (the central craft, the central site, the central report), never a passing reference.
+
+**2. The floor is distinct independent sources, not raw claim count.** A node earns a page when *independent* sources substantively cover it - not when one source mentions it many times. This is the same independence rule fusion uses: count by provenance-root, not by claim count ([decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)). Without it, a per-type gate just relocates the broken count. Starting defaults, to calibrate against the 350-junk corpus (re-run the gate, tune until junk dies and real subjects survive):
+
+| Tier | Types | Floor (starting default) |
+|------|-------|--------------------------|
+| Page-worthy | person, organisation, project, event, topic | >= 3 claims referencing the node, from >= 2 distinct independent sources (provenance-roots) |
+| High-bar | place, object, document | >= 6 claims referencing the node, from >= 3 distinct independent sources |
+
+These kill the named junk: a person quoted once fails the two-source floor; an object or place mentioned in passing fails the higher high-bar floor.
+
+**Refinement to layer in later:** weight claims where the node is the *subject* over claims that merely *mention* it, so a focused-on node outranks a name-dropped one. This matters most for topics, which exist just by being referenced (general relativity is cited throughout the corpus but is background, not a subject) - subject-weighting keeps background topics off the page list even when widely referenced. It needs claim references to distinguish primary from incidental; a later refinement, not the starting default.
 
 ## Structural types
 
