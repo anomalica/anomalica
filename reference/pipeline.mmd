@@ -3,7 +3,6 @@ flowchart TB
   classDef pub fill:#D1F1F1,stroke:#0B6E6E,stroke-width:1.5px,color:#053333;
   classDef rev fill:#E9E5DC,stroke:#5E5A50,stroke-width:1.5px,color:#2c2a24;
   classDef store fill:#ffffff,stroke:#5E5A50,stroke-width:1.3px,color:#2c2a24;
-  classDef planned fill:#ffffff,stroke:#0B6E6E,stroke-width:1.5px,stroke-dasharray:5 4,color:#053333;
 
   raw["Raw sources"]:::src
   ingester{{"Ingester"}}:::pub
@@ -11,10 +10,11 @@ flowchart TB
   archive[("sources/ archive")]:::src
   workbench{{"Workbench"}}:::rev
   digester{{"Digester"}}:::pub
-  fuser{{"Digest fuser (planned)"}}:::planned
-  digests[("Digests")]:::pub
+  raw_digests[("Raw digests")]:::pub
+  fuser{{"Digest fuser"}}:::pub
+  fused_digests[("Fused digests")]:::pub
   assimilator{{"Assimilator"}}:::pub
-  kg[("SQLite knowledge graph")]:::pub
+  kg[("Knowledge graph")]:::pub
   synthesiser{{"Synthesiser"}}:::pub
   briefs[("Briefs")]:::pub
   assembler{{"Assembler"}}:::pub
@@ -26,19 +26,20 @@ flowchart TB
   ingester -->|"records (1:1)"| ingests
   ingester -->|"originals + raw transcripts"| archive
   ingests -->|"records (1:1)"| digester
-  digester -->|"1..N raw digests (one per model)"| fuser
-  fuser -->|"fused digest (N -> 1)"| digests
-  digests ==>|"per-record digests (many -> one)"| assimilator
+  digester -->|"raw digests (1..N)"| raw_digests
+  raw_digests -->|"versions per record"| fuser
+  fuser -->|"one canonical digest"| fused_digests
+  fused_digests ==>|"per-record fused digests"| assimilator
   assimilator <-->|"reads + updates"| kg
   kg -->|"entity + its claims"| synthesiser
   synthesiser ==>|"a brief per page (one -> many)"| briefs
   briefs -->|"the page's brief (1:1)"| assembler
-  digests -->|"one record (1:1)"| assembler
+  fused_digests -->|"one record (1:1)"| assembler
   assembler -->|"entity articles + inspection pages"| content
   content -->|"renders"| site
   brand -.->|"tokens, logo"| site
   ingests <-.->|"review + corrections"| workbench
-  digests <-.->|"review + corrections"| workbench
+  fuser <-.->|"review: pick the best claim"| workbench
   archive -.->|"check against source"| workbench
   workbench -.->|"digestible signal + visual notes"| digester
 
@@ -48,8 +49,9 @@ flowchart TB
   click archive nodeClick
   click workbench nodeClick
   click digester nodeClick
+  click raw_digests nodeClick
   click fuser nodeClick
-  click digests nodeClick
+  click fused_digests nodeClick
   click assimilator nodeClick
   click kg nodeClick
   click synthesiser nodeClick

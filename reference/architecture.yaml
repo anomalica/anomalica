@@ -48,9 +48,10 @@ nodes:
     zone: "review"
     desc: "The human review app, and the hub that touches almost everything. A reviewer loads a record, checks it against
       the original source and the raw archive, corrects the record text, labels who is speaking, adds visual notes (what's
-      on screen but not in the audio), corrects the digests, and marks which records are observed enough to digest."
-    output: "Corrections committed back to both the records (ingests) and the digests as git commits; a 'digestible' signal
-      and a visual-notes sidecar for the digester."
+      on screen but not in the audio), reviews the fuser's choices - picking a better variant of a claim rather than editing
+      digests directly - and marks which records are observed enough to digest."
+    output: "Corrections committed back to the records (ingests) as git commits; fusion preferences for the fuser to replay;
+      a 'digestible' signal and a visual-notes sidecar for the digester."
     contains: "Reviewer edits + observations; reads the source material to check records against it."
     copyright: "PUBLIC tool. It reads source material that may be copyrighted but never exposes it publicly - what it publishes
       back are the corrections, not the source."
@@ -59,26 +60,35 @@ nodes:
     zone: "public"
     desc: "AI reads each record and extracts the atomic factual claims and the entities (nodes) they involve, with provenance
       - who said it, where, attestation level. Defaults to the Claude subscription."
-    output: "One per-record digest file (YAML) of nodes + claims."
+    output: "Raw digests - one or more per source (a source can be digested by several models, or re-digested over time),
+      each a full set of nodes + claims for the record."
     contains: "Structured facts with provenance - no copyrighted text, just claims traceable to a source."
     copyright: "Its output (digests) is public."
-  fuser:
-    kind: "Component (Python, planned)"
-    zone: "public"
-    desc: "Planned (decision 0039). When one source is digested by several models, the fuser builds ONE fused digest from the
-      raw per-model digests: a model clusters the same fact across them, keeps the best phrasing, and - diffing the previous
-      fused digest against the new one - records what was superseded, added, or deleted. It judges meaning, not text hashes or
-      raw locations (both drift when a record is edited in the workbench). Today the digester writes one digest straight to
-      Digests, so the fuser is a 1-model pass-through."
-    output: "One fused digest per source - the only one assimilated; the raw per-model digests are kept as the rebuildable inputs."
-    contains: "The fusion + supersession logic. Facts with provenance, no copyrighted text."
-    copyright: "Its output (the fused digest) is public."
-  digests:
+  raw_digests:
     kind: "Data store (public)"
     zone: "public"
-    desc: "Per-record digest files: the nodes and claims extracted from one source. This is the source of truth for the knowledge
-      graph - the graph is rebuildable from these."
-    output: "The input to the assimilator, and one input to the assembler."
+    desc: "The digest versions for each source - anywhere from one to several, produced by digesting it with different models
+      or re-digesting it over time. Kept as the irreplaceable inputs the fused digest is rebuilt from. Inert: never assimilated
+      directly."
+    output: "The fuser's input."
+    contains: "Facts and claims with provenance, per record per model - not source text."
+    copyright: "PUBLIC - facts and claims aren't copyrightable."
+  fuser:
+    kind: "Component (Python)"
+    zone: "public"
+    desc: "A source can be digested more than once - by different models, or re-digested over time - producing several versions
+      of the digest. The fuser collapses those versions into one comprehensive canonical digest, merging equivalent nodes
+      and claims across them (not just selecting one). Automated, but a reviewer can steer it in the workbench - say which
+      version of a claim is better - and those preferences are replayed, so the result stays rebuildable. Decision 0039."
+    output: "One fused digest per source - the only one assimilated; the raw digests are kept as the rebuildable inputs."
+    contains: "The claim-fusion + supersession logic. Facts with provenance, no copyrighted text."
+    copyright: "Its output (the fused digest) is public."
+  fused_digests:
+    kind: "Data store (public)"
+    zone: "public"
+    desc: "The fused digest per source - one reconciled set of nodes and claims, built by the fuser from the raw digests.
+      The source of truth for the knowledge graph: the graph is rebuildable from these, and these from the raw digests."
+    output: "The input to the assimilator, and one input to the assembler (per-record inspection pages)."
     contains: "Facts and claims with provenance, per record - not source text."
     copyright: "PUBLIC - facts and claims aren't copyrightable, so everything from the digests onward is public."
   assimilator:
@@ -88,13 +98,13 @@ nodes:
       same real-world entity named across many records into a single node, accumulates every claim about it, computes corroboration
       (independent sources agreeing) and evidence scores, and writes the updated graph back. Incremental - seeded once, grown
       each run. This is where the project's differentiator lives."
-    output: "Reads and writes the SQLite knowledge graph - maintains it incrementally."
+    output: "Reads and writes the knowledge graph - maintains it incrementally."
     contains: "The integration logic - import, entity matching, scoring, corroboration, embeddings and search - now its own
       component, split out of the digester. Shares the digest format and the Claude transport with the digester via the anomalica-common
       library."
     copyright: "Its output (the graph) is public."
   kg:
-    kind: "Data artefact (SQLite)"
+    kind: "Data artefact"
     zone: "public"
     desc: "The unified, queryable knowledge graph: one node per real-world entity, all claims about it from across every source,
       corroboration links and evidence scores. The downloadable, torrentable public dataset and the source for every rendered
@@ -170,10 +180,12 @@ links:
   digester:
     - label: "View on GitHub"
       url: "https://github.com/anomalica/digester"
+  raw_digests:
+    - note: "The per-model digests, kept as the rebuildable inputs to the fuser."
   fuser:
-    - note: "Planned - decision 0039 (multi-model digestion and canonical reconciliation). Not yet built."
-  digests:
-    - note: "Public data - the per-record facts the knowledge graph is built from."
+    - note: "Decision 0039 - multi-model digestion and claim fusion."
+  fused_digests:
+    - note: "Public data - the fused per-record facts the knowledge graph is built from."
   assimilator:
     - label: "View on GitHub"
       url: "https://github.com/anomalica/assimilator"
