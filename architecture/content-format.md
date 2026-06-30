@@ -33,7 +33,7 @@ The frontmatter is **human-controlled**; the assembler reads it but never modifi
 | `directives` | list | no | Article-level presentational instructions to the assembler (see [Directives](#directives)). Style/formatting/naming only - never factual. |
 | `metadata` | object | no | Optional metadata the assembler reads but does not modify. Sub-shape not yet specified. |
 
-There is **no cost or billing field** in content frontmatter. Per-artefact AI usage, where surfaced, is provenance only (model, version, token counts); any notional cost shown on the site is derived by the site from published list prices, not stored here.
+There is **no cost or billing field** in content frontmatter. Per-artefact AI usage is provenance only (model, version, token counts). As of 2026-06-29 it is NOT surfaced on the public site (the per-artefact usage/cost panels are pulled - Mark's reversal); the provenance data is kept in frontmatter and the AI-operation ledger for possible later surfacing (likely the internal workbench, TBD). Any notional cost is a pure derivation from published list prices, never stored here.
 
 ## Directives
 
