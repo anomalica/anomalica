@@ -4,54 +4,59 @@ flowchart TB
   classDef rev fill:#E9E5DC,stroke:#5E5A50,stroke-width:1.5px,color:#2c2a24;
   classDef store fill:#ffffff,stroke:#5E5A50,stroke-width:1.3px,color:#2c2a24;
 
-  raw["Raw sources"]:::src
-  ingester{{"Ingester"}}:::pub
-  ingests[("Ingests")]:::src
-  archive[("sources/ archive")]:::src
-  workbench{{"Workbench"}}:::rev
-  digester{{"Digester"}}:::pub
-  raw_digests[("Raw digests")]:::pub
-  fuser{{"Digest fuser"}}:::pub
-  fused_digests[("Fused digests")]:::pub
-  assimilator{{"Assimilator"}}:::pub
-  kg[("Knowledge graph")]:::pub
-  synthesiser{{"Synthesiser"}}:::pub
-  briefs[("Briefs")]:::pub
-  assembler{{"Assembler"}}:::pub
-  content[("Content")]:::pub
-  site{{"Site"}}:::pub
-  brand[("Brand")]:::store
+  raw@{ shape: doc, label: "Raw source" }
+  ingester@{ shape: rounded, label: "Ingester" }
+  ingest@{ shape: doc, label: "Ingest" }
+  archive@{ shape: docs, label: "sources/ archive" }
+  workbench@{ shape: rounded, label: "Workbench" }
+  digester@{ shape: rounded, label: "Digester" }
+  digests@{ shape: docs, label: "Per-model digests" }
+  selector@{ shape: rounded, label: "Digest selector" }
+  selected@{ shape: doc, label: "Selected digest" }
+  assimilator@{ shape: rounded, label: "Assimilator" }
+  kg@{ shape: cyl, label: "Knowledge graph" }
+  synthesiser@{ shape: rounded, label: "Synthesiser" }
+  briefs@{ shape: doc, label: "Brief" }
+  assembler@{ shape: rounded, label: "Assembler" }
+  content@{ shape: doc, label: "Content" }
+  site@{ shape: rounded, label: "Site" }
+  brand@{ shape: docs, label: "Brand" }
 
-  raw -->|"original files (1:1)"| ingester
-  ingester -->|"records (1:1)"| ingests
+  raw -->|"original file (1:1)"| ingester
+  ingester -->|"record (1:1)"| ingest
   ingester -->|"originals + raw transcripts"| archive
-  ingests -->|"records (1:1)"| digester
-  digester -->|"raw digests (1..N)"| raw_digests
-  raw_digests -->|"versions per record"| fuser
-  fuser -->|"one canonical digest"| fused_digests
-  fused_digests ==>|"per-record fused digests"| assimilator
+  ingest -->|"record (1:1)"| digester
+  digester -->|"one digest per model (1..N)"| digests
+  digests -->|"candidate digests"| selector
+  selector -->|"picks the single best"| selected
+  selected ==>|"one per record (1:1)"| assimilator
   assimilator <-->|"reads + updates"| kg
   kg -->|"entity + its claims"| synthesiser
   synthesiser ==>|"a brief per page (one -> many)"| briefs
   briefs -->|"the page's brief (1:1)"| assembler
-  fused_digests -->|"one record (1:1)"| assembler
+  selected -->|"one record (1:1)"| assembler
   assembler -->|"entity articles + inspection pages"| content
   content -->|"renders"| site
   brand -.->|"tokens, logo"| site
-  ingests <-.->|"review + corrections"| workbench
-  fuser <-.->|"review: pick the best claim"| workbench
+  ingest <-.->|"review + corrections"| workbench
+  selector <-.->|"review the selection"| workbench
   archive -.->|"check against source"| workbench
   workbench -.->|"digestible signal + visual notes"| digester
 
+  class raw,ingest,archive src
+  class ingester,digester,digests,selector,selected,assimilator,kg,synthesiser,briefs,assembler,content,site pub
+  class workbench rev
+  class brand store
+
   click raw nodeClick
   click ingester nodeClick
-  click ingests nodeClick
+  click ingest nodeClick
   click archive nodeClick
   click workbench nodeClick
   click digester nodeClick
-  click raw_digests nodeClick
-  click fuser nodeClick
-  click fused_digests nodeClick
+  click digests nodeClick
+  click selector nodeClick
+  click selected nodeClick
   click assimilator nodeClick
   click kg nodeClick
   click synthesiser nodeClick
