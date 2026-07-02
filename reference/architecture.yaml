@@ -6,6 +6,7 @@
 nodes:
   raw:
     kind: "Input"
+    format: "PDF, EPUB, HTML, audio, or video - any source format"
     zone: "source"
     desc: "The original source material in any format - PDF documents, audio, video, web pages, ebooks. Driven by the existing
       network of references, not external editorial picks."
@@ -25,6 +26,7 @@ nodes:
     copyright: "PUBLIC - open-source code."
   ingest:
     kind: "Data store (private)"
+    format: "Markdown (.md) with YAML frontmatter (plus a JSON verification sidecar)"
     zone: "source"
     desc: "The record store - one ingest per source: a markdown + YAML file, content-addressed by hash. This is the binding
       contract every downstream stage reads against."
@@ -66,6 +68,7 @@ nodes:
     copyright: "Its output (digests) is public."
   digests:
     kind: "Data store (public)"
+    format: "YAML (.yaml)"
     zone: "public"
     desc: "The per-model digests of one source - one digest file per model. A source is digested by several models (1..N),
       each producing a full set of nodes + claims; the selector picks the single best. Kept as the rebuildable inputs the
@@ -86,6 +89,7 @@ nodes:
     copyright: "Its output (the selected digest) is public."
   selected:
     kind: "Data store (public)"
+    format: "YAML (.yaml)"
     zone: "public"
     desc: "The selected digest per source - the single best per-model digest, chosen by the selector. The source of truth
       for the knowledge graph: the graph is rebuildable from the selected digests, and each of these is chosen from the per-model
@@ -107,6 +111,7 @@ nodes:
     copyright: "Its output (the graph) is public."
   kg:
     kind: "Data artefact"
+    format: "SQLite (.db)"
     zone: "public"
     desc: "The unified, queryable knowledge graph: one node per real-world entity, all claims about it from across every source,
       corroboration links and evidence scores. The downloadable, torrentable public dataset and the source for every rendered
@@ -125,6 +130,7 @@ nodes:
     copyright: "PUBLIC - briefs are facts and claims, not source text."
   briefs:
     kind: "Data store (public)"
+    format: "YAML (.yaml)"
     zone: "public"
     desc: "One language-neutral brief per page: the exact slice of the knowledge graph a page is built from, before any prose.
       Its input hash is what tells the system when a page has gone out of date and needs rebuilding."
@@ -144,6 +150,7 @@ nodes:
     copyright: "Its output is public."
   content:
     kind: "Data store (public)"
+    format: "Markdown (.md) with YAML frontmatter"
     zone: "public"
     desc: "The rendered articles plus their media. Each entity article and per-record inspection page, with live deep-links
       back to the exact source."
