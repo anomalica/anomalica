@@ -271,6 +271,21 @@ Two behaviours follow from that per-type hashing. It deduplicates - the same inp
 
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
 
+Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`:
+
+- `{hash}.verification.json` - cloze proof-of-possession challenges (ingester's
+  `shared/verification.py`; consumed by the workbench access gate). Present only
+  for records whose copyright status gates access.
+- `{hash}.review.json` - review-coverage spans and the reviewer verdict
+  (`anomalica/review-coverage/N`, written by the workbench; read by the
+  digester's review gate).
+- `{hash}.highlights.json` - relevance-tuning ground truth
+  (`anomalica/highlights/1`, written by the workbench tuning mode; read by the
+  digester's grader). Span offsets are Unicode code points into the raw stored
+  body (the verbatim text after the closing frontmatter fence); `body_sha256`
+  pins the exact body the offsets index. See
+  [relevance-tuning-mode](../decisions/drafts/relevance-tuning-mode.md).
+
 ### Versioning and supersession
 
 Three orthogonal axes describe a record's generation, defined in full in
