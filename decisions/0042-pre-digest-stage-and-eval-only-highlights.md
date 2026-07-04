@@ -39,6 +39,15 @@ The pre-digest is MATERIALISED per record and stored, not regenerated-on-demand 
 
 Cost is negligible (derived text). It stays derived - rebuildable from the ingest plus the versioned prep - so a lost pre-digest is regenerable; the stored copy is the authoritative record of what the model actually saw. It is content-addressed by its own hash and recorded in the digest; the exact store path and prep-version field land in [record-format.md](../architecture/record-format.md).
 
+### One function, two call sites: live preview at review, stored at digest
+
+The deterministic prep is single-sourced in `anomalica_common.pre_digest.materialise()`, called at two points:
+
+- **Review time (live, on-demand).** The workbench backend computes the pre-digest on demand via `materialise()` and shows it in the pre-digest tab, so a reviewer inspects the exact model input WHILE reviewing - before any digestion - to judge whether a record is good to leave as-is. Live preview during review is a first-class use, not only post-digest display.
+- **Digest time (materialised, stored).** The digester calls the same `materialise()`, stores the result, and extracts from it.
+
+Because both call the same function, the review-time preview is byte-identical to what actually gets digested - preview == digested. The "stored" decision is unchanged: the pre-digest is still materialised and stored at digest time (that is the auditable artefact); live computation is how it is previewed beforehand, not a second source of truth.
+
 ### Highlights are evaluation-only, never shown to the model
 
 Highlights are an EVAL signal only - never part of the pre-digest, so the model never sees them. This avoids biasing the model and avoids aided/unaided variants.
