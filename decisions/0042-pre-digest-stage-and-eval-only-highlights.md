@@ -27,6 +27,7 @@ Properties:
 
 - **Read-only + derived.** Corrections never edit the pre-digest; a reviewer fixes the SOURCE (the ingest marker) and the pre-digest is re-derived. One-way data flow is preserved - the pre-digest is a consuming stage's output, never written back into.
 - **Reproducible + auditable.** The digest records the pre-digest's content hash; `(pre-digest hash + prompt version + model)` makes a digest exactly reproducible and auditable. This composes with the prompt-provenance already shipped (the `prompts` block, [0039 amendment 2026-07-04](0039-multi-model-digestion-canonical-reconciliation.md)).
+- **On the source side of the copyright boundary.** The pre-digest holds the prepared source text - still the source's own prose - so its copyright follows the source and it is access-gated exactly like the ingest. Extraction is what crosses into public claims: the digests onward are public, the pre-digest is not.
 
 ### Stored, not regenerated-on-demand
 
