@@ -100,7 +100,7 @@ Four bracketed tokens are reserved for non-individual sources:
 | `[narrator]` | A voice-over narrator distinct from any on-camera speaker. |
 | `[external footage]` | Audio from an inserted clip (news segment, archival recording, etc.) where the speaker isn't part of the primary recording. |
 | `[group]` | Multiple people saying the same thing simultaneously - chants, unison answers from a committee, group responses. |
-| `[irrelevant]` | Content that doesn't belong in the record (ads, sponsor reads, off-topic asides). Reviewers can hide these segments from the rendered output. |
+| `[irrelevant]` | Content that doesn't belong in the record (ads, sponsor reads, off-topic asides). Hidden from rendered output, and stripped before extraction so no claim is drawn from it (see [Irrelevant content](#irrelevant-content)). |
 
 The brackets are part of the value. The ingester does not emit these tokens itself - they're applied by human reviewers in the workbench when the diarisation-assigned `Speaker N` is identified as one of these cases.
 
@@ -186,6 +186,41 @@ redacted:
 ```
 
 `extent` estimates how much was redacted: `words`, `sentence`, `paragraph`, or `page`.
+
+### Irrelevant content
+
+Content that is physically part of the source but does not belong in the record - a book's title page, table of contents, index, or glossary; a publisher's cross-sell advertisement; an off-topic aside. It is marked, never deleted: the mark is fully reversible and the source text stays intact in the ingest.
+
+The mechanism depends on the source shape.
+
+**Prose records (web, ebook, pdf)** have no speakers or segments, so a paired HTML-comment region wraps the irrelevant block(s):
+
+```markdown
+Chapter Eleven closes the investigation.
+
+<!-- irrelevant: start -->
+
+## Also by this author
+
+*Order the sequel, out this autumn from the same publisher.*
+
+<!-- irrelevant: end -->
+
+Appendix A lists the case files referenced above.
+```
+
+- **Block-aligned.** `start` and `end` each sit on their own annotation line and wrap whole blocks (paragraphs, headings, lists, tables) - never part of a sentence. There is no mid-sentence form; excluding a fragment of a sentence is not an irrelevant-marking case.
+- **Non-nesting.** A region never contains another region: a `start` is closed by the next `end`.
+- **Multiple regions** per record are allowed.
+- **Verbatim and reversible.** The wrapped text is the source text unchanged; the two comment lines are the only addition, so removing them restores the record exactly.
+
+Each marker is an ordinary single-field block annotation: `<!-- irrelevant: start -->` parses as the YAML mapping `{irrelevant: start}`, value `start` or `end`. Note the space after the colon that YAML requires - write `irrelevant: start`, not `irrelevant:start` (the latter parses as a bare string, not a mapping, and is invalid here).
+
+**Audio and video transcripts** have no prose blocks to wrap, so they mark irrelevant spans by segment instead, through the reserved `[irrelevant]` speaker token (`<!-- speaker: [irrelevant] -->`; see [Speaker change](#speaker-change)). The region marker complements that token - it does not replace it: prose gets the region, transcripts get the speaker token.
+
+**The digester strips both before extraction.** Before reading a record, the digester removes all irrelevant-marked content - both prose `irrelevant: start`/`end` regions and transcript `[irrelevant]` speaker segments - so the extraction model never sees it and no claim is drawn from it. This parallels the classification-marking strip ([Classification markings](#classification-markings)): a read-time transform only. The source text stays in the ingest and the reviewer's mark stays reversible; nothing is written back from the digester, so data still flows one direction.
+
+This is additive within `anomalica/record/1`: a consumer that does not recognise the region treats the wrapped text as ordinary content - the behaviour before the marker existed - so it needs no `schema` bump.
 
 ## Inline annotations
 
