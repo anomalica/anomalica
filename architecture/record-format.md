@@ -197,7 +197,7 @@ redacted:
 
 ### Irrelevant content
 
-Content that is physically part of the source but does not belong in the record - a book's title page, table of contents, index, or glossary; a publisher's cross-sell advertisement; an off-topic aside. It is marked, never deleted: the mark is fully reversible and the source text stays intact in the ingest.
+Content that is physically part of the source but does not belong in the record - a book's title page, table of contents, index, or glossary; a publisher's cross-sell advertisement; an off-topic aside. It is marked, never deleted: the mark is fully reversible and the source text stays intact in the ingest. What counts as irrelevant - the reviewer convention across every record type - is the canonical list in [review-workbench.md](review-workbench.md#what-to-mark-irrelevant); this section specifies the marker syntax.
 
 The mechanism depends on the source shape.
 

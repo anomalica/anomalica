@@ -125,7 +125,7 @@ Video and audio records are the most labour-intensive to review because automati
 
 - **Speaker merging** - the diarisation may split one person into multiple speaker identities. The reviewer merges them.
 - **Speaker identification** - assigning names to unidentified speakers, confirming or correcting automatic identifications.
-- **Marking irrelevant sections** - ads, sponsor reads, intro/outro filler, "next time on..." previews, off-topic tangents. These sections are flagged so the digester can skip them.
+- **Marking irrelevant sections** - flagging content that doesn't belong in the record (via the `[irrelevant]` speaker token) so the digester skips it. The audio/video cases - ads, sponsor reads, intro/outro filler, "next time on..." previews, off-topic tangents - are one category of the canonical [What to mark irrelevant](#what-to-mark-irrelevant) list, which covers every record type.
 - **Timestamp correction** - adjusting speaker turn boundaries where the diarisation placed them incorrectly.
 - **Playback alongside transcript** - the video or audio plays in sync with the transcript, making it easy to verify what was said against what was transcribed.
 
@@ -137,8 +137,24 @@ Video and audio playback uses the browser's built-in HTML5 media elements. Synci
 - **Node review** - verifying that people, organisations, projects, places, events, objects, documents, and topics were correctly identified and linked. Correcting misidentifications or creating new nodes.
 - **Flagging missing claims** - noting claims that the digester missed and should have extracted.
 - **Removing irrelevant claims** - marking claims that were extracted but add no value (pleasantries, filler, off-topic asides).
+- **Marking irrelevant content** - flagging whole source sections that are not domain content (front matter, marketing, bibliographies, and the rest) so the digester skips them before extraction. See [What to mark irrelevant](#what-to-mark-irrelevant).
 
 The review interface uses structured forms rather than raw text editing. Reviewers correct speaker names via dropdowns, adjust timestamps with controls, and change claim types and attestation levels through purpose-built inputs. This is more usable than editing YAML directly and reduces the chance of formatting errors.
+
+## What to mark irrelevant
+
+The single canonical list of what a reviewer marks irrelevant, for every record type - books, PDFs, web pages, audio, video. The marker syntax is in [record-format.md](record-format.md#irrelevant-content) (a prose region marker for text records, the `[irrelevant]` speaker token for transcripts). Marking is non-destructive: the text stays in the record and is only excluded from extraction ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)), so err toward marking anything that is not content.
+
+**Principle.** Mark irrelevant anything that is NOT domain-knowledge content about the subject - anything that is not a substantive claim or fact about the anomalous-phenomena topic. Keep the actual content; exclude the apparatus around it.
+
+- **Self-promotional / marketing** - about-the-author blurbs, jacket and cover copy, "praise for this book", author bios. These make factual-sounding claims with the weakest possible provenance - the book vouching for itself - so extracting them launders marketing into the graph. If an author's standing ever matters for weighting, it comes from INDEPENDENT sources, never from the jacket.
+- **Copyright / legal / publication apparatus** - copyright pages, disclaimers, permissions, ISBN and publication data, "all rights reserved".
+- **Navigation / structural apparatus** - tables of contents, indices, page-number lists, running headers and footers.
+- **Source apparatus** - bibliographies, endnotes, and footnote CITATION lists. The citations are sources, not claims; per-chapter numbering and Ibid chains make them low-value and hard to resolve (see the parked endnote-mining work). Exception: a discursive note that adds genuine content is pulled inline, case by case.
+- **Front- and back-matter filler** - dedication, half-title, colophon, and usually acknowledgements.
+- **Audio / video filler** - ads, sponsor reads, intro/outro filler, "next time on..." previews, off-topic tangents.
+
+This is the human counterpart to the digester's model-prep: what a reviewer marks here is exactly what the pre-digest strips before extraction, so the model never reads it.
 
 ## How corrections are saved
 
