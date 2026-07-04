@@ -2,7 +2,7 @@
 
 How the pipeline fits together, end to end. A living document.
 
-**The architecture diagram is not drawn here.** Its single source lives in the site repository - `site/assets/architecture/pipeline.mmd` (the topology) and `site/data/architecture.yaml` (per-node detail) - which the site renders as the interactive `/architecture/` page. Earlier versions of this document kept an ASCII copy of that diagram; it only drifted, so it is gone. Change the pipeline shape in those two files, not here.
+**The architecture diagram is not drawn here.** Its single source lives in this meta-repo - `reference/pipeline.mmd` (the topology) and `reference/architecture.yaml` (per-node detail), which the site mounts and renders as the interactive `/architecture/` page. Earlier versions of this document kept an ASCII copy of that diagram; it only drifted, so it is gone. Change the pipeline shape in those two files, not here.
 
 **The repository map and the per-component documentation index live in the [README](../README.md)**, not here. Per-component detail is in the docs the README links (ingester, digester, assimilator, assembler, data model, node types).
 
@@ -10,7 +10,7 @@ What remains below is the one thing neither the diagram nor the per-component do
 
 ## Data flow
 
-The ingester writes ingests to the access-controlled ingests repository. The digester reads from that repository, extracts claims and nodes, and writes digests to the public digests repository. Both the ingester and digester need access to the ingests repository; public exposure of any individual ingest is then gated by that record's copyright status. (Planned direction: the digester may run several models per ingest and a fuser stage builds one fused digest from them; only the fused digest is assimilated - [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md).)
+The ingester writes ingests to the access-controlled ingests repository. The digester reads from that repository and, before extracting, derives a materialised **pre-digest** from each record - the deterministic model-prep (irrelevant regions removed, footnotes inlined, word-timestamps stripped) applied so that the exact model input is itself an inspectable, stored artefact ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)). It extracts claims and nodes from the pre-digest and writes digests to the public digests repository. Both the ingester and digester need access to the ingests repository; public exposure of any individual ingest is then gated by that record's copyright status. (Planned direction: the digester may run several models per record and a selector stage picks one selected digest from them; only the selected digest is assimilated - [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md).)
 
 Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
 
