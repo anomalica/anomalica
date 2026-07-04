@@ -101,6 +101,9 @@ types:
       - {name: prompts, type: list, required: false, description: "Which prompt produced each pass, so the digest is attributable
           to an exact prompt (mirrors 0010-auditable-assembly). One entry per pass: {pass, id, version, sha256, file}. An
           override is recorded as version 'override' with the file's own hash. Absent on pre-stamping digests."}
+      - {name: pre_digest, type: object, required: false, description: "Content hash of the pre-digest - the ingest after
+          deterministic model-prep (irrelevant removed, footnotes inlined, timestamps stripped), the exact model input (0042).
+          {sha256, prep_version}. With prompts + model, reproduces the digest exactly. Absent on pre-0042 digests."}
       - {name: record, type: object, required: true, description: "The source record: {id (graph UUID, the join key against
           ingests), title, producer, date, reference}. Same value across every per-model digest of one source - the constant
           the source-trace rides on."}

@@ -40,10 +40,11 @@ two sides for any given record.
 ## Document structure
 
 The order of top-level keys is fixed: `schema`, `extracted_at`, `model`,
-`ai_usage`, `prompts`, `record`, `terminology`, `nodes`, `domain_claims`,
-`infrastructure_claims`. Null and empty values are omitted - if a record has no
-infrastructure claims, the key is absent rather than present with `[]`.
-`ai_usage`, `prompts`, and `terminology` are optional blocks (see below).
+`ai_usage`, `prompts`, `pre_digest`, `record`, `terminology`, `nodes`,
+`domain_claims`, `infrastructure_claims`. Null and empty values are omitted - if
+a record has no infrastructure claims, the key is absent rather than present with
+`[]`. `ai_usage`, `prompts`, `pre_digest`, and `terminology` are optional blocks
+(see below).
 
 ```yaml
 schema: anomalica/digest/1
@@ -127,6 +128,27 @@ pins exact content. A per-run `DIGESTER_NODES_PROMPT_FILE` /
 the override file's own hash - never silently. Absent on digests produced before
 prompt-provenance stamping; those can be attributed by `extracted_at` against
 the registry's per-version `added` dates.
+
+### `pre_digest`
+
+Optional. The content hash of the **pre-digest** - the ingest after all
+deterministic model-prep (irrelevant regions removed, footnotes inlined,
+word-timestamps stripped), which is exactly the text the model extracted from
+([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)).
+
+```yaml
+pre_digest:
+  sha256: 1c0d2ba0347d3592...
+  prep_version: 1
+```
+
+Together with `prompts` and `model` this makes a digest exactly reproducible:
+`(pre-digest hash + prompt version + model)`. `prep_version` names the version of
+the deterministic prep that produced the pre-digest. The materialised pre-digest
+artefact is stored content-addressed and served for inspection by the workbench's
+pre-digest tab; its store layout is in
+[record-format.md](record-format.md). Absent on digests produced before the
+pre-digest stage.
 
 ### `nodes`
 
@@ -224,9 +246,9 @@ Producers (the digester, the converter, future tooling) must:
 
 Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md); not yet built. Today the relationship is 1:1 (one model, one digest, `model: <alias>`). The planned direction:
 
-- **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored version-named at `digests/variants/{friendly-name}/{model-id}-{version}.yaml` (a top-level `variants/` tree, NOT under `records/`, because the assimilator globs `records/` recursively and would otherwise import them). The version in the filename means a new model release never overwrites a prior file.
-- **One canonical** at the unchanged `digests/records/{friendly-name}.yaml` - DERIVED by a reconciliation stage that clusters equivalent claims across the variants, dedups same-fact-different-words, and picks the best phrasing. Recomputed from all current variants when the set changes (order-independent, idempotent). It is the only digest the assimilator imports; the variants are inert.
-- **Schema `anomalica/digest/2`** (lands with the build): `model` carries the versioned id; the canonical gains `reconciled_from` (the variants it was built from); optionally per-claim variant provenance.
+- **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored at `digests/variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml` (a top-level `variants/` tree, NOT under `records/`, because the assimilator globs `records/` recursively and would otherwise import them). The variant key carries the model AND the prompt hash ([0039 amendment 2026-07-04](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)), so a prompt tune on the same model never overwrites the prior output. This layout is built; the variants store now.
+- **One canonical** at the unchanged `digests/records/{friendly-name}.yaml` - a SELECTED per-model digest, not a merge: the selector picks one whole variant as the canonical (no claim-clustering, no dedup-across-variants, no best-phrasing synthesis). Until the selector lands the canonical is latest-written by a production run. It is the only digest the assimilator imports; the variants are inert.
+- **Schema `anomalica/digest/2`** (lands with the selector): `model` carries the versioned id; the canonical gains `selected_from` (the candidate variants and the winner) - its presence distinguishes a canonical from a variant.
 - **Independence**: multiple models on one source are alternatives, not corroboration - zero added independence. The evidence model counts independence by provenance-root, not claim-count (decision 0039).
 
 ## Legacy markdown format
