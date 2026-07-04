@@ -100,3 +100,26 @@ Reverses the 2026-06-27 "digest fuser" framing (which never shipped): multi-mode
 The digester's fuser->selector CODE rename is a follow-up, not done here.
 
 Architecture diagram source (the selector node): `reference/pipeline.mmd` + `reference/architecture.yaml` in the meta-repo.
+
+## Amendment (2026-07-04): variant naming carries the prompt identity
+
+The storage layout was built ahead of the deferred reconciliation, as the
+"stop overwriting on re-digest" step. The 0039 variant name `{model-id}-{version}.yaml`
+(model version only) predates prompt-provenance (`prompts` block in the digest;
+see [digest-format.md](../architecture/digest-format.md)). A re-digest is
+usually the SAME model with a TUNED prompt - the tuning loop's common case - so
+a model-only key would overwrite exactly the prior output we mean to preserve.
+
+Variants are therefore named
+`variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml`, where `prompt-sha8` is
+an 8-char digest of the passes' combined prompt sha256s. (model X, prompt v2)
+and (model X, prompt v3) coexist as comparable variants; an identical
+model+prompt run overwrites only its own file (correct redo semantics).
+
+Canonical fill, until reconciliation lands: `records/{friendly-name}.yaml` is
+latest-written by a PRODUCTION run. A run with a prompt override in effect (any
+`prompts` entry at `version: override`) writes its variant only and never
+touches the canonical, so tuning-loop experiments cannot leak into the graph.
+A `--variant-only` flag forces variant-only even for an active-prompt side-run
+(benchmarks). Implemented in `digester/digest_store.py`, wired into the
+`extract` / `batch-extract` CLI via `--digests-root`.
