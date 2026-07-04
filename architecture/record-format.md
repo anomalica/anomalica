@@ -83,6 +83,14 @@ YAML inside HTML comments. Single-field annotations use inline comments. Multi-f
 
 `printed_page` is omitted when there is no printed page number, or when it matches `file_page`.
 
+For `ebook` records there is no fixed file pagination, so `file_page` does not apply. When the EPUB carries EPUB3 pagebreaks (`epub:type="pagebreak"` or `role="doc-pagebreak"`, whose `title` is the print-edition page), the ingester emits `printed_page` alone at each break position:
+
+```markdown
+<!-- printed_page: 15 -->
+```
+
+The label is taken verbatim from the pagebreak, so front-matter roman numerals (`iii`, `viii`) and index labels appear as-is. A page break can fall mid-paragraph, so the marker records where print page N begins in the reflowed text. EPUBs without pagebreaks carry no page markers and locate content by [chapter boundary](#chapter-boundary) only.
+
 ### Speaker change
 
 An inline HTML comment marks when the speaker changes. All content until the next speaker annotation belongs to that speaker.
