@@ -40,9 +40,10 @@ two sides for any given record.
 ## Document structure
 
 The order of top-level keys is fixed: `schema`, `extracted_at`, `model`,
-`record`, `nodes`, `domain_claims`, `infrastructure_claims`. Null and
-empty values are omitted - if a record has no infrastructure claims, the
-key is absent rather than present with `[]`.
+`ai_usage`, `prompts`, `record`, `terminology`, `nodes`, `domain_claims`,
+`infrastructure_claims`. Null and empty values are omitted - if a record has no
+infrastructure claims, the key is absent rather than present with `[]`.
+`ai_usage`, `prompts`, and `terminology` are optional blocks (see below).
 
 ```yaml
 schema: anomalica/digest/1
@@ -96,6 +97,36 @@ persons ([person naming](node-types.md#person)) or a plain
 organisation name. `date` is a string in the form `YYYY` or `YYYY-MM-DD`.
 `reference` is an external identifier where one exists (book ISBN,
 report number, archive identifier) and is often null.
+
+### `prompts`
+
+Optional. Which prompt produced each extraction pass, so a digest is
+attributable to an exact prompt - the extraction-side counterpart to the
+assembler's auditable assembly ([decision 0010](../decisions/0010-auditable-assembly.md)).
+A list with one entry per pass, each recording the prompt `id`, `version`,
+content `sha256`, and source `file`:
+
+```yaml
+prompts:
+  - pass: nodes
+    id: nodes
+    version: v2
+    sha256: a155b450f8e6dfb1...
+    file: nodes.txt
+  - pass: claims
+    id: claims
+    version: v2
+    sha256: 579539bac029333c...
+    file: claims.txt
+```
+
+The prompts are versioned files in the digester repo
+(`workspace/digester/prompts/`, registered in `registry.yaml`); the `sha256`
+pins exact content. A per-run `DIGESTER_NODES_PROMPT_FILE` /
+`DIGESTER_CLAIMS_PROMPT_FILE` override is recorded as `version: override` with
+the override file's own hash - never silently. Absent on digests produced before
+prompt-provenance stamping; those can be attributed by `extracted_at` against
+the registry's per-version `added` dates.
 
 ### `nodes`
 
