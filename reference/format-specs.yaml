@@ -84,13 +84,13 @@ types:
           that produced this record (model, version, token counts). No cost fields. Exact sub-field shape pending confirmation
           from the ingester workspace - emitted by the pipeline but not yet in record-format.md.",}
 
-  raw_digest:
+  per_model_digest:
     schema: anomalica/digest/1
     status: stable
     serialisation: YAML
     spec_doc: architecture/digest-format.md
-    summary: One model's extraction of a source - a full set of nodes + claims. One or more per source (several models, or
-      re-digestions over time); these are the inputs the fuser merges.
+    summary: One model's extraction of a source - a full set of nodes + claims. One per model, several per source (1..N models);
+      these are the candidates the digest selector chooses from.
     fields:  # top-level metadata ("header"); the body is nodes + claims (see body)
       - {name: schema, type: string, required: true, description: "`anomalica/digest/1`."}
       - {name: extracted_at, type: string, required: true, description: "ISO 8601 timestamp of the extraction run."}
@@ -102,8 +102,8 @@ types:
           to an exact prompt (mirrors 0010-auditable-assembly). One entry per pass: {pass, id, version, sha256, file}. An
           override is recorded as version 'override' with the file's own hash. Absent on pre-stamping digests."}
       - {name: record, type: object, required: true, description: "The source record: {id (graph UUID, the join key against
-          ingests), title, producer, date, reference}. Same value across every raw digest of one source - the constant the
-          source-trace rides on."}
+          ingests), title, producer, date, reference}. Same value across every per-model digest of one source - the constant
+          the source-trace rides on."}
     body:
       nodes: "List of every node mentioned by any claim. Each: {id (UUID, fresh per digest), type (one of person, organisation,
         project, place, event, object, document, topic), name, metadata?}."
@@ -112,26 +112,28 @@ types:
         from - the trace), date? | date_range?, refs?, quote (verbatim SOURCE text), text}."
       infrastructure_claims: "Same shape as domain_claims, routed to the infrastructure graph. Omitted when empty."
 
-  fused_digest:
+  selected_digest:
     schema: anomalica/digest/2
     status: provisional
     serialisation: YAML
     spec_doc: decisions/0039-multi-model-digestion-canonical-reconciliation.md
-    summary: The canonical digest per source - the fuser collapses the raw digests' equivalent nodes and claims into one.
-      The only digest assimilated; always rebuildable from the raw digests.
+    summary: The selected digest per source - the digest selector picks the single best per-model digest whole; it does not
+      merge them. The only digest assimilated; always rebuildable by re-running the selection over the per-model digests.
     fields:
       - {name: schema, type: string, required: true, description: "`anomalica/digest/2`."}
-      - {name: generated_at, type: string, required: true, description: "ISO 8601 timestamp of the fusion run."}
-      - {name: reconciled_from, type: list, required: true, description: "The raw digests merged into this one - each {model,
-          version} (+ its source path/hash). The digest-level audit: which models' extractions went in."}
-      - {name: record, type: object, required: true, description: "The source record - same shape and same value as the raw
-          digests' (one source). The source-trace rides on this being constant across raw and fused."}
+      - {name: selected_at, type: string, required: true, description: "ISO 8601 timestamp of the selection run."}
+      - {name: selected_from, type: list, required: true, description: "The per-model digests the selection chose among -
+          each {model, version} (+ its source path/hash), the winner marked. The digest-level audit: which models' extractions
+          were candidates and which was picked."}
+      - {name: record, type: object, required: true, description: "The source record - same shape and same value as the per-model
+          digests' (one source). The source-trace rides on this being constant across the per-model digests and the selected
+          one."}
     body:
-      nodes: "Merged nodes; each carries which raw digests contributed it."
-      domain_claims: "Fused claims. Each keeps the SOURCE pointer unchanged (quote + location_in_record into `record`) AND
-        adds `sources` - the raw claims it collapsed in: {model, version, claim_id, won_text?} - so a fused claim traces both
-        to the original source and to which models produced it. Models on one source are alternatives, not corroboration:
-        `sources` is audit, never an evidence boost (0039 independence rule)."
+      nodes: "The winning per-model digest's nodes, unchanged - selection picks a whole digest, so nodes are never merged
+        across models."
+      domain_claims: "The winning per-model digest's claims, unchanged (quote + location_in_record into `record`). No cross-model
+        merge: models on one source are alternatives, not corroboration, and the selector picks one whole digest rather than
+        collapsing claims (0039 independence rule)."
       infrastructure_claims: "Same shape, routed to the infrastructure graph."
 
   brief:

@@ -27,6 +27,7 @@ nodes:
   ingest:
     kind: "Data store (private)"
     format: "Markdown (.md) with YAML frontmatter (plus a JSON verification sidecar)"
+    spec: ingest
     zone: "source"
     desc: "The record store - one ingest per source: a markdown + YAML file, content-addressed by hash. This is the binding
       contract every downstream stage reads against."
@@ -82,6 +83,7 @@ nodes:
   digests:
     kind: "Data store (public)"
     format: "YAML (.yaml)"
+    spec: per_model_digest
     zone: "public"
     desc: "The per-model digests of one source - one digest file per model. A source is digested by several models (1..N),
       each producing a full set of nodes + claims; the selector picks the single best. Kept as the rebuildable inputs the
@@ -103,6 +105,7 @@ nodes:
   selected:
     kind: "Data store (public)"
     format: "YAML (.yaml)"
+    spec: selected_digest
     zone: "public"
     desc: "The selected digest per source - the single best per-model digest, chosen by the selector. The source of truth
       for the knowledge graph: the graph is rebuildable from the selected digests, and each of these is chosen from the per-model
@@ -144,6 +147,7 @@ nodes:
   briefs:
     kind: "Data store (public)"
     format: "YAML (.yaml)"
+    spec: brief
     zone: "public"
     desc: "One language-neutral brief per page: the exact slice of the knowledge graph a page is built from, before any prose.
       Its input hash is what tells the system when a page has gone out of date and needs rebuilding."
