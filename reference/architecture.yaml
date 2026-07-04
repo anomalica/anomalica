@@ -36,6 +36,19 @@ nodes:
     copyright: "Follows the source. This store is kept private because it can hold copyrighted text we are not allowed to
       republish, with proof-of-possession gating in the workbench - a copyright constraint, not secrecy; public-domain material
       here is free to share."
+  predigest:
+    kind: "Data store (private)"
+    zone: "source"
+    format: "Markdown (.md) - the prepared record"
+    desc: "The ingest after the digester's deterministic model-prep: irrelevant regions removed (from the reviewer's marks),
+      footnotes inlined at their reference points, word-timestamps stripped. It IS the exact text the model extracts from
+      - materialised and stored so the model input is inspectable, not a hidden transform inside the digester. Read-only and
+      derived: corrections are made on the ingest and the pre-digest is re-derived. Decision 0042."
+    output: "The digester's extraction input; its content hash is recorded in the digest for exact, auditable reproducibility."
+    contains: "The prepared source text - still the source's own prose, cleaned - not extracted claims."
+    copyright: "Follows the source. It holds source text, so it sits on the SOURCE side of the copyright boundary - gated
+      like the ingest. Extraction into public claims is what crosses that boundary; the digests onward are public, the pre-digest
+      is not."
   archive:
     kind: "Data store (sources/)"
     zone: "source"
@@ -180,6 +193,9 @@ links:
       url: "https://github.com/anomalica/ingester"
   ingest:
     - note: "Private store - holds copyrighted source material, never published."
+  predigest:
+    - note: "Decision 0042 - the materialised, inspectable model input; a read-only rendered tab in the workbench shows it
+        beside the ingest, with the exact versioned prompt."
   archive:
     - note: "Private archive."
   workbench:

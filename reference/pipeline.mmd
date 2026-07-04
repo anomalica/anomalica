@@ -7,6 +7,7 @@ flowchart TB
   raw@{ shape: doc, label: "Raw source" }
   ingester@{ shape: rounded, label: "Ingester" }
   ingest@{ shape: doc, label: "Ingest" }
+  predigest@{ shape: doc, label: "Pre-digest" }
   archive@{ shape: docs, label: "sources/ archive" }
   workbench@{ shape: rounded, label: "Workbench" }
   digester@{ shape: rounded, label: "Digester" }
@@ -25,7 +26,8 @@ flowchart TB
   raw -->|"original file (1:1)"| ingester
   ingester -->|"record (1:1)"| ingest
   ingester -->|"originals + raw transcripts"| archive
-  ingest -->|"record (1:1)"| digester
+  ingest -->|"deterministic prep: strip irrelevant, inline footnotes, strip timestamps"| predigest
+  predigest -->|"the exact model input"| digester
   digester -->|"one digest per model (1..N)"| digests
   digests -->|"candidate digests"| selector
   selector -->|"picks the single best"| selected
@@ -43,7 +45,7 @@ flowchart TB
   archive -.->|"check against source"| workbench
   workbench -.->|"digestible signal + visual notes"| digester
 
-  class raw,ingest,archive src
+  class raw,ingest,predigest,archive src
   class ingester,digester,digests,selector,selected,assimilator,kg,synthesiser,briefs,assembler,content,site pub
   class workbench rev
   class brand store
@@ -51,6 +53,7 @@ flowchart TB
   click raw nodeClick
   click ingester nodeClick
   click ingest nodeClick
+  click predigest nodeClick
   click archive nodeClick
   click workbench nodeClick
   click digester nodeClick
