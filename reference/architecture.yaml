@@ -57,8 +57,20 @@ nodes:
       confidences and all). Lets a record be re-rendered to a new format without re-running it on the graphics card."
     output: "Re-render source for the ingester; provenance of last resort."
     contains: "The original files + raw transcripts. Copyright follows the source."
-    copyright: "Follows the source - kept where copyright requires it, the same constraint as the ingests. (Backup of this
-      is an open operational task.)"
+    copyright: "Follows the source - kept where copyright requires it, the same constraint as the ingests. Backed up off-machine
+      to object storage (the bucket node)."
+  bucket:
+    kind: "Data store (object storage)"
+    zone: "source"
+    desc: "Off-machine object storage - a cloud storage bucket - holding the source originals so a non-embeddable local file
+      can be served to readers and the archive survives loss of the local machine or link-rot at the origin. The originals
+      are pushed here from the sources/ archive, routed by copyright."
+    output: "Originals served to readers; a durable backup of the sources/ archive."
+    contains: "The original source files - a mix of public-domain and copyrighted material, held in separate zones by status."
+    copyright: "Split by status and enforced by the storage zone itself: public-domain and openly-licensed originals sit in
+      an open zone (served by a direct URL); copyrighted originals sit in a token-authenticated zone and are only ever handed
+      out as short-lived signed URLs after the workbench's proof-of-possession gate passes - there is no public URL for gated
+      content."
   workbench:
     kind: "Component (Svelte + FastAPI)"
     zone: "review"
