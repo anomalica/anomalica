@@ -279,7 +279,12 @@ The date was {{illegible: possibly March 2004}} according to the memo.
 {{audience: laughter}}
 ```
 
-The content inside `{{ }}` is parsed as YAML. A single key-value pair where the key describes what or who the annotation is about, and the value provides the detail. There is no fixed vocabulary of keys - the key is whatever makes sense in context.
+The content inside `{{ }}` is parsed as YAML, in one of two authored forms:
+
+- **Keyed** - a single key-value pair where the key describes what or who the annotation is about and the value gives the detail (`{{Fravor: holds up photograph}}`). There is no fixed vocabulary of keys; the key is whatever makes sense in context.
+- **Keyless** - a bare YAML scalar, for an unkeyed note that needs no subject (`{{laughs}}`, `{{applause}}`). The scalar is the whole note.
+
+A small set of keys is *reserved* for machine-read markers rather than authored notes: `t` (word-level timestamp) and `highlight-start` / `highlight-end` ([Highlights](#highlights)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching; the extraction pipeline strips the reserved markers but keeps authored notes as context (see [Highlights](#highlights) and [The bracket meta-notation](#the-bracket-meta-notation)).
 
 ### Why double curly braces
 
@@ -313,18 +318,42 @@ The value is the marking verbatim, parentheses stripped, quoted when it contains
 
 Classification markings are never represented with strikethrough; strikethrough is reserved for text genuinely struck through in the source. Like every annotation, classification markings are metadata, not prose - consumers strip or interpret them before treating the body as text. The extraction pipeline in particular removes them before reading prose, so a marking never leaks into an extracted claim.
 
+### Highlights
+
+A highlight marks a span a reviewer judged significant - gold to keep, an example for training or evaluation, or simply something to flag. Highlights are authored in the workbench and stored in the record body, so they survive edits without a drifting sidecar, and they work in every record type.
+
+A highlight is a pair of inline markers sharing a short opaque id:
+
+```markdown
+The {{highlight-start: a1}}remote viewers with the NSA{{highlight-end: a1}} were getting this.
+```
+
+The id lets highlights **overlap**: two spans that cross are told apart by their ids, so a close matches the right open even when another highlight opened in between.
+
+```markdown
+{{highlight-start: a1}}quick brown {{highlight-start: b2}}fox{{highlight-end: a1}} jumps{{highlight-end: b2}}
+```
+
+Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers.
+
+**Orphan handling.** An edit can delete one half of a pair. A `highlight-start` with no matching end auto-closes at the end of its block or speaker turn; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
+
+**Highlights are stripped from the pre-digest and never reach the extraction model.** Unlike the content notes above, a highlight carries no content - it is a reviewer's pointer, an evaluation and curation signal only. Letting the model see it would bias extraction and destroy its value as a blind recall signal ([0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)); the `{{t:}}` timestamp markers are stripped the same way. Authored content notes (`{{...}}`, keyed or keyless) are the exception - they are preserved into the pre-digest as context, exactly as bracket meta-notes are.
+
+This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
+
 ## The bracket meta-notation
 
 A square-bracket note - `[...]` - in the pre-digest is a *description of what is present*, not verbatim source content. It reaches the model as context, and the digester reads it as meta. It appears in two places:
 
 - **Images**, rendered into the pre-digest from the [image annotation](#image): `[image]` alone, `[image: DESCRIPTION]`, and `[caption: CAPTION]`.
-- **Transcript event notes**, added by a reviewer while editing a transcript: `[laughs]`, `[applause]`, `[inaudible]`, `[crosstalk]`, and similar non-verbal events. The reviewer types the bracket where the event happens; it records what occurred, not words anyone spoke.
+- **Transcript event notes** - non-verbal events such as laughter, applause, or an inaudible passage. These are now authored as keyless inline annotations (`{{laughs}}`, `{{applause}}`, `{{inaudible}}`; see [Inline annotations](#inline-annotations)); older records carry the legacy bracket form (`[laughs]`) pending migration. Either records what occurred, not words anyone spoke.
 
 **The load-bearing rule: the meta framing is never a verbatim claim; genuine content described inside it still is.** The digester may use a `[...]` note as context, but must never turn the FRAMING into a spoken or written claim - `[laughs]` never becomes "someone laughed"; `[caption: Credit Getty]` never becomes an attribution claim; a bare `[image]` never becomes a claim. But genuine content that a description transcribes - `[image: the text of a screenshotted tweet]`, `[image: a chart's figures]` - is a real statement the source makes through that image, and stays extractable as a claim, sourced to the image. The brackets frame *where* content came from; the content inside a description is still content.
 
 Because event notes appear only in transcripts (which carry no markdown links) and image notes are generated by the pre-digest with an `image:` or `caption:` prefix, `[...]` meta-notes do not collide with ordinary bracketed prose.
 
-**Relationship to `{{...}}` inline annotations.** The `{{key: value}}` form ([Inline annotations](#inline-annotations)) is the *keyed* meta-annotation - a redaction, illegibility, classification, or a subject-attributed action such as `{{Fravor: holds up photograph}}`. The `[...]` form is the *unkeyed* one - a bare non-verbal event, or a pre-digest-rendered image or caption. Both are metadata, never prose, and both obey the never-a-verbatim-claim rule above: use `[laughs]` for a simple transcript event, and `{{...}}` when the note needs a key or a subject.
+**Relationship to `{{...}}` inline annotations.** Reviewer-authored notes are all `{{...}}` now - keyed when the note has a subject (`{{Fravor: holds up photograph}}`, `{{classification: U}}`) and keyless for a bare event (`{{laughs}}`). The `[...]` bracket form is reserved for two non-authored uses: the speaker tokens (`[narrator]`, `[irrelevant]`, and similar) inside `<!-- speaker: -->` comments, and the image and caption meta the pre-digest renders from image annotations (`[image: ...]`, `[caption: ...]`). A bare `[...]` sitting in a stored record body that is neither of those is therefore *literal source content* (`[sic]`, an editor's `[bracketed]` clarification inside a quote), not an annotation - which is exactly why authored notes moved to `{{...}}`: to stop colliding with the brackets real source text contains. Where they are annotations, both forms are metadata, never prose, and both obey the never-a-verbatim-claim rule above.
 
 ## Parser behaviour
 
