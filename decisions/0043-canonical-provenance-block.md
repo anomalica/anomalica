@@ -63,7 +63,7 @@ A claim's authoritative provenance is a reference to its source RECORD - the `re
 - [`format-specs.yaml`](../reference/format-specs.yaml) `types.ingest` restructures: a `provenance` object replaces the subsumed top-level fields; `title`, `schema`, `source_type`, `copyright`, `classification`, the hash and `processing` fields stay.
 - [record-format.md](../architecture/record-format.md) gains a Provenance section; [data-model.md](../architecture/data-model.md) "Record provenance" updates to the block and the claim carry-through.
 - This is a BREAKING frontmatter change (pre-launch, preferred over a compatibility shim): consumers reading top-level `source_url`/`publisher`/`date_published`/etc. switch to `provenance.*`.
-- Rollout, routed separately: the ingester writes `provenance` on source records (currently closed - to be opened); the digester carries it to claims (authoritative reference + render cache); a backfill migration retro-stamps existing records and moves the old top-level fields into the block. The scheduler's war.gov and channel stubs align to the ratified names.
+- Rollout, routed separately and paced: the ingester writes `provenance` on source records; the digester carries it to claims (authoritative reference + render cache); a backfill migration retro-stamps existing records and moves the old top-level fields into the block. The scheduler's war.gov and channel stubs align to the ratified names.
 
 ## Scope
 
