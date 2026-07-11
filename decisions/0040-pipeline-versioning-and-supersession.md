@@ -37,7 +37,7 @@ is `hash_file(asset_path)` - the source-asset SHA-256, archived at
 bytes. It rotates only across re-DOWNLOAD. A `source_hash` field for these types
 would be byte-identical to `content_hash` and would not give a more stable
 identity. The only identity stable across re-downloads is the LOGICAL source
-identity (`source_id`/`source_url`).
+identity (`provenance.identifiers`/`provenance.source_url`).
 
 ## Decision
 
@@ -80,7 +80,7 @@ ignores it. No service endpoint - the data lives where consumers already look.
 ### Supersession
 
 Supersession is a guarantee, not a convention, keyed on LOGICAL source identity
-(`source_id`, then `source_url` - the only identity stable across re-downloads;
+(`provenance.identifiers`, then `provenance.source_url` - the only identity stable across re-downloads;
 the per-download `content_hash` is not). On (re-)ingest of a source that already
 has a live root record:
 

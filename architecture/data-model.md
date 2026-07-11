@@ -24,13 +24,15 @@ See also: [node types](node-types.md). This document is the canonical home for p
 
 ## Record provenance: who made a record versus who made a claim
 
-A record's provenance is recorded in three fields:
+A record's source-origin metadata lives in one `provenance` block ([record-format.md](record-format.md#provenance), [decision 0043](../decisions/0043-canonical-provenance-block.md)) - `publisher`, `creators`, `published_date`, `source_url`, `identifiers`, `collection`, and the rest. Two roles matter for who-said-what:
 
-- **`publisher`** (record frontmatter) - the entity that created the content (a channel, outlet, or committee), not the hosting platform.
-- **`creators`** (record frontmatter) - the human creator(s): a document's author, a video or podcast host or presenter, a channel owner who is a named person. Person names in canonical "Last, First Middle" form.
+- **`provenance.publisher`** - the entity that created the source (a channel, outlet, or committee), not the hosting platform.
+- **`provenance.creators`** - the human creator(s): a document's author, a video or podcast host or presenter, a named channel owner. Person names in natural order.
 - **`speaker`** (per claim) - who asserted a specific claim, which may differ from the record's creator (a guest on a host's podcast; a witness quoted in an article).
 
-The **source** role (the person or organisation that produced the record) is the `publisher` and/or the `creators`. The `speaker` is claim-level, not record-level. All three may coincide (a solo essay) or all differ (a guest interviewed on a hosted show published by a channel).
+The **source** role (the person or organisation that produced the record) is `provenance.publisher` and/or `provenance.creators`. The `speaker` is claim-level, not record-level. All three may coincide (a solo essay) or all differ (a guest interviewed on a hosted show published by a channel).
+
+**Provenance carries to claims.** A claim's authoritative provenance is a reference to its source record - the `record_id` it already carries - so the record's `provenance` block is the single source of truth and the corroboration logic (independence by provenance root) is unaffected. On top, the digest may denormalise `publisher` + `published_date` + `collection` onto a claim as a RENDER CACHE (recomputed on re-digest, never authoritative), so an article renders "from a 1949 Department of Energy document" without a join. A subject's incident place and date are claims about place and event nodes - never provenance.
 
 ## Source properties
 

@@ -26,12 +26,44 @@ Required fields:
 ---
 schema: anomalica/record/1
 title: "Document title"
-date_published: 2023-07-26
 source_type: pdf
+provenance:
+  publisher: "..."
+  published_date: 2023-07-26
+  source_url: "https://..."
 ---
 ```
 
 Every frontmatter field - its type, whether it is required, which source types it applies to, and a description - is listed once in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.ingest`. That YAML is the canonical field list; this document does not repeat it. The hash fields (`content_hash`, `source_hash`) are explained in narrative under [Store](#store); the body-annotation sub-fields (image, chapter, snapshot roles) are specified in their sections below.
+
+### Provenance
+
+Every record carries a `provenance` block - the canonical home for source-origin metadata, consolidating what used to be scattered across separate top-level fields (`publisher`, `source_url`, `date_published`, `source_id`, `creators`, and the rest). One block, one source of truth ([decision 0043](../decisions/0043-canonical-provenance-block.md)).
+
+```yaml
+provenance:
+  collection: "war.gov UFO reading room"      # curated grouping this record belongs to
+  publisher: "Department of Energy"           # issuing body / channel / author-org (not the hosting platform)
+  creators: ["Edward Teller"]                 # human author(s) / host(s), person names in natural order
+  published_date: "1949-03"                   # the source's own publication or upload date (ISO 8601, may be partial)
+  acquired_date: "2026-07-11T09:00:00Z"       # when Anomalica brought the source in
+  source_url: "https://www.war.gov/..."       # canonical URL of the original
+  fetched_url: "https://web.archive.org/..."  # the URL actually retrieved, when different from source_url
+  source_file: "los-alamos-1949.pdf"          # original filename, for a source ingested from a local file with no URL
+  identifiers:                                # native source identifiers, keyed by scheme
+    virin: "..."
+    youtube: "aB8zcAttP1E"
+  description: "..."                           # the source's OWN blurb, verbatim - never AI-generated
+```
+
+Each source type fills what it has; a sub-field with no value is OMITTED, never set to null. Origin-unknown is simply the absence of `source_url`, `fetched_url`, `source_file`, and `identifiers` - there is no separate marker (this replaces the old scalar `provenance: unknown`).
+
+Two boundaries are load-bearing:
+
+- **Source facts, not subject facts.** Provenance is about the SOURCE - who issued it, when it was published, where to find it. A subject's incident place and incident date are NOT provenance; they are extracted as claims about place and event nodes, so they stay inside the scored, corroborated evidence model. `published_date` is strictly the source's publication or upload date.
+- **Copyright is not mirrored here.** `copyright` (and `copyright.status`) is the single authoritative copyright field, top-level; provenance carries no `license`. `classification` likewise stays top-level. The `description` is the source's verbatim blurb, never AI-written - and reproducing a `licensed` or `restricted` source's blurb is itself reproduction, so it is omitted or truncated for those sources, exactly as the source text is gated.
+
+A claim's authoritative provenance is a reference to its source record (the `record_id` it already carries); the digest may additionally denormalise `publisher` + `published_date` + `collection` onto a claim as a render cache, so an article renders "from a 1949 Department of Energy document" without a join. The cache is derived and refreshed on re-digest; the record's block is authoritative. See [data-model.md](data-model.md).
 
 ### Web record snapshots
 
@@ -425,7 +457,7 @@ Three orthogonal axes describe a record's generation, defined in full in
   provenance, unchanged.
 
 **Supersession** retires a prior record when a source is re-ingested, keyed on
-LOGICAL source identity (`source_id`, then `source_url` - the only identity
+LOGICAL source identity (`provenance.identifiers`, then `provenance.source_url` - the only identity
 stable across re-downloads; a per-download `content_hash` is not). The new record
 carries `supersedes: <old_content_hash>`; the prior record is stamped
 `superseded_by: <new_content_hash>`, moved from `store/{hash}.md` to
@@ -482,11 +514,13 @@ Copyright status follows the parent record. If `copyright.status` is `licensed` 
 ---
 schema: anomalica/record/1
 title: "David Fravor Statement for the House Oversight Committee"
-date_published: 2023-07-26
-creators:
-  - Fravor, David
-source_url: https://oversight.house.gov/...
 source_type: pdf
+provenance:
+  publisher: "House Oversight Committee"
+  creators:
+    - David Fravor
+  published_date: 2023-07-26
+  source_url: https://oversight.house.gov/...
 content_hash: sha256:7bf2c20d...
 pages: 3
 ---
@@ -519,10 +553,13 @@ years.
 ---
 schema: anomalica/record/1
 title: "Lex Fridman Podcast #122 - David Fravor"
-date_published: 2020-09-08
-source_url: https://youtube.com/watch?v=aB8zcAttP1E
 source_type: video
-source_id: youtube:aB8zcAttP1E
+provenance:
+  publisher: "Lex Fridman"
+  published_date: 2020-09-08
+  source_url: https://youtube.com/watch?v=aB8zcAttP1E
+  identifiers:
+    youtube: aB8zcAttP1E
 duration: 7200
 content_hash: sha256:e27169e8...
 ---
@@ -546,8 +583,9 @@ content_hash: sha256:e27169e8...
 ---
 schema: anomalica/record/1
 title: "Incident Report"
-date_published: 2004-11-14
 source_type: pdf
+provenance:
+  published_date: 2004-11-14
 pages: 5
 ---
 

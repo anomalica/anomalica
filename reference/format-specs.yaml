@@ -33,24 +33,20 @@ types:
           when word-level timestamps are present."}
       - {name: title, type: string, required: true, description: "Document or episode title. Always quoted. Lives only in
           frontmatter, never injected into the body."}
-      - {name: date_published, type: string|null, required: true, description: "When the original content was published. ISO
-          8601, precision varies (2023, 2023-07, 2023-07-26). null when genuinely undated - never fabricated from file/ingest
-          dates."}
       - {name: source_type, type: string, required: true, description: "One of pdf, audio, video, web, ebook."}
       - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts
           that carry per-word `{{t:}}` markers."}
-      - {name: publisher, type: string, required: false, description: "The entity that created the content (e.g. CBS News,
-          House Oversight Committee). Not the hosting platform; distinct from creators."}
-      - {name: source_url, type: string, required: false, description: "URL where the source can be found."}
-      - {name: source_id, type: string, required: false, description: "Stable platform-specific identifier (e.g. youtube:ZBtMbBPzqHY)."}
-      - {name: fetched_url, type: string, required: false, description: "URL actually retrieved from, if different from source_url
-          (e.g. a Wayback Machine archive URL)."}
-      - {name: source_file, type: string, required: false, description: "Original filename for a record ingested from a local
-          file with no URL. Bytes archived at sources/{content_hash}.{ext}."}
-      - {name: provenance, type: string, required: false, description: "`unknown` when a record has no recoverable acquisition
-          origin (no source_url and no source_file). Absent when the origin is known."}
-      - {name: creators, type: list, required: false, description: "Human creator(s) - author(s), host(s)/presenter(s). Person
-          names, canonical 'Last, First Middle' preferred. Distinct from publisher (the entity)."}
+      - {name: provenance, type: object, required: true, description: "Canonical source-origin block (decision 0043; narrative
+          + example in record-format.md). Sub-fields, each OMITTED when absent (never null): collection (curated grouping,
+          e.g. 'war.gov UFO reading room'); publisher (issuing body / channel / author-org, not the hosting platform); creators
+          (human author(s)/host(s), person names in natural order); published_date (the SOURCE's own publication/upload date,
+          ISO 8601, may be partial - omitted when genuinely undated); acquired_date (when we brought it in, ISO 8601 datetime);
+          source_url (canonical URL of the original); fetched_url (URL actually retrieved when different, e.g. a Wayback archive);
+          source_file (original filename for a source ingested from a local file); identifiers (native ids keyed by scheme:
+          youtube, virin, isbn, doi, ...); description (the source's OWN blurb, verbatim, never AI - omitted or truncated
+          for licensed/restricted sources per copyright.status). SOURCE facts only - a subject's incident place and date are
+          claims, not provenance. Copyright is NOT mirrored here; the authoritative field is the top-level `copyright`. Origin-unknown
+          is simply the absence of source_url/fetched_url/source_file/identifiers."}
       - {name: content_hash, type: string, required: false, description: "SHA-256 naming the record's file in store/. Hashes
           source bytes for audio/video/pdf, extracted body text for web/ebook. See hashes below."}
       - {name: source_hash, type: string, required: false, formats: [web, ebook], description: "SHA-256 of the raw source
@@ -61,8 +57,6 @@ types:
           for web records."}
       - {name: pages, type: integer, required: false, formats: [pdf], description: "Page count for documents."}
       - {name: duration, type: number, required: false, formats: [audio, video], description: "Duration in seconds for audio/video."}
-      - {name: date_accessed, type: string, required: false, description: "When the source was fetched. ISO 8601 with timezone
-          (Zulu)."}
       - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. ISO 8601 with
           timezone (Zulu)."}
       - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright
@@ -73,8 +67,8 @@ types:
       - {name: processing, type: object, required: false, description: "Processing metadata: handler, version (git short-hash),
           pipeline_version (monotonic per-media-type extraction generation; see 0040), tools used, source characteristics."}
       - {name: supersedes, type: string, required: false, description: "content_hash of the prior record this one retired,
-          when a re-ingest of the same logical source (source_id/source_url) superseded an earlier extraction. Stamped across
-          schema boundaries. See 0040."}
+          when a re-ingest of the same logical source (its `provenance.source_url` / `provenance.identifiers`) superseded
+          an earlier extraction. Stamped across schema boundaries. See 0040."}
       - {name: superseded_by, type: string, required: false, description: "content_hash of the record that superseded this
           one. Present only on retired records (moved to store/v1/). Consumers HIDE any record carrying this. The source of
           truth for supersession; see 0040."}

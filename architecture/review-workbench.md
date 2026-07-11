@@ -185,7 +185,7 @@ A record can carry up to three identities at any given time:
 
 | Kind | Source | Stable across | Available for |
 |------|--------|---------------|----------------|
-| `url` | The `source_url` frontmatter field. The URL the ingester fetched. | Re-ingestion. Publisher byte-level changes. Re-extraction. | Web records, YouTube videos, anything fetched by URL. |
+| `url` | The record's `provenance.source_url`. The URL the ingester fetched. | Re-ingestion. Publisher byte-level changes. Re-extraction. | Web records, YouTube videos, anything fetched by URL. |
 | `sha256` | The source asset's SHA-256 - the verification sidecar's `sha256` and the `sources/` filename (a `source_hash` frontmatter field where present). | Re-extraction. Parser improvements. Post-processing changes. | PDFs, ebooks, audio files, video files, any record sourced from a file. |
 | `content` | The `content_hash` (per record-format.md: source-asset hash for `audio`/`video`/`pdf`, extracted-body hash for `web`/`ebook`). | For `web`/`ebook`, any body change rotates it; for `audio`/`video`/`pdf`, stable across re-extraction. | All records (always present). |
 
