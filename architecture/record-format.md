@@ -368,7 +368,7 @@ The id lets highlights **overlap**: two spans that cross are told apart by their
 
 Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers.
 
-**Orphan handling.** An edit can delete one half of a pair. A `highlight-start` with no matching end auto-closes at the end of its block or speaker turn; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
+**Span extent and orphan handling.** A matched pair is bounded only by its own start and end markers - a highlight may span any range, including across paragraph breaks and speaker turns (a highlight over a multi-speaker back-and-forth is valid). An edit can delete one half of a pair: a `highlight-start` with no matching end auto-closes at the end of the body; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
 
 **Highlights are stripped from the pre-digest and never reach the extraction model.** Unlike the content notes above, a highlight carries no content - it is a reviewer's pointer, an evaluation and curation signal only. Letting the model see it would bias extraction and destroy its value as a blind recall signal ([0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)); the `{{t:}}` timestamp markers are stripped the same way. Authored content notes (`{{...}}`, keyed or keyless) are the exception - they are preserved into the pre-digest as context, exactly as bracket meta-notes are.
 
@@ -384,7 +384,7 @@ A span note is a pair of inline markers sharing a short opaque id. `note-start` 
 {{note-start: [a1, "on-screen caption: the witness's own drawing of the craft"]}} ... spanned words ... {{note-end: a1}}
 ```
 
-The flow list keeps the note flat - no nested braces to confuse the `}}` scan - and the text is quoted per YAML when it contains colons or quotes. Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers. Overlap and orphan handling are the same as [Highlights](#highlights): spans are told apart by id, an unmatched half auto-closes at the end of its block or speaker turn, and an end with no live open is dropped.
+The flow list keeps the note flat - no nested braces to confuse the `}}` scan - and the text is quoted per YAML when it contains colons or quotes. Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers. Overlap, extent, and orphan handling are the same as [Highlights](#highlights): spans are told apart by id and may cross speaker turns and paragraph breaks, an unmatched half auto-closes at the end of the body, and an end with no live open is dropped.
 
 **Unlike a highlight, a span note carries content and is preserved into the pre-digest.** The markers (`note-start` / `note-end` and their ids) are stripped from prose - for search and display, and from the model input - but the note's *text* is re-surfaced into the pre-digest as a context note, exactly like the keyed and keyless content notes, so the model reads it as interpretive context. This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
 
