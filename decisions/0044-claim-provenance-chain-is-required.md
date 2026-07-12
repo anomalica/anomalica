@@ -62,17 +62,34 @@ This is the claim-level chain [data-model.md](../architecture/data-model.md) alr
 
 **Grade by the whole chain, not by the last mouth it passed through.** A speaker naming their immediate contact does not make the claim second-hand if that contact was themselves relaying someone else. Count the removes. This is what made the Tau Ceti claim `second_hand` when it is `third_hand`.
 
-### 3. When a claim rests on who asserted it, the attribution belongs in the claim text
+### 3. When a claim rests on who asserted it, the attribution belongs in the claim text - and extraction DECLARES that it does
 
-The existing rule - strip the reporting verb, state the bare fact, let the `speaker` field carry the attribution - stands **only where the speaker is a conduit**. It is reversed where the claim's truth-status depends on the assertion itself.
-
-- **Conduit** (`origin_kind` is `speaker`, `named`, or `document`, and the fact stands independently of who relayed it): keep the bare fact. "The Nimitz incident occurred in 2004." Naming the relayer in the text would turn the graph into a pile of quotations.
-- **Load-bearing attribution** (`origin_kind: anonymous`, OR `type: hearsay`, OR `attestation` is `second_hand`/`third_hand`): **the attribution goes inside the `text`.**
+Where the claim's truth-status depends on the assertion itself, **the attribution goes inside the `text`**:
 
   - RIGHT: "An anonymous source claiming to work inside the Defense Intelligence Agency, in an email forwarded to the speaker by an intermediary, said the filmed entity was a cloned extraterrestrial biological entity type two from the Tau Ceti star system."
   - WRONG: "The being was a cloned extraterrestrial biological entity type two from the Tau Ceti star system."
 
 The reason is not stylistic. For such a claim, "the entity came from Tau Ceti" is not a fact about the world and is not what the source establishes. The fact about the world is *that an anonymous person asserted it*. Stripping the attribution does not tidy the claim - it **changes what the claim says**, from a true statement about an assertion into a false statement about reality. A claim must be safe read alone, because eventually something will read it alone: `text` is what flows into articles, and safety cannot depend on every consumer, forever, remembering to check a sidecar field.
+
+**Attribution-in-text means naming the ORIGIN inside the sentence** - normally as its grammatical subject ("David Fravor observed the object accelerate"; "Jon Stewart considers the account a PSYOP"). It does NOT mean prefixing the claim with the RELAYER or the containing document ("According to the DoD statement of 2020-04-27, ..."), which remains forbidden by the anchor rules. Those are different things: the first is ordinary prose, the second is the quotation-pile the anchor rules exist to prevent.
+
+**Extraction declares it; nobody derives it.** Every claim carries a required boolean:
+
+```yaml
+attribution_in_text: true    # the text names who asserted this
+```
+
+It is set by the model that just wrote the text, so it cannot drift from it. Downstream consumers **read** it and must never re-derive it from `origin_kind`/`claim_type`/`attestation`: those are proxies for a property of the sentence, and a proxy can disagree with the sentence. Deriving it was the original design and it was wrong - a `named` or `document` origin is always at least one remove, so it grades `second_hand` and any depth-based rule routes every ordinary citation into "attribution required", contradicting the conduit case in the same breath. The only stable invariant is: *the attribution is in the text if and only if the writer put it there.*
+
+Consumers therefore branch on three states, and the third is the one that matters:
+
+| `attribution_mode` | Condition | Consumer behaviour |
+|--------------------|-----------|--------------------|
+| `in_text` | chain present AND `attribution_in_text` | Render as-is. Suppress a separate speaker line. Never wrap in a second attribution. |
+| `bare_ok` | chain present AND NOT `attribution_in_text` | Safe as a bare fact. |
+| `unknown` | no chain (every pre-0044 claim), or ungradeable | **Fail safe.** The text is bare but unvouched. Do NOT assert it, do NOT render as-is. Hedge or drop. |
+
+`unknown` must never fall through to "safe to assert". Absence of a danger signal is not evidence of safety - that is how a claim of unknown provenance gets published as fact, which is the failure this record exists to prevent.
 
 ### 4. Only sincere assertions are claims
 
