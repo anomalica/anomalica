@@ -316,7 +316,7 @@ The content inside `{{ }}` is parsed as YAML, in one of two authored forms:
 - **Keyed** - a single key-value pair where the key describes what or who the annotation is about and the value gives the detail (`{{Fravor: holds up photograph}}`). There is no fixed vocabulary of keys; the key is whatever makes sense in context.
 - **Keyless** - a bare YAML scalar, for an unkeyed note that needs no subject (`{{laughs}}`, `{{applause}}`). The scalar is the whole note.
 
-A small set of keys is *reserved* for machine-read markers rather than authored notes: `t` (word-level timestamp) and `highlight-start` / `highlight-end` ([Highlights](#highlights)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching; the extraction pipeline strips the reserved markers but keeps authored notes as context (see [Highlights](#highlights) and [The bracket meta-notation](#the-bracket-meta-notation)).
+A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` ([Highlights](#highlights)), and `note-start` / `note-end` ([Span notes](#span-notes)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t` and `highlight-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
 
 ### Why double curly braces
 
@@ -373,6 +373,20 @@ Ids are opaque, unique within a record, and minted by the authoring UI; reviewer
 **Highlights are stripped from the pre-digest and never reach the extraction model.** Unlike the content notes above, a highlight carries no content - it is a reviewer's pointer, an evaluation and curation signal only. Letting the model see it would bias extraction and destroy its value as a blind recall signal ([0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)); the `{{t:}}` timestamp markers are stripped the same way. Authored content notes (`{{...}}`, keyed or keyless) are the exception - they are preserved into the pre-digest as context, exactly as bracket meta-notes are.
 
 This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
+
+### Span notes
+
+A span note attaches free text to a word *range* - "what was on screen here", external context that spans a period the words alone do not carry. It is the ranged counterpart to the keyless point note (`{{laughs}}`, anchored to one spot): a span note has a start and an end the reviewer can drag to re-range.
+
+A span note is a pair of inline markers sharing a short opaque id. `note-start` carries a YAML flow list `[id, text]`; `note-end` carries the id:
+
+```markdown
+{{note-start: [a1, "on-screen caption: the witness's own drawing of the craft"]}} ... spanned words ... {{note-end: a1}}
+```
+
+The flow list keeps the note flat - no nested braces to confuse the `}}` scan - and the text is quoted per YAML when it contains colons or quotes. Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers. Overlap and orphan handling are the same as [Highlights](#highlights): spans are told apart by id, an unmatched half auto-closes at the end of its block or speaker turn, and an end with no live open is dropped.
+
+**Unlike a highlight, a span note carries content and is preserved into the pre-digest.** The markers (`note-start` / `note-end` and their ids) are stripped from prose - for search and display, and from the model input - but the note's *text* is re-surfaced into the pre-digest as a context note, exactly like the keyed and keyless content notes, so the model reads it as interpretive context. This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
 
 ## The bracket meta-notation
 
