@@ -56,6 +56,24 @@ Each claim carries an attestation level (how close the speaker was to what they 
 
 Attestation depth affects evidence scoring. A first-hand claim corroborated by another independent first-hand claim is stronger than a third-hand claim with no first-hand backing.
 
+Attestation is **derived from the provenance chain**, not judged by feel ([0044](../decisions/0044-claim-provenance-chain-is-required.md)): `origin_kind: speaker` with an empty relay is `first_hand`; one remove is `second_hand`; two or more removes is `third_hand`; `unattributed` has no evidential stance and omits it.
+
+**Grade by the whole chain, not by the last mouth it passed through.** A speaker naming their immediate contact does not make a claim second-hand if that contact was themselves relaying someone else - count the removes. An assertion reaching the speaker as a forwarded email from an anonymous source is `third_hand`, however confidently the speaker names the person who forwarded it.
+
+## Claim text and load-bearing attribution
+
+A claim's `text` normally states the bare fact, with the speaker held in the structured `speaker` field - naming the relayer in the text would turn the graph into a pile of quotations rather than portable facts. That rule holds **only where the speaker is a conduit** for something that stands independently of who relayed it.
+
+It reverses where the attribution is load-bearing - `origin_kind: anonymous`, or `type: hearsay`, or an attestation of `second_hand`/`third_hand`. There, **the attribution goes inside the `text`** ([0044](../decisions/0044-claim-provenance-chain-is-required.md)).
+
+The reason is not stylistic. For such a claim, the proposition is not a fact about the world and is not what the source establishes; the fact about the world is *that someone asserted it*. Stripping the attribution does not tidy the claim, it changes what the claim says - from a true statement about an assertion into a false statement about reality. `text` is what flows into articles, so a claim must be safe read alone; safety cannot depend on every consumer, forever, remembering to check a sidecar field.
+
+## Only sincere assertions are claims
+
+Exhaustive extraction means never skimming and never curating for importance. It does not mean literalising every sentence spoken. A claim is extracted only where the source **sincerely asserts** a fact. The following are not claims, even though the words appear verbatim in the source: jokes, deadpan, irony and running bits (comedic self-description is not biography, and deadpan gives no signal a joke is underway); hypotheticals and rhetorical questions; statements quoted in order to be rejected; and hyperbole or figures of speech, which are never converted into measurements.
+
+Omitting a joke costs little. Asserting one as fact manufactures a false fact, which is the worst output this system can produce.
+
 ## Record classification
 
 A record's classification describes its relationship to the events it covers - distinct from a claim's attestation, which describes the speaker's proximity to what they assert:
@@ -79,6 +97,29 @@ Claim type is orthogonal to attestation level. A claim can be first-hand opinion
 Every claim has a provenance chain (the path a claim took from its original source to the knowledge graph). Provenance chains are used to determine genuine independence when assessing corroboration.
 
 Two claims corroborate each other only if their provenance chains do not share a common root. Ten outlets all reporting the same press release is one source, not ten.
+
+The chain is a **required** field on every claim ([0044](../decisions/0044-claim-provenance-chain-is-required.md)) - the extraction schema will not accept a claim without it, so "where did this come from?" is a question the model must answer rather than one it may skip:
+
+```yaml
+provenance_chain:
+  origin_kind: anonymous        # speaker | named | anonymous | document | unattributed
+  origin: "a person claiming to work inside the Defense Intelligence Agency"
+  relay:                        # ordered, origin -> speaker; empty when the speaker IS the origin
+    - "an email"
+    - "an intermediary known to the speaker"
+```
+
+| `origin_kind` | The root of the chain |
+|---------------|----------------------|
+| `speaker` | The speaker originated it - they observed it, did it, or hold it. `relay` is empty. |
+| `named` | An identifiable person, organisation, or document. It is a node, and must also appear in `refs`. |
+| `anonymous` | An unnamed or unidentifiable source. **It cannot be a node** (see [node types](node-types.md)), so this field is the only place it can survive. |
+| `document` | A document or record the speaker is reading from or citing. |
+| `unattributed` | The source asserts it with no attribution offered - ordinary narration. |
+
+`origin_kind` is what corroboration keys on. An `anonymous` root matters most: because an anonymous actor can never be a node, dropping the chain does not merely lose detail - it silently promotes an anonymous assertion into an institutional one ("an anonymous person claiming to work inside the Defense Intelligence Agency said X" collapses into "the Defense Intelligence Agency said X").
+
+This claim-level chain is distinct from the record's `provenance` block ([0043](../decisions/0043-canonical-provenance-block.md)): provenance says where the **document** came from (publisher, dates, URL); the provenance chain says who, **inside** the document, asserted the claim and through whom it reached the speaker. A claim has both.
 
 ## Pipeline outputs
 

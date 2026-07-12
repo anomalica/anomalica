@@ -73,7 +73,11 @@ domain_claims:
     speaker:
       id: dea95da2-a779-4012-88d5-d443d7f8f4b3
       name: Elizondo, Luis
-    location: paragraph 1
+    provenance_chain:
+      origin_kind: speaker
+      origin: Elizondo, Luis
+      relay: []
+    location: 00:04:12.0-00:04:25.5
     date: '2017'
     refs:
       - id: dea95da2-a779-4012-88d5-d443d7f8f4b3
@@ -87,6 +91,32 @@ domain_claims:
 
 infrastructure_claims: []
 ```
+
+### `provenance_chain`
+
+Required on every claim ([0044](../decisions/0044-claim-provenance-chain-is-required.md)). It records who
+originally asserted the claim and how it reached the speaker, and it is what the
+corroboration model keys on when deciding whether two claims are genuinely
+independent - repetitions of one anonymous email share a root and must not
+present as independent attestations. `origin_kind` is one of `speaker`, `named`,
+`anonymous`, `document`, `unattributed`; `relay` is the ordered path from origin
+to speaker, empty when the speaker is the origin. `attestation` is derived from
+its depth. An `anonymous` origin can never be a node, so this field is the only
+place it survives. See [data-model.md](data-model.md#provenance-chains).
+
+Distinct from the record's `provenance` block
+([0043](../decisions/0043-canonical-provenance-block.md)), which is source-origin
+metadata about the document rather than the assertion chain inside it.
+
+### `location`
+
+The span of the source the claim was drawn from. For a timestamped record this is
+a canonical `HH:MM:SS.d-HH:MM:SS.d` range, recovered deterministically by
+realigning the claim's verbatim `quote` against the record's word timings rather
+than by asking the model - a model left to write `location` itself picks a
+different axis per chunk (timecodes, bare seconds, even source line numbers),
+which makes variants from different models impossible to cluster against one
+another.
 
 ### `record`
 
