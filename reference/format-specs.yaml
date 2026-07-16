@@ -86,7 +86,21 @@ types:
           Currently {count, total_bytes}. Omitted when the record has no extracted media."}
       - {name: ai_usage, type: object, required: false, status: provisional, description: "PROVENANCE-ONLY record of AI processing
           that produced this record (model, version, token counts). No cost fields. Exact sub-field shape pending confirmation
-          from the ingester workspace - emitted by the pipeline but not yet in record-format.md.",}
+          from the ingester workspace - emitted by the pipeline but not yet in record-format.md."}
+    sidecars:
+      "sources/{content_hash}.peaks.json": "Waveform amplitude envelope of the archived original, audio/video only, schema
+        anomalica/peaks/1. {schema, hex_hash, bins_per_second, duration, peaks}. `peaks` is one unsigned byte per bin, base64;
+        each bin is the MAXIMUM absolute sample in its slice, never the average (an average flattens the onset the waveform
+        exists to show). Reduction is single-sourced in anomalica-common/peaks.py - two components run it and a drift between
+        them is silent. `duration` is DERIVED from the decoded audio and is the authoritative span for mapping the peaks:
+        len(peaks)/duration == bins_per_second holds here and nowhere else. Do NOT map onto a player's duration (YouTube rounds
+        to the whole second), a media element's (measures the container, not the decode), or the record's frontmatter `duration`
+        (the FILE's length - a different quantity). ACCESS: peaks follow the TRANSCRIPT's allow-list, not the archived original's
+        - open for public_domain, open_licence AND publicly_accessible, so a copyrighted source's audio stays gated while
+        its envelope is served openly (Mark's ruling 2026-07-17; an envelope is a weaker derivative than the transcript, which
+        is already public for those). The two allow-lists MUST NOT be collapsed: merging withdraws the ruling or leaks the
+        audio. Route per object kind, never once per record. Everything else - licensed, restricted, unknown, absent - fails
+        closed."
 
   per_model_digest:
     schema: anomalica/digest/1

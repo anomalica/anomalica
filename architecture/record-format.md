@@ -73,6 +73,30 @@ Every record whose source was archived carries `archived_ext` - the bare extensi
 
 `archived_ext` is also **distinct from `source_file`**, which is the ORIGINAL filename of a local-file ingest. They describe different files and may legitimately disagree: a video ingested from `interview.mkv` and archived audio-only carries `source_file: interview.mkv` alongside `archived_ext: opus`. That is correct, not an inconsistency - do not reconcile them.
 
+### The waveform peaks sidecar
+
+An audio or video record may carry a peaks sidecar at `sources/{content_hash}.peaks.json` (schema `anomalica/peaks/1`) - an amplitude envelope of the archived original, computed once at archive time. A reviewer aligning a word's timestamp needs to see the sound's onset; the envelope is what draws that waveform.
+
+```json
+{"schema": "anomalica/peaks/1", "hex_hash": "5a05136d...",
+ "bins_per_second": 100, "duration": 470.04, "peaks": "<base64>"}
+```
+
+One unsigned byte per bin, base64. Each bin is the **maximum** absolute sample in its slice, never the average - an average flattens the attack at a word's start, which is the only feature the waveform exists to show. The reduction is single-sourced in `anomalica-common` (`peaks.py`) because two components run it and a drift between them is invisible: nothing errors, the waveform just stops matching the audio.
+
+**`duration` is derived from the decoded audio, and it is the authoritative span.** A consumer must map the peaks onto THIS value, not onto a player's or media element's duration: `len(peaks) / duration == bins_per_second` holds by construction here and nowhere else. A YouTube player rounds its reported duration to the whole second (4685 for a file that is really 4684.89), and an `<audio>` element measures the container rather than the decode - either will drift the x-axis by enough to misplace an onset. Do not map onto the record's frontmatter `duration` either; that is the file's length, a different quantity, and it was wrong on every record in the corpus until 2026-07-17.
+
+**Access: peaks follow the TRANSCRIPT's rule, not the original file's.** This is the one place where a derivative is served more openly than the thing it derives from, and it is deliberate (Mark's ruling, 2026-07-17):
+
+| Object | Open for |
+|--------|----------|
+| The archived original (`sources/{hash}.{archived_ext}`) | `public_domain`, `open_licence` |
+| Its peaks (`sources/{hash}.peaks.json`) | `public_domain`, `open_licence`, **`publicly_accessible`** |
+
+So for a `publicly_accessible` source the audio stays gated while its peaks are served openly. The reasoning: peaks are in the same disclosure class as the transcript body, which is already public for those sources - the sources are publicly accessible already, ours are just more accurate transcripts, and an envelope is a weaker derivative still (100 amplitudes per second, no words, cannot reconstruct the audio). Everything outside both lists - `licensed`, `restricted`, unknown, absent - fails closed.
+
+**Do not collapse these two allow-lists.** They look like a copy-paste divergence and are not. Merging them either withdraws the ruling (no waveform for the majority of the library) or serves the copyrighted audio itself. Any router must decide per object kind, never once per record.
+
 ### Web record snapshots
 
 For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `sources/` directory. The frontmatter exposes them like this:
