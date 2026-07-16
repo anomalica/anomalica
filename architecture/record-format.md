@@ -582,7 +582,7 @@ provenance:
   source_url: https://youtube.com/watch?v=aB8zcAttP1E
   identifiers:
     youtube: aB8zcAttP1E
-duration: 7200
+duration: 7200.48
 content_hash: sha256:e27169e8...
 ---
 

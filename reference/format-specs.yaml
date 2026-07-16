@@ -64,7 +64,9 @@ types:
           (page_render | single_file), hash (sha256 of bytes), content_type (MIME). Exposes PDF renders and frozen-page captures
           for web records."}
       - {name: pages, type: integer, required: false, formats: [pdf], description: "Page count for documents."}
-      - {name: duration, type: number, required: false, formats: [audio, video], description: "Duration in seconds for audio/video."}
+      - {name: duration, type: number, required: false, formats: [audio, video], description: "Length of the FILE in seconds,
+          measured from the archived original - NOT the transcript's span. A file ending in silence or outro music runs on
+          past its last word; writing the last segment's end here understated every record in the corpus by up to 82s."}
       - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. ISO 8601 with
           timezone (Zulu)."}
       - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright
