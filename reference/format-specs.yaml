@@ -49,6 +49,14 @@ types:
           is simply the absence of source_url/fetched_url/source_file/identifiers."}
       - {name: content_hash, type: string, required: false, description: "SHA-256 naming the record's file in store/. Hashes
           source bytes for audio/video/pdf, extracted body text for web/ebook. See hashes below."}
+      - {name: archived_ext, type: string, required: false, description: "Extension of this record's archived original, bare
+          and without a dot (opus, ogg, pdf, epub, html). The archived object is sources/{content_hash}.{archived_ext} - the
+          key consumers build to fetch or play the source. NOT DERIVABLE from any other field, and must never be re-derived
+          from `container`: codec/container describe the STREAM, the extension is a property of the FILE. yt-dlp writes .opus
+          while reporting container: ogg; a download named .ogg reports an identical stream - so 76 of 122 records had container:
+          ogg against a .opus file, and a container-derived URL 404s for the majority. DISTINCT from source_file (the ORIGINAL
+          filename of a local-file ingest): a video archived audio-only legitimately shows source_file: interview.mkv with
+          archived_ext: opus. Do not reconcile the two - they describe different files."}
       - {name: source_hash, type: string, required: false, formats: [web, ebook], description: "SHA-256 of the raw source
           asset (post-render HTML for web, EPUB bytes for ebook), locating sources/{source_hash}.{ext}. Not emitted for audio/video/pdf
           (their content_hash already hashes the source bytes)."}

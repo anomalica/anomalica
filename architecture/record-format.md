@@ -65,6 +65,14 @@ Two boundaries are load-bearing:
 
 A claim's authoritative provenance is a reference to its source record (the `record_id` it already carries); the digest may additionally denormalise `publisher` + `published_date` + `collection` onto a claim as a render cache, so an article renders "from a 1949 Department of Energy document" without a join. The cache is derived and refreshed on re-digest; the record's block is authoritative. See [data-model.md](data-model.md).
 
+### The archived original
+
+Every record whose source was archived carries `archived_ext` - the bare extension of that archived object, which lives at `sources/{content_hash}.{archived_ext}`. That pair is the whole address: consumers build it to fetch or play the source (the workbench serving a reviewer the audio behind a transcript, for instance).
+
+**The extension is not derivable, and must never be re-derived from `container`.** `codec` and `container` under `processing.source` describe the STREAM; the extension is a property of the FILE. yt-dlp writes `.opus` while reporting `container: ogg`, and a file downloaded as `.ogg` reports an identical stream - so the same metadata legitimately backs both extensions. Before this field existed, 76 of 122 records said `container: ogg` against a `.opus` file on disk, and a container-derived URL 404'd for the majority of the library. There is no glob on the CDN, so a wrong extension is simply a miss. Write the extension down; never infer it.
+
+`archived_ext` is also **distinct from `source_file`**, which is the ORIGINAL filename of a local-file ingest. They describe different files and may legitimately disagree: a video ingested from `interview.mkv` and archived audio-only carries `source_file: interview.mkv` alongside `archived_ext: opus`. That is correct, not an inconsistency - do not reconcile them.
+
 ### Web record snapshots
 
 For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `sources/` directory. The frontmatter exposes them like this:
