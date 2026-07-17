@@ -14,7 +14,7 @@ Two-pass artificial-intelligence extraction - a nodes pass and a claims pass:
 
 ### Node identification
 
-Identifies the domain nodes the record mentions: person, organisation, project, place, event, object, topic (the taxonomy and classification rules are in [node-types.md](node-types.md)). This is per-record - the digester sees one record at a time and does not resolve nodes across records; that cross-corpus matching is the assimilator's.
+Identifies the domain nodes the record mentions: person, organisation, project, place, event, object, document, topic (the taxonomy and classification rules are in [node-types.md](node-types.md)). This is per-record - the digester sees one record at a time and does not resolve nodes across records; that cross-corpus matching is the assimilator's.
 
 ### Claim extraction
 
