@@ -348,7 +348,7 @@ The content inside `{{ }}` is parsed as YAML, in one of two authored forms:
 - **Keyed** - a single key-value pair where the key describes what or who the annotation is about and the value gives the detail (`{{Fravor: holds up photograph}}`). There is no fixed vocabulary of keys; the key is whatever makes sense in context.
 - **Keyless** - a bare YAML scalar, for an unkeyed note that needs no subject (`{{laughs}}`, `{{applause}}`). The scalar is the whole note.
 
-A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` ([Highlights](#highlights)), and `note-start` / `note-end` ([Span notes](#span-notes)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t` and `highlight-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
+A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` ([Highlights](#highlights)), `note-start` / `note-end` ([Span notes](#span-notes)), and `link-start` / `link-end` ([Cross-record links](#cross-record-links)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t`, `highlight-*`, and `link-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
 
 ### Why double curly braces
 
@@ -419,6 +419,34 @@ A span note is a pair of inline markers sharing a short opaque id. `note-start` 
 The flow list keeps the note flat - no nested braces to confuse the `}}` scan - and the text is quoted per YAML when it contains colons or quotes. Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers. Overlap, extent, and orphan handling are the same as [Highlights](#highlights): spans are told apart by id and may cross speaker turns and paragraph breaks, an unmatched half auto-closes at the end of the body, and an end with no live open is dropped.
 
 **Unlike a highlight, a span note carries content and is preserved into the pre-digest.** The markers (`note-start` / `note-end` and their ids) are stripped from prose - for search and display, and from the model input - but the note's *text* is re-surfaced into the pre-digest as a context note, exactly like the keyed and keyless content notes, so the model reads it as interpretive context. This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
+
+### Cross-record links
+
+A cross-record link is a reviewer-authored reference from a span in this record to another record - typically to a specific part of it. The use case: an interview mentions a document; that document is ingested as its own record; the reviewer links the mentioning phrase to the document, so a reader (and other content) can follow the reference to the exact passage cited.
+
+It is the third paired-marker `{{ }}` type, alongside [highlights](#highlights) and [span notes](#span-notes), and shares their machinery. `link-start` carries a flat YAML flow list; `link-end` carries the id:
+
+```markdown
+{{link-start: [a1, "sha256:7bf2c20d..."]}} the AARO historical record report {{link-end: a1}}
+```
+
+with an optional anchor into the target - a verbatim quote from it:
+
+```markdown
+{{link-start: [a1, "sha256:7bf2c20d...", "unidentified anomalous phenomena remain unexplained"]}} that passage {{link-end: a1}}
+```
+
+The list is flat (no nested braces, so the `}}` scan stays safe), with up to three elements: the opaque **id**, the target's **`content_hash`**, and an optional **target quote**. Ids, overlap, extent, and orphan handling are exactly as [Highlights](#highlights) - spans are told apart by id, may cross paragraph and speaker boundaries, an unmatched half auto-closes at the end of the body, and reviewers never type the markers.
+
+Three rules make a link durable:
+
+- **Target by content hash, never by symlink.** The link pins the target's `content_hash` (`store/{hash}.md`), never its `records/` symlink name - archives move symlinks out from under name lookups. The hash records exactly what was linked.
+- **Resolve through supersession at render time.** The pinned hash is stable identity; if the target has since been superseded ([Versioning and supersession](#versioning-and-supersession)), resolution follows the chain to the current record so the link still lands. The pinned hash is what was cited; the chain is how it stays reachable.
+- **Anchor by quote, re-derived - the same as a claim.** When an anchor is given it is a verbatim quote from the target, and the precise location within the target (a `HH:MM:SS.d-HH:MM:SS.d` range for a timestamped record, a page or character span for text) is re-derived by aligning that quote against the target - exactly as a claim's `location` is recovered ([digest-format.md](digest-format.md), digester `f4dcab2`), never authored directly. A quote survives the target's re-extraction; a raw offset would not.
+
+**Links are stripped from the pre-digest, like highlights.** A link is a reviewer's navigation pointer, not source content: the `link-start` / `link-end` markers and their payload are removed before extraction, and the spanned prose stays as ordinary text, so the model reads the referring phrase unchanged and extraction is unaffected. Additive within `anomalica/record/1` - a consumer that does not recognise the markers treats the spanned text as prose - so no `schema` bump.
+
+Each link is individually addressable by its id (the source record's hash plus the link id), which is what makes it shareable and referenceable from other content. The shareable URL scheme, and any **backlink** view (a target showing which records link to it, *derived* by scanning forward links, never stored on the target), are the workbench's and site's to render against this contract.
 
 ## The bracket meta-notation
 
