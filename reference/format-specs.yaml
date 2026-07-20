@@ -87,6 +87,12 @@ types:
       - {name: ai_usage, type: object, required: false, status: provisional, description: "PROVENANCE-ONLY record of AI processing
           that produced this record (model, version, token counts). No cost fields. Exact sub-field shape pending confirmation
           from the ingester workspace - emitted by the pipeline but not yet in record-format.md."}
+      - {name: overlay_next_id, type: integer, required: false, description: "The next overlay-marker id to mint. Highlights,
+          span notes and links share ONE per-record id space; this counter is monotonic and never decremented, so an overlay
+          id is never reissued within the record's lifetime - which keeps highlight context links and shareable (record-hash
+          + id) link addresses from silently rebinding to a different span. Written by the workbench, not the ingester. Absent
+          on records with no overlay markers; when absent, derive the high-water lazily from the largest id extant in the
+          body. See record-format.md."}
     sidecars:
       "sources/{content_hash}.peaks.json": "Waveform amplitude envelope of the archived original, audio/video only, schema
         anomalica/peaks/1. {schema, hex_hash, bins_per_second, duration, peaks}. `peaks` is one unsigned byte per bin, base64;
