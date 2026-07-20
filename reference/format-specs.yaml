@@ -88,11 +88,14 @@ types:
           that produced this record (model, version, token counts). No cost fields. Exact sub-field shape pending confirmation
           from the ingester workspace - emitted by the pipeline but not yet in record-format.md."}
       - {name: overlay_next_id, type: integer, required: false, description: "The next overlay-marker id to mint. Highlights,
-          span notes and links share ONE per-record id space; this counter is monotonic and never decremented, so an overlay
-          id is never reissued within the record's lifetime - which keeps highlight context links and shareable (record-hash
-          + id) link addresses from silently rebinding to a different span. Written by the workbench, not the ingester. Absent
-          on records with no overlay markers; when absent, derive the high-water lazily from the largest id extant in the
-          body. See record-format.md."}
+          span notes, links AND the references between them share ONE per-record id space; this counter only ever increases,
+          so no id the record has ever mentioned in any overlay construct is reissued - which keeps highlight context links
+          and shareable (record-hash + id) link addresses from silently rebinding to a different span. It is not a decodable
+          index (records may hold legacy or hand-written ids that are not counter renderings; the counter just refuses to
+          collide with them). Written by the workbench, not the ingester. Absent on records with no overlay markers; when
+          absent, derive the high-water from the largest id mentioned anywhere in the body (markers and references alike,
+          since a dangling reference can be the only thing naming an id), clamped up to the authoring UI's minimum id - a
+          fresh record starts at that minimum, not zero. See record-format.md."}
     sidecars:
       "sources/{content_hash}.peaks.json": "Waveform amplitude envelope of the archived original, audio/video only, schema
         anomalica/peaks/1. {schema, hex_hash, bins_per_second, duration, peaks}. `peaks` is one unsigned byte per bin, base64;
