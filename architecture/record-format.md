@@ -348,7 +348,7 @@ The content inside `{{ }}` is parsed as YAML, in one of two authored forms:
 - **Keyed** - a single key-value pair where the key describes what or who the annotation is about and the value gives the detail (`{{Fravor: holds up photograph}}`). There is no fixed vocabulary of keys; the key is whatever makes sense in context.
 - **Keyless** - a bare YAML scalar, for an unkeyed note that needs no subject (`{{laughs}}`, `{{applause}}`). The scalar is the whole note.
 
-A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` ([Highlights](#highlights)), `note-start` / `note-end` ([Span notes](#span-notes)), and `link-start` / `link-end` ([Cross-record links](#cross-record-links)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t`, `highlight-*`, and `link-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
+A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` / `highlight-context` ([Highlights](#highlights), [Highlight context links](#highlight-context-links)), `note-start` / `note-end` ([Span notes](#span-notes)), and `link-start` / `link-end` ([Cross-record links](#cross-record-links)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t`, `highlight-*`, and `link-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
 
 ### Why double curly braces
 
@@ -398,13 +398,32 @@ The id lets highlights **overlap**: two spans that cross are told apart by their
 {{highlight-start: a1}}quick brown {{highlight-start: b2}}fox{{highlight-end: a1}} jumps{{highlight-end: b2}}
 ```
 
-Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers.
+Ids are opaque, unique within a record, minted by the authoring UI (reviewers never type these markers), and **never reused**: a deleted id is never reissued - new ids mint monotonically above every id the record has carried, so deletions leave harmless gaps. That makes an id a permanent handle, which every id reference depends on: [context links](#highlight-context-links) between highlights, and the (record-hash + id) address that makes a [cross-record link](#cross-record-links) shareable. A reused id would silently re-point a reference at an unrelated span - and for a cross-record link, from *outside* the record, where no writer could repair it. Non-reuse is what lets the orphan machinery protect a stale reference by leaving it safely dangling rather than silently rebinding.
 
 **Span extent and orphan handling.** A matched pair is bounded only by its own start and end markers - a highlight may span any range, including across paragraph breaks and speaker turns (a highlight over a multi-speaker back-and-forth is valid). An edit can delete one half of a pair: a `highlight-start` with no matching end auto-closes at the end of the body; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
 
 **Highlights are stripped from the pre-digest and never reach the extraction model.** Unlike the content notes above, a highlight carries no content - it is a reviewer's pointer, an evaluation and curation signal only. Letting the model see it would bias extraction and destroy its value as a blind recall signal ([0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)); the `{{t:}}` timestamp markers are stripped the same way. Authored content notes (`{{...}}`, keyed or keyless) are the exception - they are preserved into the pre-digest as context, exactly as bracket meta-notes are.
 
 This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
+
+### Highlight context links
+
+A highlight can carry a **context link** to one or more *earlier* highlights in the same record that it needs in order to be understood. The case: an early highlight introduces who a person is; a later highlight has them only as "he said..." - the later span depends on the earlier one for its meaning. The link is one-directional and points backwards, and it is untyped - one generic "needs this for context" edge, not a vocabulary of edge kinds (type it later only if real use demands it).
+
+Highlights already carry ids, so a context link is not a new marker pair - it is a small standalone annotation naming ids, reserved key `highlight-context`. Its value is a flow list whose first id is the highlight that needs context and whose remaining ids are the earlier highlights it depends on:
+
+```markdown
+{{highlight-start: h7}}he said the craft was recovered intact{{highlight-end: h7}}
+{{highlight-context: [h7, h3]}}
+```
+
+Here highlight `h7` depends on `h3` - say, the earlier span that named the person `h7` now only calls "he". A highlight may depend on several: `{{highlight-context: [h7, h3, h5]}}`. Because it references ids, not position, the annotation may sit anywhere in the body; the authoring UI places it at the dependent highlight, and reviewers never type it. A referenced highlight can be legitimately deleted, and because ids are never reused ([Highlights](#highlights)) that reference cannot rebind to a different span - it simply becomes unresolvable. A dangling `highlight-context` (its dependent highlight gone, or a target no longer present) is **retained and rendered as unresolved** for the reviewer to decide on, never silently dropped: the intent to link is a signal worth keeping. This differs from a half-deleted highlight *pair*, which auto-closes - that is structural repair of a span, not a semantic reference. These ids are per-record and short; they are NOT usable across records - a cross-record reference uses the [cross-record link](#cross-record-links) form, keyed on `content_hash` + quote, never a bare id.
+
+**Context links strip from the pre-digest with their highlights.** They carry no content and live entirely on the highlights, which are already stripped - so `highlight-context` joins `highlight-*` in the strip-entirely bucket and the model never sees it. No new pre-digest rule.
+
+The point of chains is evaluation. **A chain of context-linked highlights is one gold unit**, not several independent spans: the expected extraction merges the linked spans and *resolves the coreference* - it must name the person the later span only calls "he", using the earlier span. That makes a reviewer's gold a direct measure of cross-passage coreference and attribution on long transcripts - one of the few things that actually separates models on hard content, and exactly what a claim's `speaker` and `refs` have to get right. A model that emits an unresolved "he" fails the gold unit. A useful side-effect worth the reviewer knowing: chains remove the pressure to draw one big highlight with an irrelevant interior just to reach the context it needs - reviewers highlight tightly and link, which also keeps the gold clean.
+
+Additive within `anomalica/record/1` - a consumer that does not recognise `highlight-context` ignores it - so no `schema` bump.
 
 ### Span notes
 
