@@ -97,6 +97,26 @@ So for a `publicly_accessible` source the audio stays gated while its peaks are 
 
 **Do not collapse these two allow-lists.** They look like a copy-paste divergence and are not. Merging them either withdraws the ruling (no waveform for the majority of the library) or serves the copyrighted audio itself. Any router must decide per object kind, never once per record.
 
+### Copyright status: what a source gets by default
+
+`copyright.status` is one of `public_domain`, `open_licence`, `publicly_accessible`, `licensed`, `restricted`. Only the first two serve the ORIGINAL file openly; the rest gate it behind proof of possession. What differs between them is not whether *you* can reach the content, but whether Anomalica may redistribute the original file.
+
+An ingester assigns the status from HOW the source was acquired. Most specific wins:
+
+| Acquisition | Default | Why |
+|-------------|---------|-----|
+| An explicit `--copyright` | that value | The caller knows (e.g. the war.gov importer stamps `public_domain`). |
+| A `.gov` / `.mil` URL | `public_domain` | US government works carry no copyright (17 USC 105). There is nothing to protect, so gating one hides a public document from its own reviewer for no benefit. |
+| Any other `http(s)` URL | `publicly_accessible` | We retrieved it anonymously, which PROVES it is publicly accessible. The original still stays gated - we don't redistribute someone else's copyrighted file - but the extracted text is surfaced. |
+| A local file | `restricted` | Unknown provenance: we cannot assert anything about it, so fail closed. |
+
+Two things this encodes, both learned the hard way:
+
+- **Fetching from a public URL is evidence.** A source we pulled anonymously cannot honestly be called `restricted`. Every handler defaults a URL fetch to at least `publicly_accessible`; a PDF that defaulted to `restricted` was an outlier bug, not the policy.
+- **The `.gov`/`.mil` rule matches the HOSTNAME, never the string.** `example.com/fake.gov/report.pdf` and `example.gov.uk` must not qualify - a substring match here opens copyrighted material.
+
+These are DEFAULTS, not licence determinations - a government site can host a contractor report that retains copyright, so a reviewer can always override the status in the workbench. Widening one (gated -> open) is irreversible once served, so it is a human decision, never an automated upgrade.
+
 ### Web record snapshots
 
 For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `sources/` directory. The frontmatter exposes them like this:

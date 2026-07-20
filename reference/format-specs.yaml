@@ -70,7 +70,15 @@ types:
       - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. ISO 8601 with
           timezone (Zulu)."}
       - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright
-          draft). status is one of public_domain, open_licence, publicly_accessible, licensed, restricted."}
+          draft). status is one of public_domain, open_licence, publicly_accessible, licensed, restricted. Only public_domain
+          and open_licence serve the ORIGINAL file openly; the rest gate it behind proof of possession. DEFAULTS BY ACQUISITION
+          (most specific wins, narrative in record-format.md): an explicit --copyright > a .gov/.mil URL -> public_domain
+          (US government works carry no copyright, 17 USC 105 - gating one hides a public document for no benefit; match the
+          HOSTNAME, never the string, or 'example.com/fake.gov/x.pdf' opens copyrighted material) > any other http(s) URL
+          -> publicly_accessible (retrieving it anonymously PROVES public accessibility; the original still stays gated, the
+          extracted text is surfaced) > a local file -> restricted (unknown provenance, fail closed). These are defaults a
+          reviewer can override, not licence determinations; widening one (gated -> open) is irreversible once served and
+          is a human decision, never an automated upgrade."}
       - {name: classification, type: string, required: false, formats: [pdf], description: "Original security classification
           banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
           a marking."}
