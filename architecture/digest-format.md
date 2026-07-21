@@ -240,6 +240,38 @@ is the canonical claim as extracted - usually a tightened or
 paraphrased version of `quote`. Both use YAML block scalars (`|-`) so
 multi-line content needs no escaping.
 
+A `quote` may be **elided**. An atomic claim distilled from verbose
+speech legitimately spans non-contiguous stretches of the source, and
+stitching those stretches is preferable to the alternatives - a bloated
+quote that carries the filler, or a paraphrase that loses the verbatim
+anchor. Elision is governed by four rules:
+
+- **Every fragment is verbatim.** Each stretch between join markers
+  appears character-for-character in the source record.
+- **Every fragment independently locates.** The re-aligner (see
+  `location`) must place each fragment against the source. A fragment
+  that does not locate is a *broken* quote - the one fidelity failure -
+  and the grader rejects it. Verbatim-but-non-contiguous is *elided*,
+  not broken, and passes.
+- **Fragments keep source order.** They appear in the quote in the same
+  order they occur in the source; the re-aligner's located positions run
+  non-decreasing across them. This is what stops an elision from
+  reordering or recomposing what the speaker said - a reordered elision
+  is a fidelity failure even when every fragment locates.
+- **`...` marks each join** and is the only text permitted between
+  fragments. It carries no meaning of its own: the re-aligner ignores it
+  and matches the verbatim fragments on either side, and a consumer
+  detects an elided quote by its presence.
+
+These four are mechanical and checkable. They are necessary, not
+sufficient: an elision that drops a negation, condition, or attributive
+qualifier can invert the sense of the retained fragments while each one
+stays verbatim, located, and ordered. Meaning-preservation across a join
+is therefore an authoring obligation that the grader and human review
+enforce, not something the re-aligner can guarantee. The eval's
+`contiguous` / `elided` / `broken` split follows directly: contiguous and
+elided both pass fidelity, only broken fails.
+
 `text` is the only required content field. A claim with neither a
 `quote` nor a `text` is malformed.
 
