@@ -44,6 +44,17 @@ Properties that accumulate as data flows through the knowledge graph, derived fr
 | **Correction behaviour** | Whether and how quickly the source issues corrections when its claims are contradicted. Tracked as observable events. |
 | **Independence** | Institutional and financial connections to the subjects the source covers. Documented factually, not scored as good or bad. |
 
+## Record unit: whole containers versus scoped excerpts
+
+Most sources map to one record. The exception is a large CONTAINER whose relevant content is a small, cited fraction - a defence appropriations act (~1700 pages) cited only for its UAP provisions, an omnibus report, a hearing appendix. Two units are possible, and the choice is by relevance DENSITY, not size:
+
+- **Whole-container record** - the container's full text is the record body, and sub-parts are located nodes and claims within it. Right when the container is mostly SIGNAL: a UAP FOIA release, a UAP hearing. (The Elizondo resignation letter is not a separate record; it is held-within the FOIA release that reproduces it, located by page range - so a FOIA is a whole-container record even though it "contains" letters.)
+- **Scoped excerpt record** - the record body is only the relevant sections; the FULL container is archived as the original for verifiability. Right when the container is mostly NOISE: a budget statute cited for three UAP sections, where extracting the whole act floods review with irrelevant statute and pays extraction on 1700 pages to keep 20.
+
+The test is **whole when extracting the container is mostly signal, excerpt when it is mostly noise.** Size is a symptom, not the criterion: a short mostly-irrelevant source may excerpt, a long mostly-relevant one stays whole.
+
+A scoped excerpt record is **body-anchored regardless of the container's media type**: its `content_hash` is over the extracted excerpt (so two excerpts of one act are distinct records), and `source_hash` addresses the full archived container - the same two-hash pattern web and ebook records already use ([record-format.md](record-format.md), [format-specs.yaml](../reference/format-specs.yaml) `chain`). Provenance names the container and the scope: `publisher` (issuing body), `identifiers` (the public-law or report number), `source_url` (the full act), and the record title carries the sections ("NDAA FY2023 - UAP provisions, secs. 6801-6803"). A different section becoming relevant later is a new excerpt record from the same archived original - nothing is re-acquired, and completeness lives in the archive rather than in every record.
+
 ## Claim attestation
 
 Each claim carries an attestation level (how close the speaker was to what they are describing) describing the chain between the speaker and the events described:
