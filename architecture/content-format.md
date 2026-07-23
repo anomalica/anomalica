@@ -72,7 +72,12 @@ built_by:                    # OUTPUTS and generator
   system_prompt_sha256: <sha256>
   directives_sha256: <sha256>  # the RESOLVED directive list
   body_sha256: <sha256>
+  tokens: {input, output}    # this assembly's own usage
 ```
+
+`tokens` is here because **the article is the only artefact of the assemble stage**. Every other stage's usage has a second home - a record's or a digest's own `ai_usage` - so removing the carried-forward copy from an article loses nothing. The assemble entry has no such original: the AI-operation ledger is meant to be it, and the ledger is not written (0037 is scaffolded, and its own text names the gap: "assembler discards usage today"). Dropping `ai_usage` without this line would destroy each article's assembly token counts at the moment of writing, which is the opposite of the 2026-06-29 position that usage data is *kept* and merely not surfaced.
+
+This does not reopen what the `ai_usage` removal closed. That removal targets **carry-forward** - upstream entries republished into a public artefact, which is how a forbidden cost field reached 53 articles. The assemble stage's own tokens are first-party data about this artefact, not a copy of someone else's. Cost, price, and currency fields remain forbidden here as everywhere: tokens are a measurement, and any figure is derived by the consumer at display.
 
 Two keys rather than one because they answer opposite questions: `built_from` is what went in, `built_by` is what came out and what made it. Between them they make three staleness questions independently answerable, and a regeneration pass needs all three:
 
@@ -140,6 +145,8 @@ These block ratification of this format:
 
    So the order is: **`built_by` lands, then `ai_usage` is removed.** It is *not* gated on node-mode graph-slice identity, which is a larger and separate problem - blocking the removal on it would hold a leak path open for the sake of an unrelated design question.
 
-   **Strip `ai_usage` only from an article that is gaining `built_from` in the same write.** The two stamps preserve different halves of what the carried-forward list held. `built_by` preserves the *assembly* model; `built_from.claims` preserves the route to the *upstream* models, since an article's usage entries are recovered by walking its claims to their digests. An article written without a binding - node mode, which has no `built_from` - would keep its assembly model but lose any way to reach the models that produced its claims, and that is the majority of the corpus today. The conditional costs one check and confines the removal to articles where the recovery route exists; node-mode pages keep `ai_usage` until they re-assemble from a brief, at which point they gain both stamps and lose the block in the same write.
+   **Strip `ai_usage` only from an article that is gaining `built_from` *or* `record_hash` in the same write.** The two stamps preserve different halves of what the carried-forward list held. `built_by` preserves the *assembly* model; the binding preserves the route to the *upstream* models, since an article's usage entries are recovered by walking back to the digests behind it. Either binding provides that route: `built_from.claims` by a claims walk, and `record_hash` more directly still, because a record page has exactly one source record. Record pages carry `record_hash` and deliberately never carry `built_from`, so a condition naming only the latter would strand them holding `ai_usage` for ever.
+
+   Node mode has neither, and keeps `ai_usage`. Such an article would otherwise retain its assembly model but lose any way to reach the models that produced its claims - and that is the majority of the corpus today. Those pages keep the block until they re-assemble from a brief, at which point they gain both stamps and lose it in the same write.
 
    The `metadata` sub-shape and node identity/slug halves of this question remain open.
