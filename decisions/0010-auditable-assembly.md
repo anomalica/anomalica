@@ -81,11 +81,25 @@ Two defects in this record's own specification, corrected in
   prompt, resolved directives - plus a `transport` stamp. The divergence
   itself is a defect to close: `<COMPONENT>_USE_API` selects a billing
   path, and prompt content is meant to be invariant across it.
-- **"Previous article version" is listed as a prompt component but has
-  never been one.** `build_prompt` takes node, claims, related nodes, and
-  directives; no previous version is fed in. It is recorded here rather
-  than quietly deleted: either it is a real requirement and is outstanding,
-  or the list should drop it. Unresolved.
+- **"Previous article version" is dropped from the prompt-component
+  list.** It was never implemented - `build_prompt` takes node, claims,
+  related nodes, and directives - and it should not be. Feeding an
+  article's previous version back in makes assembly a function of its own
+  history: the article can no longer be rebuilt from its inputs alone, so
+  two people holding identical inputs get different articles depending on
+  what happened to be there before. That contradicts the reconstructability
+  this record exists to guarantee - reconstructing the prompt would require
+  the whole version chain rather than the current inputs - and it makes the
+  `body_sha256` staleness axis incoherent, because regeneration would never
+  converge.
+
+  The need it presumably served, preserving human edits across
+  regeneration, now has a deterministic mechanism instead: `body_sha256`
+  detects that a human edited the body and the assembler's preserve-list
+  keeps the authored keys, rather than feeding old text to a model and
+  hoping it is carried through. If iterative human-guided refinement is
+  wanted later it is a piece of work in its own right, with the
+  idempotency trade-off stated - not a line item in a component list.
 
 Directives, when versioned, must hash the **resolved** list rather than
 point at files: they are resolved at build time from up to five sources
