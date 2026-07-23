@@ -140,4 +140,6 @@ These block ratification of this format:
 
    So the order is: **`built_by` lands, then `ai_usage` is removed.** It is *not* gated on node-mode graph-slice identity, which is a larger and separate problem - blocking the removal on it would hold a leak path open for the sake of an unrelated design question.
 
+   **Strip `ai_usage` only from an article that is gaining `built_from` in the same write.** The two stamps preserve different halves of what the carried-forward list held. `built_by` preserves the *assembly* model; `built_from.claims` preserves the route to the *upstream* models, since an article's usage entries are recovered by walking its claims to their digests. An article written without a binding - node mode, which has no `built_from` - would keep its assembly model but lose any way to reach the models that produced its claims, and that is the majority of the corpus today. The conditional costs one check and confines the removal to articles where the recovery route exists; node-mode pages keep `ai_usage` until they re-assemble from a brief, at which point they gain both stamps and lose the block in the same write.
+
    The `metadata` sub-shape and node identity/slug halves of this question remain open.
