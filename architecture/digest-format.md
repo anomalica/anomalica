@@ -131,16 +131,31 @@ report number, archive identifier) and is often null.
 
 ### `ai_usage`
 
-Optional. What the extraction run consumed, carried forward onto the digest:
+Optional. What each stage consumed, carried forward onto the digest. **The
+contract is two shapes, not one**, switched on the presence of `duration_s`:
 
 ```yaml
 ai_usage:
-  - stage: extract
-    model: sonnet
-    model_version: claude-sonnet-4-5-20250929
-    tokens_in: 650679
-    tokens_out: 136077
+  - stage: digest            # AI stage: tokens, no wall-time
+    model: claude-opus-4-8
+    model_version: claude-opus-4-8   # optional; alias resolved to a versioned id
+    tokens:
+      input: 208331
+      output: 39436
+  - stage: transcribe        # LOCAL (gpu/cpu) stage: wall-time, no tokens
+    model: whisperx-large-v3
+    duration_s: 412.7
 ```
+
+`tokens` is **nested**, and that is canonical - it is what every emitter
+writes and what carried-forward entries hold. `tokens.input` is the *total*
+the model read, input plus cache read plus cache creation, so a consumer
+deriving a figure accounts for prompt caching, which dominates the count.
+
+Local stages (`transcribe`, `diarise`, `embed`) carry no tokens: there is no
+model-token billing on the local paths, so the entry records the local model
+and wall-time only. A consumer must not assume tokens are present - reading
+`tokens` unconditionally breaks on every local stage.
 
 **Provenance only - model, version, and token counts. No cost, price, or
 currency field appears here, in any other artefact, or in
@@ -155,6 +170,19 @@ turning an interchange artefact into a billing one, and it puts a
 cost-shaped field into repositories that are read far more widely than the
 dev layer. Nothing is lost by deriving: `extracted_at` already dates the
 run, so which price era applied stays recoverable without a stored basis.
+
+The closed contract is therefore `stage`, `model`, `model_version?`,
+`tokens{input, output}` for AI stages and `stage`, `model`, `duration_s`
+for local ones. A producer builds an entry explicitly from those fields
+rather than forwarding an SDK usage object minus a few keys: an
+unspecified block accepts anything, which is exactly how a cost field
+crept in, and a closed list means the next SDK field cannot drift into an
+interchange artefact.
+
+An allow-list applied to the wrong shape is destructive, not merely
+untidy. A list built for AI stages, applied to a local entry, strips it to
+bare `stage` + `model` and silently discards the only measurement it had.
+Switch on `duration_s` before conforming anything.
 
 Amended 2026-07-23: emitted digests previously carried `notional_cost_usd`
 and `price_basis` in violation of this rule (59 digests, alongside 53
