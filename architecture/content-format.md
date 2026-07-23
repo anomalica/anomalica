@@ -69,3 +69,14 @@ These block ratification of this format:
    **`ai_usage` in article frontmatter has no live consumer**, which makes the remaining question cheap to settle. `site/layouts/partials/` holds `ai-usage.html`, `ai-usage-grouped.html`, and `ai-usage-aggregate.html`, and nothing in `layouts/` includes any of them - dead since the 2026-06-29 display-off reversal (usage data kept, not publicly surfaced). So dropping `ai_usage` from content frontmatter would break no rendering today; the case for keeping it is provenance-on-the-artefact, not display. Decide it on that basis rather than on consumer impact, and note that the assembler can always re-derive from the digest.
 
    Those dead partials also settle the shape question independently: they read `.tokens.input` / `.tokens.output` and derive cost themselves from a prices dict. The consumer-derived cost model this project just mandated already existed in the site layer, and it was written against **nested** tokens.
+
+   **Decided 2026-07-23: `ai_usage` comes out of article frontmatter.** Four reasons, in order of weight:
+
+   - It is the *propagation path*, not just a location. Carry-forward of `ai_usage` into content frontmatter is precisely how a forbidden cost field reached 53 public articles. Dropping the two fields fixes this instance; dropping the carry-forward removes the class, so the next field that should not be public has no route to get there.
+   - No provenance is lost. The digest carries `ai_usage` and the AI-operation ledger ([0037](../decisions/0037-ai-operation-ledger.md)) is its durable home once built. Both are dev-layer. Removing the copy in the most-exposed layer removes a duplicate, not a record.
+   - No consumer breaks, as established above.
+   - It matches the 2026-06-29 position: usage data kept, not publicly surfaced, with any future surfacing expected in the internal workbench rather than the public site.
+
+   **Sequenced behind open question 2, not independent of it.** Re-deriving an article's usage later requires the article to bind back to the brief and graph slice it came from, and where that binding lives is exactly what question 2 leaves unsettled. Removing `ai_usage` before the binding lands would leave an article with neither its usage nor a route to recover it. That binding is required by [0010](../decisions/0010-auditable-assembly.md) regardless, so this is a sequencing constraint rather than a dependency that might not arrive: settle question 2, then the assembler stops emitting `ai_usage`, and it clears from existing articles as they re-assemble.
+
+   The `metadata` sub-shape and node identity/slug halves of this question remain open.
