@@ -46,7 +46,7 @@ clusters:
 | `members[].quality` | `bad`, `okay`, or `good`. May be omitted when `irrelevant` is set. |
 | `members[].irrelevant` | Worth, not correctness. Orthogonal to `quality`. |
 
-## The three invariants
+## The four invariants
 
 **Quality and relevance are orthogonal, and never collapse into one
 scale.** `irrelevant` is not a fourth quality value. A claim can be
@@ -67,6 +67,15 @@ common rather than rare; without an explicit `tie` a reviewer facing two
 equally good claims must either skip (losing the information that they
 were equal) or pick arbitrarily (injecting noise into the win rate).
 
+**A member appears only if it was adjudicated.** Absence of a member
+means the reviewer did not reach that claim - never "looked at it and
+found it fine". This is the same shape as an absent `best_of`, and it is
+what makes the irrelevant rate computable: because `irrelevant` defaults
+to false, an unmarked claim would otherwise be indistinguishable from an
+ungraded one, and every ungraded claim would silently count as relevant.
+The denominator for anything per-claim is therefore the members present,
+not the claims in the digest.
+
 **`quality` is optional only under `irrelevant`.** Grading the
 craftsmanship of a claim that should not exist is wasted review. The
 consequence has to be stated rather than assumed: the quality
@@ -85,12 +94,59 @@ Nothing below is stored - each falls out of the sidecar.
 | Irrelevant (noise) rate | `irrelevant` marks over that model's members. |
 | Head-to-head best-of win rate | Wins over competed clusters (`best_of` present, `tie` included in the denominator). Skipped clusters excluded. |
 | Missed-fact rate | Clusters in which a model has no member, over all clusters. Free from cluster membership - which is why `models` is required. |
-| Cost per good claim | `good` counts joined to the AI-operation ledger ([0037](../decisions/0037-ai-operation-ledger.md)) on record and model. |
+| Cost per good claim | `good` counts joined to per-model token usage on record and model. Only valid at full adjudication coverage - see below. |
 
-**No cost, price, or token fields appear in this sidecar.** Per-call
-usage lives in the ledger, which is the single source of truth for it,
-and pricing is applied at the analysis layer - stored in neither
-artefact.
+**No cost, price, or token fields appear in this sidecar.** Usage is
+recorded where the work happened, not copied into the judgement of it.
+
+The join source is the **digest's own `ai_usage` block**, which every
+variant carries (model plus token counts). The AI-operation ledger
+([0037](../decisions/0037-ai-operation-ledger.md)) is where this moves
+once it exists - the database is unbuilt and the emit sites unwired as of
+2026-07-23, so an eval that joins against the ledger today joins against
+nothing.
+
+Join on **tokens, not on a stored cost**. Per the canonical rule in
+[format-specs.yaml](../reference/format-specs.yaml), AI usage is
+provenance only - model, version, token counts - and any notional cost is
+derived by the consumer from published list prices, never stored in an
+artefact. A stored dollar figure bakes in a price that changes and turns
+an interchange record into a billing one.
+
+## Adjudication coverage
+
+Adjudication is partial until it is finished, and a metric that mixes a
+*complete* numerator with a *partial* denominator (or the reverse) degrades
+smoothly and invisibly as coverage falls - it never announces itself, it
+just reads wrong. Coverage per model is the members present in this
+sidecar over the claims in that model's digest.
+
+Two metrics have that asymmetry and must never print without their
+coverage beside them:
+
+- **Cost per good claim.** The run cost is complete the moment the model
+  finishes; the good-claim count grows with every click of review. At 20
+  claims graded out of 100 the metric overstates cost roughly fivefold,
+  and it improves steadily as review proceeds, which reads exactly like a
+  model getting cheaper. Restrict the headline figure to fully-adjudicated
+  records, or scale explicitly and say so.
+- **Irrelevant (noise) rate.** Same trap in the flattering direction: if
+  the denominator is all claims rather than adjudicated members, every
+  ungraded claim counts as relevant and the model looks quieter than it
+  is. The member-presence invariant above is what fixes this - divide by
+  members present.
+
+Two are immune, and it is worth knowing why so the fence is not applied
+where it is not needed. **Head-to-head win rate** is immune by
+construction: skipped clusters leave the denominator, so it is always
+computed over exactly what was adjudicated. **Missed-fact rate** is immune
+entirely - it falls out of cluster membership and the recorded model set,
+and needs no adjudication at all.
+
+This is the same discipline as the quality-distribution caveat above, and
+the same failure that the sparse-gold reading produced (an off-target rate
+of 70% on sparse gold against 39% on dense). A number that flatters
+silently must never print naked.
 
 ## The quality scale
 

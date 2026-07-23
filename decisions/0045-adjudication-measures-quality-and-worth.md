@@ -92,11 +92,20 @@ easy to miss:
   counted as a draw would penalise every model for a reviewer's absence.
 
 Cost-per-good-claim is derived, not recorded. The audit sidecar carries
-no cost, price, or token fields: per-call usage already lives in the
-AI-operation ledger ([0037](0037-ai-operation-ledger.md)), which is the
-single source of truth for it, and the metric is a join from per-model
-good-claim counts to that ledger on the record and model. Pricing is
-applied at the analysis layer and stored in neither artefact.
+no cost, price, or token fields: usage is recorded where the work
+happened, and the metric is a join from per-model good-claim counts to
+per-model token usage. The join source today is the digest's own
+`ai_usage` block; the AI-operation ledger
+([0037](0037-ai-operation-ledger.md)) is where it moves once built, which
+it is not as of 2026-07-23. The join is on tokens, never on a stored cost
+- notional cost is derived by the consumer from list prices and stored in
+no artefact.
+
+Every derived metric that mixes a complete numerator with a partial
+denominator must publish its adjudication coverage. Cost-per-good-claim
+and the irrelevant rate both do, and both degrade smoothly and invisibly
+as coverage falls rather than failing loudly; the head-to-head win rate
+and missed-fact rate do not. The field contract fences this.
 
 Adjudication no longer produces a truth signal. That is deliberate - the
 mechanical checks own fabrication, and their coverage is now load-bearing
