@@ -79,6 +79,8 @@ built_by:                    # OUTPUTS and generator
 
 This does not reopen what the `ai_usage` removal closed. That removal targets **carry-forward** - upstream entries republished into a public artefact, which is how a forbidden cost field reached 53 articles. The assemble stage's own tokens are first-party data about this artefact, not a copy of someone else's. Cost, price, and currency fields remain forbidden here as everywhere: tokens are a measurement, and any figure is derived by the consumer at display.
 
+`model`, `model_version`, and `tokens` are **lifted from the stage's usage entry, never recomputed**. The token figure is cache-aware - input plus cache read plus cache creation - and that arithmetic lives in `anomalica_common.llm.usage_entry`. Recomputing it at the stamp is how the two silently drift apart, the same reason the assembler computes neither `claim_hash` nor `brief_hash` for itself.
+
 Two keys rather than one because they answer opposite questions: `built_from` is what went in, `built_by` is what came out and what made it. Between them they make three staleness questions independently answerable, and a regeneration pass needs all three:
 
 | Question | Answered by | Meaning |
@@ -148,5 +150,7 @@ These block ratification of this format:
    **Strip `ai_usage` only from an article that is gaining `built_from` *or* `record_hash` in the same write.** The two stamps preserve different halves of what the carried-forward list held. `built_by` preserves the *assembly* model; the binding preserves the route to the *upstream* models, since an article's usage entries are recovered by walking back to the digests behind it. Either binding provides that route: `built_from.claims` by a claims walk, and `record_hash` more directly still, because a record page has exactly one source record. Record pages carry `record_hash` and deliberately never carry `built_from`, so a condition naming only the latter would strand them holding `ai_usage` for ever.
 
    Node mode has neither, and keeps `ai_usage`. Such an article would otherwise retain its assembly model but lose any way to reach the models that produced its claims - and that is the majority of the corpus today. Those pages keep the block until they re-assemble from a brief, at which point they gain both stamps and lose it in the same write.
+
+   **Implemented 2026-07-23**, verified through the real write path in all three modes: record (`record_hash`) and brief (`built_from`) drop the carried-forward chain to zero entries, node mode retains it, and `built_by.tokens` is preserved in all three. One incidental gain: with no chain to gather, brief-mode assembly no longer reads the digests directory at all, which moves it a step closer to 0036's "given the brief and nothing else".
 
    The `metadata` sub-shape and node identity/slug halves of this question remain open.
