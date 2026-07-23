@@ -45,3 +45,49 @@ The site provides a prompt inspector that reconstructs and displays the full pro
 Every article carries a verifiable chain from inputs to output. A reader does not need to trust the platform's claims about how articles are produced - they can check.
 
 The audit trail adds storage and processing overhead. Each article carries metadata (hashes, directive snapshots, verification reports) alongside the content itself. This is an acceptable cost for a platform whose credibility depends on verifiability.
+
+## Amendment 2026-07-23: implementation status, and two specification defects
+
+This record describes an audit trail that **is not built**. Measured against
+the assembler on this date: `hashlib` is not imported, and nothing in the
+list below is computed or stored.
+
+| Component this record requires | Status |
+|---|---|
+| Hash of the article content | Not emitted. |
+| Hash of the full prompt | Not computed. |
+| Knowledge-graph data, versioned | Brief mode only (`brief_hash`). Record mode has the digest's `content_hash`. **Node mode - the majority of the corpus - has no slice identity, and no mechanism exists to create one.** |
+| Directives, versioned | Not versioned. |
+| Previous article version | Has never existed (see below). |
+| Verification report | Does not exist. `validate_article` is a structural parser with quirk repair, not verification: no second model, no stored report. |
+
+Until these land, the transparency commitment this record makes - that a
+reader can reconstruct the prompt and verify an article independently, via
+a prompt inspector - is **unbacked**. The commitment is not withdrawn; it
+is recorded here as outstanding so the gap is not mistaken for a solved
+problem. Tracked as three separate pieces of work, because one title hid
+three very different sizes: the generator/output stamp (small), node-mode
+slice identity (design, cross-component with the assimilator), and the
+verification report (a feature, not a field).
+
+Two defects in this record's own specification, corrected in
+[content-format.md](../architecture/content-format.md#auditable-assembly):
+
+- **"A hash of the full prompt" is underspecified**, because the prompt
+  differs by transport: the subscription path appends a system prompt, the
+  API path sends none. One blended hash would give the same authored prompt
+  two identities depending on billing path, and could not say which
+  component differed. Replaced by component hashes - user prompt, system
+  prompt, resolved directives - plus a `transport` stamp. The divergence
+  itself is a defect to close: `<COMPONENT>_USE_API` selects a billing
+  path, and prompt content is meant to be invariant across it.
+- **"Previous article version" is listed as a prompt component but has
+  never been one.** `build_prompt` takes node, claims, related nodes, and
+  directives; no previous version is fed in. It is recorded here rather
+  than quietly deleted: either it is a real requirement and is outstanding,
+  or the list should drop it. Unresolved.
+
+Directives, when versioned, must hash the **resolved** list rather than
+point at files: they are resolved at build time from up to five sources
+walking up the folder tree, so the file set that produced a given article
+is not recoverable from the article.
