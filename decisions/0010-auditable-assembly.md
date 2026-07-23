@@ -56,7 +56,7 @@ list below is computed or stored.
 |---|---|
 | Hash of the article content | Not emitted. |
 | Hash of the full prompt | Not computed. |
-| Knowledge-graph data, versioned | Brief mode only (`brief_hash`). Record mode has the digest's `content_hash`. **Node mode - the majority of the corpus - has no slice identity, and no mechanism exists to create one.** |
+| Knowledge-graph data, versioned | Brief mode only (`brief_hash`). Record mode has the digest's `content_hash`. Node mode has no slice identity and needs none: it is the interim direct-graph-read path [0036](0036-synthesise-stage-brief-as-writer-input.md) supersedes, and a database-direct binding for it would be the "parallel scheme" that record forbids. Those articles close by re-assembly from briefs. |
 | Directives, versioned | Not versioned. |
 | Previous article version | Has never existed (see below). |
 | Verification report | Does not exist. `validate_article` is a structural parser with quirk repair, not verification: no second model, no stored report. |
@@ -65,10 +65,9 @@ Until these land, the transparency commitment this record makes - that a
 reader can reconstruct the prompt and verify an article independently, via
 a prompt inspector - is **unbacked**. The commitment is not withdrawn; it
 is recorded here as outstanding so the gap is not mistaken for a solved
-problem. Tracked as three separate pieces of work, because one title hid
-three very different sizes: the generator/output stamp (small), node-mode
-slice identity (design, cross-component with the assimilator), and the
-verification report (a feature, not a field).
+problem. Tracked as separate pieces of work, because one title hid very
+different sizes: the generator/output stamp (small, and shipped on this
+date) and the verification report (a feature, not a field).
 
 Two defects in this record's own specification, corrected in
 [content-format.md](../architecture/content-format.md#auditable-assembly):
