@@ -67,3 +67,38 @@ The ingester repo has zero `anomalica_common` imports, so its paths can never ro
 ## Scope
 
 A new operational store, a shared writer, and per-site emits. It gives per-call usage a durable home and adds model provenance to the [0008](0008-content-traceable-to-sources.md)/[0010](0010-auditable-assembly.md) audit trail. It changes no model behaviour. The operation and transport enums align to the scheduler's existing job vocabulary. Field detail is in [architecture/ai-ledger-format.md](../architecture/ai-ledger-format.md) (`anomalica/ai-ledger/1`), scaffolded now and filled as the writer lands at each site.
+
+## Amendment 2026-07-23: no stored cost, anywhere
+
+Stored dollar figures come out of emitted AI usage. `notional_cost_usd`
+and `price_basis` are dropped at the producer; `model`, `model_version`,
+and token counts stay. A consumer that wants to show a notional cost
+derives it from tokens against published list prices at the point of
+display. The canonical statement of the rule is in
+[format-specs.yaml](../reference/format-specs.yaml); the field-level
+contract is [digest-format.md](../architecture/digest-format.md#ai_usage).
+
+Two clauses in this record are superseded by it:
+
+- The assembler item in the implementation fan-out lists
+  `message.usage` / `total_cost_usd` together as what the private
+  transport discards and "must stop discarding and emit". It must emit
+  **usage**, not cost - `message.usage` yes, `total_cost_usd` no.
+- The `processing.json` supersession says the Schedule tab "reads
+  per-call cost and tokens from the ledger". It reads **tokens** and
+  derives cost at display. This was loose wording rather than a schema
+  decision: the ledger's own field table
+  ([ai-ledger-format.md](../architecture/ai-ledger-format.md)) never had
+  a cost column, so the ledger schema was always compliant.
+
+Grounds. A stored dollar figure bakes in a price that changes and turns
+an interchange artefact into a billing one. The spread when measured was
+59 digests and 53 assembled articles carrying stored dollars, and
+`content/` feeds the public site - so a cost-shaped field was sitting in
+a repository read far more widely than the dev layer. Nothing is lost by
+deriving: `extracted_at` already dates each run, so which price era
+applied stays recoverable without a stored basis.
+
+No bulk rewrite. The fields clear as records re-digest and articles
+re-assemble, both of which happen anyway; artefacts produced before this
+date may still carry them.

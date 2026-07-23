@@ -129,6 +129,40 @@ organisation name. `date` is a string in the form `YYYY` or `YYYY-MM-DD`.
 `reference` is an external identifier where one exists (book ISBN,
 report number, archive identifier) and is often null.
 
+### `ai_usage`
+
+Optional. What the extraction run consumed, carried forward onto the digest:
+
+```yaml
+ai_usage:
+  - stage: extract
+    model: sonnet
+    model_version: claude-sonnet-4-5-20250929
+    tokens_in: 650679
+    tokens_out: 136077
+```
+
+**Provenance only - model, version, and token counts. No cost, price, or
+currency field appears here, in any other artefact, or in
+[format-specs.yaml](../reference/format-specs.yaml).** A consumer that wants
+to show a notional cost derives it from the token counts against published
+list prices at the point of display. This is the canonical rule for AI usage
+across the project, and it holds for the record's `ai_usage`, an article's,
+and the AI-operation ledger alike.
+
+The reason is that a stored dollar figure bakes in a price that changes,
+turning an interchange artefact into a billing one, and it puts a
+cost-shaped field into repositories that are read far more widely than the
+dev layer. Nothing is lost by deriving: `extracted_at` already dates the
+run, so which price era applied stays recoverable without a stored basis.
+
+Amended 2026-07-23: emitted digests previously carried `notional_cost_usd`
+and `price_basis` in violation of this rule (59 digests, alongside 53
+assembled articles). Both fields are dropped at the producer. No bulk
+rewrite - the fields clear as records re-digest and articles re-assemble,
+which happens anyway, so old artefacts may still carry them. See
+[0037](../decisions/0037-ai-operation-ledger.md), amended.
+
 ### `prompts`
 
 Optional. Which prompt produced each extraction pass, so a digest is

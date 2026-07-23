@@ -10,6 +10,12 @@
 # HARD RULE: no cost/billing/dollar fields appear in any document or in this file. Per-call
 # AI usage is provenance only (model, version, token counts). Any notional cost a consumer
 # wants to show is derived by that consumer from published list prices, never stored here.
+# Enforced 2026-07-23: producers were emitting notional_cost_usd + price_basis in violation
+# (59 digests, 53 articles; content/ feeds the public site). Both dropped at the producer,
+# no bulk rewrite - they clear as artefacts regenerate, so pre-2026-07-23 files may carry
+# them. The spec was always right here; the emitters drifted. See 0037 (amended) and
+# digest-format.md#ai_usage. Nothing is lost by deriving: extracted_at dates the run, so
+# the applicable price era stays recoverable without a stored basis.
 #
 # spec_version is this file's own version; each type's `schema` is the document schema it
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
