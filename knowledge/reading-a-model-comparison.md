@@ -39,6 +39,22 @@ the decision falls to the tiebreakers - fidelity, review burden, cost -
 and that is a legitimate way to decide. It is only illegitimate to
 present it as the headline metric having chosen.
 
+**Measure variance where the metric is not saturated.** A small, easy
+record is the tempting place to bound run-to-run noise cheaply, but a
+record already scoring 95-100% has almost no room to move, so the
+estimate comes back compressed and is then applied to hard records where
+the real spread lives. The cheap measurement is not a cheaper version of
+the right one; it is a different measurement that understates. Bound
+variance on a hard record or not at all.
+
+And sequence it. A variance bound is rarely on the critical path: if the
+open question is whether one model leads across *source types*, running
+the arms on a transcript, a statute and a scanned release answers the
+ordering question directly, and consistency across three types is
+stronger evidence than a variance figure from one. Reach for the variance
+run only if the ordering flips between types - that is when you need to
+know whether a flip is noise.
+
 ## Characterise a failure at the strength the evidence supports
 
 "20% of its quotes are hallucinated" and "20% of its quotes are

@@ -47,6 +47,28 @@ it:
   unit that cannot be tested is not a unit that passed; publish it as its
   own number so the coverage is visible.
 
+## It also applies to instrumentation, not just schemas
+
+The same conflation appears one level up, where the apparatus reports a
+measurement it never actually took.
+
+Re-running a model arm to estimate run-to-run variance returns
+**byte-identical** output, because the checkpoint cache serves the prior
+result from disk. The measurement reads 0.0 variance *by construction* -
+absence of a fresh call conflated with an observation of stability. It
+needs the call cache disabled, which makes it a full-cost run rather than
+a cheap one.
+
+The consequence is worse than a single wrong number: a variance estimate
+of zero makes **every** subsequent delta look significant. A silent
+non-measurement here does not mislead about itself, it miscalibrates
+everything compared against it afterwards.
+
+The general form: before trusting a number, check that the apparatus
+performed the observation rather than returning something that merely
+looks like one. Caches, defaults, and short-circuits all produce
+confident-looking output without doing the work.
+
 ## The related trap: a heuristic that overrides ground truth
 
 The coreference case had a second failure underneath the first. The
