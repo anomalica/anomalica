@@ -65,6 +65,51 @@ Two boundaries are load-bearing:
 
 A claim's authoritative provenance is a reference to its source record (the `record_id` it already carries); the digest may additionally denormalise `publisher` + `published_date` + `collection` onto a claim as a render cache, so an article renders "from a 1949 Department of Energy document" without a join. The cache is derived and refreshed on re-digest; the record's block is authoritative. See [data-model.md](data-model.md).
 
+### Document type
+
+`source_type` records **how a source was acquired** (`pdf`, `audio`, `video`, `web`, `ebook`). `document_type` records **what it is** - the form of the artefact, independent of how it reached us.
+
+```yaml
+source_type: web
+document_type: email
+```
+
+The two are orthogonal, and they come apart immediately. The same email is `web` when scraped from a publication, `pdf` when it arrives inside a FOIA release, and RFC822 when downloaded as `.eml`. Making email a sixth `source_type` would therefore make every email inside a PDF invisible to it - and the corpus already holds that case.
+
+`document_type` is an open set - `email`, `letter`, `memo`, `report`, `statute`, `affidavit`, `transcript`, `interview` - naming the artefact's form, never its subject. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. Omit it where the form adds nothing a handler or reader could not already infer; it exists to drive extraction, not to classify for its own sake.
+
+**It describes the WHOLE record, so it never applies to a container.** FOIA release 18-F-0324 is a `pdf` whose body contains many emails; its `document_type` is not `email`, because the record is the release. Correspondence inside a container is marked in the body instead, with [message boundaries](#message-boundary). A record-level `document_type: email` asserts the entire record is one message - an `.eml`, or a page publishing a single message.
+
+### Email headers
+
+Where `document_type: email`, the RFC822 headers are parsed deterministically - the standard-library `email` parser, no model involved - and split between two homes.
+
+The normalised, project-wide facts go to [provenance](#provenance), so every consumer reads them without knowing the format:
+
+| Provenance field | Taken from |
+|---|---|
+| `published_date` | The `Date` header. Authoritative. |
+| `creators` | The `From` participant, name in natural order. |
+| `identifiers.message_id` | The `Message-ID`. |
+
+The format-native structure that provenance cannot represent goes in an `email` block:
+
+```yaml
+email:
+  from: {name: John Podesta, address: john.podesta@gmail.com}
+  to: [{name: Bob Fish, address: robertbfish@earthlink.net}]
+  cc: []
+  subject: 'Re: Leslie Kean book comment'
+  in_reply_to: '<003501d05799$...@earthlink.net>'
+  references: ['<...>']
+```
+
+It does not repeat `published_date` or `creators` - it carries what those cannot, the addresses and the threading. Recipients matter because an email is a dated communication between named parties, which is a real relationship for the graph rather than "a page that happened to mention some names".
+
+Taking the `Date` header as `published_date` is a correction, not a refinement. A scraped email page yields whatever date the surrounding HTML exposes: one Podesta record landed on 2000-01-01, lifted from a date-picker widget in the page's own JavaScript, fifteen years from the message's actual date.
+
+**`dkim_verified` is optional, and absence is not failure.** Set it only where the source itself carries a `DKIM-Signature` that was checked. Absent means *no signature was present in this copy* - never *verification failed*. A Gmail-sent copy legitimately carries no signature while a received copy of the same message does, so collapsing absent to false would mark genuine unsigned copies as suspect and hand evidence-scoring a penalty nothing earned.
+
 ### The archived original
 
 Every record whose source was archived carries `archived_ext` - the bare extension of that archived object, which lives at `sources/{content_hash}.{archived_ext}`. That pair is the whole address: consumers build it to fetch or play the source (the workbench serving a reviewer the audio behind a transcript, for instance).
@@ -195,6 +240,27 @@ Four bracketed tokens are reserved for non-individual sources:
 | `[irrelevant]` | Content that doesn't belong in the record (ads, sponsor reads, off-topic asides). Hidden from rendered output, and stripped before extraction so no claim is drawn from it (see [Irrelevant content](#irrelevant-content)). |
 
 The brackets are part of the value. The ingester does not emit these tokens itself - they're applied by human reviewers in the workbench when the diarisation-assigned `Speaker N` is identified as one of these cases.
+
+### Message boundary
+
+Marks each message in an email thread, and each piece of correspondence inside a container. Structurally this is the correspondence equivalent of [Speaker change](#speaker-change): one body divided into segments authored by different people at different times.
+
+```markdown
+<!-- message: {n: 2, from: John Podesta <john.podesta@gmail.com>, date: 2015-03-05T18:38:14-05:00, quoted: true} -->
+```
+
+One annotation per message carrying a YAML mapping, rather than several loose keys. Separate `message_n` / `message_from` / `message_date` annotations can desynchronise, and a parser cannot then distinguish a missing key from a misplaced one.
+
+| Key | Meaning |
+|-----|---------|
+| `n` | Position in the thread, outermost message first. |
+| `from` | The sender, `Name <address>` where both are known. |
+| `date` | That message's own `Date` header, ISO 8601 with offset. |
+| `quoted` | `true` where the segment is quoted inside a later message rather than authored at this level. |
+
+**`quoted` is the load-bearing key.** A reply that quotes its predecessor puts two people's words in one body, and without the flag an extractor attributes the quoted text to the replying sender - the correspondence equivalent of a flattened attribution, and just as invisible once it reaches a claim. Every claim drawn from a `quoted: true` segment belongs to that segment's `from`, never to the message containing it.
+
+This annotation applies wherever correspondence appears, including inside a container whose own `document_type` is not `email` - which is the case it exists for.
 
 ### Sentence-level timestamps
 

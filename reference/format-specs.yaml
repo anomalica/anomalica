@@ -53,6 +53,15 @@ types:
           for licensed/restricted sources per copyright.status). SOURCE facts only - a subject's incident place and date are
           claims, not provenance. Copyright is NOT mirrored here; the authoritative field is the top-level `copyright`. Origin-unknown
           is simply the absence of source_url/fetched_url/source_file/identifiers."}
+      - {name: document_type, type: string, required: false, description: "WHAT the artefact is (email, letter, memo, report,
+          statute, affidavit, transcript, interview), orthogonal to source_type which is HOW it was acquired. Open set. Describes
+          the WHOLE record, so never set on a container: a FOIA pdf holding many emails is not document_type email - its correspondence
+          is marked in the body with message-boundary annotations. See record-format.md."}
+      - {name: email, type: object, required: false, description: "Format-native email structure where document_type is email,
+          parsed deterministically from RFC822 headers (stdlib email parser, no model). {from, to, cc, subject, in_reply_to,
+          references} with participants as {name, address}. Does NOT repeat published_date or creators - the Date header IS
+          provenance.published_date (authoritative) and From IS provenance.creators; Message-ID goes to provenance.identifiers.
+          dkim_verified is optional and absent means NO SIGNATURE IN THIS COPY, never verification-failed."}
       - {name: content_hash, type: string, required: false, description: "SHA-256 naming the record's file in store/. Hashes
           source bytes for audio/video/pdf, extracted body text for web/ebook. See hashes below."}
       - {name: archived_ext, type: string, required: false, description: "Extension of this record's archived original, bare
