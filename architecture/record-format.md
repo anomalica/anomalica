@@ -80,17 +80,21 @@ The two are orthogonal, and they come apart immediately. The same email is `web`
 
 **It describes the WHOLE record, so it never applies to a container.** FOIA release 18-F-0324 is a `pdf` whose body contains many emails; its `document_type` is not `email`, because the record is the release. Correspondence inside a container is marked in the body instead, with [message boundaries](#message-boundary). A record-level `document_type: email` asserts the entire record is one message - an `.eml`, or a page publishing a single message.
 
+**Not to be confused with the nested `document_type` in 15 legacy records.** Those carry a `provenance:` block of war.gov reading-room catalogue metadata whose `document_type: AUD` is *war.gov's own* cataloguing code, a foreign vocabulary that happens to share the word. Only the top-level field is this vocabulary. The two do not collide mechanically - different nesting levels - but a reader meeting both in one corpus will reasonably assume they are one scheme, so the legacy code should be namespaced as source-native metadata when that block is reconciled.
+
 ### Email headers
 
 Where `document_type: email`, the RFC822 headers are parsed deterministically - the standard-library `email` parser, no model involved - and split between two homes.
 
-The normalised, project-wide facts go to [provenance](#provenance), so every consumer reads them without knowing the format:
+The normalised, project-wide facts go to the record's ordinary date and author fields, so every consumer reads them without knowing the format:
 
-| Provenance field | Taken from |
-|---|---|
-| `published_date` | The `Date` header. Authoritative. |
-| `creators` | The `From` participant, name in natural order. |
-| `identifiers.message_id` | The `Message-ID`. |
+| Field | Taken from | Home once [0043](../decisions/0043-canonical-provenance-block.md) lands |
+|---|---|---|
+| `date_published` | The `Date` header. Authoritative. | `provenance.published_date` |
+| `creators` | The `From` participant, name in natural order. | `provenance.creators` |
+| `email.message_id` | The `Message-ID`. | `provenance.identifiers.message_id` |
+
+**Write these to the flat fields that exist today, not to 0043's block.** That block is accepted but unimplemented - no handler emits it, and no record carries `provenance.published_date` or `provenance.creators`. Email fields ride the 0043 migration with every other record type when it happens; they are not special-cased ahead of it, and nothing writes into a block that nothing produces or reads. `message_id` sits in the `email` block until that migration gives it a home in `identifiers`.
 
 The format-native structure that provenance cannot represent goes in an `email` block:
 

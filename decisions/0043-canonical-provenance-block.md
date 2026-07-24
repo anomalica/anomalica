@@ -68,3 +68,49 @@ A claim's authoritative provenance is a reference to its source RECORD - the `re
 ## Scope
 
 A canonical `provenance` block on records that consolidates scattered source-origin frontmatter into one home, kept strictly to source facts (not subject facts), with `copyright` and `classification` staying authoritative and separate; carried to claims as an authoritative record reference plus a derived render cache. Generalises the scheduler's war.gov draft and drops its `location`, `license`, and incident sense of `original_date` per the source-versus-subject and single-source-of-truth rules. Builds on the provenance-overlap corroboration model ([0039](0039-multi-model-digestion-canonical-reconciliation.md), [data-model.md](../architecture/data-model.md)).
+
+## Amendment 2026-07-24: unimplemented, and the key is occupied
+
+Measured against the ingests on this date: **no handler emits this block.**
+Of 154 records, 0 carry `provenance.published_date` or
+`provenance.creators`; 151 carry a flat `date_published` and 21 a flat
+`creators`. The consolidation this record decided has not happened.
+
+Worse for anyone implementing it, the `provenance:` key is **already in
+use for something else**. Fifteen records carry a block of war.gov
+reading-room catalogue metadata under that name:
+
+```yaml
+provenance:
+  collection: war.gov UFO reading room
+  agency: NASA
+  incident_date: 7/21/61
+  incident_location: North Atlantic Ocean
+  document_type: AUD
+  dvids_id: '1007878'
+```
+
+That block is non-conformant with this record on two counts, and a
+migration must handle both rather than merely renaming keys:
+
+- **It holds subject facts.** `incident_date` and `incident_location`
+  describe what the source is *about*, and this record states plainly that
+  a subject's incident place and date are claims, not provenance. They do
+  not migrate into the block; they belong in extraction.
+- **`document_type: AUD` is a foreign vocabulary.** It is war.gov's own
+  cataloguing code, unrelated to the top-level
+  [`document_type`](../architecture/record-format.md#document-type) that
+  names an artefact's form. Sharing the word across two nesting levels
+  invites exactly the conflation the reconciliation should remove:
+  namespace it as source-native catalogue metadata (`identifiers`, or a
+  clearly source-scoped sub-block), rather than leaving a colliding name.
+
+The remaining fields are closer to conformant than they look:
+`collection` is already this record's field, and `agency` and `dvids_id`
+are a publisher and a native identifier under other names.
+
+Consequence for work that depends on this block: **do not write into it
+until it exists.** Email header routing, specified 2026-07-24, targets the
+flat fields that are populated today and rides this migration when it
+happens rather than being special-cased ahead of it. A consumer cannot be
+asked to read a block nothing produces.
