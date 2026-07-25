@@ -63,12 +63,46 @@ at our own expense.
    partly an artefact of that selection - the same defect that makes a
    100%-resolution corpus useless for calibration.
 
-One modelling caution to carry in: **witness count is not a reliability
-proxy.** A large count means the stimulus was widely visible, which
-correlates with mundane, high-altitude, long-duration causes - satellite
-re-entries, planets, balloons. Treating more witnesses as stronger
-evidence will bias a scorer toward exactly the cases most likely to be
-ordinary.
+5. **Does the scheme separate strangeness of the PHENOMENON from richness
+   of the REPORT?** An articulate witness describing a lantern in vivid
+   detail and a hesitant witness describing something genuinely anomalous
+   produce dossiers of similar size. Adjacent to the C/D distinction but
+   not the same: C/D is about data sufficiency, this is about narrative
+   quality passing itself off as either strangeness or evidence.
+
+## The failure class these share
+
+**A signal that measures how well something is told is not a signal of
+whether it happened.** Every caution below is an instance, and each one
+looks like common sense in the moment of adoption.
+
+- **Witness count is not a reliability proxy.** A large count means the
+  stimulus was widely visible, which correlates with mundane,
+  high-altitude, long-duration causes - satellite re-entries, planets,
+  balloons. More witnesses biases a scorer toward the ordinary.
+- **Vividness, detail, and specificity measure narrative skill.** This
+  bites hardest on our own corpus, which is roughly two-thirds podcast and
+  interview material. A practised storyteller produces richer, more
+  specific, more internally consistent claims than a hesitant first-hand
+  witness, and the trap is worse than GEIPAN's because these are precisely
+  the properties an extraction model measures well.
+- **Internal coherence improves with retelling.** A story told across
+  fifty shows becomes smoother, not truer. Rehearsal removes the
+  hesitations, contradictions, and gaps that a genuine recollection
+  carries, so coherence scores rise as the account moves further from the
+  event.
+- **Detail accretion inverts the reliability ordering.** Repeated
+  testimony tends to *gain* specifics over time. A scorer rewarding
+  specificity therefore ranks the latest telling highest - the version
+  most distant from the event and most contaminated by every retelling in
+  between. Where several records carry one person's account, recency is a
+  penalty, not a bonus.
+
+The repetition cautions have a second edge: many records of one person
+repeating one account are not corroboration. The claim-provenance chain
+([0044](../decisions/0044-claim-provenance-chain-is-required.md)) exists to
+stop that being counted as independent attestation, and any narrative
+quality signal must be read against it rather than alongside it.
 
 ## Related correction
 
