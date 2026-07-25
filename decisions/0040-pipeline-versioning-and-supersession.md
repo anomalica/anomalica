@@ -148,3 +148,52 @@ emitted.
 - Cross-component contract: the workbench reads the manifest and the flags;
   `architecture/record-format.md` and `reference/format-specs.yaml` carry the
   field specs. The field semantics here are the binding interface.
+
+## Amendment 2026-07-25: identity is source + selection, and the resolution path is normative
+
+This record's "Supersession vs in-place re-extraction" rule contained a
+contradiction that bit only body-anchored types. It said supersession
+fires on "a body change for web/ebook", and also that "re-extraction from
+the SAME asset keeps the same `content_hash` ... identity is stable, so
+reviews bound to the hash survive". For web, ebook, and scoped-excerpt
+records both could not hold: `content_hash` *was* the body hash, so
+re-extraction from an unchanged asset changed identity, and the promise
+that bound reviews survive was false precisely where it was most needed.
+
+Resolved by removing the cause rather than adding machinery:
+**`content_hash` hashes the source asset plus the selection, never the
+extracted body** ([record-format.md](../architecture/record-format.md#store)).
+Re-extraction - a better extractor, a page-chrome strip, chapter-number
+repair, email thread segmentation - no longer changes identity for any
+type. The in-place update this record already blesses becomes the uniform
+behaviour, and the sentence above becomes true as written.
+
+Supersession is unchanged and still fires on re-**acquisition**: a fresh
+download whose bytes differ is a different source asset, hence a
+different identity, stamped exactly as this record specifies.
+
+**Resolution is normative, because two components implemented it
+differently.** Retirement moves the prior file to `store/v1/{hash}.md`;
+`store/{hash}.md` is then absent. A consumer holding an old hash must
+therefore resolve in this order, and a consumer that stops at the first
+step reports a silent drop - a missing body, a skipped record, and a
+sweep that still exits successfully:
+
+1. `store/{hash}.md` - live record, use it.
+2. `store/v1/{hash}.md` - retired; read `superseded_by` and repeat from
+   step 1 with that hash.
+3. Neither - a genuine dangling reference. Report it; never treat it as
+   an empty record.
+
+The guarantee this places on the producer: **retirement must never leave
+nothing resolvable at the old identity.** The retired file at
+`store/v1/{hash}.md` carrying `superseded_by` is what satisfies it. A
+retirement that deletes rather than moves breaks every stored pointer,
+and the failure is silent at every consumer.
+
+The one-off migration to source-anchored identity is itself a
+re-identification of every web, ebook, and excerpt record. It is stamped
+through this same mechanism - old hash retired to `store/v1/` carrying
+`superseded_by`, so digest provenance pointers, pre-digest artefacts, and
+review sidecars keyed to the old hash all resolve forward. After it,
+this class of re-identification stops occurring.
