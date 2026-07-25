@@ -63,7 +63,9 @@ types:
           provenance.published_date (authoritative) and From IS provenance.creators; Message-ID goes to provenance.identifiers.
           dkim_verified is optional and absent means NO SIGNATURE IN THIS COPY, never verification-failed."}
       - {name: content_hash, type: string, required: false, description: "SHA-256 naming the record's file in store/. Hashes
-          source bytes for audio/video/pdf, extracted body text for web/ebook. See hashes below."}
+          the SOURCE ASSET BYTES plus, for a scoped excerpt, the normalised scope string - identity is source + selection,
+          NEVER the extracted body. So re-extraction keeps the hash and rewrites in place; nothing keyed to it detaches. See
+          chain below."}
       - {name: archived_ext, type: string, required: false, description: "Extension of this record's archived original, bare
           and without a dot (opus, ogg, pdf, epub, html). The archived object is sources/{content_hash}.{archived_ext} - the
           key consumers build to fetch or play the source. NOT DERIVABLE from any other field, and must never be re-derived
@@ -72,9 +74,9 @@ types:
           ogg against a .opus file, and a container-derived URL 404s for the majority. DISTINCT from source_file (the ORIGINAL
           filename of a local-file ingest): a video archived audio-only legitimately shows source_file: interview.mkv with
           archived_ext: opus. Do not reconcile the two - they describe different files."}
-      - {name: source_hash, type: string, required: false, formats: [web, ebook], description: "SHA-256 of the raw source
-          asset (post-render HTML for web, EPUB bytes for ebook), locating sources/{source_hash}.{ext}. Not emitted for audio/video/pdf
-          (their content_hash already hashes the source bytes)."}
+      - {name: source_hash, type: string, required: false, formats: [web, ebook], description: "SHA-256 locating the archived
+          asset at sources/{source_hash}.{ext} WHERE IT DIFFERS from the object content_hash addresses: the post-render HTML
+          for web, EPUB bytes for ebook, the full container behind a scoped excerpt. Omitted when the two would be identical."}
       - {name: snapshots, type: list, required: false, formats: [web], description: "Sibling capture artefacts. Each: role
           (page_render | single_file), hash (sha256 of bytes), content_type (MIME). Exposes PDF renders and frozen-page captures
           for web records."}
@@ -248,10 +250,13 @@ chain:
     detail: "Raw bytes (pdf/audio/video) or rendered page/EPUB (web/ebook), archived under sources/."
   - stage: ingest
     detail: >-
-      content_hash names store/{content_hash}.md. For audio/video/pdf it hashes the SOURCE BYTES (stable across re-extraction;
-      asset at sources/{content_hash}.{ext}). For web/ebook it hashes the EXTRACTED BODY, and source_hash separately names
-      the raw asset at sources/{source_hash}.{ext}. (Per-type source-anchored vs body-anchored split is current behaviour,
-      under reconciliation.)
+      content_hash names store/{content_hash}.md and hashes the SOURCE ASSET BYTES plus, for a scoped excerpt, the normalised
+      scope string. It NEVER hashes the extracted body - identity is source + selection, so re-extraction (better extractor,
+      chrome-strip, segmentation) keeps the hash and rewrites the record IN PLACE, and nothing keyed to it detaches. Asset
+      at sources/{content_hash}.{ext}; where the archived asset differs from the addressed object (web page render, EPUB,
+      full container behind an excerpt) source_hash names it at sources/{source_hash}.{ext}. Reconciled 2026-07-25: web/ebook/excerpt
+      previously hashed the body, which minted a second store entry on every re-extraction. Re-ACQUISITION returning different
+      bytes is a new identity and is handled by supersession (0040).
   - stage: digest
     detail: >-
       One digest per record at digests/records/{friendly-name}.yaml, paired to the ingest by the shared friendly name ({date}-{source_type}-{slug}).

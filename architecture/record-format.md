@@ -604,7 +604,16 @@ media/          # extracted images, per-record subdirectories
 
 The `store/` directory contains the actual record files, named by `content_hash`. What `content_hash` hashes per source type, and how it links back to `sources/`, is defined once in the canonical hash chain ([`format-specs.yaml`](../reference/format-specs.yaml), `chain:`) and is not restated here.
 
-Two behaviours follow from that per-type hashing. It deduplicates - the same input always produces the same store path. And it makes the source-anchored types stable across re-extraction (reprocessing with an improved transcriber keeps the same identity and does not orphan reviews), whereas the body-anchored types get a new `content_hash` whenever a re-extraction changes the body. Making this consistent across types is under reconciliation.
+**A record's identity is its source plus its selection, never its extraction output.** `content_hash` hashes the archived source asset's bytes, and - for a [scoped excerpt](data-model.md#record-unit-whole-containers-versus-scoped-excerpts) - the normalised scope string with it. It never hashes the extracted body.
+
+That one rule is what makes re-extraction safe. Improving an extractor, stripping page chrome, fixing chapter numbering, segmenting an email thread: all change the body, none change the source or the selection, so all keep the same `content_hash`. The record is rewritten **in place** at `store/{hash}.md`, and every digest, review sidecar, highlight, and cross-record link bound to that hash survives untouched. Reconciled 2026-07-25; previously web, ebook, and excerpt records hashed their body, so any re-extraction minted a second store entry and silently detached everything keyed to the first.
+
+Two consequences worth stating, because both look wrong at a glance:
+
+- **The record file does not reproduce its own filename.** It never did for audio, video, or PDF - the name comes from the source asset, not from the markdown. This makes the remaining types behave the same way rather than adding an exception.
+- **A re-fetch that returns different bytes is a different record**, even when the extracted text is identical. That is correct and it is what [supersession](#versioning-and-supersession) exists for: re-*acquisition* changes identity and is stamped; re-*extraction* does not and is in place. Volatility now sits where the machinery to handle it already is.
+
+Selection is part of identity because one asset can yield several records: two excerpts of one statute must be distinguishable, and they are, by their scope strings. Absent an excerpt directive the scope is empty and identity is the asset alone.
 
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
 
