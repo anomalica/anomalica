@@ -40,6 +40,40 @@ It also survives review by people who are being careful, because the
 measurement is checkable and the ADR is not in front of them. Confirming
 the number confirms nothing about whether the number matters.
 
+## The mirror: a decision record cannot report its own non-implementation
+
+The note above says artefacts cannot tell you what is being retired. The
+inverse is just as costly: **an accepted decision record reads exactly
+like a built system.** Nothing in its text distinguishes "this is how it
+works" from "this is how it was agreed it would work, and nobody has
+written it yet".
+
+Three in one week, all reading as settled:
+
+| Record | Status when measured |
+|---|---|
+| [0010](../decisions/0010-auditable-assembly.md) audit trail | Nothing computed - `hashlib` not imported in the assembler |
+| [0043](../decisions/0043-canonical-provenance-block.md) provenance block | 0 of 154 records carry it; the key is occupied by unrelated metadata |
+| [0040](../decisions/0040-pipeline-versioning-and-supersession.md) supersession | Partial - see below |
+
+Specifying against one of these produces work that cannot be built. It
+happened here: email header routing was specified into 0043's provenance
+block, by the same person who wrote 0043, without checking whether
+anything emitted it. A decision record you authored yourself is the one
+you are least likely to re-verify, which is exactly backwards.
+
+**Partial implementation is more dangerous than none.** 0040 measured as
+2 records carrying `supersedes`/`superseded_by`, a `store/v1/` directory
+present, and `pipeline_version` on 0 of 154. A spot-check finds the
+directory and the stamped records and concludes the scheme is live; the
+automatic path that would make it a *guarantee* does not exist, and the
+two stamped records are hand-made. Absence is at least honest. A working
+fragment implies a working whole.
+
+The check is the same one line: **name the field and count it.** `grep -c`
+over the artefacts settles in seconds what a record's prose cannot settle
+at all.
+
 ## The check
 
 Before specifying a fix for a measured gap, ask what decision governs the
