@@ -52,7 +52,12 @@ types:
           youtube, virin, isbn, doi, ...); description (the source's OWN blurb, verbatim, never AI - omitted or truncated
           for licensed/restricted sources per copyright.status). SOURCE facts only - a subject's incident place and date are
           claims, not provenance. Copyright is NOT mirrored here; the authoritative field is the top-level `copyright`. Origin-unknown
-          is simply the absence of source_url/fetched_url/source_file/identifiers."}
+          is simply the absence of source_url/fetched_url/source_file/identifiers. Also carries AUDIENCE (internal | public
+          - who the source was written FOR; the evidential axis, since an internal record made by people expecting secrecy
+          has no performative incentive) and DISCLOSURE (published | declassified | foia | subpoena | leaked | unknown - the
+          authenticity axis; a FOIA release is attested by the holding agency, a leak by nobody). Keep them separate: folding
+          disclosure into audience lets an unauthenticated document inherit a compelled release's credibility. Narrative in
+          record-format.md."}
       - {name: document_type, type: string, required: false, description: "WHAT the artefact is (email, letter, memo, report,
           statute, affidavit, transcript, interview), orthogonal to source_type which is HOW it was acquired. Open set. Describes
           the WHOLE record, so never set on a container: a FOIA pdf holding many emails is not document_type email - its correspondence

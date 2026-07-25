@@ -63,6 +63,24 @@ Two boundaries are load-bearing:
 - **Source facts, not subject facts.** Provenance is about the SOURCE - who issued it, when it was published, where to find it. A subject's incident place and incident date are NOT provenance; they are extracted as claims about place and event nodes, so they stay inside the scored, corroborated evidence model. `published_date` is strictly the source's publication or upload date.
 - **Copyright is not mirrored here.** `copyright` (and `copyright.status`) is the single authoritative copyright field, top-level; provenance carries no `license`. `classification` likewise stays top-level. The `description` is the source's verbatim blurb, never AI-written - and reproducing a `licensed` or `restricted` source's blurb is itself reproduction, so it is omitted or truncated for those sources, exactly as the source text is gated.
 
+#### Audience and disclosure
+
+Two provenance sub-fields carry *how a source came to exist and how it became available*. They are not copyright, not medium, and not publisher credibility - the same body produces sources that differ on both.
+
+```yaml
+provenance:
+  audience: internal        # internal | public - who it was written FOR
+  disclosure: foia          # published | declassified | foia | subpoena | leaked | unknown
+```
+
+**`audience` is the evidential axis.** A memo written for internal circulation by people who expected it to stay secret has no performative incentive: it was created to inform a colleague, not to hold a position in front of an audience. A report written for publication by an institution with a public stance is a different kind of artefact, and historiography has always weighted the two differently. Today a FOIA-released 1952 memo and a 2024 agency report are both just "a government document" to this model, which loses the distinction that matters most about them.
+
+**`disclosure` is the authenticity axis, and it must not be folded into the first.** An internal memo released under FOIA and an internal memo that leaked share `audience: internal` and differ enormously in chain of custody: the FOIA release is attested by the holding agency, the leak is attested by nobody. Collapsing them would let an unauthenticated document inherit the credibility of a compelled release, which for an evidence platform is the more dangerous error of the two.
+
+**Apply the principle to the whole corpus, not only to institutions.** The property that makes an internal memo valuable is the *absence of a performative incentive at creation* - and by that test a monetised podcast interview, produced for an audience and rewarded by its reaction, carries a stronger performative incentive than most agency reports do. This axis is not "official bad, internal good": it is a statement about who the author was performing for, and it indicts a large part of a corpus built on interview material as readily as it does an institutional report. A model that down-weights official output while treating podcast testimony as neutral has not applied the principle; it has swapped one institutional prior for another.
+
+Which is also why **an official determination is held, never used as a reference standard.** Recording that a body investigated a case and classified it under its own scheme is valuable precisely because it can be *compared* against the declassified internal record - "the public report called it a balloon; the memo released under FOIA says otherwise" is the comparison this platform exists to surface. Folding that determination into our own confidence number would destroy the comparison and import the body's institutional priors as ground truth. Hold both; weight them by these fields; never let one define the scale.
+
 A claim's authoritative provenance is a reference to its source record (the `record_id` it already carries); the digest may additionally denormalise `publisher` + `published_date` + `collection` onto a claim as a render cache, so an article renders "from a 1949 Department of Energy document" without a join. The cache is derived and refreshed on re-digest; the record's block is authoritative. See [data-model.md](data-model.md).
 
 ### Document type
