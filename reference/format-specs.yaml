@@ -95,7 +95,11 @@ types:
           -> publicly_accessible (retrieving it anonymously PROVES public accessibility; the original still stays gated, the
           extracted text is surfaced) > a local file -> restricted (unknown provenance, fail closed). These are defaults a
           reviewer can override, not licence determinations; widening one (gated -> open) is irreversible once served and
-          is a human decision, never an automated upgrade."}
+          is a human decision, never an automated upgrade. `copyright.media` carries the status of EMBEDDED MEDIA separately
+          (absent = inherits status): a publisher can only licence what it owns, so a CC BY 4.0 report built around witness-submitted
+          photographs is open_licence text with restricted media. NEVER collapse a record to the most restrictive of its parts
+          - that gates the publisher's own open analysis. Set at acquisition by a human wherever the licence carries a third-party
+          carve-out; the handler cannot infer it. Media with absent/unknown status fails closed."}
       - {name: classification, type: string, required: false, formats: [pdf], description: "Original security classification
           banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
           a marking."}

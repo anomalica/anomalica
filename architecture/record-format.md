@@ -150,6 +150,19 @@ So for a `publicly_accessible` source the audio stays gated while its peaks are 
 
 `copyright.status` is one of `public_domain`, `open_licence`, `publicly_accessible`, `licensed`, `restricted`. Only the first two serve the ORIGINAL file openly; the rest gate it behind proof of possession. What differs between them is not whether *you* can reach the content, but whether Anomalica may redistribute the original file.
 
+**`copyright.status` describes the content the publisher produced and licensed - not everything the file contains.** A publication can embed third-party material its publisher never held the rights to sublicence, and a single status per record cannot describe that. `copyright.media` carries the status of embedded media separately; absent, it inherits `status`.
+
+The case that forces it: Argentina's Air Force publishes its UAP case reports under CC BY 4.0, but the reports are built around photographs and video stills submitted by private witnesses, which the licence's own "*excepto cuando se declare lo contrario*" carve-out excludes. The analysis text is genuinely open; the witness photographs are not the Air Force's to license. So `status: open_licence` with `copyright.media: restricted`.
+
+**Do not collapse this to "the record's status is the most restrictive of its parts".** That gates the publisher's own openly-licensed analysis behind proof of possession - hiding public government material for no benefit, which is the same error the `.gov` default exists to prevent, and here it would gate exactly the officially-adjudicated text most worth surfacing.
+
+The two errors are not symmetrical, so the defaults are not either:
+
+- Over-gating open text is recoverable - a reviewer widens it later.
+- Publishing a witness's photograph we hold no licence to is **irreversible** once served from the content-delivery network, and it is a third party's rights, not ours to risk.
+
+So `copyright.media` is set at acquisition, by a human, wherever the source's licence carries a third-party carve-out - the handler cannot infer it, exactly as it cannot infer an [excerpt scope](data-model.md#record-unit-whole-containers-versus-scoped-excerpts). Where a record genuinely mixes rights-holders across its images, an individual [image annotation](#image) may override; that is the exception, and one status for the media class covers the normal case. Media whose status is absent, unknown, or unresolved fails closed.
+
 An ingester assigns the status from HOW the source was acquired. Most specific wins:
 
 | Acquisition | Default | Why |
