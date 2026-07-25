@@ -191,6 +191,13 @@ nothing resolvable at the old identity.** The retired file at
 retirement that deletes rather than moves breaks every stored pointer,
 and the failure is silent at every consumer.
 
+**The migration computes the new hash from the ARCHIVED ASSET ON DISK,
+never by re-fetching.** A re-fetch can return different bytes - a page
+changes, a server re-encodes - and would silently convert a
+re-identification into a re-acquisition, giving the record an identity
+that reflects today's fetch rather than the artefact actually held. The
+asset is already archived under `sources/`; hash that.
+
 The one-off migration to source-anchored identity is itself a
 re-identification of every web, ebook, and excerpt record. It is stamped
 through this same mechanism - old hash retired to `store/v1/` carrying
