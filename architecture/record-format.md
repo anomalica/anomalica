@@ -650,6 +650,20 @@ Selection is part of identity because one asset can yield several records: two e
 
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
 
+#### Withdrawal: sources we may not hold
+
+The copyright model governs what may be **served**. A separate class governs what may be **held at all**: a rights holder who prohibits reproduction is not satisfied by a gated copy, because the copy is itself the reproduction. Every component would report compliance - the fetch succeeds, the status tags `restricted`, the access gate correctly refuses - while the breach happened at acquisition.
+
+Prospectively this is a **source-registration** decision, not a record field: a source marked no-hold never has an adapter run against it, so no record exists to carry a status. A record that must not exist needs no field. Where a source is mixed - mostly reproducible with a no-hold subset - the marking may be narrowed per document at acquisition, never widened: a document inside a holdable source can be marked no-hold, but a document inside a no-hold source cannot be marked holdable without re-registering the source. Narrowing is safe and reversible; widening is a rights determination and a human one.
+
+Retrospectively - a record already held that later proves no-hold - the requirement is not a status but an **obligation to remove**, and it needs three things the model would otherwise lack:
+
+- **A tombstone at the identity.** Deleting the record alone is self-undoing: the next ingest finds nothing at that hash, re-fetches, and recreates it. The hash must survive as an empty marker carrying the withdrawal reason and date, so idempotency refuses rather than re-acquires. It is also the only place compliance can be evidenced once the content is gone.
+- **A third outcome in the [resolution order](#versioning-and-supersession).** A consumer holding the old hash currently resolves live, then retired, then reports a dangling reference. Withdrawal adds *withdrawn* - resolvable, deliberate, and distinct from both a live record and a broken pointer, so a cross-record link renders "removed for rights reasons" rather than failing as though something were lost.
+- **Traversal of what the record produced.** Removal is not complete while the claims, digests, pre-digests, briefs, and article text derived from it remain. That the chain is traversable at all is a consequence of the audit binding built for reconstructability ([content-format.md](content-format.md#auditable-assembly)) - the same links that answer "what was this article built from" answer "what did this record contribute to".
+
+One property makes this harder than deletion: **the store is version-controlled.** Removing a file from `ingests` does not remove it from git history, so an obligation to remove is not discharged by a commit that deletes. Whether that requires history rewrite, and how far the obligation extends into derived artefacts already published, is a rights question to settle per instance rather than a rule to fix here - but it must be settled, not assumed handled.
+
 Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`:
 
 - `{hash}.verification.json` - cloze proof-of-possession challenges (ingester's
