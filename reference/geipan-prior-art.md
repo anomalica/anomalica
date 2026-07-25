@@ -22,6 +22,40 @@ Annee, Identification, Classification, departement, date, document, lat,
 lng, Phenomene, Region, Temoignage associe, Type de cas. So the scoring
 fields live in the schema documentation, not in the published data.
 
+The **2021 legacy CSV export** carries the scoring fields the current XLSX
+export drops, and is the only public artefact that does: cases and
+testimonies, semicolon-delimited, **LATIN-1 not UTF-8**, 35 columns, frozen
+2021-02-19 - 2,768 cases 1937-2018 (A 595 / B 1,108 / C 942 / D 87 / D1 36)
+and 4,590 testimonies, under the same `sites/default/files/` path.
+
+Its columns answer part of this brief before it is read. GEIPAN modelled at
+least **four** axes where this project has been discussing three:
+
+| Field | Axis |
+|---|---|
+| `cas_etrangete` | Strangeness of the phenomenon |
+| `cas_fiabilite` | Reliability - how much the account is trusted |
+| `cas_consistance` | Internal consistency |
+| `cas_qte_information` | Quantity of information available |
+
+`cas_qte_information` sitting **alongside** `cas_fiabilite` is the
+orthogonality question answered in their own schema: "how much do we know"
+and "how much do we trust it" are separate fields, not one blended score.
+That is the C-versus-D distinction operationalised, and it is the strongest
+single argument for reading this before designing ours.
+
+## Read it; do not ingest it
+
+**CNES prohibits reproduction, adaptation, translation, and derivative
+works.** This is prior art to be read, not a source to hold. It does not go
+through ingestion, it is not a record, and nothing derived from it is
+redistributed. The distinction was theoretical while the artefact was
+hypothetical; it is concrete now that the file is unauthenticated and
+trivially fetchable.
+
+What may be taken from it is what one takes from any schema: an
+understanding of the choices someone else made. Their *values* are theirs.
+
 ## Why this is not the thing we rejected
 
 Calibrating our scorer against GEIPAN's **conclusions** was considered and
