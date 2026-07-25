@@ -53,3 +53,37 @@ AI is central to the platform and its use is communicated openly - never hidden,
 - **How humans participate** - all articles are open for human correction; edits become persistent directives the AI respects on future updates.
 
 AI is involved at every stage (extraction, graph-building, assembly, translation) - unavoidable black boxes. The platform's answer is to make each box's inputs and outputs visible: the source document, the digest extracted from it, the assembled article, the verification report. The aim is not to remove the need for trust but to make every step as verifiable as possible.
+
+## Editorial positions are stated, never encoded
+
+Anomalica will hold positions. Some are unavoidable: which sources are
+worth acquiring, how much weight a witness account carries against a
+contemporaneous document, whether an institution's public conclusions are
+treated as evidence or as a claim to be tested. These are judgements, and
+having them is not the problem.
+
+**Where a judgement is a value judgement rather than a measurement, it is
+written down in prose, with its reasoning, where a reader can find it and
+argue with it. It is never expressed as a constant inside a scoring
+function.**
+
+The failure this prevents: a number that looks neutral and is not. A
+reader shown a confidence score reasonably takes it as the output of a
+method. If an editorial preference has been folded into that number - a
+coefficient down-weighting one class of source because the platform
+distrusts it - then the score is quietly carrying an argument the reader
+was never shown, and cannot examine, disagree with, or discount. That is
+worse than an openly stated bias, because a stated position is
+defensible and arguable while a buried coefficient is neither.
+
+It also protects the person who holds the position. An editorial stance
+set out in the open, with the thinking behind it, can be defended on its
+merits or revised when someone makes a better argument. The same stance
+discovered inside a scoring constant reads as concealment, whatever the
+intent was.
+
+This follows directly from the platform's disclosure commitments above.
+Making each box's inputs and outputs visible is not much use if the
+weighting between them is where the real judgement lives. So: the
+scoring model computes what can be computed; everything else is an
+editorial position, and editorial positions live here.
