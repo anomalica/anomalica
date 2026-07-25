@@ -263,17 +263,19 @@ The brackets are part of the value. The ingester does not emit these tokens itse
 Marks each message in an email thread, and each piece of correspondence inside a container. Structurally this is the correspondence equivalent of [Speaker change](#speaker-change): one body divided into segments authored by different people at different times.
 
 ```markdown
-<!-- message: {n: 2, from: John Podesta <john.podesta@gmail.com>, date: 2015-03-05T18:38:14-05:00, quoted: true} -->
+<!-- message: {n: 2, from: "John Podesta <john.podesta@gmail.com>", date: 2015-03-05T18:38:14-05:00, quoted: true} -->
 ```
 
 One annotation per message carrying a YAML mapping, rather than several loose keys. Separate `message_n` / `message_from` / `message_date` annotations can desynchronise, and a parser cannot then distinguish a missing key from a misplaced one.
 
 | Key | Meaning |
 |-----|---------|
-| `n` | Position in the thread, outermost message first. |
+| `n` | Position in the thread, outermost message first. **This is the ordering key** - a consumer orders a thread by `n`, never by `date` (see below). |
 | `from` | The sender, `Name <address>` where both are known. |
-| `date` | That message's own `Date` header, ISO 8601 with offset. |
+| `date` | The message's own `Date` header as ISO 8601 with offset **where that header parsed**; otherwise the source's own attribution text verbatim (e.g. `"Mar 5, 2015 6:08 PM"`) - opaque, for display only, and **never parsed as a timestamp**. The verbatim fallback is kept rather than dropped or coerced: an attribution line carries no timezone, so synthesising an ISO value would fabricate an offset, and fabricating a timestamp in an archive is worse than carrying the string the source printed. A consumer tests for the ISO shape before treating a value as one; because the fallback is unsortable, `date` is not an ordering key. |
 | `quoted` | `true` where the segment is quoted inside a later message rather than authored at this level. |
+
+**Parse the mapping as YAML; do not pattern-match the annotation text.** The value is well-formed YAML - string values are double-quoted and `\`/`"` escaped, and a `-->` inside a value is emitted as `--\x3e` (a YAML `\x` escape) so an attacker-controlled display name from an email dump cannot close the annotation's HTML comment early. A consumer that scans the raw text instead of parsing it both mis-reads a display name containing `quoted: true` as the flag, and - absent the escape - loses the tail of any annotation whose value contained `-->`. Read `quoted` from the parsed mapping.
 
 **`quoted` is the load-bearing key.** A reply that quotes its predecessor puts two people's words in one body, and without the flag an extractor attributes the quoted text to the replying sender - the correspondence equivalent of a flattened attribution, and just as invisible once it reaches a claim. Every claim drawn from a `quoted: true` segment belongs to that segment's `from`, never to the message containing it.
 
