@@ -18,6 +18,25 @@ model added covered nothing the gold was looking for - and every one of
 those claims is a human review click. The average hides this completely;
 only the margin shows it.
 
+## Measure the instrument against a known intervention
+
+The most useful number this eval produced was not about a model. Changing
+the **prompt alone**, same model and same record, moved recall 12 points
+(52.0 to 64.0). Model differences on the same instrument sit around 3.
+
+That reframes the decision: model choice is a second-order effect next to a
+factor the project controls directly. Effort spent picking between the top
+models is dominated by effort spent on prompt work, and a comparison run
+before the prompt is settled is measuring the wrong variable.
+
+**But prompt sensitivity is not a variance bound.** A prompt change is a
+deliberate intervention; run-to-run noise is a different quantity and stays
+unmeasured until an arm is repeated. "Smaller than a demonstrated
+intervention effect" and "inside the noise floor" are distinct claims, and
+only the first is established. The honest statement is that a 3-point gap
+is small relative to a known controllable factor - which is enough to stop
+it deciding anything, without asserting a noise floor nobody has measured.
+
 ## One record cannot settle a corpus-wide choice
 
 A single graded record is evidence about that record. Source type

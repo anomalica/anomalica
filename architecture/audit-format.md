@@ -96,6 +96,19 @@ Nothing below is stored - each falls out of the sidecar.
 | Missed-fact rate | Clusters in which a model has no member, over all clusters. Free from cluster membership - which is why `models` is required. |
 | Cost per good claim | `good` counts joined to per-model token usage on record and model. Only valid at full adjudication coverage - see below. |
 
+**On a metered lane, cost comes from the provider's billed figure, never
+from stamped tokens.** Stamped `ai_usage` systematically *understates*
+billed consumption: only successful calls are stamped, while failed
+attempts are billed and lost, and a disconnected non-streaming request is
+billed for the complete response. A record that took 89 attempts to
+complete stamps the tokens of the one that worked.
+
+**A per-token price comparison between models is unsound in this pipeline
+regardless.** Round-trip count varies by model far more than price does, so
+a model that is cheaper per token and needs many attempts costs more than a
+dearer one that completes first time. Compare billed totals per completed
+record, not unit prices.
+
 **No cost, price, or token fields appear in this sidecar.** Usage is
 recorded where the work happened, not copied into the judgement of it.
 
