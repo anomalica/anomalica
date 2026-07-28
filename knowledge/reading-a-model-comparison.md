@@ -37,6 +37,31 @@ only the first is established. The honest statement is that a 3-point gap
 is small relative to a known controllable factor - which is enough to stop
 it deciding anything, without asserting a noise floor nobody has measured.
 
+## Two variables at once: use the signature, not the aggregate
+
+Changing two things in one run usually forfeits attribution. It need not,
+if one variable produces a **mechanistic signature** the other cannot.
+
+A run that enabled streaming *and* moved schema enforcement to prompt could
+not attribute a drop in the attempt count to either. But a client-side
+socket timeout at a fixed wall is a distinct failure class, separable in
+the log from provider rejection, invalid output, and rate limiting. Asking
+"did any call die on a timeout" rather than "did the count fall" recovers a
+clean answer from a confounded run - and costs nothing, since the failure
+is already in the log if it is recorded by cause rather than counted.
+
+**Check the indirect path before claiming a signature is exclusive.**
+Enforcement cannot produce a socket timeout directly - but it can shorten
+generation, and a call that finishes sooner never reaches the wall. So
+"zero timeouts" alone stays ambiguous: the wall removed, or the wall never
+reached. Pairing the signature with duration settles it - zero timeouts
+*at durations that previously timed out* is a fact only the first
+explanation fits.
+
+The general form: a signature is exclusive only after you have asked what
+else could suppress it, not merely what else could cause it. Record
+failures by cause; count them second.
+
 ## One record cannot settle a corpus-wide choice
 
 A single graded record is evidence about that record. Source type
