@@ -164,6 +164,38 @@ So for a `publicly_accessible` source the audio stays gated while its peaks are 
 
 **Do not collapse these two allow-lists.** They look like a copy-paste divergence and are not. Merging them either withdraws the ruling (no waveform for the majority of the library) or serves the copyrighted audio itself. Any router must decide per object kind, never once per record.
 
+### Review units: a book is not a big article
+
+**Review coverage is measured over SECTIONS, not over whole records**, wherever a record has sections. Settled 2026-07-29.
+
+The whole-record unit works at 20KB, where "reviewed" honestly means someone read it. At book length it stops meaning anything: the store's largest records run 759-879KB, up to 2,512 blocks and 122,000 words, and a whole-record coverage figure for one of those asserts that a human read a book - roughly eight hours of the project's scarcest resource. Digest twenty books against that unit and every one sits permanently near 4% reviewed. The number does not merely become unimpressive; it stops carrying information, corpus-wide, and it does so silently as the corpus grows. That is the partial-denominator failure this project has now met in three places (see [audit-format.md](audit-format.md#adjudication-coverage)) - a figure that degrades smoothly with scale and never announces itself.
+
+No interface change fixes it, because the unit is wrong rather than the presentation. A book is not a big article.
+
+**The stored datum does not change.** `review.json` holds observed spans over blocks, and it continues to. Section-level coverage is an *aggregation boundary over the same spans* - a different denominator, not a different measurement. Three things follow, and they are the reason this can be decided without blocking anything:
+
+- Existing review state stays valid. The four book records already in the store are **re-aggregated, never re-reviewed**; their spans mean exactly what they meant.
+- Extraction stores nothing derived from the review unit, so digestion does not wait on this spec.
+- Changing the unit again later is a read-side change, not a migration.
+
+**Report sections, not an average.** A record carries per-section coverage and its record-level state is "N of M sections reviewed" - naming which. A single averaged percentage recreates the problem it was introduced to solve, and a coverage figure never prints without its denominator.
+
+Partial review becomes an honest state rather than an unfinished one. A reviewer can cover the three chapters a claim set actually draws on and have that recorded as what it is.
+
+#### What a section is
+
+Follow the record's own structure where it has one; derive it where it does not:
+
+| Record | Section |
+|---|---|
+| Ebook | Chapter - already where the digester takes book locations (chapter-relative offsets, since global offsets die at the next `prep_version` bump) |
+| PDF | Page range, from the existing page boundaries |
+| Transcript (audio/video) | A **time-anchored** segment, aligned to speaker-turn boundaries so a segment never splits a turn |
+
+**A derived section boundary must be stable across re-extraction.** This is the load-bearing constraint and it is easy to get wrong: segment a transcript by block index and re-transcription silently re-points every boundary, orphaning review state - the same failure that body-anchored identity produced for records. Time is anchored to the audio and survives re-transcription; block indices do not. Segment transcripts by time.
+
+Records with no sections and no length problem stay whole-record. The threshold for deriving sections on an unsectioned record is calibratable and starts at roughly 100KB of body - below that the whole record is one honest unit.
+
 ### Copyright status: what a source gets by default
 
 `copyright.status` is one of `public_domain`, `open_licence`, `publicly_accessible`, `licensed`, `restricted`. Only the first two serve the ORIGINAL file openly; the rest gate it behind proof of possession. What differs between them is not whether *you* can reach the content, but whether Anomalica may redistribute the original file.
@@ -670,8 +702,14 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
   `shared/verification.py`; consumed by the workbench access gate). Present only
   for records whose copyright status gates access.
 - `{hash}.review.json` - review-coverage spans and the reviewer verdict
-  (`anomalica/review-coverage/N`, written by the workbench; read by the
-  digester's review gate).
+  (`anomalica/review-coverage/N`, written by the workbench). **There is no
+  review gate.** Nothing in the digester enforces the verdict - extraction
+  never consults it, and `assess_record` is reached only from the
+  `coverage` reporting command. Review is informational, exactly as
+  [0021](../decisions/0021-content-review-lifecycle.md) and
+  [0031](../decisions/0031-per-record-inspection-pages.md) require of every
+  other review signal. Corrected 2026-07-29; this document and the
+  workbench both previously described a gate that was never built.
 - `{hash}.highlights.json` - relevance-tuning ground truth
   (`anomalica/highlights/1`, written by the workbench tuning mode; read by the
   digester's grader). Span offsets are Unicode code points into the raw stored

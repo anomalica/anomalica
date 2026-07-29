@@ -221,6 +221,10 @@ the override file's own hash - never silently. Absent on digests produced before
 prompt-provenance stamping; those can be attributed by `extracted_at` against
 the registry's per-version `added` dates.
 
+**Digests without `prompts` or `pre_digest` have unrecoverable provenance.** The 23 canonical digests written before these blocks landed record neither a prompt sha nor a `prep_version`, and neither is derivable from the artefact - `extracted_at` narrows the prompt to a registry era, not to a version. Such a digest cannot be attributed, reproduced, or compared against another model's output, which makes it unusable as an eval baseline.
+
+The resolution is re-digestion rather than back-stamping, because a guessed provenance stamp is worse than an absent one. Recorded here because it changes what a corpus-wide run *is*: a run that re-digests those 23 alongside new records **replaces** the canonical corpus rather than extending it, yielding one generation at one model, one prompt sha, and one prep version. That uniformity is the point - a corpus of mixed, partly-unknown generations cannot support the model and prompt comparisons the eval depends on.
+
 ### `pre_digest`
 
 Optional. The content hash of the **pre-digest** - the ingest after all
