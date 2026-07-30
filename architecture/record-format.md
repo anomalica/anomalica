@@ -710,6 +710,18 @@ Two consequences worth stating, because both look wrong at a glance:
 
 Selection is part of identity because one asset can yield several records: two excerpts of one statute must be distinguishable, and they are, by their scope strings. Absent an excerpt directive the scope is empty and identity is the asset alone.
 
+#### Bodies may be edited in place
+
+**Annotation is hash-neutral by construction.** Marking a region irrelevant, adding a span note, correcting a chapter title - the whole reviewer workflow - changes the body and not the identity, because the identity never covered the body. A reviewer edits, the workbench commits back, the file keeps its name, and every digest, sidecar, link, and review span bound to that hash survives.
+
+This is the point of anchoring on the source rather than the extraction. The alternatives all fail: making every edit a supersession prices review at a re-identification per annotation, and hashing "the body with annotations stripped" requires the ingester, workbench, and digester to compute one normalisation identically - a divergence that is silent by nature, which is the failure being fixed rather than a fix for it.
+
+**What in-place editing does put at risk is reproducibility, not identity**, and that has its own mechanism. A digest records the `pre_digest` hash of the exact text the model read ([0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)). Edit a body after digestion and that hash no longer matches - which is how the staleness is *detected* rather than hidden. A digest carrying neither `prompts` nor `pre_digest` cannot detect it, which is one more reason those are re-digested rather than trusted.
+
+Order the work so it does not arise: **edit before digesting.** An annotation applied ahead of a digestion run is simply the text that run reads.
+
+**Records whose stored `content_hash` does not reproduce their body are not a data bug.** They are an artefact of the superseded body-anchored model, and they resolve when identity migrates - the hash stops claiming to describe the body. Do not hand-repair them, and do not compute body digests to reconcile them. Note also that the discrepancy is not attributable to annotation alone: in a 2026-07-30 measurement, 6 of 22 records *without* annotation markers also failed to reproduce their stated hash, so the legacy recipe has a second defect that the migration equally retires.
+
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
 
 #### Withdrawal: sources we may not hold
