@@ -1,10 +1,24 @@
 # The diligent version is the wrong one
 
-Internal method knowledge (a reference note). When a check enumerates "everything
-of a kind", the instinct that reads as thorough - glob wider, recurse deeper,
-include more - is frequently the version that produces confident garbage. The
-narrow scan is not lazy and the wide one is not careful; what matters is whether
-the input set is **authoritative**, and a directory tree is not.
+Internal method knowledge (a reference note).
+
+> **Prefer what is authoritative BY CONSTRUCTION over what merely asserts.**
+> A store record's filename IS its hash; the `content_hash` in its frontmatter is
+> a copy that says so. A symlink directory maintained as the live set IS the live
+> set; a directory tree that contains it is a coincidence. An explicit path list
+> IS the change you are committing; `git add -A` is whatever the working tree
+> happens to hold. The asserting version is always the one that reads as
+> thorough, and it is the one that drifts.
+
+The corollary is the title. When a check enumerates "everything of a kind", the
+instinct that reads as diligent - glob wider, recurse deeper, include more, trust
+the field that says what a thing is - is frequently the version that produces
+confident garbage. The narrow scan is not lazy and the wide one is not careful;
+what matters is only whether the input set is authoritative.
+
+Four instances below, all found in one evening (2026-07-29), in four parts of the
+pipeline, each discovered separately. Costs escalate from a wrong number to a
+committed deletion.
 
 ## The worked example (2026-07-29): scanning for duplicate records
 
@@ -55,6 +69,26 @@ directories.
   consumers need opposite things from the same marker - one to EXCLUDE it, one to
   REDIRECT through it - and a scan that only knows about files can do neither.
 
+## The asserting field: a frontmatter hash that names another record
+
+`records/2007-06-20-web-project-serpo.md` is a legacy record predating the
+store-and-symlink layout. Its frontmatter declares
+`content_hash: a480652e...` - which is a **different record entirely**, an
+unrelated interview. Hashing the two bodies confirms they differ (16,846 bytes
+against 16,962).
+
+The importer read a record's content hash from that field. Had a digest ever been
+named for Project Serpo, every claim from it would have been stamped with the
+other record's hash and every workbench deep link would have opened the wrong
+document - with nothing, anywhere, reporting an error. It was armed and unsprung
+only because neither loose file has been digested.
+
+The fix is the rule at the top: a store record is ADDRESSED BY its hash, so take
+the filename and treat the frontmatter as the copy it is. Exposure was then
+bounded by measurement rather than assumption - all 181 store records were
+checked, filename against frontmatter, and agree. The drift exists only in the
+two loose files, which have no filename hash to be authoritative.
+
 ## The version that destroys data: `git add -A` in a shared repo
 
 The three cases above produce a wrong number. This one produced a committed
@@ -77,6 +111,12 @@ flight right now", which is not a set anyone chose. Stage explicit paths.
 
 ## The rule
 
+0. **Ask which of the two things is the fact and which is the copy.** The
+   filename or the field; the manifest or the tree; the path list or `-A`. One of
+   them IS the thing by construction and the other reports it. Use the first and
+   treat the second as a claim that can be checked - and where both are available,
+   checking them against each other is cheap (181 store records, filename against
+   frontmatter, all agree - that took seconds and bounded a whole class of doubt).
 1. **Derive the set from something that is maintained as the set** - a manifest,
    a symlink directory, an index, an explicit path list - not from a directory
    listing or a working tree that happens to contain it at that instant. If no
