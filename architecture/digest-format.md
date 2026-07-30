@@ -110,13 +110,46 @@ metadata about the document rather than the assertion chain inside it.
 
 ### `location`
 
-The span of the source the claim was drawn from. For a timestamped record this is
-a canonical `HH:MM:SS.d-HH:MM:SS.d` range, recovered deterministically by
-realigning the claim's verbatim `quote` against the record's word timings rather
-than by asking the model - a model left to write `location` itself picks a
-different axis per chunk (timecodes, bare seconds, even source line numbers),
-which makes variants from different models impossible to cluster against one
-another.
+The span of the source the claim was drawn from. **Always derived by realigning
+the claim's verbatim `quote` against the record, never taken from the model.**
+This was already the rule for timestamped records; it applies to every type.
+
+A model cannot count characters, and the corpus shows exactly that: of 503
+machine-resolvable locations measured 2026-07-31, only 185 landed on their quote
+while 318 were offset, median drift 149 characters and maximum 824. Those are
+estimates wearing the costume of offsets. A model left to write `location` itself
+also picks a different axis per chunk - timecodes, bare seconds, source line
+numbers, `Foreword, paragraph 4` - which makes variants from different models
+impossible to cluster against one another.
+
+Deriving it makes drift structurally impossible rather than a defect to chase,
+and it is why a prose location is not a validation failure to be forbidden: the
+model's rough guess is fine as an *input*, useful for disambiguating which
+occurrence of a short quote is meant. It is simply never the stored value. What
+is constrained is what gets written, not what the model may say - the same
+division as the closed `ai_usage` contract.
+
+The stored form is a resolvable span, in the most **re-extraction-stable** axis
+the record supports:
+
+| Record | Form | Survives |
+|---|---|---|
+| Timed media | `HH:MM:SS.d-HH:MM:SS.d` | Re-transcription - anchored to the audio |
+| Chaptered work | `ch N:START-END` | Re-pagination and prep changes |
+| Everything else | `char:START-END` | Least stable; regenerate on re-digest |
+
+Prefer the highest row the record supports. Global character offsets are the
+fallback precisely because they die at the next `prep_version` bump, and a
+location is only as durable as the anchor beneath it.
+
+An elided `quote` aligns fragment by fragment - the elision rules already require
+each fragment to be individually locatable, so the span runs from the first
+fragment's start to the last one's end, and a fragment that will not locate is a
+broken quote rather than a location problem.
+
+A claim whose quote cannot be aligned gets **no** `location` rather than a
+guessed one. Absence means unresolvable, and it must not be filled with the
+model's estimate to avoid an empty field.
 
 ### `record`
 
