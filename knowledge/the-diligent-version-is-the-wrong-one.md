@@ -55,11 +55,32 @@ directories.
   consumers need opposite things from the same marker - one to EXCLUDE it, one to
   REDIRECT through it - and a scan that only knows about files can do neither.
 
+## The version that destroys data: `git add -A` in a shared repo
+
+The three cases above produce a wrong number. This one produced a committed
+deletion, and it is the same shape: the set of things acted on was taken from
+whatever the working tree happened to hold, rather than stated explicitly.
+
+`ingests` has several live writers - the scheduler's archive commits, workbench
+reviews, the digester, the ingester. A `./ingest --force` re-ingest briefly left a
+working-tree deletion of the old record (`6f5ea09a`) in the window before it could
+be marked superseded. A concurrent scheduler process ran `git add -A && commit`,
+staged that deletion along with its own unrelated work, and committed it inside
+`d70b379`, "archive: They Showed Him a REAL UFO - Sedge Masters | ep. 95". The
+record was a digested one, so the dangling body would have surfaced later as a
+silent drop in a downstream sweep, in a commit whose message mentions nothing of
+the kind. Recovered with `git show d70b379^:<path>` and restored in `59f61d5`.
+
+`-A` reads as thorough - "commit everything" - and in a single-writer repo it is
+harmless. In a shared one it means "commit whatever every other process has in
+flight right now", which is not a set anyone chose. Stage explicit paths.
+
 ## The rule
 
 1. **Derive the set from something that is maintained as the set** - a manifest,
-   a symlink directory, an index - not from a directory listing that happens to
-   contain it today. If no such thing exists, that is the thing to build.
+   a symlink directory, an index, an explicit path list - not from a directory
+   listing or a working tree that happens to contain it at that instant. If no
+   such thing exists, that is the thing to build.
 2. **Ask what ELSE is in the tree before widening a glob.** "Recursive" is a
    claim that everything below is the same kind of thing, and it is usually
    unchecked. Here it was false by 133 records.
@@ -70,6 +91,9 @@ directories.
 4. **Say when you got the right answer for the wrong reason.** The scan was
    correct and the reasoning behind it was not; reporting only the correct result
    would have left the next person to widen the glob and be confidently wrong.
+5. **In a shared workspace, the blast radius is other people's in-flight work.**
+   A wide glob misreports; a wide `git add`, `rm` or retry commits or destroys.
+   The rule is identical, the cost is not.
 
 Related: [match the family, not its current members](match-the-family-not-its-members.md),
 [measuring tells you what is, not what survives](measuring-tells-you-what-is-not-what-survives.md),
