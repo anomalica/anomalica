@@ -4,14 +4,21 @@ The knowledge graph (a structured database of interconnected facts) contains typ
 
 > **Taxonomy status.** This documents the live extraction contract (the two-pass nodes prompt). Digests produced before this taxonomy landed still carry the older types: as of 2026-06-21 the live graph holds 217 such nodes (matter 134, concept 58, programme 16, investigation 9) across 18 of 23 records, plus 112 names with old framing ("...Detection Matter"). The chosen cleanup is **re-digestion, not reclassification**: re-extraction reclassifies from the source (handling matter's four-way fold, which no mechanical remap can) and regenerates the names, and a full rebuild then clears the dead-type nodes. A mechanical reclassify has already failed here - a node retyped matter->event kept its "Matter" name and left a same-typed duplicate. Re-digestion runs BEFORE any graph-curation merges ([decision 0038](../decisions/0038-graph-curation-replayable-ledger.md)), since the merge ledger keys on names that re-digestion rewrites; timing is a paced subscription run. Document the contract here, not the stale data.
 
-> **Deduplication must be able to compare ACROSS types.** A type-scoped
-> comparison structurally cannot see a duplicate whose halves carry
-> different types, and that is precisely what a misclassification
-> produces: `object:Atlantis` and `person:Atlantis` are one referent that
-> no within-type pass will ever put side by side. The same blindness let
-> the corpus hold its central subject twice across a live and a dead type
-> for months without anything flagging it. Type is evidence about a node,
-> not a partition of the comparison space.
+> **Deduplication must be able to compare ACROSS types - and must not
+> merge on the strength of that comparison alone.** A type-scoped pass
+> structurally cannot see a duplicate whose halves carry different types,
+> which is how the corpus held its central subject twice, as a live
+> `topic` and a dead `concept`, for months with nothing flagging it. Type
+> is evidence about a node, not a partition of the comparison space.
+>
+> The guardrail matters as much as the rule, because a cross-type name
+> collision is more often two referents than one. `object:Atlantis` (the
+> orbiter) and `person:Atlantis` (Billy Meier's son, whose siblings Atlant
+> and Gilgamesha are also person nodes) share a name and are correctly
+> two nodes; merging them would destroy a distinction the corpus got
+> right. A differing type is weak evidence *against* identity, not for it.
+> Cross-type candidates go to adjudication on claim content, never to an
+> automatic merge.
 
 ## Node type summary
 
