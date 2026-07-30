@@ -114,20 +114,45 @@ The span of the source the claim was drawn from. **Always derived by realigning
 the claim's verbatim `quote` against the record, never taken from the model.**
 This was already the rule for timestamped records; it applies to every type.
 
-A model cannot count characters, and the corpus shows exactly that: of 503
-machine-resolvable locations measured 2026-07-31, only 185 landed on their quote
-while 318 were offset, median drift 149 characters and maximum 824. Those are
-estimates wearing the costume of offsets. A model left to write `location` itself
-also picks a different axis per chunk - timecodes, bare seconds, source line
-numbers, `Foreword, paragraph 4` - which makes variants from different models
-impossible to cluster against one another.
+The reason is **axis consistency and frame definiteness**, not model imprecision.
+A model left to write `location` itself picks a different axis per chunk -
+timecodes, bare seconds, source line numbers, `Foreword, paragraph 4` - which
+makes variants from different models impossible to cluster against one another.
+Deriving it makes the axis uniform and the span exact by construction, whatever
+the model's own error rate happens to be.
 
-Deriving it makes drift structurally impossible rather than a defect to chase,
-and it is why a prose location is not a validation failure to be forbidden: the
-model's rough guess is fine as an *input*, useful for disambiguating which
-occurrence of a short quote is meant. It is simply never the stored value. What
-is constrained is what gets written, not what the model may say - the same
-division as the closed `ai_usage` contract.
+Measured across the corpus 2026-07-31, that error rate is **small**: 2,402
+resolvable claims, median absolute drift of **1 character**, flat across document
+position, with the digester independently measuring span length at a median 0.95
+of quote length. An earlier figure of 149 characters was drift conditioned on
+claims that had already failed a containment test - a property of the failing
+subset reported as a property of the population. The pointers are essentially
+correct, and the residual is a units-frame mismatch rather than accumulating
+error.
+
+Deriving is still right, and none of the argument rested on the magnitude: it
+removes the axis variance above, it makes drift structurally impossible rather
+than merely small, and it fixes the frame problem below by definition. It is also
+why a prose location is not a validation failure to be forbidden - the model's
+rough guess is a useful *input* for disambiguating which occurrence of a short
+quote is meant, and is simply never the stored value. What is constrained is what
+gets written, not what the model may say.
+
+#### A span must declare its frame
+
+**Spans are expressed in the materialised pre-digest**, not the raw record body.
+The two differ - the pre-digest is whitespace-collapsed and annotation-stripped -
+so an offset is uninterpretable without knowing which space it counts in, and a
+consumer resolving it against the wrong one lands slightly and consistently off.
+That mismatch, not model error, produced the residual above and most of the wrong
+numbers found across four components on 2026-07-31.
+
+This needs no new field: the digest's [`pre_digest`](#pre_digest) block already
+carries `{sha256, prep_version}`, which names the exact text the offsets index.
+What was missing is the declaration that offsets are relative to it. A digest
+carrying no `pre_digest` block has **no recoverable frame**, and its spans cannot
+be resolved with confidence at all - one more thing re-digestion fixes and
+back-stamping cannot.
 
 The stored form is a resolvable span, in the most **re-extraction-stable** axis
 the record supports:
