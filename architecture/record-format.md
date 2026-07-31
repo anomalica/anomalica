@@ -172,6 +172,36 @@ So for a `publicly_accessible` source the audio stays gated while its peaks are 
 
 **Do not collapse these two allow-lists.** They look like a copy-paste divergence and are not. Merging them either withdraws the ruling (no waveform for the majority of the library) or serves the copyrighted audio itself. Any router must decide per object kind, never once per record.
 
+### Release and declassification
+
+Government documents carry their provenance **stamped on the page rather than typed in it** - a red declassification overlay, a handling caveat, a release-control footer. For a project whose claim is documented provenance, that footer *is* provenance: it names the releasing authority, the control number, who it was released to, and when.
+
+```yaml
+release:
+  declassified_by: "Richard A. Harrison"      # the officer, as a person name
+  declassified_by_title: "MG, USCENTCOM Chief of Staff"
+  control_number: "USCENTCOM 26-0028"
+  released_to: "AARO"
+  release_date: 2026-03-16
+  handling: ["FOUO", "PA applies"]
+  markings:                                    # verbatim, as stamped
+    - "Declassified by MG Richard A. Harrison, USCENTCOM Chief of Staff"
+    - "FOUO/PA applies"
+    - "Approved for Release to AARO"
+```
+
+**This is the evidence behind [`provenance.disclosure`](#audience-and-disclosure).** That field says *how* a document became available (`declassified`, `foia`, `published`); this block is the documentary proof of it, and the two must agree. It is a separate block rather than more `provenance` fields because it records a **status transition** with its own actor and date - a 1952 memo has an origin (creators, published_date) and, seventy years later, a release. Different events, different people.
+
+It is also distinct from [`classification`](#frontmatter), which records what the document *was* marked. Classification is the prior state; release is how it left it.
+
+**`markings` is required whenever the block is present, and may be empty.** That is what makes absence testable: `markings: []` asserts *examined, none found*, while an absent `release` block means *not examined* - a scanned PDF whose stamps live in the page image and need a vision pass, or a source type that carries no such markings. Without that distinction a consumer cannot tell a document with no release provenance from one whose provenance was dropped at extraction, which is the absence-read-as-a-value failure this format has now met in several places.
+
+**Sequence numbers are per-page, not per-record.** A Bates-style `000001` in a release footer numbers *that page* within the release, so a forty-page record has forty of them and a record-level scalar would be wrong. Carry them on the [page boundary](#page-boundary) annotation where they belong, or not at all.
+
+**The person becomes a node through a claim, not through frontmatter.** The ingester records what the page says; the digester decides whether to emit an administrative claim ("Harrison declassified this document on 2026-03-16"), and the person node follows from that claim by the ordinary route. No new node-creation path, and the releasing officer earns a page only under the usual [page-worthiness](node-types.md#page-worthiness-which-node-types-earn-a-page) floor - which most will never meet, correctly. The value is cumulative: an officer appearing across many releases is a real pattern about who released what, and it only exists if the individual records carry the name.
+
+**Extraction must stop treating these as furniture.** A release footer is literally a footer and a red declassification stamp reads as a watermark, so a prompt instructing "skip page furniture: page numbers, running headers, running footers, watermarks" removes them correctly by its own lights, while a markings rule covering only classification banners gives it nothing to catch them with. The instruction has to name release provenance positively; the erratic result otherwise - one document keeping `USCENTCOM` while dropping `Declassified` from the same page - is the signature of a rule that does not mention the thing at all.
+
 ### Text quality
 
 A knowingly variable-quality corpus is acceptable; an *unlabelled* one is not. A record whose text is damaged is usable as long as its condition is stated, so every claim drawn from it can be discounted knowingly. The `quality` block states that condition.

@@ -114,6 +114,14 @@ types:
           silently wrong when the threshold moves, exactly as a stored cost does when a price moves), author_present (from
           creators), title_sane (from title). Omit a field the source_type cannot have; where applicable it is present INCLUDING
           zero (page_anchors: 0 means measured-and-none, not inapplicable). Additive-optional: no schema bump."}
+      - {name: release, type: object, required: false, description: "Release/declassification provenance stamped ON the page
+          (red overlays, handling caveats, release-control footers) rather than typed in it. Fields: declassified_by (person
+          name), declassified_by_title, control_number, released_to, release_date, handling (list), markings (VERBATIM list,
+          REQUIRED when the block is present, may be []). Evidence behind provenance.disclosure - the two must agree; distinct
+          from `classification`, which is the PRIOR state. markings: [] means EXAMINED-NONE-FOUND; an ABSENT block means NOT
+          EXAMINED (e.g. a scanned pdf whose stamps need a vision pass) - that distinction is the whole point. Per-page Bates
+          sequence numbers do NOT belong here; they ride the page-boundary annotation. The declassifying officer becomes a
+          node via a digester administrative claim, never directly from frontmatter."}
       - {name: classification, type: string, required: false, formats: [pdf], description: "Original security classification
           banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
           a marking."}
