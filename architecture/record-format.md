@@ -71,7 +71,20 @@ Two boundaries are load-bearing:
 - **Source facts, not subject facts.** Provenance is about the SOURCE - who issued it, when it was published, where to find it. A subject's incident place and incident date are NOT provenance; they are extracted as claims about place and event nodes, so they stay inside the scored, corroborated evidence model. `published_date` is strictly the source's publication or upload date.
 - **Copyright is not mirrored here.** `copyright` (and `copyright.status`) is the single authoritative copyright field, top-level; provenance carries no `license`. `classification` likewise stays top-level. The `description` is the source's verbatim blurb, never AI-written - and reproducing a `licensed` or `restricted` source's blurb is itself reproduction, so it is omitted or truncated for those sources, exactly as the source text is gated.
 
-#### Audience and disclosure
+#### Date precision: record only what the source evidences
+
+**A date carries the precision the source supports and no more.** `2020`, `2020-08`, and `2020-08-09` are all valid values; the day is *omitted* when the source does not state one, never guessed to fill the field.
+
+This is already the contract elsewhere - a claim's `date` accepts `2017` ([digest-format.md](digest-format.md#claims)), and `provenance.published_date` is specified as "ISO 8601, may be partial". Only the flat `date_published` demanded a full date, and demanding one is what produces fabrication: given a source whose evidence is "August 2020", an extractor obliged to emit a day emits a plausible one. One record carried `2020-08-09` where its 6-page scan states no date at all and its filename says only `...Persian-Gulf-August-2020`. Nothing in the record distinguished that invented day from a CIA report's `26 December 1973`, which is printed on the page.
+
+The principle is the one already applied a level up - a valueless field is omitted, never nulled - applied inside the value itself. **Precision is the evidence marker**: a record reading `2020-08` is telling you the day was not evidenced, and needs no separate flag to say so.
+
+Two consequences that must be honoured downstream, or the fabrication simply moves:
+
+- **Sort by the earliest instant the value can denote**, with precision as the tiebreak: `2020` sorts at 2020-01-01, `2020-08` at 2020-08-01. Deterministic and total, so a reduced-precision value never needs padding to become sortable.
+- **Display exactly the stored precision.** `2020-08` renders "August 2020", never "1 August 2020" and never "8 August 2020". Coercing a partial date to a day at the render layer reintroduces the invention one stage later, where it is harder to see and reads to a reader as a fact about the document.
+
+**Existing day-precision values on scanned sources are not trustworthy** and cannot be audited automatically - establishing whether a stored day is evidenced means reading the source. There is no backfill: records carry honest precision as they are re-ingested, and the cohort extracted before this rule is identifiable by `date_extracted`. Until then a day on such a record is not authoritative and should not be rendered as though it were.
 
 Two provenance sub-fields carry *how a source came to exist and how it became available*. They are not copyright, not medium, and not publisher credibility - the same body produces sources that differ on both.
 
