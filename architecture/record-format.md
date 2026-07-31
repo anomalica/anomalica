@@ -194,7 +194,9 @@ release:
 
 It is also distinct from [`classification`](#frontmatter), which records what the document *was* marked. Classification is the prior state; release is how it left it.
 
-**`markings` is required whenever the block is present, and may be empty.** That is what makes absence testable: `markings: []` asserts *examined, none found*, while an absent `release` block means *not examined* - a scanned PDF whose stamps live in the page image and need a vision pass, or a source type that carries no such markings. Without that distinction a consumer cannot tell a document with no release provenance from one whose provenance was dropped at extraction, which is the absence-read-as-a-value failure this format has now met in several places.
+**`markings` is required whenever the block is present, and may be empty.** That is what makes absence testable: `markings: []` asserts *examined, none found*, while an absent `release` block means *not examined*. Without that distinction a consumer cannot tell a document carrying no release provenance from one whose provenance was dropped at extraction, which is the absence-read-as-a-value failure this format has met in several places.
+
+The absent case is narrow, and narrower than it first appears: a record extracted before this block existed, or a source type with no page furniture to carry stamps. **It is not "scanned PDFs".** The PDF handler reads every page as an image, so a scan without a text layer is examined exactly as a native-text document is - the officer's name comes off an image-only stamp the same way. A text-layer tool such as `pdftotext` will report those documents as empty, which makes them look unexaminable when measuring from outside the pipeline; that is a property of the measuring instrument, not of the handler.
 
 **Sequence numbers are per-page, not per-record.** A Bates-style `000001` in a release footer numbers *that page* within the release, so a forty-page record has forty of them and a record-level scalar would be wrong. Carry them on the [page boundary](#page-boundary) annotation where they belong, or not at all.
 

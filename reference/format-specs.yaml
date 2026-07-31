@@ -119,9 +119,11 @@ types:
           name), declassified_by_title, control_number, released_to, release_date, handling (list), markings (VERBATIM list,
           REQUIRED when the block is present, may be []). Evidence behind provenance.disclosure - the two must agree; distinct
           from `classification`, which is the PRIOR state. markings: [] means EXAMINED-NONE-FOUND; an ABSENT block means NOT
-          EXAMINED (e.g. a scanned pdf whose stamps need a vision pass) - that distinction is the whole point. Per-page Bates
-          sequence numbers do NOT belong here; they ride the page-boundary annotation. The declassifying officer becomes a
-          node via a digester administrative claim, never directly from frontmatter."}
+          EXAMINED - that distinction is the whole point. Absent is NARROW: pre-block records, or source types with no page
+          furniture. NOT scanned pdfs - the handler reads every page as an image, so a text-layer-less scan is examined like
+          any other (pdftotext reporting it empty is an instrument artefact, not a handler limit). Per-page Bates sequence
+          numbers do NOT belong here; they ride the page-boundary annotation. The declassifying officer becomes a node via
+          a digester administrative claim, never directly from frontmatter."}
       - {name: classification, type: string, required: false, formats: [pdf], description: "Original security classification
           banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
           a marking."}
