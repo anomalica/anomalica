@@ -18,6 +18,10 @@ All annotations use YAML throughout - the same data format as the frontmatter. B
 
 The first `---` fenced block is always the frontmatter. All HTML comments in the body are annotations - the ingester does not produce any other HTML comments. Text between annotations is content.
 
+**There is no `---`-fenced annotation form.** `---` closes the frontmatter and never opens anything again: every subsequent occurrence is ordinary body text - a markdown thematic break, which prose uses freely as a section divider. A parser that treats a bare `---` in the body as opening a fence will discard everything to the next one, and it will do so **silently**, because the result is still a well-formed record that simply contains less. One 622KB book parsed to 88KB (14.2%) that way, yielding 9 claims and a digest written at exit 0.
+
+The rule for recognising an annotation is therefore positive and total: **a block annotation is an HTML comment whose content parses as a YAML mapping with a known annotation key; nothing else is an annotation.** Anything failing that test is content. A consumer never needs to infer a delimiter, and a construct absent from this document is not one a parser may invent.
+
 ## Frontmatter
 
 Required fields:

@@ -74,6 +74,26 @@ The check is the same one line: **name the field and count it.** `grep -c`
 over the artefacts settles in seconds what a record's prose cannot settle
 at all.
 
+## Two corollaries about who is holding the artefact
+
+**When two components disagree about a file, trust the one NOT in the
+processing path.** A component that parses a file before measuring it is
+measuring its own output, not the artefact. A digester reported a book's
+body at 88KB while the file held 622KB, and drafted a handover to the
+ingester on that reading - the record was never damaged; the parser was.
+The component with no stake and no transform in between is reading the
+bytes.
+
+**A flat threshold across media types is wrong by default.** The same
+number means different things to a transcript and a book. A pre-digest
+survival check flagged 129 records because every transcript sits near 30%
+retention - word timestamps are about 65% of a `record/2` body and are
+stripped correctly - and against a timestamp-stripped baseline the same
+check flagged exactly one. Three separate instances of this appeared in a
+single day, which makes it a pattern rather than a coincidence: before
+setting a threshold, ask what the denominator is made of for each type it
+will run against.
+
 ## The check
 
 Before specifying a fix for a measured gap, ask what decision governs the
