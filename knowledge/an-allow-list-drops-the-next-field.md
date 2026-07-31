@@ -1,0 +1,89 @@
+# An allow-list drops the next field silently
+
+Internal method knowledge (a reference note). A function that copies data across
+a boundary by NAMING the fields it knows about will drop every field added after
+it was written, and will do so without an error, a warning, or a wrong number
+anywhere. The data is emitted correctly upstream and absent downstream, and the
+absence is then explained by a plausible story that nobody re-checks.
+
+Twice in six hours, at one boundary, on 2026-07-31.
+
+## The boundary
+
+`parse_digest_yaml` turns a digest on disk into the dict the importer folds into
+the graph. It built its output by listing keys:
+
+```python
+frontmatter = {
+    "record_id": record.get("id"),
+    "record_title": record.get("title"),
+    "record_producer": record.get("producer"),
+    "record_date": record.get("date"),
+    "record_reference": record.get("reference"),
+    ...
+}
+```
+
+Correct on the day it was written. Every field added to the digest afterwards
+stopped at that line.
+
+## What was lost, and the story that hid it
+
+**The provenance chain (ADR 0044).** The digester emitted `provenance_chain` on
+87% of claims; the graph held `origin_kind` NULL on all 19,006. The claims table
+had the columns, the model had the field, the emitter wrote it - and the parser
+did not read it back.
+
+The absence had an explanation: "the graph was built from pre-0044 digests, so a
+re-digest will populate it." Plausible, widely repeated (I repeated it myself),
+and wrong. The corpus was re-digested in full and the count stayed at zero,
+because no amount of re-emitting a field helps when nothing reads it. ADR 0039
+keys claim INDEPENDENCE on that field, so for months two podcasts relaying one
+anonymous email were indistinguishable from two witnesses.
+
+**`record.review.state`.** Stamped human / machine / none on every digest, read
+by nothing, so 53 records reached the graph unmarked. This one had a deadline
+attached: 110 unreviewed records were approved for digestion precisely because
+they would arrive MARKED and a consumer could filter. The justification was sound
+and the mechanism worked in the digest and nowhere else.
+
+Auditing the same boundary properly then found **five** dropped record fields
+(review, publisher, medium, processing_version, duration) plus `content_hash` -
+which was present in every digest and being re-derived by a filesystem scan of
+the ingests directory on every single import. Not just wasteful: a scan can
+resolve to a different record than the hash names, which is the supersession case
+that cost a separate investigation the day before.
+
+## Why it evades every normal check
+
+- **No error.** A missing key is a `None`, and `None` is a legal value.
+- **No wrong number.** Nothing is miscounted; a column is simply empty, and an
+  empty column looks like a producer that has not started emitting yet.
+- **A ready explanation.** "That data predates the feature" fits perfectly and is
+  cheap to believe. It survived a full re-digest that disproved it.
+- **Tests pass.** Both sides are individually correct. The emitter emits, the
+  schema has the column. Only an end-to-end comparison of the two populations
+  finds it, and nobody runs that until something forces it.
+
+## The rule
+
+1. **Pass the structure through; let the consumer choose.** The fix was to stop
+   enumerating and hand the whole record block over. A field added upstream now
+   reaches consumers with no change at the boundary.
+2. **Parsing is not the place for policy.** Offering everything is not the same
+   as storing everything - `ai_usage` is offered by the parser and deliberately
+   never stored, because the graph feeds the public site and per-record billing
+   data must not be one join from a renderer. That judgement belongs to the
+   consumer, which knows where its data goes; the parser does not.
+3. **Compare populations, not implementations.** "Does the producer emit it" and
+   "does the schema have a column" are both yes here. The only question that
+   found it was: count it on both sides. Do that for every field the pipeline is
+   supposed to carry, once, rather than trusting that a path exists.
+4. **Distrust an explanation that predicts nothing.** "The corpus predates the
+   field" was testable - re-digest and re-count - and nobody tested it until the
+   re-digest happened for other reasons and the number did not move.
+
+Related: [absence is not a verdict](absence-is-not-a-verdict.md) - the empty
+column read as a state; [the diligent version is the wrong
+one](the-diligent-version-is-the-wrong-one.md) - the same preference for an
+authoritative structure over an enumerated one.
