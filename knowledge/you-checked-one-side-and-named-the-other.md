@@ -1,6 +1,6 @@
 # You checked one side and named the other
 
-Internal method knowledge (a reference note). Eleven wrong findings were produced
+Internal method knowledge (a reference note). Thirteen wrong findings were produced
 across two sessions in a single day (2026-08-01), by two careful people, on a
 codebase they each knew well. Every one has the same shape, and it is not
 carelessness:
@@ -10,7 +10,7 @@ carelessness:
 The measurement was correct each time. The sentence attached to it was about
 something that had not been looked at.
 
-## The eleven
+## The thirteen
 
 | Measured | Named | Actually true |
 |---|---|---|
@@ -25,6 +25,7 @@ something that had not been looked at.
 | a tool's output count | "it silently drops 2,064 claims" | it drops two; the rest was a `--sample` default the reader had set |
 | 306 pages pass the floor | "306 pass two conditions" | 90 of them were never tested on the second |
 | the thin fraction is flat over 40x corpus growth | "therefore structural" | true, but the mechanism was unknown until orphans were separated out |
+| chainless claims in the DIGESTS | "the corpus has 578 chainless claims" | the graph held 683 - the extra 105 were two records whose import had aborted |
 
 ## Why it is not carelessness
 
@@ -41,8 +42,36 @@ thinking harder, not by re-reading the code. The CIA case is the clearest - 27
 nodes of one name is a dedup catastrophe or a node directory working correctly,
 and the two are indistinguishable until you ask how many claims point at each.
 
+## The technique that actually catches it
+
+**When a quantity exists on both sides of a boundary, measure it on both sides.
+Agreement is evidence; disagreement is the only cheap detector of a boundary
+fault.**
+
+This is stronger than any amount of care on one side, and the last entry in the
+table is why. Two people measured "how many claims lack a provenance chain". One
+counted the digest files and got 578. One counted the graph and got 683. Both
+were internally consistent, both were carefully grouped by record, and both were
+correct about the thing they had measured. The 105-claim gap WAS the finding: two
+records whose import had aborted on a database lock, leaving the graph holding
+old data while the files were perfect.
+
+Neither measurement could have found it alone. The producer-side count was
+structurally incapable of seeing a consumer-side fault, and the consumer-side
+count had no way to tell "the import dropped this" from "the producer never
+emitted it". Only the disagreement pointed at the boundary between them.
+
+Note also what the fault looked like from inside: the aborted import left one
+record stale, and the NEXT scheduled run reported complete success - it
+re-imports everything, and the stale record's claims matched by hash and were
+carried forward. No error survived, no count looked wrong. Unattended, that is
+invisible indefinitely.
+
 ## The rule
 
+0. **Measure both sides of any boundary the data crosses.** Producer and
+   consumer, file and database, emitted and stored. One number is a claim about
+   one artefact; two numbers that agree are a claim about the pipeline.
 1. **Name only the side you measured.** If the sentence is about imports, measure
    imports. A statement about the graph, derived from the digests, is a
    hypothesis.
