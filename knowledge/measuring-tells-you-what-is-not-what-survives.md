@@ -94,6 +94,32 @@ single day, which makes it a pattern rather than a coincidence: before
 setting a threshold, ask what the denominator is made of for each type it
 will run against.
 
+## A confidently recorded wrong cause is worse than no cause
+
+Writing down an unmeasured cause does more damage than leaving the
+question open, because the note inherits the authority of the document it
+sits in and redirects the next investigator away from the answer.
+
+A blocked-items file carried "do not re-add until the schema-in-argv fix
+lands" for two days. The schema was the largest plausible culprit and was
+never measured; the actual cause was the node directory in a different
+argv element ([cli-transport-argv-ceiling](cli-transport-argv-ceiling.md)).
+Anyone acting on that note would have shrunk the schema, watched the
+failure repeat identically, and had no idea why - having already spent the
+one obvious hypothesis.
+
+Record the symptom and the measurement. Where a cause is a guess, write it
+as a guess, or write nothing: "unknown, X and Y not yet ruled out" costs a
+reader nothing and misleads no one.
+
+**The failures that survive are the ones whose output looks right.** Every
+error worth the name this week produced well-formed, internally consistent,
+plausible output - a book parsed to 14% of itself, a phantom drift across
+1,589 claims, a health check reporting "No findings" over zero records, a
+date invented to fill a field. None would have been caught by reading the
+code, because the code did what it said. They are found by comparing the
+output against the thing it describes.
+
 ## The check
 
 Before specifying a fix for a measured gap, ask what decision governs the
