@@ -12,7 +12,7 @@ Each stage is named after what produces it.
 
 | Term | What it is | Where it lives |
 |------|-----------|----------------|
-| **record** | The original artefact, in whatever format it arrived: the PDF, the audio file, the ebook, the captured web page. Immutable. | `records/` (today `sources/`) |
+| **record** | The original artefact, in whatever format it arrived: the PDF, the audio file, the ebook, the captured web page. Immutable. | `records/` |
 | **ingest** | The markdown transcription of one record, written by the ingester. Has its own hash, its own character offsets, its own edit history. | `ingests/store/{hash}.md` |
 | **digest** | The claims file written by the digester from one ingest. | `digests/{slug}.yaml` |
 | **source** | Not a file. The person or organisation that produced a record. David Fravor is a source; the New York Times is a source. | Graph node |
@@ -49,11 +49,13 @@ meaning two things, which is the same defect one word to the left.
 
 ### Directories
 
-| Now | Becomes | Contents |
-|-----|---------|----------|
-| `sources/` (plain directory, not a repo) | `records/` | 1,062 originals |
-| `ingests/records/` | `ingests/by-name/` | 220 readable-name symlinks into `store/`; pairs with `store/`, which addresses by hash |
-| `digests/records/` | `digests/` itself | The 80 canonical digests move up one level; the misnamed folder is removed rather than renamed |
+All three landed on 2026-08-13.
+
+| Was | Is | Contents |
+|-----|----|----------|
+| `sources/` (plain directory, not a repo) | `records/` | 1,062 originals, 30GB |
+| `ingests/records/` | `ingests/by-name/` | 219 readable-name symlinks into `store/`; pairs with `store/`, which addresses by hash |
+| `digests/records/` | `digests/` itself | The 80 canonical digests moved up one level; the misnamed folder was removed rather than renamed |
 | `digests/variants/` | unchanged | 209 per-model variants, still grouped per ingest |
 
 `ingests/store/` keeps its name. `content/pages/records/` keeps its name: those pages
@@ -87,13 +89,17 @@ variation cannot match the glob because it is not at that level.
 
 ### Identifiers
 
-| Now | Becomes | Live occurrences | Note |
-|-----|---------|------------------|------|
-| `schema: anomalica/record/1` | `anomalica/ingest/1` | 135 in code, plus all 306 ingests on disk | Consumers validate against this string |
-| `source_file` | `record_file` | 73 | Frontmatter field naming the original |
-| `parse_record`, `record_body` | `parse_ingest`, `ingest_body` | 61 | Parser entry points |
-| `record_id` | unchanged | 158 | Correctly identifies the record |
-| `record_hash` | see below | 1,982, nearly all in generated pages | Ambiguous today; resolved below |
+Only the paths were renamed. The identifiers below are NOT done, deliberately: each
+one rewrites stored data or a public contract, and none of them changes behaviour.
+They are listed so the remaining work is visible rather than assumed finished.
+
+| Identifier | Status | Occurrences | Note |
+|-----------|--------|-------------|------|
+| `schema: anomalica/record/1` | NOT CHANGED, and probably never as its own step | 135 in code, all 306 ingests on disk | The version is a compatibility marker, not a label. Move it when the FORMAT breaks, not when the word does |
+| `source_file` | OUTSTANDING | 73 | Frontmatter field naming the original; rewrites every stored ingest |
+| `parse_record`, `record_body` | OUTSTANDING | 61 | Parser entry points; pure code, safe to do any time |
+| `record_id` | CORRECT AS IS | 158 | Identifies the record, and one record has exactly one ingest |
+| `record_hash` | rule settled, data lagging | 1,982, nearly all in generated pages | See below |
 
 `record_hash` needs no decision: the rule was already settled on 2026-07-25
 ([ingest-format.md](ingest-format.md#store)). `content_hash` hashes the archived
