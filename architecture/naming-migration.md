@@ -1,8 +1,10 @@
 # Naming migration: record, ingest, digest
 
-Status: specified, not started. Companion to the terms in [data-model.md](data-model.md)
-and the format spec in [ingest-format.md](ingest-format.md), both of which already
-carry the corrected vocabulary.
+Status: steps 1 to 5 landed 2026-08-13. Step 6 (the content delivery network) is
+held pending approval of its cost, and step 7 (the hash split) is superseded - see
+Identifiers. Companion to the terms in [data-model.md](data-model.md) and the format
+spec in [ingest-format.md](ingest-format.md), both of which carry the corrected
+vocabulary.
 
 ## The rule
 
@@ -124,21 +126,30 @@ same files at a different path.
 
 ## Order of work
 
-Each step leaves the system working. Steps 3 and 4 must land together per repo.
+Each step leaves the system working. Steps 3 and 4 landed together per repo.
 
-1. **Vocabulary.** Done: `data-model.md` defines record, ingest and digest;
+1. **Vocabulary.** DONE. `data-model.md` defines record, ingest and digest;
    `record-format.md` is now `ingest-format.md`.
-2. **Document links.** The 51 files across 11 repos that reference the old filename.
-   Mechanical, no behaviour.
-3. **Directories.** The three renames above, by `git mv` inside each repo so history
-   follows.
-4. **Code.** Per repo, bucket by bucket, tests run before the commit. The ingester and
-   `anomalica-common` first, since every other repo reads what they write.
-5. **Schema string.** `anomalica/ingest/1` written into all 306 ingests, with
-   consumers accepting both values for exactly as long as the sweep takes.
-6. **Content delivery network.** Move the storage prefix and the URL minting together,
-   then verify a gated original still resolves through a freshly signed link.
-7. **Hash split.** `record_hash` versus ingest hash, as a separate data change.
+2. **Document links.** DONE. 51 files across 11 repos.
+3. **Directories.** DONE. All three renames, by `git mv` inside each repo so history
+   follows. `sources/` is not a repo, so that one is a plain move.
+4. **Code.** DONE. Every repo's suite green: digester 147, assimilator 275,
+   scheduler 185, anomalica-common 179, ingester 347 across four handlers,
+   workbench 340.
+5. **Schema string.** NOT NEEDED as a separate step - `anomalica/record/1` names the
+   ingest format, and renaming it would rewrite all 306 stored ingests and every
+   consumer's validation for no behavioural gain. The version is a compatibility
+   marker, not a label; it moves when the FORMAT breaks, not when the word does.
+   Revisit at the next breaking change, when it costs nothing extra.
+6. **Content delivery network.** HELD, pending Mark's approval of the cost. Sequence
+   corrected by the workbench, which owns `edge/main.ts`: COPY the objects to the new
+   prefix, SWITCH the minting in one deploy, DELETE the old prefix once the gate's
+   300-second token lifetime has elapsed. A true rename has a window in which an
+   issued link points at an object that no longer exists; three steps has none. The
+   set is 19 copyright-gated originals totalling 104MB, so the transient duplication
+   is negligible.
+7. **Hash split.** SUPERSEDED. The rule was already settled on 2026-07-25; what
+   remains is the stored data catching up with it, described under Identifiers.
 
 ## Verification
 
