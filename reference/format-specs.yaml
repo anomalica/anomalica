@@ -287,7 +287,7 @@ chain:
       bytes is a new identity and is handled by supersession (0040).
   - stage: digest
     detail: >-
-      One digest per record at digests/records/{friendly-name}.yaml, paired to the ingest by the shared friendly name ({date}-{source_type}-{slug}).
+      One digest per record at digests/{friendly-name}.yaml, paired to the ingest by the shared friendly name ({date}-{source_type}-{slug}).
       record.id is the graph UUID join key.
   - stage: brief
     detail: >-

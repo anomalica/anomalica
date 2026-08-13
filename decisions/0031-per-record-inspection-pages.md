@@ -9,7 +9,7 @@ the data model (terminology) and node-types.md.
 ## Context
 
 For every ingested record the digester produces a digest (0027) at
-`digests/records/{name}.yaml` holding every node and every claim the
+`digests/{name}.yaml` holding every node and every claim the
 artificial-intelligence pipeline extracted from that record. Until now the only
 site-facing output built from those digests was the per-entity encyclopaedia articles
 (`/people/`, `/events/`, ...), each assembled across many records. There was no way, on

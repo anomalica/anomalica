@@ -45,7 +45,7 @@ The fix was not to widen or narrow the glob. It was to stop deriving the set fro
 the filesystem at all:
 
 ```python
-# ingests/records/ holds one symlink per live record, none pointing into an
+# ingests/by-name/ holds one symlink per live record, none pointing into an
 # archive tier. The live set by construction, not by directory convention.
 records_dir = ingests_dir / "records"
 return sorted(p for p in records_dir.glob("*.md") if p.resolve().is_file())

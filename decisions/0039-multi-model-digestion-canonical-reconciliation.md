@@ -5,7 +5,7 @@ Status: accepted (direction recorded; build deferred)
 
 ## Context
 
-Today the digester produces ONE digest per ingest (`digests/records/{friendly-name}.yaml`, carrying `model: sonnet` - a single model, bare alias). Extraction quality varies by model and no single model is uniformly best. The project wants the option to digest one ingest with several models (Opus, Haiku, Sonnet, later non-Claude such as DeepSeek) and reconcile their outputs into one best digest - without the multiple outputs inflating evidence.
+Today the digester produces ONE digest per ingest (`digests/{friendly-name}.yaml`, carrying `model: sonnet` - a single model, bare alias). Extraction quality varies by model and no single model is uniformly best. The project wants the option to digest one ingest with several models (Opus, Haiku, Sonnet, later non-Claude such as DeepSeek) and reconcile their outputs into one best digest - without the multiple outputs inflating evidence.
 
 This makes the digester->digest relationship 1:N. The build is deferred (the model-comparison feature and a single-best-model come first; the ensemble lands once proven needed); this records the direction so the format and the evidence model are designed for it now.
 
@@ -49,9 +49,9 @@ This is also what reconciliation (above) IS for the multi-model case: the model-
 
 ## Naming and storage (reconciled with the live contract)
 
-The live contract is one digest at `digests/records/{friendly-name}.yaml`, recursively globbed by the assimilator (`records.rglob("*.yaml")`) and joined to the ingest by the workbench on the friendly name. To add variants without disturbing that:
+The live contract is one digest at `digests/{friendly-name}.yaml`, recursively globbed by the assimilator (`records.rglob("*.yaml")`) and joined to the ingest by the workbench on the friendly name. To add variants without disturbing that:
 
-- **Canonical: `digests/records/{friendly-name}.yaml` - UNCHANGED.** Every downstream consumer (the assimilator glob, the workbench join, site references) keeps working byte-for-byte; the canonical IS "the digest" downstream.
+- **Canonical: `digests/{friendly-name}.yaml` - UNCHANGED.** Every downstream consumer (the assimilator glob, the workbench join, site references) keeps working byte-for-byte; the canonical IS "the digest" downstream.
 - **Model-variants: `digests/variants/{friendly-name}/{model-id}-{version}.yaml`** - a top-level `variants/` tree, NOT under `records/`. This is deliberate: the assimilator globs `records/` RECURSIVELY (rglob, so a slashed record title can nest), so a variants subdirectory placed under `records/` would be silently imported. Keeping variants outside `records/` means the import never sees them, satisfying "only the canonical is assimilated" with zero change to the importer.
 
 This rejects two parts of the first-cut proposal: the `.digest` extension (the workbench join, the round-trip tests, and every consumer expect `.yaml`; a rename is a gratuitous break) and a flat `{name}.{model}.yaml` alongside the canonical (it would pollute the `records/*.yaml` glob). The version-in-the-filename requirement is met by the `{model-id}-{version}.yaml` variant names; the per-record `variants/{friendly-name}/` directory follows the existing `{stem}.compare/{model}.{ext}` lineage of the model-comparison tooling.

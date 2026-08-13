@@ -66,6 +66,8 @@ provenance:
   acquired_date: "2026-07-11T09:00:00Z"       # when Anomalica brought the source in
   source_url: "https://www.war.gov/..."       # canonical URL of the original
   fetched_url: "https://web.archive.org/..."  # the URL actually retrieved, when different from source_url
+  also_published_at:                          # other listings of this same source (see below)
+    - "https://www.youtube.com/watch?v=..."
   source_file: "los-alamos-1949.pdf"          # original filename, for a source ingested from a local file with no URL
   identifiers:                                # native source identifiers, keyed by scheme
     virin: "..."
@@ -74,6 +76,21 @@ provenance:
 ```
 
 Each source type fills what it has; a sub-field with no value is OMITTED, never set to null. Origin-unknown is simply the absence of `source_url`, `fetched_url`, `source_file`, and `identifiers` - there is no separate marker (this replaces the old scalar `provenance: unknown`).
+
+**`also_published_at` is a dedup key, not a citation list.** One recording is often
+published in more than one place - an episode on the publisher's own channel and a
+repost on another. Those are not separate sources, and when duplicate records of one
+source are merged the survivor keeps a single `source_url` and lists the other
+listings here. Every consumer that decides "do we already hold this?" MUST match
+against these as well as `source_url`: re-encountering an alias otherwise ingests it
+as a fresh record and recreates the duplicate the merge removed. Aliases follow the
+record that carries them - on a `superseded_by` record they are retired with it and
+match nothing.
+
+It does not confer independence. Two listings of one recording are still one source;
+independence is counted by provenance-chain root
+([0044](../decisions/0044-claim-provenance-chain-is-required.md)), never by how many
+URLs a record answers to.
 
 Two boundaries are load-bearing:
 

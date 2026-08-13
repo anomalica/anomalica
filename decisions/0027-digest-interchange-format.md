@@ -53,7 +53,7 @@ before the workbench is built against it, avoids relitigating later.
 ## Decision
 
 The digester output is a YAML file at
-`digests/records/{friendly-name}.yaml`, conforming to schema
+`digests/{friendly-name}.yaml`, conforming to schema
 `anomalica/digest/1`. The full specification lives in
 [`architecture/digest-format.md`](../architecture/digest-format.md).
 
@@ -79,7 +79,7 @@ Key shape choices, with the rationale:
 
 - **Folder named `records/`, file extension `.yaml` only.** Avoids the
   repetition of `digests/extracts/...digest.yaml`. The
-  parallel structure with `ingests/records/{name}.md` makes
+  parallel structure with `ingests/by-name/{name}.md` makes
   the workbench join obvious: same filename in two repositories,
   different extension reflecting different content.
 
@@ -135,8 +135,8 @@ The conversion is one-way; the digester no longer produces markdown.
 - Producer and consumer code is simpler: standard YAML libraries
   replace a custom line-regex parser.
 - The workbench can now be built against a stable, documented
-  format. Mounting `ingests/records/` and
-  `digests/records/` side by side, keyed by friendly
+  format. Mounting `ingests/by-name/` and
+  `digests/` side by side, keyed by friendly
   filename, is sufficient for the "source -> ingest -> digest"
   three-column view.
 - The one-off taxonomy fixers in `digester/reclassify.py` still
