@@ -779,6 +779,14 @@ media/          # extracted images, per-record subdirectories
 
 The `store/` directory contains the actual record files, named by `content_hash`. What `content_hash` hashes per source type, and how it links back to `sources/`, is defined once in the canonical hash chain ([`format-specs.yaml`](../reference/format-specs.yaml), `chain:`) and is not restated here.
 
+**An ingest's own hash does not name its archived original for every type.** Resolve
+an original through `source_hash` where it is present, not through `content_hash`
+alone: 18 of the 19 copyright-gated ingests on disk today are epubs that resolve only
+that way. A resolver that consults `content_hash` alone returns almost nothing and
+gives no sign it looked in the wrong place. See the open item in
+[naming-migration.md](naming-migration.md) - the rule below is settled, the stored
+data has not all caught up with it.
+
 **A record's identity is its source plus its selection, never its extraction output.** `content_hash` hashes the archived source asset's bytes, and - for a [scoped excerpt](data-model.md#record-unit-whole-containers-versus-scoped-excerpts) - the normalised scope string with it. It never hashes the extracted body.
 
 That one rule is what makes re-extraction safe. Improving an extractor, stripping page chrome, fixing chapter numbering, segmenting an email thread: all change the body, none change the source or the selection, so all keep the same `content_hash`. The record is rewritten **in place** at `store/{hash}.md`, and every digest, review sidecar, highlight, and cross-record link bound to that hash survives untouched. Reconciled 2026-07-25; previously web, ebook, and excerpt records hashed their body, so any re-extraction minted a second store entry and silently detached everything keyed to the first.

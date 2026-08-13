@@ -93,12 +93,20 @@ variation cannot match the glob because it is not at that level.
 | `record_id` | unchanged | 158 | Correctly identifies the record |
 | `record_hash` | see below | 1,982, nearly all in generated pages | Ambiguous today; resolved below |
 
-`record_hash` needs a decision rather than a rename. Today the hash is taken over the
-original file's bytes for PDF and audio but over the extracted text for web and
-ebook, an inconsistency [data-model.md](data-model.md) already flags. The corrected
-vocabulary resolves it: a record has a hash over its own bytes, an ingest has a hash
-over its own text, and they are different numbers. Splitting them is a data change
-and should be done as its own step, after the renames, not folded into them.
+`record_hash` needs no decision: the rule was already settled on 2026-07-25
+([ingest-format.md](ingest-format.md#store)). `content_hash` hashes the archived
+original's bytes plus any scope string, never the extracted body, which is what makes
+re-extraction in place safe.
+
+THE DATA HAS NOT CAUGHT UP WITH THE RULE, and it is worth knowing before anyone
+relies on it. Of the 19 copyright-gated ingests, 18 find their archived original only
+through `source_hash`; exactly one resolves through `content_hash`. All 18 are epubs.
+So on disk an ebook's `content_hash` still does not name its original, and code that
+resolves originals by `content_hash` alone silently finds almost nothing while
+looking like it worked. Two candidate causes, not yet separated: those records
+predate the reconciliation and want re-ingesting, or ebook is legitimately keeping
+the two-hash form and the narrative overstates the reconciliation. Resolve before
+this is treated as done.
 
 Nearly all occurrences are in generated pages under `content/`, which the assembler
 rewrites, so they are not hand-edited.
