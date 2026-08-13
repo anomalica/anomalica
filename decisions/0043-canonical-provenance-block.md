@@ -5,7 +5,7 @@ Status: accepted
 
 ## Context
 
-Records carry source-origin metadata scattered across many top-level frontmatter fields - `publisher`, `creators`, `source_url`, `source_id`, `fetched_url`, `source_file`, `date_published`, `date_accessed`, plus `copyright`, `classification`, `processing` - with no consistent provenance grouping, and [record-format.md](../architecture/record-format.md) defines no canonical block. A knowledge graph about contested documents needs every claim traceable to its origin - "Department of Energy, Los Alamos, 1949, VIRIN X" - which means provenance must be first-class and flow source -> record -> claim.
+Records carry source-origin metadata scattered across many top-level frontmatter fields - `publisher`, `creators`, `source_url`, `source_id`, `fetched_url`, `source_file`, `date_published`, `date_accessed`, plus `copyright`, `classification`, `processing` - with no consistent provenance grouping, and [ingest-format.md](../architecture/ingest-format.md) defines no canonical block. A knowledge graph about contested documents needs every claim traceable to its origin - "Department of Energy, Los Alamos, 1949, VIRIN X" - which means provenance must be first-class and flow source -> record -> claim.
 
 The scheduler invented a `provenance` block for the war.gov importer and Mark wants it canonical across every source type. Its draft (`scheduler/.ai/decisions/2026-07-11-provenance-block-proposal.md`) proposed `collection`, `publisher`, `original_date`, `acquired_date`, `location`, `source_url`, `identifiers`, `description`, `license`.
 
@@ -61,7 +61,7 @@ A claim's authoritative provenance is a reference to its source RECORD - the `re
 ## Consequences
 
 - [`format-specs.yaml`](../reference/format-specs.yaml) `types.ingest` restructures: a `provenance` object replaces the subsumed top-level fields; `title`, `schema`, `source_type`, `copyright`, `classification`, the hash and `processing` fields stay.
-- [record-format.md](../architecture/record-format.md) gains a Provenance section; [data-model.md](../architecture/data-model.md) "Record provenance" updates to the block and the claim carry-through.
+- [ingest-format.md](../architecture/ingest-format.md) gains a Provenance section; [data-model.md](../architecture/data-model.md) "Record provenance" updates to the block and the claim carry-through.
 - This is a BREAKING frontmatter change (pre-launch, preferred over a compatibility shim): consumers reading top-level `source_url`/`publisher`/`date_published`/etc. switch to `provenance.*`.
 - Rollout, routed separately and paced: the ingester writes `provenance` on source records; the digester carries it to claims (authoritative reference + render cache); a backfill migration retro-stamps existing records and moves the old top-level fields into the block. The scheduler's war.gov and channel stubs align to the ratified names.
 
@@ -99,7 +99,7 @@ migration must handle both rather than merely renaming keys:
   not migrate into the block; they belong in extraction.
 - **`document_type: AUD` is a foreign vocabulary.** It is war.gov's own
   cataloguing code, unrelated to the top-level
-  [`document_type`](../architecture/record-format.md#document-type) that
+  [`document_type`](../architecture/ingest-format.md#document-type) that
   names an artefact's form. Sharing the word across two nesting levels
   invites exactly the conflation the reconciliation should remove:
   namespace it as source-native catalogue metadata (`identifiers`, or a

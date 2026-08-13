@@ -83,7 +83,7 @@ The workbench may serve extracted text from copyrighted source material to users
 
 The workbench uses two distinct SHA-256 hashes. They coincide for `audio`/`video`/`pdf` and differ for `web`/`ebook`:
 
-- **Public identifier** - `public_hash`, the first 56 hex chars of the record's `content_hash`. Per record-format.md, `content_hash` is the source-asset hash for `audio`/`video`/`pdf` and the extracted-body hash for `web`/`ebook`. The public identifier is used in the public digests repository, in public-facing URLs, and in per-claim deep-links (decision 0031). It is an identifier, not a secret - it does not unlock an ingest.
+- **Public identifier** - `public_hash`, the first 56 hex chars of the record's `content_hash`. Per ingest-format.md, `content_hash` is the source-asset hash for `audio`/`video`/`pdf` and the extracted-body hash for `web`/`ebook`. The public identifier is used in the public digests repository, in public-facing URLs, and in per-claim deep-links (decision 0031). It is an identifier, not a secret - it does not unlock an ingest.
 - **Possession key** - the SHA-256 of the raw SOURCE ASSET (the file a reviewer would hold). It is carried in the verification sidecar's `sha256` field and is the `sources/{hash}.{ext}` filename (for `web`/`ebook` it is not a frontmatter field). The hash-verification gate matches the reviewer's locally-computed file hash against this. For `audio`/`video`/`pdf` it equals `content_hash`; for `web`/`ebook` it is a different hash from the body-derived `content_hash`.
 
 Possession is proven against the source-asset hash, so a reviewer hashing their own copy of the file unlocks the ingest. Harvesting the public identifier does not help:
@@ -143,7 +143,7 @@ The review interface uses structured forms rather than raw text editing. Reviewe
 
 ## What to mark irrelevant
 
-The single canonical list of what a reviewer marks irrelevant, for every record type - books, PDFs, web pages, audio, video. The marker syntax is in [record-format.md](record-format.md#irrelevant-content) (a prose region marker for text records, the `[irrelevant]` speaker token for transcripts). Marking is non-destructive: the text stays in the record and is only excluded from extraction ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)), so err toward marking anything that is not content.
+The single canonical list of what a reviewer marks irrelevant, for every record type - books, PDFs, web pages, audio, video. The marker syntax is in [ingest-format.md](ingest-format.md#irrelevant-content) (a prose region marker for text records, the `[irrelevant]` speaker token for transcripts). Marking is non-destructive: the text stays in the record and is only excluded from extraction ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)), so err toward marking anything that is not content.
 
 **Principle.** Mark irrelevant anything that is NOT domain-knowledge content about the subject - anything that is not a substantive claim or fact about the anomalous-phenomena topic. Keep the actual content; exclude the apparatus around it.
 
@@ -173,7 +173,7 @@ The git history provides the full audit trail: who changed what, when, and why. 
 
 ## Review identity across re-ingestion
 
-The ingester improves continually: capture pipelines get better, parsers find bugs, post-processing rules tighten. When the ingester re-ingests a record, the body may change. For `web`/`ebook` records (whose `content_hash` hashes the extracted body) that rotates `content_hash`; for `audio`/`video`/`pdf` (whose `content_hash` hashes the source asset) `content_hash` is stable across re-extraction (see record-format.md).
+The ingester improves continually: capture pipelines get better, parsers find bugs, post-processing rules tighten. When the ingester re-ingests a record, the body may change. For `web`/`ebook` records (whose `content_hash` hashes the extracted body) that rotates `content_hash`; for `audio`/`video`/`pdf` (whose `content_hash` hashes the source asset) `content_hash` is stable across re-extraction (see ingest-format.md).
 
 Naive binding of reviews to `content_hash` orphans every prior review when the ingester re-runs. A reviewer who approved a record yesterday would find the same record back in the unreviewed queue today, with no signal that they had already approved its previous form. The friction compounds: a single ingester improvement that touches one file format can invalidate the entire review backlog for that format.
 
@@ -187,7 +187,7 @@ A record can carry up to three identities at any given time:
 |------|--------|---------------|----------------|
 | `url` | The record's `provenance.source_url`. The URL the ingester fetched. | Re-ingestion. Publisher byte-level changes. Re-extraction. | Web records, YouTube videos, anything fetched by URL. |
 | `sha256` | The source asset's SHA-256 - the verification sidecar's `sha256` and the `sources/` filename (a `source_hash` frontmatter field where present). | Re-extraction. Parser improvements. Post-processing changes. | PDFs, ebooks, audio files, video files, any record sourced from a file. |
-| `content` | The `content_hash` (per record-format.md: source-asset hash for `audio`/`video`/`pdf`, extracted-body hash for `web`/`ebook`). | For `web`/`ebook`, any body change rotates it; for `audio`/`video`/`pdf`, stable across re-extraction. | All records (always present). |
+| `content` | The `content_hash` (per ingest-format.md: source-asset hash for `audio`/`video`/`pdf`, extracted-body hash for `web`/`ebook`). | For `web`/`ebook`, any body change rotates it; for `audio`/`video`/`pdf`, stable across re-extraction. | All records (always present). |
 
 `url` is preferred over `sha256` is preferred over `content`. A given record may have any subset of the three. Web records have `url` and `content`. File-sourced records have `sha256` and `content`. Web records that the ingester also archives by file (a SingleFile snapshot for offline reading) carry all three.
 

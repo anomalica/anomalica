@@ -45,7 +45,7 @@ New voices that do not match any known profile are flagged for manual identifica
 
 ## Output
 
-Regardless of input format, the ingester produces a markdown file with YAML (a human-readable metadata format) annotations following the [record format specification](record-format.md). See [architecture decision record 0019](../decisions/0019-record-interchange-format.md) for why this format was chosen over alternatives including DoclingDocument.
+Regardless of input format, the ingester produces a markdown file with YAML (a human-readable metadata format) annotations following the [record format specification](ingest-format.md). See [architecture decision record 0019](../decisions/0019-record-interchange-format.md) for why this format was chosen over alternatives including DoclingDocument.
 
 Each output record contains:
 
@@ -60,7 +60,7 @@ For audio/video specifically, the frontmatter includes a speaker roster and the 
 
 Images embedded in the source are extracted alongside the record. EPUBs are supported today; PDF figure extraction and video keyframes will follow.
 
-Each image is content-hashed and saved to `media/{record_hash}/{img_hash}.{ext}` in the ingests repository. The body annotation references the image by bare filename (`<!-- image: file: abc123.png alt: "..." -->`); the consumer resolves the full path from the record's location. See the [record format specification](record-format.md) for the exact annotation form and rationale.
+Each image is content-hashed and saved to `media/{record_hash}/{img_hash}.{ext}` in the ingests repository. The body annotation references the image by bare filename (`<!-- image: file: abc123.png alt: "..." -->`); the consumer resolves the full path from the record's location. See the [record format specification](ingest-format.md) for the exact annotation form and rationale.
 
 Alt text from the source (`<img alt="">`) is preserved when present. A factual `description` is added later by a vision pass or human review, not at ingestion time.
 

@@ -146,7 +146,7 @@ emitted.
 - The digester sees supersession via frontmatter and can avoid re-consuming
   retired records.
 - Cross-component contract: the workbench reads the manifest and the flags;
-  `architecture/record-format.md` and `reference/format-specs.yaml` carry the
+  `architecture/ingest-format.md` and `reference/format-specs.yaml` carry the
   field specs. The field semantics here are the binding interface.
 
 ## Amendment 2026-07-25: identity is source + selection, and the resolution path is normative
@@ -162,7 +162,7 @@ that bound reviews survive was false precisely where it was most needed.
 
 Resolved by removing the cause rather than adding machinery:
 **`content_hash` hashes the source asset plus the selection, never the
-extracted body** ([record-format.md](../architecture/record-format.md#store)).
+extracted body** ([ingest-format.md](../architecture/ingest-format.md#store)).
 Re-extraction - a better extractor, a page-chrome strip, chapter-number
 repair, email thread segmentation - no longer changes identity for any
 type. The in-place update this record already blesses becomes the uniform

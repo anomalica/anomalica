@@ -78,7 +78,7 @@ fuzzy token-LCS, measure agreement.
    digester's extraction view byte-identical to the cloze source (or
    proof-of-possession answers break), that function moves to a shared
    `clean_body()` in the ingester's `shared/`, imported by both verification.py
-   and the digester. Its exact behaviour is pinned here and in record-format.md
+   and the digester. Its exact behaviour is pinned here and in ingest-format.md
    so neither side can drift: strip the YAML frontmatter; replace each
    HTML-comment annotation (`<!-- ... -->`, including `<!-- speaker: X -->`) and
    each inline `{{...}}` annotation (`{{t:}}`, `{{redacted}}`, `{{classification}}`)
@@ -176,7 +176,7 @@ fuzzy token-LCS, measure agreement.
 
 - **Strip inline (digester) vs clean-body + `words.json` sidecar (ingester).**
   The one remaining open question, and not a separate decision: it is the same
-  call as the pending v2 record-format question for the maintainer (the clean-body +
+  call as the pending v2 ingest-format question for the maintainer (the clean-body +
   committed `words.json` sidecar recommendation). Decision 1's carrier resolves
   when that is answered - the sidecar is the converged direction (the ingester
   has the `anomalica/words/1` schema ready); inline strip is the fallback only if

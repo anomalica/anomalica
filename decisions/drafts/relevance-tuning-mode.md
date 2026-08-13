@@ -89,7 +89,7 @@ Contract decisions (agreed with workbench, 2026-07-02):
 
 - **Offsets index the RAW STORED BODY** - everything after the closing frontmatter
   fence, verbatim: no `.strip()`, no fence removal, no `{{t:}}` token stripping.
-  This is self-contained against `record-format.md` and does not require the
+  This is self-contained against `ingest-format.md` and does not require the
   workbench to replicate the digester's internal cleaning. The digester owns the
   raw->clean derivation, so its grader maps model quotes (drawn from the cleaned
   body) back to raw-body spans via the re-aligner.

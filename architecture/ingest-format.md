@@ -1,6 +1,15 @@
-# Record Format
+# Ingest Format
 
-The record format is the interchange format between the ingester and the digester. Each ingested source produces one ingest - a `.md` file in this format.
+The ingest format is the interchange format between the ingester and the digester.
+Each record - the original artefact, in whatever format it arrived - is transcribed
+into exactly one ingest, a `.md` file in this format.
+
+NAMING. A **record** is the original: the PDF, the audio file, the ebook, the
+captured web page. An **ingest** is the markdown we transcribe it into. They are
+not the same object and must not share a word: an ingest has its own hash, its own
+character offsets, and its own edit history, while the record it came from is
+immutable. Code and directories that call an ingest a "record" predate this and are
+being corrected; [data-model.md](data-model.md) holds the canonical terms.
 
 See [architecture decision record 0019](../decisions/0019-record-interchange-format.md) for why this format was chosen.
 

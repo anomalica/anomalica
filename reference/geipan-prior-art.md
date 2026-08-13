@@ -62,7 +62,7 @@ Calibrating our scorer against GEIPAN's **conclusions** was considered and
 rejected: their verdicts carry their institutional priors, and an official
 adjudication is something this project holds and compares against the
 declassified record, never something it treats as ground truth (see
-[record-format.md](../architecture/record-format.md#audience-and-disclosure)).
+[ingest-format.md](../architecture/ingest-format.md#audience-and-disclosure)).
 
 Reading how they **operationalised** a measurement is a different act.
 Studying an existing schema before designing one does not inherit its

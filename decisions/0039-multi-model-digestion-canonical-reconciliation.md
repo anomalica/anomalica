@@ -68,7 +68,7 @@ Until the build, digests stay `anomalica/digest/1`, one per record, `model: <ali
 
 ## What does NOT change
 
-- **The ingest contract ([record-format.md](../architecture/record-format.md)) is untouched.** The 1:N is entirely digester-output-side; one ingest per source as before.
+- **The ingest contract ([ingest-format.md](../architecture/ingest-format.md)) is untouched.** The 1:N is entirely digester-output-side; one ingest per source as before.
 - **Assimilation stays mechanical** (replace-by-record); the new judgement is confined to reconciliation.
 - **claim_hash / staleness** unchanged - they propagate canonical improvements automatically.
 

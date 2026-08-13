@@ -19,7 +19,7 @@ A new derived, read-only artefact between the ingest and the digest: **the inges
 
 The prep is deterministic:
 
-- **Irrelevant regions removed** - from the human `[irrelevant]` marks: prose `<!-- irrelevant: start -->` / `end` regions and transcript `<!-- speaker: [irrelevant] -->` segments ([record-format.md](../architecture/record-format.md#irrelevant-content)).
+- **Irrelevant regions removed** - from the human `[irrelevant]` marks: prose `<!-- irrelevant: start -->` / `end` regions and transcript `<!-- speaker: [irrelevant] -->` segments ([ingest-format.md](../architecture/ingest-format.md#irrelevant-content)).
 - **Footnotes inlined** at their reference points - deterministic, from standard Markdown `[^N]` / `[^N]:` syntax.
 - **Word-timestamps stripped** (transcripts).
 
@@ -37,7 +37,7 @@ The pre-digest is MATERIALISED per record and stored, not regenerated-on-demand 
 - **Exact audit.** The digest's recorded pre-digest hash always verifies against a stored file. Regeneration reproduces the exact input only if every historical version of the prep logic stays runnable; when the prep improves, regeneration drifts and the recorded hash becomes unverifiable. Storing removes that risk.
 - **The inspectable journey.** The exact input that produced a historical digest can be diffed, because old pre-digests are preserved rather than overwritten.
 
-Cost is negligible (derived text). It stays derived - rebuildable from the ingest plus the versioned prep - so a lost pre-digest is regenerable; the stored copy is the authoritative record of what the model actually saw. It is content-addressed by its own hash and recorded in the digest; the exact store path and prep-version field land in [record-format.md](../architecture/record-format.md).
+Cost is negligible (derived text). It stays derived - rebuildable from the ingest plus the versioned prep - so a lost pre-digest is regenerable; the stored copy is the authoritative record of what the model actually saw. It is content-addressed by its own hash and recorded in the digest; the exact store path and prep-version field land in [ingest-format.md](../architecture/ingest-format.md).
 
 ### One function, two call sites: live preview at review, stored at digest
 
@@ -70,7 +70,7 @@ A read-only **`pre-digest` tab** in the workbench, beside ingest / edit / raw / 
 ## Consequences
 
 - The digester materialises the pre-digest (deterministic prep) and extracts from it; the digest records the pre-digest hash.
-- [record-format.md](../architecture/record-format.md) gains the pre-digest artefact and its store layout; [overview.md](../architecture/overview.md) gains the ingest -> pre-digest -> digest step in the data-flow story.
+- [ingest-format.md](../architecture/ingest-format.md) gains the pre-digest artefact and its store layout; [overview.md](../architecture/overview.md) gains the ingest -> pre-digest -> digest step in the data-flow story.
 - The architecture diagram gains a pre-digest node between the ingest and the digester (`reference/pipeline.mmd` + `reference/architecture.yaml`) - deferred until the shape is confirmed, to avoid churning the just-revised diagram.
 - The workbench gains the read-only pre-digest tab.
 - The digester's grader shifts to coverage-only corpus-wide plus section gold standards.
@@ -78,4 +78,4 @@ A read-only **`pre-digest` tab** in the workbench, beside ingest / edit / raw / 
 
 ## Scope
 
-A new materialised pipeline artefact (the pre-digest) between ingest and digest - stored per record, content-addressed, hash-recorded in the digest for exact reproducibility - and a reframing of highlights as a partial-first-class, evaluation-only signal (coverage corpus-wide, precision from sampled gold-standard sections). Builds on record-format.md (the irrelevant marks and footnote/timestamp handling it derives from) and 0039 (prompt-provenance, digest reproducibility); supersedes relevance-tuning-mode.md.
+A new materialised pipeline artefact (the pre-digest) between ingest and digest - stored per record, content-addressed, hash-recorded in the digest for exact reproducibility - and a reframing of highlights as a partial-first-class, evaluation-only signal (coverage corpus-wide, precision from sampled gold-standard sections). Builds on ingest-format.md (the irrelevant marks and footnote/timestamp handling it derives from) and 0039 (prompt-provenance, digest reproducibility); supersedes relevance-tuning-mode.md.

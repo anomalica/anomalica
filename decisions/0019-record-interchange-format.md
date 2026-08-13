@@ -3,7 +3,7 @@
 Date: 2026-03-24
 Status: accepted
 
-Amendment (2026-06-20): block-level annotations are YAML inside HTML comments (`<!-- ... -->`), not `---`-fenced blocks - this removed the `---` overloading the original format carried. See [decisions/drafts/inline-metadata-format.md](drafts/inline-metadata-format.md) and [architecture/record-format.md](../architecture/record-format.md); the Decision and Consequences below are updated to match.
+Amendment (2026-06-20): block-level annotations are YAML inside HTML comments (`<!-- ... -->`), not `---`-fenced blocks - this removed the `---` overloading the original format carried. See [decisions/drafts/inline-metadata-format.md](drafts/inline-metadata-format.md) and [architecture/ingest-format.md](../architecture/ingest-format.md); the Decision and Consequences below are updated to match.
 
 ## Context
 
@@ -25,7 +25,7 @@ Use markdown files with YAML frontmatter and inline YAML annotation blocks. The 
 - **YAML annotation blocks** (inside HTML comments, e.g. `<!-- speaker: ... -->`) for block-level markers: page boundaries, speaker turns, image descriptions, block-level redactions
 - **Double curly brace inline annotations** (`{{YAML}}`) for the rare cases where an annotation falls mid-sentence, such as `{{redacted: ~3 words}}` or `{{illegible}}`
 
-The full specification lives in `architecture/record-format.md`.
+The full specification lives in `architecture/ingest-format.md`.
 
 ## Why not existing formats
 

@@ -65,7 +65,7 @@ review status, consistent with 0021: review is informational, never a gate.
 
 The surface is the **extraction inspection page** (or record inspection page),
 deliberately distinct from two existing things called "review": the workbench's frozen
-`single_file` "canonical review surface" (record-format.md), and 0021's human review of
+`single_file` "canonical review surface" (ingest-format.md), and 0021's human review of
 *published articles*. Naming it this way keeps three distinct concepts from collapsing
 into one word.
 

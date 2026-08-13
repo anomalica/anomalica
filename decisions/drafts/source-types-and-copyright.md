@@ -152,7 +152,7 @@ For `licensed` status, the `reference` field points to evidence of the permissio
 
 ## Original file storage
 
-The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the raw source asset's SHA-256 - the hash that names the file in `sources/`. Which field carries that hash is per-type: `source_hash` (frontmatter) for `web`; `content_hash` (frontmatter, which hashes the source bytes) for `audio`/`video`/`pdf`; and for `ebook` only the verification sidecar's `sha256` (no frontmatter field). See record-format.md's `source_hash` row.
+The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the raw source asset's SHA-256 - the hash that names the file in `sources/`. Which field carries that hash is per-type: `source_hash` (frontmatter) for `web`; `content_hash` (frontmatter, which hashes the source bytes) for `audio`/`video`/`pdf`; and for `ebook` only the verification sidecar's `sha256` (no frontmatter field). See ingest-format.md's `source_hash` row.
 
 Two storage zones are used:
 

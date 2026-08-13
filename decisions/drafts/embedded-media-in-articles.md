@@ -10,7 +10,7 @@ Final assembled articles will benefit from embedded media alongside the prose. T
 - A page about a person should include a photograph of that person where one is available.
 - A page about an event (the Nimitz encounter) should be able to embed the relevant video (the Tic Tac footage) inline.
 
-The ingester landed image extraction on 2026-04-30 (this repository at `335d67f`, ingester at `2cb5944`). Images are now stored at `ingests/media/{record_hash}/{img_hash}.{ext}` alongside the records that reference them, and the record-format spec describes the body annotation form. That solves the input side of the pipeline for images sourced from books and other ingested artefacts.
+The ingester landed image extraction on 2026-04-30 (this repository at `335d67f`, ingester at `2cb5944`). Images are now stored at `ingests/media/{record_hash}/{img_hash}.{ext}` alongside the records that reference them, and the ingest-format spec describes the body annotation form. That solves the input side of the pipeline for images sourced from books and other ingested artefacts.
 
 What is not yet specified is how media propagates from ingested records, through the digester, through the assembler, into the content repository, and onto the site.
 
@@ -28,7 +28,7 @@ What is not yet specified is how media propagates from ingested records, through
 
 ## Implications
 
-- The record-format spec already supports image annotations with a `description` field reserved for vision-pass or human-authored captions. That field becomes load-bearing if media appears on public articles - it is the alt text and the caption.
+- The ingest-format spec already supports image annotations with a `description` field reserved for vision-pass or human-authored captions. That field becomes load-bearing if media appears on public articles - it is the alt text and the caption.
 - The data model (`architecture/data-model.md`) does not currently describe media nodes. If media becomes graph-first, the model needs a media node type.
 - The assembler design must account for media inclusion from the outset rather than treating it as a later extension.
 - Video introduces a transcoding and hosting question that images do not: a single original may need multiple delivery formats (web-playable codec, thumbnails for preview). The content repository's role expands accordingly.

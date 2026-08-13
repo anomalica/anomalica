@@ -7,24 +7,27 @@ See also: [node types](node-types.md). This document is the canonical home for p
 | Term | Definition |
 |------|-----------|
 | **Source** | A role, not a node type. A person or organisation that produces records is a source. David Fravor is a Person node who is also a source because he has produced records (interviews, written statements). The New York Times is an Organisation node that is also a source. |
-| **Record** | A node type. A specific artefact containing information: a podcast episode, document, transcript, article, video. A record is a pointer to the original material (URL, ISBN, archive identifier), not a copy. See [node types](node-types.md). |
-| **Claim** | A node type. An atomic assertion extracted from a record, with a specific location within that record (timestamp, page, paragraph) and a speaker. The smallest unit of information in the knowledge graph (a structured database of interconnected facts) and the mechanism by which domain nodes (entries in the knowledge graph) are connected. See [node types](node-types.md). |
+| **Record** | A node type. A specific artefact containing information: a podcast episode, document, transcript, article, video. THE ORIGINAL, in whatever format it arrived - the PDF, the audio file, the ebook, the captured web page. A record is a pointer to that original material (URL, ISBN, archive identifier), not a copy. It is never the markdown we transcribe it into; that is an ingest. See [node types](node-types.md). |
+| **Ingest** | The markdown transcription of one record, written by the ingester. One record makes one ingest. Claim locations (a page, a character span, a timestamp) address the ingest, because it is the text that was actually read. |
+| **Digest** | The claims file, written by the digester from one ingest. One ingest makes one digest per model that reads it. |
+| **Claim** | A node type. An atomic assertion extracted from a record, located within that record's ingest (timestamp, page, character span) and carrying a speaker. The smallest unit of information in the knowledge graph (a structured database of interconnected facts) and the mechanism by which domain nodes (entries in the knowledge graph) are connected. See [node types](node-types.md). |
 | **Directive** | A durable instruction for the assembler, extracted by artificial intelligence from human edits. Affects presentation only (style, grammar, disambiguation, formatting, naming). Cannot alter factual content. |
 | **Assemble** | What the assembler's artificial intelligence does with knowledge-graph data to produce articles: arrange existing claims, attributions, and relationships into readable prose. It does not create information. |
 
 ## Relationships
 
 - A **person** or **organisation** produces one or more **records** (making them a source)
+- A **record** is transcribed into exactly one **ingest**, which is read to produce one **digest** per model
 - A **record** contains one or more **claims**
 - A **claim** has a **speaker** (the person who made the assertion, which may differ from the record's producer)
-- A **claim** has a location within its record (timestamp, page number, paragraph)
+- A **claim** has a location within its record's **ingest** (timestamp, page number, character span) - the ingest is the text that was read, so it is the only thing an offset can address
 - A **claim** is attributed to one or more **records** (the same claim may appear in multiple records, which may constitute corroboration if the provenance chains are independent)
 - A **claim** references zero or more **domain nodes** (person, organisation, project, place, event, object, document, topic)
 - Domain nodes do not link directly to each other. Every relationship passes through a claim.
 
 ## Record provenance: who made a record versus who made a claim
 
-A record's source-origin metadata lives in one `provenance` block ([record-format.md](record-format.md#provenance), [decision 0043](../decisions/0043-canonical-provenance-block.md)) - `publisher`, `creators`, `published_date`, `source_url`, `identifiers`, `collection`, and the rest. Two roles matter for who-said-what:
+A record's source-origin metadata lives in one `provenance` block ([ingest-format.md](ingest-format.md#provenance), [decision 0043](../decisions/0043-canonical-provenance-block.md)) - `publisher`, `creators`, `published_date`, `source_url`, `identifiers`, `collection`, and the rest. Two roles matter for who-said-what:
 
 - **`provenance.publisher`** - the entity that created the source (a channel, outlet, or committee), not the hosting platform.
 - **`provenance.creators`** - the human creator(s): a document's author, a video or podcast host or presenter, a named channel owner. Person names in natural order.
@@ -53,7 +56,7 @@ Most sources map to one record. The exception is a large CONTAINER whose relevan
 
 The test is **whole when extracting the container is mostly signal, excerpt when it is mostly noise.** Size is a symptom, not the criterion: a short mostly-irrelevant source may excerpt, a long mostly-relevant one stays whole.
 
-A scoped excerpt record is **anchored on the container plus its scope**: its `content_hash` is over the archived container's bytes together with the normalised scope string (so two excerpts of one act are distinct records, while re-extracting either keeps its identity), and `source_hash` addresses the full archived container - the same two-hash pattern web and ebook records already use ([record-format.md](record-format.md), [format-specs.yaml](../reference/format-specs.yaml) `chain`). Provenance names the container and the scope: `publisher` (issuing body), `identifiers` (the public-law or report number), `source_url` (the full act), and the record title carries the sections ("NDAA FY2023 - UAP provisions, secs. 6801-6803"). A different section becoming relevant later is a new excerpt record from the same archived original - nothing is re-acquired, and completeness lives in the archive rather than in every record.
+A scoped excerpt record is **anchored on the container plus its scope**: its `content_hash` is over the archived container's bytes together with the normalised scope string (so two excerpts of one act are distinct records, while re-extracting either keeps its identity), and `source_hash` addresses the full archived container - the same two-hash pattern web and ebook records already use ([ingest-format.md](ingest-format.md), [format-specs.yaml](../reference/format-specs.yaml) `chain`). Provenance names the container and the scope: `publisher` (issuing body), `identifiers` (the public-law or report number), `source_url` (the full act), and the record title carries the sections ("NDAA FY2023 - UAP provisions, secs. 6801-6803"). A different section becoming relevant later is a new excerpt record from the same archived original - nothing is re-acquired, and completeness lives in the archive rather than in every record.
 
 The whole-versus-excerpt call is a **human judgement made at acquisition** - relevance density is not something the ingester can infer from a file, so it cannot decide noise-from-signal itself. It reaches the handler as an explicit **excerpt directive** on the source, carrying the section scope (e.g. `excerpt: {scope: "secs. 6801-6803"}`). That directive does two things: it selects the sections the handler extracts, and it enters the scope string into the record's identity (name by the hash of container bytes plus normalised scope, write `source_hash` over the full archived container). Absent the directive a source ingests WHOLE, which is the safe default - a missing directive under-excerpts (a larger but complete record), never silently drops relevant content. The same scope string becomes the record's title suffix and the provenance section-naming.
 

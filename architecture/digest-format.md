@@ -10,7 +10,7 @@ canonical digest - see [Planned: multi-model digestion](#planned-multi-model-dig
 and [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md).
 
 The companion document on the ingester side is
-[`record-format.md`](record-format.md). This document covers the digester
+[`ingest-format.md`](ingest-format.md). This document covers the digester
 side.
 
 The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.digest`); this document is its narrative companion.
@@ -301,7 +301,7 @@ Together with `prompts` and `model` this makes a digest exactly reproducible:
 the deterministic prep that produced the pre-digest. The materialised pre-digest
 artefact is stored content-addressed and served for inspection by the workbench's
 pre-digest tab; its store layout is in
-[record-format.md](record-format.md). Absent on digests produced before the
+[ingest-format.md](ingest-format.md). Absent on digests produced before the
 pre-digest stage.
 
 ### `nodes`

@@ -3,7 +3,7 @@
 # Every Anomalica document type's header/frontmatter fields and the hash chain that
 # links them, in one place. Consumers (the site's architecture page, tooling) read THIS
 # file directly and must not hand-copy these fields elsewhere - that is the duplication
-# this file exists to prevent. The prose companions under architecture/ (record-format.md,
+# this file exists to prevent. The prose companions under architecture/ (ingest-format.md,
 # digest-format.md, brief-format.md, content-format.md) carry the narrative (body grammar,
 # parser behaviour, examples); the field list is canonical here.
 #
@@ -29,7 +29,7 @@ types:
     schema: anomalica/record/1
     status: stable
     serialisation: markdown + YAML frontmatter
-    spec_doc: architecture/record-format.md
+    spec_doc: architecture/ingest-format.md
     summary: One file per ingested source - the interchange between the ingester and the digester.
     source_types: [pdf, audio, video, web, ebook]
     # `formats` on a field lists the source_types it applies to, ONLY where the spec states
@@ -43,7 +43,7 @@ types:
       - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts
           that carry per-word `{{t:}}` markers."}
       - {name: provenance, type: object, required: true, description: "Canonical source-origin block (decision 0043; narrative
-          + example in record-format.md). Sub-fields, each OMITTED when absent (never null): collection (curated grouping,
+          + example in ingest-format.md). Sub-fields, each OMITTED when absent (never null): collection (curated grouping,
           e.g. 'war.gov UFO reading room'); publisher (issuing body / channel / author-org, not the hosting platform); creators
           (human author(s)/host(s), person names in natural order); published_date (the SOURCE's own publication/upload date,
           ISO 8601, may be partial - omitted when genuinely undated); acquired_date (when we brought it in, ISO 8601 datetime);
@@ -57,11 +57,11 @@ types:
           has no performative incentive) and DISCLOSURE (published | declassified | foia | subpoena | leaked | unknown - the
           authenticity axis; a FOIA release is attested by the holding agency, a leak by nobody). Keep them separate: folding
           disclosure into audience lets an unauthenticated document inherit a compelled release's credibility. Narrative in
-          record-format.md."}
+          ingest-format.md."}
       - {name: document_type, type: string, required: false, description: "WHAT the artefact is (email, letter, memo, report,
           statute, affidavit, transcript, interview), orthogonal to source_type which is HOW it was acquired. Open set. Describes
           the WHOLE record, so never set on a container: a FOIA pdf holding many emails is not document_type email - its correspondence
-          is marked in the body with message-boundary annotations. See record-format.md."}
+          is marked in the body with message-boundary annotations. See ingest-format.md."}
       - {name: email, type: object, required: false, description: "Format-native email structure where document_type is email,
           parsed deterministically from RFC822 headers (stdlib email parser, no model). {from, to, cc, subject, in_reply_to,
           references} with participants as {name, address}. Does NOT repeat published_date or creators - the Date header IS
@@ -94,7 +94,7 @@ types:
       - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright
           draft). status is one of public_domain, open_licence, publicly_accessible, licensed, restricted. Only public_domain
           and open_licence serve the ORIGINAL file openly; the rest gate it behind proof of possession. DEFAULTS BY ACQUISITION
-          (most specific wins, narrative in record-format.md): an explicit --copyright > a .gov/.mil URL -> public_domain
+          (most specific wins, narrative in ingest-format.md): an explicit --copyright > a .gov/.mil URL -> public_domain
           (US government works carry no copyright, 17 USC 105 - gating one hides a public document for no benefit; match the
           HOSTNAME, never the string, or 'example.com/fake.gov/x.pdf' opens copyrighted material) > any other http(s) URL
           -> publicly_accessible (retrieving it anonymously PROVES public accessibility; the original still stays gated, the
@@ -139,7 +139,7 @@ types:
           Currently {count, total_bytes}. Omitted when the record has no extracted media."}
       - {name: ai_usage, type: object, required: false, status: provisional, description: "PROVENANCE-ONLY record of AI processing
           that produced this record (model, version, token counts). No cost fields. Exact sub-field shape pending confirmation
-          from the ingester workspace - emitted by the pipeline but not yet in record-format.md."}
+          from the ingester workspace - emitted by the pipeline but not yet in ingest-format.md."}
       - {name: overlay_next_id, type: integer, required: false, description: "The next overlay-marker id to mint. Highlights,
           span notes, links AND the references between them share ONE per-record id space; this counter only ever increases,
           so no id the record has ever mentioned in any overlay construct is reissued - which keeps highlight context links
@@ -148,7 +148,7 @@ types:
           collide with them). Written by the workbench, not the ingester. Absent on records with no overlay markers; when
           absent, derive the high-water from the largest id mentioned anywhere in the body (markers and references alike,
           since a dangling reference can be the only thing naming an id), clamped up to the authoring UI's minimum id - a
-          fresh record starts at that minimum, not zero. See record-format.md."}
+          fresh record starts at that minimum, not zero. See ingest-format.md."}
     sidecars:
       "sources/{content_hash}.peaks.json": "Waveform amplitude envelope of the archived original, audio/video only, schema
         anomalica/peaks/1. {schema, hex_hash, bins_per_second, duration, peaks}. `peaks` is one unsigned byte per bin, base64;

@@ -19,7 +19,7 @@ This record defines where each kind of decision now lives, and how records are m
 | Concern | Home | Form |
 |---------|------|------|
 | **Architecture** - how the system is built: pipeline, interchange formats, storage, assembly, ingestion, evidence scoring | `decisions/` (numbered ADRs; `decisions/drafts/` for in-progress) | ADR: Context, Decision, Consequences |
-| **Data model, terminology, taxonomy** - node types, naming conventions, claim/extraction conventions, the shared vocabulary | living docs in `architecture/` (`data-model.md`, `node-types.md`, `record-format.md`) | edit-in-place, current state only |
+| **Data model, terminology, taxonomy** - node types, naming conventions, claim/extraction conventions, the shared vocabulary | living docs in `architecture/` (`data-model.md`, `node-types.md`, `ingest-format.md`) | edit-in-place, current state only |
 | **Editorial and voice** - how content reads: plain language, neutral voice, AI-authorship disclosure | `guides/editorial-style.md` | living guide |
 | **Governance and founding** - what the project is and how it is run: founding aims, name, licensing, funding, scope commitments, disclosure policy | `guides/governance.md` | living charter |
 | **Operations and infrastructure** - running the service: domains, hosting, analytics, jurisdiction | the `operations` repo | operations' call |
