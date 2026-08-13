@@ -68,6 +68,16 @@ better-corroborated the more duplicates it holds. Recording the alias also close
 dedup path - keyed on one URL alone, a retired address returns as a fresh record the
 next time it is pasted.
 
+**An alias is an assertion, so it carries its evidence.** Because dedup treats an
+alias as identity, a WRONG alias does not show up as a duplicate - it silently
+suppresses a legitimate ingest, and "already held" reads exactly the same whether the
+match was right or wrong. The two errors are not symmetric: under-merging inflates
+corroboration, over-merging hides content and says nothing. So an alias is added on
+evidence, never on resemblance of title, and the evidence goes in
+`superseded_reason` where it can be checked rather than taken on trust. Running time
+to the centisecond is the cheap fingerprint and it separates the two branches above
+exactly: a re-encode matches, a cut-down or re-recording does not.
+
 ## Record unit: whole containers versus scoped excerpts
 
 Most sources map to one record. The exception is a large CONTAINER whose relevant content is a small, cited fraction - a defence appropriations act (~1700 pages) cited only for its UAP provisions, an omnibus report, a hearing appendix. Two units are possible, and the choice is by relevance DENSITY, not size:
