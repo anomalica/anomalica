@@ -779,13 +779,28 @@ media/          # extracted images, per-record subdirectories
 
 The `store/` directory contains the actual record files, named by `content_hash`. What `content_hash` hashes per source type, and how it links back to `sources/`, is defined once in the canonical hash chain ([`format-specs.yaml`](../reference/format-specs.yaml), `chain:`) and is not restated here.
 
-**An ingest's own hash does not name its archived original for every type.** Resolve
-an original through `source_hash` where it is present, not through `content_hash`
-alone: 18 of the 19 copyright-gated ingests on disk today are epubs that resolve only
-that way. A resolver that consults `content_hash` alone returns almost nothing and
-gives no sign it looked in the wrong place. See the open item in
-[naming-migration.md](naming-migration.md) - the rule below is settled, the stored
-data has not all caught up with it.
+**An ingest's own hash does not name its archived original for every type. Resolve
+through `source_hash` wherever it is present.** Measured across all 221 ingests on
+disk, the split is exact and has no exceptions:
+
+| Types | `content_hash` names the original | carries `source_hash` |
+|-------|----------------------------------|-----------------------|
+| audio, pdf, video (171) | yes, all | none |
+| web, ebook (50) | no, none | yes, all |
+
+A resolver consulting `content_hash` alone therefore finds nothing at all for web and
+ebook, and gives no sign it looked in the wrong place - it reads as "no original
+archived". That has already produced one wrong answer, a storage move sized at 1
+object instead of 19.
+
+NOTE THE CONTRADICTION WITH THE PARAGRAPH BELOW, which says web and ebook were
+reconciled onto source-byte hashing on 2026-07-25. The data says otherwise, and not
+as leftovers: ebooks extracted on 2026-07-29 and 2026-07-30 body-hash exactly like
+the older ones, and `source_hash` is present in precisely the two types that need it
+and absent from the three that do not. That is a designed pattern, not an unmigrated
+tail. Either the reconciliation never shipped for these two types or the narrative
+overstates its scope; the ingester owns the hashing and is resolving which. Until
+then, trust the table above over the narrative.
 
 **A record's identity is its source plus its selection, never its extraction output.** `content_hash` hashes the archived source asset's bytes, and - for a [scoped excerpt](data-model.md#record-unit-whole-containers-versus-scoped-excerpts) - the normalised scope string with it. It never hashes the extracted body.
 

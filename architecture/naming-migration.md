@@ -106,15 +106,15 @@ They are listed so the remaining work is visible rather than assumed finished.
 original's bytes plus any scope string, never the extracted body, which is what makes
 re-extraction in place safe.
 
-THE DATA HAS NOT CAUGHT UP WITH THE RULE, and it is worth knowing before anyone
-relies on it. Of the 19 copyright-gated ingests, 18 find their archived original only
-through `source_hash`; exactly one resolves through `content_hash`. All 18 are epubs.
-So on disk an ebook's `content_hash` still does not name its original, and code that
-resolves originals by `content_hash` alone silently finds almost nothing while
-looking like it worked. Two candidate causes, not yet separated: those records
-predate the reconciliation and want re-ingesting, or ebook is legitimately keeping
-the two-hash form and the narrative overstates the reconciliation. Resolve before
-this is treated as done.
+THE NARRATIVE AND THE DATA DISAGREE, and the data is consistent enough to be
+believed. Across all 221 ingests: audio, pdf and video (171) hash the original's
+bytes and carry no `source_hash`; web and ebook (50) hash the body and every one
+carries `source_hash`. No exceptions either way, and ebooks extracted after the
+reconciliation date behave identically to those before it. So this is a two-hash
+design for the two types whose original is not the text, not an unmigrated tail.
+Either the reconciliation never shipped for web and ebook or its written scope is too
+broad; the ingester owns the hashing and is resolving which. `ingest-format.md`
+carries the measured table and a pointer to the contradiction.
 
 Nearly all occurrences are in generated pages under `content/`, which the assembler
 rewrites, so they are not hand-edited.
