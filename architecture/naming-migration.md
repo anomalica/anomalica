@@ -51,32 +51,37 @@ meaning two things, which is the same defect one word to the left.
 |-----|---------|----------|
 | `sources/` (plain directory, not a repo) | `records/` | 1,062 originals |
 | `ingests/records/` | `ingests/by-name/` | 220 readable-name symlinks into `store/`; pairs with `store/`, which addresses by hash |
-| `digests/records/` and `digests/variants/` | `digests/` flat | 80 canonical plus 209 variants, together |
+| `digests/records/` | `digests/` itself | The 80 canonical digests move up one level; the misnamed folder is removed rather than renamed |
+| `digests/variants/` | unchanged | 209 per-model variants, still grouped per ingest |
 
 `ingests/store/` keeps its name. `content/pages/records/` keeps its name: those pages
 are about the original document.
 
-### Digest filenames
+### Why the canonical digests are not distinguished by filename
 
-The two digest subdirectories collapse into one flat directory, with the filename
-carrying the distinction:
+A filename convention was considered and rejected: `{slug}.yaml` for canonical and
+`{slug}--{model}.{signature}.yaml` for a variation, in one flat directory.
+
+It reads well and keeps each ingest's digests adjacent in a sorted listing, but the
+separator is a parsing convention, and a convention is something a future slug can
+violate. Ingest names already contain dots (146 of 220 carry a `.v2` infix), which is
+why a dot could not be the separator in the first place; there is no reason to assume
+hyphens are safer forever. Every consumer would then have to know the rule, and one
+that forgot would silently treat a variation as canonical.
+
+A directory boundary cannot be broken by a filename. So the canonical digests sit at
+the root of `digests/` and the variants a level below:
 
 ```
-digests/2020-09-04-pdf-range-fouler-reporting-form.yaml
-digests/2020-09-04-pdf-range-fouler-reporting-form--sonnet.e9b8b6d4.yaml
+digests/
+  2020-09-04-pdf-range-fouler-reporting-form.yaml
+  variants/
+    2020-09-04-pdf-range-fouler-reporting-form/
+      sonnet.e9b8b6d4.yaml
 ```
 
-No double hyphen means canonical; a double hyphen introduces the model and prompt
-signature that produced that variation. A sorted listing puts each ingest's canonical
-digest immediately above its own variations.
-
-The separator cannot be a dot. Ingest names already contain them (146 of 220 carry a
-`.v2` infix) and variant files are themselves `model.signature.yaml`, so splitting on
-dots is ambiguous. No existing slug contains a double hyphen, and slug generation
-collapses hyphen runs, so it stays unambiguous.
-
-Consumers that glob `digests/*.yaml` for canonical digests must exclude `--`. That
-replaces the current requirement to know two directory names.
+`digests/*.yaml` is then exactly the canonical set. No filter, no convention, and a
+variation cannot match the glob because it is not at that level.
 
 ### Identifiers
 
