@@ -47,6 +47,27 @@ Properties that accumulate as data flows through the knowledge graph, derived fr
 | **Correction behaviour** | Whether and how quickly the source issues corrections when its claims are contradicted. Tracked as observable events. |
 | **Independence** | Institutional and financial connections to the subjects the source covers. Documented factually, not scored as good or bad. |
 
+## Record identity: one artefact, several URLs
+
+A record is the ARTEFACT, so two places to fetch the same artefact are one record,
+not two. A podcast episode uploaded by its publisher and reposted by a news channel
+is one record reachable at two URLs, recorded as `also_published_at` and
+[`superseded_by`](ingest-format.md) rather than as a second record - exactly as an
+ISBN and a library shelfmark are two ways to reach one book.
+
+**The test is the artefact, not the bytes.** The same episode re-encoded by a second
+uploader is one record with two URLs even though the two files hash differently. A
+different edit - a cut-down, a re-recording, a different running time - is a
+different artefact and therefore a different record.
+
+The decisive reason is corroboration, not tidiness. Claims cite records, and
+independence is assessed by provenance root, so filing one recording as two records
+makes a single account look like two independent sources agreeing with each other.
+That inverts the measure meant to detect single-sourcing: the corpus reads
+better-corroborated the more duplicates it holds. Recording the alias also closes the
+dedup path - keyed on one URL alone, a retired address returns as a fresh record the
+next time it is pasted.
+
 ## Record unit: whole containers versus scoped excerpts
 
 Most sources map to one record. The exception is a large CONTAINER whose relevant content is a small, cited fraction - a defence appropriations act (~1700 pages) cited only for its UAP provisions, an omnibus report, a hearing appendix. Two units are possible, and the choice is by relevance DENSITY, not size:
