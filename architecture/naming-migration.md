@@ -157,6 +157,32 @@ Each step leaves the system working. Steps 3 and 4 landed together per repo.
 7. **Hash split.** SUPERSEDED. The rule was already settled on 2026-07-25; what
    remains is the stored data catching up with it, described under Identifiers.
 
+## What the sweep missed, and why
+
+Two sites survived every pattern-based sweep and both failed in the quiet
+direction - after the expensive work, in a way that reads as something else.
+
+- **`ingester/ingest` staged `records/`.** Every ingest after the rename acquired the
+  source, extracted it, wrote the ingest, wrote its symlink and its verification
+  sidecar, and then exited 128 on `pathspec 'records/' did not match any files`. The
+  output was correct and simply never committed, so ingests piled up untracked and
+  the failure read as a git problem rather than as work going nowhere.
+- **`digester/reports/run-queue.sh` resolved `$DIGESTS/records/{slug}.yaml`.** The
+  comment directly above that line already warned that getting it wrong "reads every
+  record as undigested and re-runs the entire corpus" - which is what it would have
+  done, on the plan, at corpus scale.
+
+THE PATTERNS WERE THE PROBLEM. The sweeps matched shapes that appear in Python -
+`ingests/records`, `/ "records"`, `digests_path / "records"` - and a bare `records/`
+inside a shell command matches none of them. Neither site is exotic; both are the
+most ordinary way to write a path in shell.
+
+So when renaming a directory, grep for the BARE segment (`records/`) across every
+executable file type including shell, and read every hit rather than filtering to
+the shapes you expect. Most hits will be prose and public URLs that must not change,
+which is the cost; the alternative is a path that only bites after the expensive
+work has been done.
+
 ## Verification
 
 - After step 3: `assimilate` rebuilds the graph and reports the same node and claim
