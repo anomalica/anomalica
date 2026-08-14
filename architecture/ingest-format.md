@@ -550,6 +550,18 @@ At least one of the two fields is present on every marked section: a numbered ch
 
 These are structural markers, not rendered prose. Consumers typically use them for navigation (jump-to-chapter, table of contents construction) and suppress them when displaying the body. Where a `chapter_title` is present, the source itself usually also opens the chapter with a heading on the next non-empty line; consumers should not render the annotation as a duplicate of that heading. A claim's location cites the `chapter` value (`ch1:1240-1310`), so it names the chapter a reader can turn to rather than a file offset.
 
+### Footnotes
+
+Footnotes and endnotes are normalised to CommonMark footnote syntax regardless of where the source keeps the note text (foot of the page, end of the chapter, end of the book):
+
+```markdown
+The craft was recovered in 1947.[^12]
+
+[^12]: Corso, *The Day After Roswell*, p. 34.
+```
+
+A `[^N]` reference marker is placed inline at the exact point the source cites the note, and the note's text is collected as a `[^N]: ...` definition at the end of the chapter that cites it, so a chapter and its notes stay together when the body is chunked by chapter. `N` is a book-wide sequential number, unique across the whole record. The reference and its definition replace the source's own linkage (a superscript linking to a separate notes section), which would otherwise flatten to a bare digit stuck onto the preceding word. Where the note text cannot be resolved, the `[^N]` marker is still emitted without a definition rather than left as a stray digit in the prose.
+
 ### Block-level redaction
 
 ```markdown
