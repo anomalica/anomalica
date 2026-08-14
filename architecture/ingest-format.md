@@ -412,7 +412,7 @@ Four bracketed tokens are reserved for non-individual sources:
 | Token | Meaning |
 |-------|---------|
 | `[narrator]` | A voice-over narrator distinct from any on-camera speaker. |
-| `[external footage]` | Audio from an inserted clip (news segment, archival recording, etc.) where the speaker isn't part of the primary recording. |
+| `[external footage]` | DEPRECATED - use an [external passage](#external-passages) region instead, and name the speaker plainly. Retained only so existing records parse. |
 | `[group]` | Multiple people saying the same thing simultaneously - chants, unison answers from a committee, group responses. |
 | `[irrelevant]` | Content that doesn't belong in the record (ads, sponsor reads, off-topic asides). Hidden from rendered output, and stripped before extraction so no claim is drawn from it (see [Irrelevant content](#irrelevant-content)). |
 
@@ -613,7 +613,7 @@ The content inside `{{ }}` is parsed as YAML, in one of two authored forms:
 - **Keyed** - a single key-value pair where the key describes what or who the annotation is about and the value gives the detail (`{{Fravor: holds up photograph}}`). There is no fixed vocabulary of keys; the key is whatever makes sense in context.
 - **Keyless** - a bare YAML scalar, for an unkeyed note that needs no subject (`{{laughs}}`, `{{applause}}`). The scalar is the whole note.
 
-A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` / `highlight-context` ([Highlights](#highlights), [Highlight context links](#highlight-context-links)), `note-start` / `note-end` ([Span notes](#span-notes)), and `link-start` / `link-end` ([Cross-record links](#cross-record-links)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t`, `highlight-*`, and `link-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
+A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` / `highlight-context` ([Highlights](#highlights), [Highlight context links](#highlight-context-links)), `note-start` / `note-end` ([Span notes](#span-notes)), `link-start` / `link-end` ([Cross-record links](#cross-record-links)), and `external-start` / `external-end` ([External passages](#external-passages)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t`, `highlight-*`, and `link-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
 
 ### Why double curly braces
 
@@ -654,6 +654,51 @@ A highlight marks a span a reviewer judged significant - gold to keep, an exampl
 A highlight is a pair of inline markers sharing a short opaque id:
 
 ```markdown
+### External passages
+
+A passage the record QUOTES rather than utters - an inserted clip, an archival
+recording, a read-aloud excerpt. The speaker is the person who spoke the words, named
+plainly; where those words came from is a property of the PASSAGE, not of the name:
+
+```
+<!-- speaker: Buzz Aldrin -->
+{{external-start: [a1, "Larry King Live, 1996"]}}
+There was this object out there ...
+{{external-end: a1}}
+```
+
+Elements: an opaque id, a human description of where the passage came from, and
+optionally the `sha256:` content hash of the record it came from when that record has
+itself been ingested. Description and hash are SEPARATE positions rather than one
+slot holding either, so no consumer has to sniff for a `sha256:` prefix to know what
+it is holding. Overlap, orphan and nesting behaviour is the highlight rule exactly.
+
+**The speaker is the person, always.** `Buzz Aldrin`, in every record that quotes him,
+never `Buzz Aldrin (External Footage)`. Folding provenance into the name conflates WHO
+spoke with WHERE it came from, and downstream every spelling becomes a separate
+person: the corpus carries `Buzz Aldrin` and `Buzz Aldrin (External Footage)` as two
+speakers, Ross Coulthart as four, and one record inverts it entirely to
+`External footage (Victor)` - the provenance became the name and the person became the
+parenthetical.
+
+**NOT stripped from the pre-digest.** Unlike an irrelevant region, an external passage
+is frequently the most load-bearing material in the record; stripping it would delete
+the quoted person's actual words from a record whose whole point is that it carries
+them. The markers go, the words stay.
+
+**What it is FOR is attestation, not tidiness.** Words spoken in a 1996 broadcast were
+not uttered in a 2026 podcast, so a claim drawn from the passage belongs to the
+original speaker with the quoting record as a relay - `origin` is the person in the
+clip, `relay` carries the record that replayed it
+([0044](../decisions/0044-claim-provenance-chain-is-required.md)). This needs no new
+machinery: 2,507 claims already carry a non-empty relay.
+
+The stake is corroboration. Attribute a quoted clip to the record containing it and
+the same clip quoted by three podcasts reads as three independent sources agreeing -
+the same inversion that duplicate records produce, where the corpus looks
+better-corroborated the more often one statement is repeated. Where the hash is
+present and the original is ingested, corroboration counts the original ONCE.
+
 The {{highlight-start: a1}}remote viewers with the NSA{{highlight-end: a1}} were getting this.
 ```
 
