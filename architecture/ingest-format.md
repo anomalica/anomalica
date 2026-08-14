@@ -537,16 +537,18 @@ image:
 Marks the start of a chapter or top-level structural section in long-form documents (primarily ebooks).
 
 ```markdown
-<!-- chapter: 3 -->
-<!-- chapter_title: "DEDICATION" -->
+<!-- chapter: 1 -->
+<!-- chapter_title: "The Secrecy" -->
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `chapter` | integer | yes | Sequential index of the chapter within the document, starting at 1. Counts every structural section the source defines, including front matter (cover, dedication, contents). |
-| `chapter_title` | string | no | The chapter's title as given in the source. Always quoted. Omitted when the source provides no explicit title. |
+| `chapter` | string | no | The chapter's own number, as a decimal string. It is the number the book prints at the head of the chapter, however the source writes it - `1`, `Chapter One`, `CHAPTER I`, and a bare `ONE` all yield `chapter: 1` - so the value is the label a reader would cite ("chapter 1"), not a position in the file: the book's chapter 1 carries `chapter: 1` even though a dozen front-matter sections precede it in reading order. Omitted for any section the source does not number - front matter (cover, contents, dedication), part dividers ("Part One"), and unnumbered chapters. |
+| `chapter_title` | string | no | The chapter's title as given in the source, with any leading enumerator stripped (`"1. The Secrecy"` in the table of contents becomes `"The Secrecy"`, the number moving to `chapter`). Always quoted. Omitted when the source provides no explicit title. |
 
-These are structural markers, not rendered prose. Consumers typically use them for navigation (jump-to-chapter, table of contents construction) and suppress them when displaying the body. Where a `chapter_title` is present, the source itself usually also opens the chapter with a heading on the next non-empty line; consumers should not render the annotation as a duplicate of that heading.
+At least one of the two fields is present on every marked section: a numbered chapter carries both, a titled-but-unnumbered section (front matter, a part divider) carries `chapter_title` alone. The extractor drops the source's own chapter-number heading from the body once it is captured here, so the number is not left as an orphan line (`1`) with no context; a part divider keeps its "Part One" line as prose.
+
+These are structural markers, not rendered prose. Consumers typically use them for navigation (jump-to-chapter, table of contents construction) and suppress them when displaying the body. Where a `chapter_title` is present, the source itself usually also opens the chapter with a heading on the next non-empty line; consumers should not render the annotation as a duplicate of that heading. A claim's location cites the `chapter` value (`ch1:1240-1310`), so it names the chapter a reader can turn to rather than a file offset.
 
 ### Block-level redaction
 
