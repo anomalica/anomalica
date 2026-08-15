@@ -627,7 +627,7 @@ The content inside `{{ }}` is parsed as YAML, in one of two authored forms:
 - **Keyed** - a single key-value pair where the key describes what or who the annotation is about and the value gives the detail (`{{Fravor: holds up photograph}}`). There is no fixed vocabulary of keys; the key is whatever makes sense in context.
 - **Keyless** - a bare YAML scalar, for an unkeyed note that needs no subject (`{{laughs}}`, `{{applause}}`). The scalar is the whole note.
 
-A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` / `highlight-context` ([Highlights](#highlights), [Highlight context links](#highlight-context-links)), `note-start` / `note-end` ([Span notes](#span-notes)), `link-start` / `link-end` ([Cross-record links](#cross-record-links)), and `external-start` / `external-end` ([External passages](#external-passages)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t`, `highlight-*`, and `link-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
+A small set of keys is *reserved* for machine-read markers rather than free-form annotation content: `t` (word-level timestamp), `highlight-start` / `highlight-end` / `highlight-context` ([Highlights](#highlights), [Highlight context links](#highlight-context-links)), `note-start` / `note-end` ([Span notes](#span-notes)), `link-start` / `link-end` ([Cross-record links](#cross-record-links)), `external-start` / `external-end` ([External passages](#external-passages)), and `cites-start` / `cites-end` ([Cited works](#cited-works)). A consumer treating the body as prose strips the whole `{{...}}` family so a marker never breaks word matching. The extraction pipeline strips the `t`, `highlight-*`, and `link-*` markers entirely (they carry no content); for `note-*` it strips the markers but preserves the note's text as context, exactly as it keeps the keyed and keyless content notes (see [Span notes](#span-notes) and [The bracket meta-notation](#the-bracket-meta-notation)).
 
 ### Why double curly braces
 
@@ -668,6 +668,44 @@ A highlight marks a span a reviewer judged significant - gold to keep, an exampl
 A highlight is a pair of inline markers sharing a short opaque id:
 
 ```markdown
+### Cited works
+
+A passage in which the speaker NAMES a work - a book, a report, a film. Records what
+was cited, so an acquisition list and a "which claims rest on material we cannot
+check" query are both derivable:
+
+```
+{{cites-start: [a1, "book", "The Invisible College", "Jacques Vallee"]}}
+Vallee's Invisible College describes ...
+{{cites-end: a1}}
+```
+
+Positions: id, kind, title, optional creator, and optionally the `sha256:` content
+hash of the record for that work once it has been ingested. `kind` is a closed set,
+currently `book` alone: anything fetchable is simply ingested on the spot, so the only
+case needing a placeholder is material that must be physically obtained. Add kinds
+when one actually appears rather than inventing them up front.
+
+**IT RECORDS THE CITATION, NOT WHETHER WE HOLD IT.** The tempting shape is a marker
+meaning "unheld", and it is wrong: whether the corpus holds a work is MUTABLE and the
+marker is not. Acquire the book and every such marker in every record is silently
+false, with nothing to sweep them - a fact that is true when written and quietly
+untrue later, which is the failure mode this format works hardest to avoid. So the
+marker states only what the speaker did, which never changes. Held-ness is a QUERY:
+does a record exist for this work? Always current, and acquisition adds a hash rather
+than invalidating an assertion.
+
+**Distinct from a cross-record link.** A `link` is OUR navigational pointer between
+two records and pins a content hash. A `cites` is THEIR act - the speaker named a
+work - and may pin nothing. The line is authorship, the same line that separates a
+reviewer's span note from the prose it annotates.
+
+**Stripped from the pre-digest**, like highlights and links: the title is in the prose
+already and the marker only makes it machine-readable. Where a reviewer wants to add
+identification the speaker did not give, that is a span note - domain context about
+the material - not this marker, which is infrastructural (see
+[data-model.md](data-model.md#domain-versus-infrastructure)).
+
 ### External passages
 
 A passage the record QUOTES rather than utters - an inserted clip, an archival
