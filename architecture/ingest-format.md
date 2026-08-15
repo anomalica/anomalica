@@ -897,11 +897,10 @@ relied on: every one of the 17 ebook and 34 web records carries a `source_hash`,
 every one of those 51 originals is present in `records/`. There is no partial-coverage
 case to code around.
 
-This shape has now produced three wrong counts in one day, by three different sessions
-- a storage move sized at 1 object instead of 19, a relay count read as 0 instead of
-2,507 by looking at the wrong nesting level, and a coverage figure of 13 ebooks and 27
-web records where the true figure is all of them. Each looked like a clean answer. If
-a count of records touching this seems low, suspect the query.
+This shape has now produced four wrong counts in one day, across three sessions. Each
+looked like a clean answer; see
+[the instrument measured itself](../knowledge/the-instrument-measured-itself.md). If a
+count of records touching this seems low, suspect the query before the data.
 
 NOTE THE CONTRADICTION WITH THE PARAGRAPH BELOW, which says web and ebook were
 reconciled onto source-byte hashing on 2026-07-25. The data says otherwise, and not
