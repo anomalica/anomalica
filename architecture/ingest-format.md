@@ -887,8 +887,21 @@ disk, the split is exact and has no exceptions:
 
 A resolver consulting `content_hash` alone therefore finds nothing at all for web and
 ebook, and gives no sign it looked in the wrong place - it reads as "no original
-archived". That has already produced one wrong answer, a storage move sized at 1
-object instead of 19.
+archived".
+
+**TO ASK WHETHER A FILE IS ALREADY HELD, INDEX BOTH FIELDS.** Hash the file and look
+for it under `content_hash` OR `source_hash`; matching on `content_hash` alone answers
+"no" for every ebook and every web record, which is exactly the case a
+have-we-got-this-already check exists to serve. The invariant is total and can be
+relied on: every one of the 17 ebook and 34 web records carries a `source_hash`, and
+every one of those 51 originals is present in `records/`. There is no partial-coverage
+case to code around.
+
+This shape has now produced three wrong counts in one day, by three different sessions
+- a storage move sized at 1 object instead of 19, a relay count read as 0 instead of
+2,507 by looking at the wrong nesting level, and a coverage figure of 13 ebooks and 27
+web records where the true figure is all of them. Each looked like a clean answer. If
+a count of records touching this seems low, suspect the query.
 
 NOTE THE CONTRADICTION WITH THE PARAGRAPH BELOW, which says web and ebook were
 reconciled onto source-byte hashing on 2026-07-25. The data says otherwise, and not
