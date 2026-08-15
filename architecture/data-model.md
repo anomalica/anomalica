@@ -47,6 +47,30 @@ Properties that accumulate as data flows through the knowledge graph, derived fr
 | **Correction behaviour** | Whether and how quickly the source issues corrections when its claims are contradicted. Tracked as observable events. |
 | **Independence** | Institutional and financial connections to the subjects the source covers. Documented factually, not scored as good or bad. |
 
+## Domain versus infrastructure
+
+Two kinds of statement live in a record, and the digest already separates them:
+`domain_claims` route to `knowledge.db`, `infrastructure_claims` to
+`infrastructure.db` ([digest-format.md](digest-format.md)). 1,825 infrastructure
+claims exist today, so this is the primary partition rather than a refinement of one.
+
+- **Domain** - about the subject. What the witness saw, what the document records,
+  what was on screen that the words alone miss.
+- **Infrastructure** - about the corpus. Which work a passage cites, where a quoted
+  clip came from, what a reviewer needed to establish to read the material.
+
+BODY ANNOTATIONS SIT ON THE SAME AXIS, and which side an annotation falls on
+determines whether the extraction model should ever see it. A span note is domain
+context and is preserved into the pre-digest, because "the witness was pointing at a
+map" is information about the subject. A cited work
+([ingest-format.md](ingest-format.md#cited-works)) is infrastructural and is stripped,
+because which book we have acquired says nothing about UAP and invites the model to
+extract claims about acquisition.
+
+Folding the two into one marker family is what makes that undecidable: a consumer
+handed one bucket cannot tell context about the material from a fact about our
+holdings, and both then reach the model as though they were the same kind of thing.
+
 ## Record identity: one artefact, several URLs
 
 A record is the ARTEFACT, so two places to fetch the same artefact are one record,
