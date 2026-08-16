@@ -42,22 +42,48 @@ types:
       - {name: source_type, type: string, required: true, description: "One of pdf, audio, video, web, ebook."}
       - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts
           that carry per-word `{{t:}}` markers."}
-      - {name: provenance, type: object, required: true, description: "Canonical source-origin block (decision 0043; narrative
-          + example in ingest-format.md). Sub-fields, each OMITTED when absent (never null): collection (curated grouping,
-          e.g. 'war.gov UFO reading room'); publisher (issuing body / channel / author-org, not the hosting platform); creators
-          (human author(s)/host(s), person names in natural order); published_date (the SOURCE's own publication/upload date,
-          ISO 8601, may be partial - omitted when genuinely undated); acquired_date (when we brought it in, ISO 8601 datetime);
-          source_url (canonical URL of the original); fetched_url (URL actually retrieved when different, e.g. a Wayback archive);
-          source_file (original filename for a source ingested from a local file); identifiers (native ids keyed by scheme:
-          youtube, virin, isbn, doi, ...); description (the source's OWN blurb, verbatim, never AI - omitted or truncated
-          for licensed/restricted sources per copyright.status). SOURCE facts only - a subject's incident place and date are
-          claims, not provenance. Copyright is NOT mirrored here; the authoritative field is the top-level `copyright`. Origin-unknown
-          is simply the absence of source_url/fetched_url/source_file/identifiers. Also carries AUDIENCE (internal | public
-          - who the source was written FOR; the evidential axis, since an internal record made by people expecting secrecy
-          has no performative incentive) and DISCLOSURE (published | declassified | foia | subpoena | leaked | unknown - the
-          authenticity axis; a FOIA release is attested by the holding agency, a leak by nobody). Keep them separate: folding
-          disclosure into audience lets an unauthenticated document inherit a compelled release's credibility. Narrative in
-          ingest-format.md."}
+      # CURRENT FLAT FIELDS (2026-08-16). These are what records actually carry - 242 of 257 live
+      # records have no provenance block at all. They are superseded by `provenance` WHEN 0043 SHIPS;
+      # until then they are the live contract and a validator must accept them.
+      - {name: date_published, type: string, required: false, description: "Source publication date, ISO 8601, PARTIAL ALLOWED
+          (2020, 2020-08) - carries only the precision the source evidences, never a guessed day. -> provenance.published_date."}
+      - {name: source_url, type: string, required: false, description: "Canonical URL of the original. -> provenance.source_url."}
+      - {name: fetched_url, type: string, required: false, description: "URL actually retrieved when different (e.g. Wayback).
+          -> provenance.fetched_url."}
+      - {name: source_id, type: string, required: false, description: "Native source identifier. -> provenance.identifiers."}
+      - {name: source_file, type: string, required: false, description: "Original filename of a local-file ingest. -> provenance.source_file."}
+      - {name: publisher, type: string, required: false, description: "Issuing body / channel / author-org. -> provenance.publisher."}
+      - {name: creators, type: list, required: false, description: "Human author(s)/host(s), person names in natural order.
+          -> provenance.creators."}
+      - {name: authors, type: list, required: false, description: "LEGACY ALIAS of creators. Being unified onto creators;
+          do not emit new."}
+      - {name: description, type: string, required: false, description: "The source''s OWN blurb, verbatim, never AI. -> provenance.description."}
+      - {name: date_accessed, type: string, required: false, description: "When the source was retrieved. -> provenance.acquired_date."}
+      - {name: also_published_at, type: list, required: false, description: "Other URLs carrying the same source. TOP-LEVEL
+          on disk; the provenance block places it nested - reconcile when 0043 ships."}
+      - {name: speakers, type: list, required: false, formats: [audio, video], description: "Identified speakers in a transcript
+          (57 records). Distinct from creators: a host is a creator, a guest is a speaker."}
+      - {name: review_carryover, type: object, required: false, description: "Review state carried across a re-extraction
+          (6 records), so a reviewer''s work survives a body rewrite. Written by the workbench."}
+      - {name: provenance, type: object, required: false, status: target, description: "TARGET SHAPE, NOT YET EMITTED - decision
+          0043 is accepted and unimplemented; 242 of 257 live records have no provenance block, and the 15 that do carry war.gov
+          catalogue vocabulary (agency/virin/dvids_id/incident_date), not this one. Was listed required:true, which meant
+          zero live records validated. Consumers read the flat fields above until the migration lands. Canonical source-origin
+          block (decision 0043; narrative + example in ingest-format.md). Sub-fields, each OMITTED when absent (never null):
+          collection (curated grouping, e.g. 'war.gov UFO reading room'); publisher (issuing body / channel / author-org,
+          not the hosting platform); creators (human author(s)/host(s), person names in natural order); published_date (the
+          SOURCE's own publication/upload date, ISO 8601, may be partial - omitted when genuinely undated); acquired_date
+          (when we brought it in, ISO 8601 datetime); source_url (canonical URL of the original); fetched_url (URL actually
+          retrieved when different, e.g. a Wayback archive); source_file (original filename for a source ingested from a local
+          file); identifiers (native ids keyed by scheme: youtube, virin, isbn, doi, ...); description (the source's OWN blurb,
+          verbatim, never AI - omitted or truncated for licensed/restricted sources per copyright.status). SOURCE facts only
+          - a subject's incident place and date are claims, not provenance. Copyright is NOT mirrored here; the authoritative
+          field is the top-level `copyright`. Origin-unknown is simply the absence of source_url/fetched_url/source_file/identifiers.
+          Also carries AUDIENCE (internal | public - who the source was written FOR; the evidential axis, since an internal
+          record made by people expecting secrecy has no performative incentive) and DISCLOSURE (published | declassified
+          | foia | subpoena | leaked | unknown - the authenticity axis; a FOIA release is attested by the holding agency,
+          a leak by nobody). Keep them separate: folding disclosure into audience lets an unauthenticated document inherit
+          a compelled release's credibility. Narrative in ingest-format.md."}
       - {name: document_type, type: string, required: false, description: "WHAT the artefact is (email, letter, memo, report,
           statute, affidavit, transcript, interview), orthogonal to source_type which is HOW it was acquired. Open set. Describes
           the WHOLE record, so never set on a container: a FOIA pdf holding many emails is not document_type email - its correspondence
