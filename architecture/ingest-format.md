@@ -733,10 +733,37 @@ speakers, Ross Coulthart as four, and one record inverts it entirely to
 `External footage (Victor)` - the provenance became the name and the person became the
 parenthetical.
 
-**NOT stripped from the pre-digest.** Unlike an irrelevant region, an external passage
-is frequently the most load-bearing material in the record; stripping it would delete
-the quoted person's actual words from a record whose whole point is that it carries
-them. The markers go, the words stay.
+**STRIPPED from the pre-digest**, markers and words together, joining highlights and
+links. This reverses the original ruling here, which preserved the passage on the
+grounds that a clip is often the most load-bearing material in a record. Three
+reasons overturned it:
+
+- **The copy is worse than the original.** A podcast replaying NASA's Gemini 7 audio
+  transcribes it as one blob attributed to nobody; the same audio is already a record
+  in this corpus, segmented across 33 turns with Frank Borman, Jim Lovell and Mission
+  Control named. Extracting the copy manufactures unattributed claims from a degraded
+  transcript.
+- **And then they corroborate the good ones.** One utterance extracted twice is the
+  false-independence problem again, and stripping removes it at source rather than
+  detecting and collapsing it downstream.
+- **Ingesting an original must be purely additive.** Clips are often from material not
+  yet released. If a container's extraction includes the clip, ingesting the original
+  later puts the same content in the graph from two extractions, and keeping them
+  consistent means re-digesting every container whenever that happens. Stripping means
+  acquiring an original never makes anything already extracted wrong.
+
+THE COST IS REAL AND IS ACCEPTED: a passage held nowhere else contributes nothing to
+the graph. It is not silently lost, though - an external passage with no `sha256:`
+hash is precisely a work item, the same acquisition signal a [cited
+work](#cited-works) carries, and the discipline it enforces is the right one: if a
+clip matters, ingest what it came from, so the corpus only ever extracts from primary
+material.
+
+**This does not merge external into `irrelevant`.** They now share a pipeline
+behaviour and mean different things. `irrelevant` says "not domain content at all";
+external says "somebody else's words, quoted here". Only external keeps the speaker's
+name, feeds the acquisition view, and tells a reader the record is SHOWING rather than
+asserting.
 
 **What it is FOR is attestation, not tidiness.** Words spoken in a 1996 broadcast were
 not uttered in a 2026 podcast, so a claim drawn from the passage belongs to the
