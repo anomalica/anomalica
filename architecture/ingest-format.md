@@ -425,6 +425,31 @@ Four bracketed tokens are reserved for non-individual sources:
 
 The brackets are part of the value. The ingester does not emit these tokens itself - they're applied by human reviewers in the workbench when the diarisation-assigned `Speaker N` is identified as one of these cases.
 
+### Document boundary
+
+Marks where each contained work starts inside a **compilation** - a proceedings of separate papers, an anthology, a report bundling annexes by different authors.
+
+```markdown
+<!-- document: {n: 3, title: "Apparent Endless Extraction of Energy from the Vacuum by Cyclic Manipulation of Casimir Cavity Dimensions", creators: ["Robert L. Forward"], document_type: report} -->
+```
+
+| Key | Meaning |
+|-----|---------|
+| `n` | Position in the container, first document first. |
+| `title` | The contained work's own title. |
+| `creators` | Its authors - **not** the container's. |
+| `document_type` | The contained work's form, where it differs usefully from the container's. |
+
+One annotation carrying a YAML mapping, for the same reason as [message boundaries](#message-boundary): separate keys desynchronise, and a parser then cannot tell a missing key from a misplaced one.
+
+**Attribution flows to the contained document, and this is the load-bearing part.** A claim drawn from between one `document` annotation and the next is attributed to *that* document's `creators`, never the container's. Without the rule, a claim from Forward's paper is sourced to a NASA workshop proceedings and loses that Forward wrote it - the flattened attribution [0044](../decisions/0044-claim-provenance-chain-is-required.md) exists to prevent, arriving by a different route. The container's own `creators` remain whoever compiled or issued it.
+
+This is the general case of the message boundary; correspondence is the specialisation, carrying `from`, `date`, and `quoted` instead. A consumer treating both as "a contained work starts here" is reading them correctly.
+
+**A compilation is one record, not many.** Identity is source plus selection, so one PDF is one source. Splitting a proceedings into seventeen [scoped excerpts](data-model.md#record-unit-whole-containers-versus-scoped-excerpts) would price review and digestion per paper and multiply the store for nothing the annotation does not already give. And `document_type` is never set on the container - a record-level value asserts the whole record is one work.
+
+**Never write frontmatter vocabulary into a body.** A 416-page proceedings arrived carrying seventeen `***`-fenced blocks of `schema: anomalica/record/1` / `title:` / `creators:` / `source_type: pdf` - the extraction model reproducing the record template it had been shown, because the format gave it nowhere else to put per-paper metadata. Those keys are ours, not the source's; by the format's own [total rule](#structure) such a block is content, so the extraction model then reads our schema back as something the source says. The model chose `***` over `---`, correctly avoiding the truncation the [Store](#store) section warns about - it failed only where the format was silent.
+
 ### Message boundary
 
 Marks each message in an email thread, and each piece of correspondence inside a container. Structurally this is the correspondence equivalent of [Speaker change](#speaker-change): one body divided into segments authored by different people at different times.
