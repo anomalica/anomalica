@@ -253,8 +253,15 @@ quality:
   replacement_chars: 0        # U+FFFD count in the body
   substitution_score: 0.0     # OCR proper-noun inconsistency
   page_anchors: 412           # printed_page marker count
-  chapter_titles: true        # chapters carry real titles, not "Chapter 7"
+  chapter_markers: 38         # count of <!-- chapter: --> annotations
+  chapter_titles: 36          # count of <!-- chapter_title: --> annotations
 ```
+
+**`chapter_markers` and `chapter_titles` are both counts, and the pair is the signal.** Markers is how many chapters were found; titles is how many carry a real title. `titles < markers` means chapters whose titles the extractor did not recover - *Hair of the Alien* at 28 markers against 1 title is a book whose titles were lost, which is precisely the defect an ebook re-extraction chases.
+
+`titles > markers` is legal and not an error: an unnumbered section - front matter, a part divider - carries a `chapter_title` with no `chapter` annotation. *American Cosmic* reads 7 markers against 18 titles for that reason. Only the shortfall direction is damage.
+
+`chapter_titles` was specified here as a boolean ("chapters carry real titles") until 2026-08-16. Nothing on disk was ever a boolean; all 17 ebooks carry integers. The drafting error is instructive - a boolean of that shape is a *judgement over a measurement*, which the rule below says not to store. Counts were right and the summary was the mistake.
 
 **It describes the text as delivered, and attributes no fault.** Not `source_quality`: a U+FFFD cannot be attributed between a damaged source and a bad decode on our side, and the distinction is usually unrecoverable. Naming it after the source would assert an attribution we do not have and point a consumer at the wrong thing to discount. What matters downstream is that the text is damaged, not whose fault it was.
 
@@ -1058,8 +1065,7 @@ on 2026-08-16.
 
 Two consequences, both live: a consumer resolving a missing record falls through to
 `store/v1/` and gets a title with no body and no hash, which reads as a retired
-record rather than a queue artefact; and **11 stubs share a filename with a live
-record**, so `store/{hash}.md` and `store/v1/{hash}.md` name the same address with a
+record rather than a queue artefact; and **14 hashes hold a file in both tiers** (11 one-byte stubs plus three others), so `store/{hash}.md` and `store/v1/{hash}.md` name the same address with a
 1-byte stub at one end. The stubs do not belong in the retirement tier - that is a
 writer to fix, not a rule to relax.
 
