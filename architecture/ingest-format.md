@@ -712,11 +712,39 @@ Vallee's Invisible College describes ...
 {{cites-end: a1}}
 ```
 
-Positions: id, kind, title, optional creator, and optionally the `sha256:` content
-hash of the record for that work once it has been ingested. `kind` is a closed set,
-currently `book` alone: anything fetchable is simply ingested on the spot, so the only
-case needing a placeholder is material that must be physically obtained. Add kinds
-when one actually appears rather than inventing them up front.
+Positions: id, kind, title, optional creator, then zero or more LOCATORS.
+
+`kind` is a closed set: `book` and `web`. Add kinds when one actually appears rather
+than inventing them up front.
+
+**A locator is self-identifying by prefix, so it needs no position of its own.**
+
+| Prefix | Means |
+|--------|-------|
+| `https://`, `http://` | where the work lives on the web |
+| `sha256:` | the record for this work in this corpus, once it has been ingested |
+
+```
+{{cites-start: [a1, "book", "The Invisible College", "Jacques Vallee"]}}
+{{cites-start: [a2, "web", "Glowing Auras and Black Money", "New York Times", "https://www.nytimes.com/2017/12/16/us/politics/pentagon-program-ufo-harry-reid.html"]}}
+{{cites-start: [a3, "web", "Glowing Auras and Black Money", "New York Times", "https://www.nytimes.com/...", "sha256:7bf2c20d..."]}}
+```
+
+The alternative was a fixed `url` position after the hash, which reads well until a
+book needs one: it would carry `""` to reach the position past it. An empty string
+standing in for "this kind does not have one" is a placeholder that every consumer
+must learn to skip, and each further kind adds another. Locators avoid it because
+nothing is positional - a citation carries the identifiers it has, in any order, and
+absence is simply absence.
+
+It also extends without a spec change: an `isbn:` or `doi:` is another prefixed
+locator, not a seventh position and a new rule about which slots may be blank.
+
+**A URL and a hash are different facts and both may be present.** The hash says the
+work IS HERE, and is identity; the URL says where to fetch it. A cited web page is
+therefore fetchable in a way a cited book is not - someone can go and ingest it, at
+which point the hash joins the URL and nothing already written becomes wrong, which is
+the additive property this marker exists to have.
 
 **IT RECORDS THE CITATION, NOT WHETHER WE HOLD IT.** The tempting shape is a marker
 meaning "unheld", and it is wrong: whether the corpus holds a work is MUTABLE and the
