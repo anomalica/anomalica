@@ -61,10 +61,14 @@ types:
       - {name: date_accessed, type: string, required: false, description: "When the source was retrieved. -> provenance.acquired_date."}
       - {name: also_published_at, type: list, required: false, description: "Other URLs carrying the same source. TOP-LEVEL
           on disk; the provenance block places it nested - reconcile when 0043 ships."}
-      - {name: speakers, type: list, required: false, formats: [audio, video], description: "Identified speakers in a transcript
-          (57 records). Distinct from creators: a host is a creator, a guest is a speaker."}
-      - {name: review_carryover, type: object, required: false, description: "Review state carried across a re-extraction
-          (6 records), so a reviewer''s work survives a body rewrite. Written by the workbench."}
+      - {name: speakers, type: list, required: false, formats: [audio, video], description: "Names associated with a recording
+          (57 records), UNVALIDATED - populated from source metadata, so values include channel names (Lehto Files) and session
+          labels (Ross Coulthart Q&A) alongside actual people. NOT an identified-speaker roster and not a clean creators/speakers
+          split; semantics pending the ingester. Do not build against it as a person list."}
+      - {name: review_carryover, type: object, required: false, description: "Review state preserved across a re-extraction
+          (6 records) so a reviewer''s work survives a body rewrite. {at, from, had_text_edits}. The workbench READS it and
+          never writes it, lifting it into its listing to render such a record as verify rather than reviewed - load-bearing:
+          drop it and the workbench silently stops telling a carried-over review from a real one."}
       - {name: provenance, type: object, required: false, status: target, description: "TARGET SHAPE, NOT YET EMITTED - decision
           0043 is accepted and unimplemented; 242 of 257 live records have no provenance block, and the 15 that do carry war.gov
           catalogue vocabulary (agency/virin/dvids_id/incident_date), not this one. Was listed required:true, which meant
