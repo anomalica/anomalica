@@ -30,19 +30,27 @@ The first line earns its place. The second instructs the reader to do the only
 thing the screen affords - a list of rows is clickable, and nobody has needed
 telling that for thirty years.
 
-**The definite article is the tell.** To write the second sentence at all you have
-to point at the system's own furniture: *the* corpus, *the* sources, *the* record,
-*the* list. That reaches for internal vocabulary and hands it to someone who never
-asked about the internals. When a sentence of interface copy contains "the" in
-front of a system noun, it is usually the system describing itself.
+**The shape is an imperative plus a purpose clause**: *choose one to read what X
+says*, *click a row to see its claims*, *select a source to view details*. Do this,
+in order to see that. It is a sentence about operating the thing.
+
+**The definite article is the quick tell**, and it is worth scanning for: the
+purpose clause has to name the system's own furniture - *the* corpus, *the* record,
+*the* list - so a "the" in front of a system noun usually rides along with one of
+these. Use it to find candidates, not to convict them.
+
+**IT DOES NOT CONDEMN A SENTENCE THAT SAYS WHAT THE DATA IS.** "Of the 800 works
+named across the material, 25 are ones we hold" names internal furniture too, and
+it is the most valuable line on that screen. The difference is not the article, it
+is what the sentence is for: explaining the furniture to someone who can already
+see it is waste; telling them what they are looking at, when they have never seen
+it before, is the job. A well-made telephone does not say "pick up to talk" - but a
+filing cabinet in someone else's office does need a label saying whose files these
+are.
 
 The mistake behind it is treating information as free. It is not. Every added
 sentence is something to read, and it weakens the line above it - the label was
 doing the work, and now it shares the space with an instruction.
-
-**A well-made telephone does not say "pick up to talk" on the handset**, or "rotate
-the dial to enter a number". It is built to do one thing and it lets the thing be
-obvious. Cluttering it is what a lesser tool does.
 
 So: write the label, then stop. If the interaction genuinely is not obvious, that
 is a fault in the design, and a sentence of explanation hides it rather than fixing
