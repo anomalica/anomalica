@@ -80,6 +80,8 @@ Each named work carries a **shelf-check**: whether the corpus holds it. Of the 8
 Two things the view is careful about:
 
 - **`administrative` is not a defect category.** 1,469 of the 1,830 claims are typed `administrative`, which is what a bibliography is made of. The other 361 were typed as observation, testimony or hearsay - types the extraction usually reserves for the domain half. They sort to the top because that is where a mis-filed domain claim would be found, but the claim type does not determine the split (the digester assigns the section, and the type independently), so this is a heuristic and the view says so.
+- **20 of the 800 works are the same work listed twice.** `Communion` and `Communion (Whitley Strieber book)` are separate nodes, so the counts report them twice. The assimilator's merge ledger would fold them, but replay is only ever passed the domain connection - it has never reached `infrastructure.db` and a merge recorded today would not either. The view names the duplicates rather than reporting one work as two in silence.
+
 - **The read is read-only.** `infrastructure.db` is derived and rebuilt from the digests on every import, so a correction written there would not survive. Recategorising a claim belongs in the curation ledger the assimilator replays, keyed on `claim_fingerprint` scoped by record content hash - not on `claims.id` (fresh per emission) or `claim_hash` (which includes resolved graph ids and moves when node resolution moves). No correction action is built yet.
 
 ## Copyright handling
