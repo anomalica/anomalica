@@ -425,6 +425,22 @@ Four bracketed tokens are reserved for non-individual sources:
 
 The brackets are part of the value. The ingester does not emit these tokens itself - they're applied by human reviewers in the workbench when the diarisation-assigned `Speaker N` is identified as one of these cases.
 
+### Mathematics
+
+Equations are transcribed as LaTeX, delimited `\[ ... \]` for display and `\( ... \)` inline.
+
+```markdown
+\[ r = R \sqrt{\beta} \frac{F_\text{sky}\,\Omega}{F_\text{sun}\,\alpha_\text{moon}} \tag{4} \]
+```
+
+**This is faithfulness, not presentation.** Flattening an equation to unicode destroys structure that cannot be recovered: the same source line renders as `r = R · √β · Fsky · Ω/(Fsun · α)`, from which a reader cannot tell whether the radical covers `β` alone or the whole product, and where `F_sky` and `α_moon` have silently lost their subscripts. That is the same class of loss as a paraphrased quote - the record stops representing what the page says. "Transcribe as-is" therefore *requires* LaTeX here; unicode approximation is the departure from it.
+
+**Not `$`, and not `$$`.** A corpus of government programmes is full of dollar figures, and `$` as a math delimiter collides with them. A no-space-hugging guard handles `$22 million` but still misreads a range - `$50-$60` opens at `$5` and closes at the `$` preceded by `-`, swallowing the text between. That is a silent corruption of ordinary prose into math, and this document already settled the identical question once: double curly braces were chosen for inline annotations because "single curly braces appear in source text (mathematics, code, template syntax)... this avoids false matches **without requiring escape mechanisms**". LaTeX's own delimiters are unambiguous in prose; use them.
+
+**Transcribe, never simplify.** Reproduce the equation as printed - do not solve, rearrange, normalise notation, or drop an equation number. The LaTeX must render to what the page shows, and the same fidelity bar applies as to a quote.
+
+**No schema bump.** This is additive within `record/1`. `record/2` denotes word timestamps because `{{t:}}` markers interleave through the whole body and a consumer ignorant of them renders garbage; math is localised and **degrades gracefully** - a consumer that does not render it shows the LaTeX source, which is still readable and still faithful. Graceful degradation is the test for a body construct, not whether it touches body grammar.
+
 ### Document boundary
 
 Marks where each contained work starts inside a **compilation** - a proceedings of separate papers, an anthology, a report bundling annexes by different authors.
