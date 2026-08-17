@@ -33,6 +33,11 @@ than by the author noticing.
 - **If a count seems low, re-measure a different way before reporting it.** Not
   the same way more carefully; a different way. Agreement between two unrelated
   methods is the cheapest real evidence available.
+- **A check with two possible outputs that prints neither has not run.** Piping a
+  test through another command and reading the wrong exit status gives exactly
+  that: `grep -q ... | sed ...` reports `sed`, which succeeds whatever `grep`
+  found, so an if/else prints nothing and the answer looks like "no". Silence from
+  something built to answer either way is the tell.
 
 ## Why it is worth a note
 
