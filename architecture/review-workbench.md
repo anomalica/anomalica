@@ -69,6 +69,19 @@ A fourth element shows **where the digest's claims ended up** - links to all ass
 
 The three panels are resizable using PaneForge, which supports nested panel groups and keyboard accessibility. Each panel is a container query boundary, so its contents adapt to whatever width the user drags the dividers to.
 
+## Infrastructure view
+
+Extraction splits every record in two. Domain claims go to `knowledge.db` and become articles; **infrastructure claims** - what a source says about its own sources - go to `infrastructure.db`. That second database had no consumer at all until the workbench's Infrastructure tab: 1,830 claims and 9,605 nodes written on every import and never read.
+
+Followed through its claim-to-node references it is a bibliography. 800 works, 994 people and 356 organisations, linked by who wrote what and who cited whom - "American Cosmic cites Jeremy Sconce's Haunted Media", "Leon Festinger, Henry Riecken and Stanley Schachter wrote When Prophecy Fails". So the view is organised around works rather than claims, with people, organisations and the raw claim list alongside.
+
+Each named work carries a **shelf-check**: whether the corpus holds it. Of the 800 named, it holds 25. The remaining 775 are a reading list the material assembled about itself, and the most likely next use of this data is as an acquisition list.
+
+Two things the view is careful about:
+
+- **`administrative` is not a defect category.** 1,469 of the 1,830 claims are typed `administrative`, which is what a bibliography is made of. The other 361 were typed as observation, testimony or hearsay - types the extraction usually reserves for the domain half. They sort to the top because that is where a mis-filed domain claim would be found, but the claim type does not determine the split (the digester assigns the section, and the type independently), so this is a heuristic and the view says so.
+- **The read is read-only.** `infrastructure.db` is derived and rebuilt from the digests on every import, so a correction written there would not survive. Recategorising a claim belongs in the curation ledger the assimilator replays, keyed on `claim_fingerprint` scoped by record content hash - not on `claims.id` (fresh per emission) or `claim_hash` (which includes resolved graph ids and moves when node resolution moves). No correction action is built yet.
+
 ## Copyright handling
 
 The workbench may serve extracted text from copyrighted source material to users who demonstrate they have a legitimate copy. It is not a distribution channel. What is shown depends on the copyright status of each record (see the [source types and copyright decision](../decisions/drafts/source-types-and-copyright.md) for the full display rules and metadata schema). Protection is layered:
