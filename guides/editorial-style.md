@@ -18,6 +18,36 @@ Jargon and unexplained acronyms select out readers and give cover to imprecision
 - Prefer the plain version where it loses no precision: "evidence trail" over "provenance chain", "first-hand" over "primary attestation".
 - Never use a complex word where a simple one works: "use" not "utilise", "show" not "demonstrate", "build" not "construct".
 
+### Do not explain the interface to the person using it
+
+A label says what a thing is. Then a second sentence tells the reader how to
+operate it, and that second sentence is nearly always waste. From the works list:
+
+> Books, articles, films and documents the sources name.
+> *Choose one to read what the corpus says about it.*
+
+The first line earns its place. The second instructs the reader to do the only
+thing the screen affords - a list of rows is clickable, and nobody has needed
+telling that for thirty years.
+
+**The definite article is the tell.** To write the second sentence at all you have
+to point at the system's own furniture: *the* corpus, *the* sources, *the* record,
+*the* list. That reaches for internal vocabulary and hands it to someone who never
+asked about the internals. When a sentence of interface copy contains "the" in
+front of a system noun, it is usually the system describing itself.
+
+The mistake behind it is treating information as free. It is not. Every added
+sentence is something to read, and it weakens the line above it - the label was
+doing the work, and now it shares the space with an instruction.
+
+**A well-made telephone does not say "pick up to talk" on the handset**, or "rotate
+the dial to enter a number". It is built to do one thing and it lets the thing be
+obvious. Cluttering it is what a lesser tool does.
+
+So: write the label, then stop. If the interaction genuinely is not obvious, that
+is a fault in the design, and a sentence of explanation hides it rather than fixing
+it.
+
 ### Audience
 
 - Architecture and code documentation: write for a competent programmer who may not know this specific domain.
