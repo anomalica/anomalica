@@ -11,7 +11,7 @@ as a decision when nothing decided it:
 A NULL invites suspicion. A populated column invites none, which is why this
 shape survives longer.
 
-## Three instances in one day (2026-08-18)
+## Four instances in one day (2026-08-18)
 
 **A seed that looks like a working layer.** `records.work_id` names the WORK a
 record is a copy of, so that two files of one book count as one source. Every row
@@ -41,6 +41,27 @@ would report a number. On the day `link-works` first groups a duplicate they wil
 contradict each other about the same node, one saying one source and the other
 saying eight, and neither will raise anything.
 
+**One string in two shapes of field.** Two records carried a YouTube channel name
+in `speakers`, a list of people, AND in `publisher`. Stripping it from the roster
+last week did not surface the publisher error, because both fields were populated
+and both looked answered - so the same fault sat twice in one record, in two
+fields, found from two directions a week apart.
+
+Its check is a third kind again, and the reason the catalogue matters more than
+the count: not a distribution test, and not "could this have been produced without
+anyone looking", but CROSS-FIELD CONSISTENCY. One string appearing in a
+person-shaped field and an organisation-shaped field in the same record is
+evidence that neither was decided - whatever wrote it was not distinguishing
+people from publishers, so both values are the same guess wearing two labels.
+
+**And a sentence in a spec is populated too.** The ingest spec stated "an absent
+publisher is an unknown root" in the present tense. Read as a description of
+behaviour it is false - nothing in the independence path reads publisher at all -
+and it was in fact a design CONSTRAINT for whoever builds the count. A specified
+sentence looks as settled as a populated column and defaults the same way: written
+once, never compared to the system it describes. It has since been rewritten as a
+rule rather than a statement.
+
 ## Why it outlives the absence version
 
 An empty column prompts "why is this empty". A full one prompts nothing, and any
@@ -61,10 +82,19 @@ For any field that is supposed to record a decision, judgement or grouping:
    than NULL, presence is not evidence and every consumer needs the comparison,
    not the field.
 2. **What is the query that distinguishes decided from defaulted?** Write it down
-   next to the field. For a grouping key it is `COUNT(DISTINCT k) < COUNT(*)`;
-   for a seeded id it is `k <> id`; for a provenance field it is whether the value
-   could have been produced without anyone looking.
-3. **Do two consumers of the same fact compute it the same way?** Where one is
+   next to the field. Four instances gave three shapes, and the catalogue is the
+   useful part:
+   - *distribution* - for a grouping key, `COUNT(DISTINCT k) < COUNT(*)`; for a
+     seeded id, `k <> id`. The count alone always says yes.
+   - *provenance* - could this value have been produced without anyone looking? A
+     field a scraper can fill is not a field a human decided.
+   - *cross-field* - does one string appear in two fields of different shapes in
+     the same row? Then neither was decided, and fixing one will not surface the
+     other.
+3. **Does this hold for prose as well as columns?** A spec sentence in the present
+   tense reads as a description of behaviour and is often a constraint nobody has
+   checked against the system. Same default, same invisibility.
+4. **Do two consumers of the same fact compute it the same way?** Where one is
    work-aware and another is record-aware, they agree only while the layer between
    them is inert - and the day it starts working is the day they diverge.
 
