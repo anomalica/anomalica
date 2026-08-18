@@ -114,3 +114,29 @@ until it exists.** Email header routing, specified 2026-07-24, targets the
 flat fields that are populated today and rides this migration when it
 happens rather than being special-cased ahead of it. A consumer cannot be
 asked to read a block nothing produces.
+
+## Amendment 2026-08-18: the work and the copy are separate layers
+
+The block as decided carries one publication layer, so a redistributed
+source records its redistributor as the originator. Two sub-fields are
+added - `posted_by` and `posted_date`, describing **the copy** - while
+`publisher` and `published_date` keep their meaning as **the work** and
+are left absent until the work is identified.
+
+Folded in here rather than given its own record: this is the provenance
+block's own concern, it adds no new concept, and 0043 is itself accepted
+and unimplemented - a second record would create a second migration for
+two fields. The live flat fields are `posted_by` / `posted_date`,
+migrating into the block with the rest.
+
+The reason is the evidence model, not neatness. Independence is counted
+by provenance root and [0044](0044-claim-provenance-chain-is-required.md)
+builds on that count, so re-uploads of one broadcast presented as
+distinct publishers read as independent corroboration. One 1997 Art Bell
+broadcast is currently filed as 8 records and therefore 8 roots.
+
+**An absent publisher is an unknown root, not a distinct one.** Clearing
+a false attribution stops the inflation only if unknowns are also
+excluded from the independent count; treating each unidentified record as
+its own root restores the same error more quietly. Narrative and worked
+example in [ingest-format.md](../architecture/ingest-format.md#the-work-and-the-copy-are-different-things).

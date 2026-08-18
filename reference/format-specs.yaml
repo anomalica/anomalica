@@ -52,7 +52,15 @@ types:
           -> provenance.fetched_url."}
       - {name: source_id, type: string, required: false, description: "Native source identifier. -> provenance.identifiers."}
       - {name: source_file, type: string, required: false, description: "Original filename of a local-file ingest. -> provenance.source_file."}
-      - {name: publisher, type: string, required: false, description: "Issuing body / channel / author-org. -> provenance.publisher."}
+      - {name: publisher, type: string, required: false, description: "The WORK's issuing body - who originated it, NOT the
+          channel a copy came from (that is posted_by). No longer written from channel metadata; ABSENT until the work is
+          identified, which is the not-evidenced convention, not a gap to fill. -> provenance.publisher."}
+      - {name: posted_by, type: string, required: false, description: "The channel or site THIS COPY came from - all the fetcher
+          can observe. Distinct from publisher: an archival re-upload has both. Filing a redistributor as publisher made 8
+          re-uploads of one 1997 broadcast count as 8 independent provenance roots, corrupting the 0044 evidence model. ->
+          provenance.posted_by."}
+      - {name: posted_date, type: string, required: false, description: "When that channel posted this copy. Distinct from
+          date_published (when the WORK was issued) and from date_accessed (when we fetched it). -> provenance.posted_date."}
       - {name: creators, type: list, required: false, description: "Human author(s)/host(s), person names in natural order.
           -> provenance.creators."}
       - {name: authors, type: list, required: false, description: "LEGACY ALIAS of creators. Being unified onto creators;

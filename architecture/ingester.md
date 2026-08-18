@@ -79,11 +79,17 @@ Alt text from the source (`<img alt="">`) is preserved when present. A factual `
 
 | Stage | Tool | Notes |
 |-------|------|-------|
-| PDF extraction | Vision-capable artificial intelligence model | PDFs sent directly to a vision model for comprehension-based text extraction. Handles both born-digital and scanned PDFs in a single pipeline. Avoids the layout-mangling problems of raw text extraction (pdftotext) and the structural errors of character-level optical character recognition (Tesseract) |
+| PDF extraction | GPT-5.6 Luna vision (metered, gated) | Pages are rendered to images and sent to the vision model for comprehension-based text extraction. Handles both born-digital and scanned PDFs in a single pipeline. Avoids the layout-mangling problems of raw text extraction (pdftotext) and the structural errors of character-level optical character recognition (Tesseract) |
 | Ebook conversion | Calibre | Converts between ebook formats, open source |
 | Web scraping | trafilatura | Extracts article text and metadata from HTML. Fetch chain (HTTP, Wayback Machine, Patchright) handled by the acquire layer |
 
-Self-hosted open source tooling is preferred for independence and cost control. The vision model for PDF extraction is the exception - it calls an external application programming interface.
+Self-hosted open source tooling is preferred for independence and cost control. AI-based extraction is the exception - it calls an external application programming interface.
+
+### Model default and the spend gate
+
+Any ingestion path that does **not** run the local Whisper model defaults to `openai/gpt-5.6-luna` (via OpenRouter) rather than the Claude subscription - a deliberate, recorded exception to the project's subscription-default rule (see the operating rules in the meta-repo `CLAUDE.md`), because subscription vision is worse and dearer for scanned documents and Luna is watermark-free. Today that means PDF only: audio/video transcribe with the local Whisper model (no metered spend), and web/ebook extraction is rule-based and calls no model. A future ebook or web AI path inherits this default rather than re-opening the question.
+
+Because that default is metered, PDF ingestion runs behind a strict pre-flight spend gate: it prints a page-based cost estimate and refuses unless the run is explicitly confirmed (`--confirm-spend` / `INGEST_SPEND_CONFIRMED=1`). Nothing auto-approves - `INGEST_SPEND_CEILING_USD` defaults to `0.00`, and that default is part of the decision, not a tunable: a non-zero ceiling is an operator's deliberate choice to let small per-doc runs proceed unattended, and even then it bounds **one** run, never a batch. Aggregate (batch) approval is the scheduler's responsibility. `INGEST_USE_API=0` forces the unmetered subscription path. The OpenRouter account balance is the final hard cap.
 
 ## Deep linking
 

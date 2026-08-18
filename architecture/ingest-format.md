@@ -98,6 +98,31 @@ Two boundaries are load-bearing:
 - **Source facts, not subject facts.** Provenance is about the SOURCE - who issued it, when it was published, where to find it. A subject's incident place and incident date are NOT provenance; they are extracted as claims about place and event nodes, so they stay inside the scored, corroborated evidence model. `published_date` is strictly the source's publication or upload date.
 - **Copyright is not mirrored here.** `copyright` (and `copyright.status`) is the single authoritative copyright field, top-level; provenance carries no `license`. `classification` likewise stays top-level. The `description` is the source's verbatim blurb, never AI-written - and reproducing a `licensed` or `restricted` source's blurb is itself reproduction, so it is omitted or truncated for those sources, exactly as the source text is gated.
 
+#### The work and the copy are different things
+
+A redistributed source has two publication layers, and recording only one files the redistributor as the originator.
+
+```yaml
+publisher: "WXIA-TV"            # the WORK - who issued it
+date_published: "1988"
+posted_by: "Eyes On Cinema"     # the COPY - the channel this copy came from
+posted_date: 2026-08-13         # when that channel posted it
+```
+
+`posted_by` and `posted_date` describe **the copy the fetcher actually saw**, which is all it can observe. `publisher` and `date_published` keep their existing meaning - the work - and the handler no longer writes them from channel metadata. On a fresh ingest they are simply **absent** until someone identifies the work, which is the same not-evidenced convention as [date precision](#date-precision-record-only-what-the-source-evidences). Where the channel *is* the originator, all four are filled and the pairs match; there is no special case.
+
+`posted_date` is also distinct from `acquired_date`: the channel posted the copy, we fetched it. Different actors, different dates.
+
+**This is an evidence-model defect, not tidiness.** Independence is counted by provenance root, and [0044](../decisions/0044-claim-provenance-chain-is-required.md) builds the evidence model on that count - so two channels re-uploading one broadcast read as two independent sources. Live: 15 records attributed to one archival channel, and a single 1997 Art Bell broadcast filed as **8 records** that count as 8 independent roots. A 1967 recording of James McDonald's Australia tour is filed as published 2026-08-11.
+
+**An absent publisher is an unknown root, never a distinct one.** Removing the false attribution stops re-uploads counting as independent; it does not make them recognisably the same work, because nothing yet identifies the work. Two records with no publisher are two *unknowns*, and a consumer that treats each as its own root has reintroduced the same inflation by a quieter route. Unknown roots do not count as independent evidence.
+
+**Absence has to be tolerated because identification often fails.** A 1988 WXIA-TV news segment in the corpus never names its station in the audio: an extraction pass yields "a local television news segment, Georgia, c. 1988, reported by Bruce Erion" and stops. "WXIA-TV, 11Alive News Extra" came from outside research. A `publisher` that defaults to whatever the fetcher saw would have filled that gap with a falsehood rather than leaving it open.
+
+**Roles stay out of frontmatter.** No `creators` list with role labels, no confidence or basis marker, no nested `copy` block - all three were considered and rejected. An anchor, a reporter, a producer are roles, and [node-types.md](node-types.md) already holds that a document node is the work while a producer is a source in a role, not a type. The ratified precedent is the [`release`](#release-and-declassification) block: the declassifying officer becomes a node through a digester administrative claim, never directly from frontmatter. A reporter arrives the same way, and the transcript supports it - the WXIA segment has Kelly Morgan handing over ("Bruce Erion tells us about an Athens man and his close encounter. Bruce?") and Erion signing off ("John, Kelly."), so anchor-versus-reporter is extractable with real quotes. A basis field would have been a second, weaker evidence model sitting beside `attestation` and `provenance_chain`.
+
+**Correcting existing records is not mechanical corpus-wide.** Moving `publisher` to `posted_by` and clearing `date_published` is safe only where the channel is a redistributor; applying it where the channel is the originator would delete a true publisher. Correct the identified archival channels, leave the rest.
+
 #### Date precision: record only what the source evidences
 
 **A date carries the precision the source supports and no more.** `2020`, `2020-08`, and `2020-08-09` are all valid values; the day is *omitted* when the source does not state one, never guessed to fill the field.
