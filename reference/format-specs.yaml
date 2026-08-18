@@ -46,7 +46,7 @@ types:
       # records have no provenance block at all. They are superseded by `provenance` WHEN 0043 SHIPS;
       # until then they are the live contract and a validator must accept them.
       - {name: date_published, type: string, required: false, description: "Source publication date, ISO 8601, PARTIAL ALLOWED
-          (2020, 2020-08) - carries only the precision the source evidences, never a guessed day. -> provenance.published_date."}
+          (QUOTED when reduced: "1988", "2020-08"; bare when full: 2020-08-09 - a bare 1988 parses as an integer) - carries only the precision the source evidences, never a guessed day. -> provenance.published_date."}
       - {name: source_url, type: string, required: false, description: "Canonical URL of the original. -> provenance.source_url."}
       - {name: fetched_url, type: string, required: false, description: "URL actually retrieved when different (e.g. Wayback).
           -> provenance.fetched_url."}
@@ -59,6 +59,9 @@ types:
           can observe. Distinct from publisher: an archival re-upload has both. Filing a redistributor as publisher made 8
           re-uploads of one 1997 broadcast count as 8 independent provenance roots, corrupting the 0044 evidence model. ->
           provenance.posted_by."}
+      - {name: container_title, type: string, required: false, description: "The journal, book, or programme the WORK appeared in
+          (Scientific Reports; Topological Foundations of Electromagnetism; 11Alive News Extra). One field for all three, per CSL
+          container-title. Different axis from posted_by: the venue OF THE WORK, not the channel that reposted a copy."}
       - {name: posted_date, type: string, required: false, description: "When that channel posted this copy. Distinct from
           date_published (when the WORK was issued) and from date_accessed (when we fetched it). -> provenance.posted_date."}
       - {name: creators, type: list, required: false, description: "Human author(s)/host(s), person names in natural order.

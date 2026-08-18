@@ -140,3 +140,20 @@ a false attribution stops the inflation only if unknowns are also
 excluded from the independent count; treating each unidentified record as
 its own root restores the same error more quietly. Narrative and worked
 example in [ingest-format.md](../architecture/ingest-format.md#the-work-and-the-copy-are-different-things).
+
+Two clarifications to the amendment above, both measured after it landed:
+
+- **Publisher is not wired to the independence count.** `provenance_root`
+  reads `speaker_id`, `record_id`, `origin_kind` and `origin`, all on
+  `claims`; publisher sits in `records.metadata` and is never opened. The
+  inflation is a fallback to `record_id` covering 7,165 of 27,966 claims
+  (26%) across 58 of 80 records. Separating the work from the copy fixes a
+  false attribution; it does not touch that count, and must not be
+  reported as having done so.
+- **`posted_by` cannot serve as a work-identity key.** Eight parts of one
+  broadcast and fifteen unrelated segments both share an uploader. Work
+  identity is `publisher` plus `published_date`, which stay absent until a
+  human supplies them.
+
+`container_title` is added by the same amendment - the journal, book or
+programme a work appeared in, one field per CSL `container-title`.

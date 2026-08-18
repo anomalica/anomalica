@@ -113,9 +113,17 @@ posted_date: 2026-08-13         # when that channel posted it
 
 `posted_date` is also distinct from `acquired_date`: the channel posted the copy, we fetched it. Different actors, different dates.
 
-**This is an evidence-model defect, not tidiness.** Independence is counted by provenance root, and [0044](../decisions/0044-claim-provenance-chain-is-required.md) builds the evidence model on that count - so two channels re-uploading one broadcast read as two independent sources. Live: 15 records attributed to one archival channel, and a single 1997 Art Bell broadcast filed as **8 records** that count as 8 independent roots. A 1967 recording of James McDonald's Australia tour is filed as published 2026-08-11.
+`container_title` records the journal, book, or programme a work appeared in - "Topological Foundations of Electromagnetism" for a chapter, "Scientific Reports" for a paper, "11Alive News Extra" for the WXIA segment. One field for all three, following CSL's `container-title`: the venue is the same relation whether it is bound, published, or broadcast, and splitting it into book-specific and journal-specific fields buys nothing. It is a different axis from `posted_by` - the venue **of the work**, against the channel that reposted **a copy**.
 
-**An absent publisher is an unknown root, never a distinct one.** Removing the false attribution stops re-uploads counting as independent; it does not make them recognisably the same work, because nothing yet identifies the work. Two records with no publisher are two *unknowns*, and a consumer that treats each as its own root has reintroduced the same inflation by a quieter route. Unknown roots do not count as independent evidence.
+**The attribution is false on its own terms.** A 1988 WXIA-TV segment records Eyes On Cinema as its publisher and 2026 as its publication year; a 1967 recording of James McDonald's Australia tour is filed as published 2026-08-11. Live: 15 records attributed to one archival channel, and a single 1997 Art Bell broadcast filed as 8 records.
+
+**It does not, however, drive the independence count - and fixing it does not fix that.** Measured 2026-08-18: `provenance_root` reads four columns (`speaker_id`, `record_id`, `origin_kind`, `origin`), all on `claims`. Publisher lands in `records.metadata` and nothing in the independence path opens it. The real inflation is a **fallback to `record_id`** where `origin_kind` is `speaker` or `unattributed` and no speaker resolved - 7,165 of 27,966 claims, **26%**, across 58 of 80 records. So N re-uploads of one work are N roots for a quarter of the corpus's claims, regardless of publisher, and this change moves that in neither direction.
+
+Stated plainly because the tempting misreading is that the provenance fix handled it. It did not; the fallback is separate work.
+
+**An absent publisher is an unknown root, never a distinct one.** This is a rule for whoever builds the count, not a description of a wire that exists today. Two records with no publisher are two *unknowns*, and treating each as its own root inflates independence exactly as a false publisher would - more quietly, because it reads as missing data rather than as a bug.
+
+**`posted_by` is not a grouping key.** The 8 Art Bell records *are* one work and share a `posted_by`; the 15 Eyes On Cinema records are 15 *different* works and also share a `posted_by`. A key that groups by uploader cannot tell eight parts of one broadcast from fifteen unrelated segments off one channel. Work identity needs `publisher` plus `date_published` - the pair that stays absent until a human supplies it - so re-uploads need identification before any mechanical grouping helps.
 
 **Absence has to be tolerated because identification often fails.** A 1988 WXIA-TV news segment in the corpus never names its station in the audio: an extraction pass yields "a local television news segment, Georgia, c. 1988, reported by Bruce Erion" and stops. "WXIA-TV, 11Alive News Extra" came from outside research. A `publisher` that defaults to whatever the fetcher saw would have filled that gap with a falsehood rather than leaving it open.
 
@@ -129,7 +137,9 @@ posted_date: 2026-08-13         # when that channel posted it
 
 This is already the contract elsewhere - a claim's `date` accepts `2017` ([digest-format.md](digest-format.md#claims)), and `provenance.published_date` is specified as "ISO 8601, may be partial". Only the flat `date_published` demanded a full date, and demanding one is what produces fabrication: given a source whose evidence is "August 2020", an extractor obliged to emit a day emits a plausible one. One record carried `2020-08-09` where its 6-page scan states no date at all and its filename says only `...Persian-Gulf-August-2020`. Nothing in the record distinguished that invented day from a CIA report's `26 December 1973`, which is printed on the page.
 
-The principle is the one already applied a level up - a valueless field is omitted, never nulled - applied inside the value itself. **Precision is the evidence marker**: a record reading `2020-08` is telling you the day was not evidenced, and needs no separate flag to say so.
+The principle is the one already applied a level up - a valueless field is omitted, never nulled - applied inside the value itself.
+
+**Emit a reduced-precision date as a QUOTED string; a full date bare.** `date_published: 1988` parses as the integer 1988, and across the corpus `date_published` has been read as four different Python types - `date`, `datetime`, `str` and `int` - purely from how the value was written. So `2020-08-09` is written bare and reads as a date, while `"2020-08"` and `"1988"` are quoted and read as strings. This applies to every date field carrying reduced precision, `posted_date` included. **Precision is the evidence marker**: a record reading `2020-08` is telling you the day was not evidenced, and needs no separate flag to say so.
 
 Two consequences that must be honoured downstream, or the fabrication simply moves:
 
