@@ -160,17 +160,26 @@ Ordered by value, not by ease. The first is the reason the component exists.
 
 ## Open questions
 
-- **Web research on the subscription path.** The transport calls `claude -p` with
-  tools disabled, which is what makes it a clean single-shot completion. Research
-  checks need search. Whether search can be enabled without giving the pass a general
-  agentic tool surface decides whether check 1 is buildable as specified, or whether
-  research has to be a separate deterministic fetch step feeding the model.
-- **Approval write path in the deployed workbench.** The public workbench is a static
-  snapshot plus an edge function. Reviewer writes today go through a path that needs
-  establishing before the tab is built; approval must reuse it rather than add a
-  second writer.
-- **Housekeeping's own ceiling number.** Lower than the global session/weekly
-  ceilings. The value should come from measuring a real pass, not from a guess.
+- **Whether `posted_by` / `posted_date` should join `GATED_FRONTMATTER_ALLOW`.**
+  They are the direct successors of `publisher` and `date_published`, which are both
+  already allowed, so a gated record can currently show the wrong field but not the
+  proposal to correct it. Adding them is a *widening* of the copyright gate, which
+  is Mark's call and not a side effect of building a tab. Impact today is nil: all
+  19 gated records are books and papers, and the redistributor check only fires on
+  YouTube channels, which are `publicly_accessible`.
+- **Housekeeping's own ceiling number.** Set to session 70 / weekly 80 against the
+  global 90 / 95. Chosen, not measured; a real pass should inform it.
+
+**Resolved 2026-08-19: web research on the subscription path.** `claude -p` takes
+`--tools WebSearch`, so research and a locked-down tool surface are compatible and
+check 1 is buildable as specified. The catch, measured rather than assumed:
+`--tools` restricts only the BUILT-IN set, so with `--tools WebSearch` alone the
+model reports 46 tools - Gmail including `send_message`, Google Calendar,
+Cloudflare, context7, and workspace-bus including `ask_mark`. Record bodies and web
+results are both untrusted input, so that is an injection with a working mail
+sender attached. `--strict-mcp-config` plus `--setting-sources ""` reduces it to
+exactly one tool. All three flags are load-bearing and live in
+`anomalica_common.llm.call_with_research`.
 
 ## Relationship to review
 
@@ -206,12 +215,16 @@ As of 2026-08-19 evening.
 
 **Not done.**
 
-- **The model-backed checks.** The open question above - whether `claude -p` can do
-  web research with tools disabled - is still open and decides their shape.
+- **The model-backed checks themselves.** Their transport now exists
+  (`anomalica_common.llm.call_with_research`); no check uses it yet.
 - **The scheduler job type.** The CLI runs; it is not yet a lane the scheduler
   stages and dispatches.
-- **The workbench Housekeeping tab.** Nothing exists. This is the piece that makes
-  proposals reviewable, so until it lands the sidecars accumulate unread.
+- **The decide write path.** The tab reads online and stages decisions, but the
+  `POST /api/ingests/{hash}/housekeeping/decide` route exists in neither the local
+  FastAPI backend nor the Deno edge, so nothing can be committed yet. It cannot
+  reuse `PUT /api/ingests/{hash}`: that route requires the client to send the whole
+  record, and a gated record's body is not in the browser. The writer must read the
+  record itself, splice, and commit record + sidecar together.
 - **`container_title` and the speaker-naming check** from the check list.
 
 **Known, deliberately not done.**
