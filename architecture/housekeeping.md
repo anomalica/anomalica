@@ -4,8 +4,7 @@ A recurring pass that improves the **frontmatter** of already-ingested records a
 proposes the changes for human approval. It never edits body prose, and it never
 applies a change itself.
 
-Status: specified 2026-08-19, not yet built. This document is the contract; the
-implementation notes at the end say what exists and what does not.
+Status: specified 2026-08-19. Partly built - see [Implementation state](#implementation-state).
 
 ## Why it exists
 
@@ -183,3 +182,41 @@ record as reviewed.
 Housekeeping runs on records that have **not** yet been human-reviewed, or its
 proposals are applied as a clearly separate commit. Landing metadata edits on a
 record after sign-off silently changes something already approved.
+
+## Implementation state
+
+As of 2026-08-19 evening.
+
+**Done.**
+
+- **The root cause is fixed.** `ingester` commit 523d1c0: the acquirer now writes
+  `posted_by` / `posted_date` and leaves `publisher` / `date_published` absent, in
+  both `acquire.py` (the live path) and `manifest_meta.py`. The audio handler no
+  longer fabricates a `date_published` from today, and `validator.py` requires one
+  of `date_published` or `posted_date` rather than `date_published` unconditionally
+  - that unconditional requirement was what forced the fabrication. 273 tests.
+- **The deterministic pass.** `scheduler/backend/housekeeping.py`: sidecar read and
+  write, the `checker_version` re-check marker, decision carry-over, the two
+  model-free checks, and the guarded apply. Finds 61 proposals across 29 of 288
+  records at no allowance cost.
+- **The runner.** `scheduler/backend/housekeeping_cli.py`: `scan`, `propose`,
+  `show`. Refuses any metered configuration outright, and holds below its own
+  ceiling (session 70 / weekly 80, against the global 90 / 95), re-checked per
+  record so a long pass notices the ceiling arriving mid-run.
+
+**Not done.**
+
+- **The model-backed checks.** The open question above - whether `claude -p` can do
+  web research with tools disabled - is still open and decides their shape.
+- **The scheduler job type.** The CLI runs; it is not yet a lane the scheduler
+  stages and dispatches.
+- **The workbench Housekeeping tab.** Nothing exists. This is the piece that makes
+  proposals reviewable, so until it lands the sidecars accumulate unread.
+- **`container_title` and the speaker-naming check** from the check list.
+
+**Known, deliberately not done.**
+
+`manifest_meta.py` advertises itself as the single source of truth for the acquirer's
+provenance mapping and has no production caller - `acquire.py` duplicates the mapping
+inline. Both were corrected together in 523d1c0. Wiring one to the other is a tidy-up
+that was kept out of a correctness fix.
