@@ -224,15 +224,17 @@ As of 2026-08-19 evening.
   a client that does not have a gated body. Record and sidecar commit together.
 - **A first pass over the corpus**, committed to `ingests`: 61 proposals across 29
   records, 259 empty sidecars marking records as examined. No allowance spent.
+- **The production decide route** in `workbench/edge/main.ts`, so approval works on
+  the deployed workbench and not only under `just dev`. `edge/lib/housekeeping.ts`
+  is a hand port of `apply_items`, which is a standing liability - it duplicates the
+  one function guaranteeing prose is never touched, and exists only because
+  production runs no Python. Two things hold it: the Python cases are ported
+  alongside it, and `backend/test_housekeeping_parity.py` runs BOTH over the same 35
+  inputs (the 29 real sidecars plus 6 synthetic shapes) and compares output text
+  exactly. Verified that the parity test bites by sabotaging the TypeScript side.
 
 **Not done.**
 
-- **The PRODUCTION decide route.** `workbench/edge/main.ts` is the only writer
-  online and has no housekeeping route, so approval works under `just dev` and not
-  on workbench.anomalica.is. It is a faithful port of `apply_items` into
-  TypeScript - splice the frontmatter lines, assert the body is byte-identical,
-  commit record and sidecar together - and the port is the risk: two
-  implementations of the one function that guarantees prose is never touched.
 - **The model-backed checks themselves.** Their transport now exists
   (`anomalica_common.llm.call_with_research`); no check uses it yet.
 - **The scheduler job type.** The CLI runs; it is not yet a lane the scheduler
