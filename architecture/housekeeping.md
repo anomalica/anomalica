@@ -29,6 +29,18 @@ per-record judgement on 288 records.
 Per-record judgement at corpus scale, where being wrong is cheap to catch and
 expensive to miss, is what an AI proposal with human approval is for.
 
+**Fix the source first.** A corpus survey on 2026-08-19 found this is not a backlog
+to clear once - it is still being created. `ingester/acquire/workspace/manifest_meta.py:38-40`
+writes `out["publisher"] = channel` for every video, and
+`ingester/acquire/workspace/acquire.py:315` does the same, so all 178 video records
+have a YouTube channel as `publisher`. [ingest-format](ingest-format.md) line 112
+states "the handler no longer writes them from channel metadata"; that change was
+specified and never made. `posted_by`, `posted_date` and `container_title` appear on
+0 of 288 records and in no producer code at all.
+
+Housekeeping cleaning a corpus the ingester keeps re-dirtying is mopping with the tap
+running. The handler fix comes first; housekeeping then clears what already exists.
+
 It also aims at the real bottleneck. 214 of 288 records have never been reviewed, and
 that - not throughput upstream - is why nothing reaches the site. Anything that
 reduces the per-record cost of review is worth more than anything before it.
