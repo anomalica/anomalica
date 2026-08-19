@@ -209,22 +209,34 @@ As of 2026-08-19 evening.
   model-free checks, and the guarded apply. Finds 61 proposals across 29 of 288
   records at no allowance cost.
 - **The runner.** `scheduler/backend/housekeeping_cli.py`: `scan`, `propose`,
-  `show`. Refuses any metered configuration outright, and holds below its own
-  ceiling (session 70 / weekly 80, against the global 90 / 95), re-checked per
-  record so a long pass notices the ceiling arriving mid-run.
+  `show`. Refuses any metered configuration outright. The ceiling (session 70 /
+  weekly 80, against the global 90 / 95) gates `--research` only - the model-free
+  checks spend nothing, so holding them because the plan is busy would stop free
+  work for a reason that does not apply to it.
+- **Shared, not duplicated.** The model, the sidecar and `apply_items` live in
+  `anomalica_common.housekeeping`, because the scheduler proposes and the workbench
+  applies and both must agree on what applying means. Duplicating the one function
+  that guarantees prose is never touched would have let it drift.
+- **The read + decide routes** in `workbench/backend/server.py`, and the
+  **Housekeeping tab**. Approval is a decision-only POST: the client sends
+  `{item_id, status}` pairs and the server, which can read the record, splices it -
+  `PUT /api/ingests/{hash}` cannot be reused because it needs the whole record from
+  a client that does not have a gated body. Record and sidecar commit together.
+- **A first pass over the corpus**, committed to `ingests`: 61 proposals across 29
+  records, 259 empty sidecars marking records as examined. No allowance spent.
 
 **Not done.**
 
+- **The PRODUCTION decide route.** `workbench/edge/main.ts` is the only writer
+  online and has no housekeeping route, so approval works under `just dev` and not
+  on workbench.anomalica.is. It is a faithful port of `apply_items` into
+  TypeScript - splice the frontmatter lines, assert the body is byte-identical,
+  commit record and sidecar together - and the port is the risk: two
+  implementations of the one function that guarantees prose is never touched.
 - **The model-backed checks themselves.** Their transport now exists
   (`anomalica_common.llm.call_with_research`); no check uses it yet.
 - **The scheduler job type.** The CLI runs; it is not yet a lane the scheduler
   stages and dispatches.
-- **The decide write path.** The tab reads online and stages decisions, but the
-  `POST /api/ingests/{hash}/housekeeping/decide` route exists in neither the local
-  FastAPI backend nor the Deno edge, so nothing can be committed yet. It cannot
-  reuse `PUT /api/ingests/{hash}`: that route requires the client to send the whole
-  record, and a gated record's body is not in the browser. The writer must read the
-  record itself, splice, and commit record + sidecar together.
 - **`container_title` and the speaker-naming check** from the check list.
 
 **Known, deliberately not done.**
