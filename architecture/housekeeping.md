@@ -224,8 +224,11 @@ As of 2026-08-19 evening.
   a client that does not have a gated body. Record and sidecar commit together.
 - **A first pass over the corpus**, committed to `ingests`: 61 proposals across 29
   records, 259 empty sidecars marking records as examined. No allowance spent.
-- **The production decide route** in `workbench/edge/main.ts`, so approval works on
-  the deployed workbench and not only under `just dev`. `edge/lib/housekeeping.ts`
+- **The production decide route** in `workbench/edge/main.ts`, DEPLOYED to Bunny
+  edge script 79602 on 2026-08-19 (the previous release was 2026-07-23, so the route
+  was committed but not live until then - committing edge code does not ship it).
+  Verified after: the decide route answers 401 rather than 404, the existing
+  endpoints still answer 200, and a sweep of all 19 gated records shows 0 leaking. `edge/lib/housekeeping.ts`
   is a hand port of `apply_items`, which is a standing liability - it duplicates the
   one function guaranteeing prose is never touched, and exists only because
   production runs no Python. Two things hold it: the Python cases are ported
