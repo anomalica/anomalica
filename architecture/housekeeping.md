@@ -158,6 +158,60 @@ Ordered by value, not by ease. The first is the reason the component exists.
 4. **Deterministic field hygiene.** Required-field presence per `source_type`, date
    precision written per the quoting rule, `creators` that parse as a list. No model.
 
+## Structure repair (books)
+
+Mark's case, 2026-08-19: *The Fourth Mind* (Whitley Strieber) has 27 headings in its
+body and every one is a flat `#` in capitals. The book's own structure is two parts
+and seventeen numbered chapters:
+
+```
+in the record          the book's own contents page
+# BODIES AND POWERS    I. Bodies and Powers      <- a PART
+# THE SECRECY          1. The Secrecy            <- a CHAPTER, same heading level
+# FAR FROM HOME        2. Far From Home
+```
+
+Three things are lost at once: the part/chapter hierarchy, the numbering, and the
+case. Two headings are `# UNTITLED`.
+
+**This belongs in housekeeping rather than the ingester**, and not only because
+re-running an extraction to fix a heading is expensive. `content_hash` is the
+record's identity and it is NOT the body hash - verified on this record, whose body
+hashes to `334d4ffb…` while its identity is `524f46e5…`. So a body edit is safe,
+whereas the practical instinct to "re-ingest it properly" produces a *new* record and
+orphans the digest and every claim built on it. The reviewable-patch shape is the
+safer one.
+
+**Most of it needs no model.** The book's own contents page is in the record, at the
+`# CONTENTS` heading. Matching body headings against it on a normalised key recovers
+the number, the correct case and the part-versus-chapter distinction for the great
+majority - a first crude pass matched 19 of 27, with the misses being the title page,
+the author, CONTENTS itself, the bibliography and the two `# UNTITLED`. Only the
+untitled ones need judgement.
+
+### What this costs, stated plainly
+
+Housekeeping's guarantee today is that **body prose is untouchable**, enforced by
+comparing a byte-for-byte digest of the whole body before and after. A heading lives
+in the body, so that guarantee cannot survive unchanged.
+
+The replacement is narrower than "trust the model" and wider than today: **only the
+lines a human approved may change, and every other byte of the record is identical.**
+That is already how `apply_items` works - it splices named lines - so the frontmatter
+case becomes a special case of the general one rather than the only permitted one. A
+heading item names an exact line and previews it the same way a frontmatter item
+does:
+
+```
+- # THE SECRECY
++ ## 1. The Secrecy
+```
+
+The guard changes from "the body is identical" to "every line except the approved
+ones is identical". That is a real loosening and is recorded here as one, not slipped
+in: it must be an explicit decision, because the reason a reviewer can trust a
+housekeeping commit is that the guarantee is mechanical rather than a promise.
+
 ## Open questions
 
 - **Whether `posted_by` / `posted_date` should join `GATED_FRONTMATTER_ALLOW`.**
