@@ -664,6 +664,17 @@ redacted:
 
 `extent` estimates how much was redacted: `words`, `sentence`, `paragraph`, or `page`.
 
+### Inline redaction value
+
+An inline `{{redacted: ...}}` value carries two things, comma-separated, both optional:
+
+- an **extent** - the redaction box's width estimated in characters, `~N chars` (the older `~N words` is still accepted); and
+- the **citation** the redactor printed in or beside the box - the FOIA exemption or classification code, verbatim as printed (`(b)(6)`, `1.4a`, `3.5c`), several comma-separated as the source lists them.
+
+Either may appear alone, or both together in either order: `{{redacted: ~12 chars, (b)(6)}}`, `{{redacted: (b)(3), (b)(6)}}`, `{{redacted: ~8 chars}}`, or a bare `{{redacted}}`. A consumer reads the value rather than matching a fixed shape: a comma-separated part that looks like `~N chars` or `~N words` sizes the bar; anything else is the printed citation, drawn inside the bar the way the source prints it in the box.
+
+`~N chars` off a rendered page image is a model's estimate with the same epistemic status as `~2 words`, in a unit closer to what the artefact shows - a redaction is a drawn box of measurable width, not a word count. It is judged from the box itself; it is never a word count multiplied into characters, which would read as a measurement while carrying strictly less information than the count it came from. (Deterministic geometry is not an option: even the born-digital records in this corpus are scanned pages under an OCR text layer, so a redaction is pixels inside an image, not a rectangle a layout query can return.)
+
 ### Irrelevant content
 
 Content that is physically part of the source but does not belong in the record - a book's title page, table of contents, index, or glossary; a publisher's cross-sell advertisement; an off-topic aside. It is marked, never deleted: the mark is fully reversible and the source text stays intact in the ingest. What counts as irrelevant - the reviewer convention across every record type - is the canonical list in [review-workbench.md](review-workbench.md#what-to-mark-irrelevant); this section specifies the marker syntax.
@@ -704,7 +715,7 @@ This is additive within `anomalica/record/1`: a consumer that does not recognise
 For annotations that fall mid-sentence. The syntax is `{{YAML}}` - double curly braces containing valid YAML.
 
 ```markdown
-The programme was conducted at {{redacted: ~2 words}} Air Force Base.
+The programme was conducted at {{redacted: ~9 chars, (b)(1)}} Air Force Base.
 
 The date was {{illegible: possibly March 2004}} according to the memo.
 
@@ -1310,7 +1321,7 @@ pages: 5
 
 # Incident Report
 
-On {{redacted: date in November 2004}}, personnel at {{redacted}}
+On {{redacted: ~11 chars, (b)(1)}}, personnel at {{redacted: (b)(6)}}
 observed an unidentified aerial object in restricted airspace.
 
 <!--
@@ -1319,7 +1330,7 @@ redacted:
 -->
 
 The object was tracked on radar for approximately 12 minutes
-before {{redacted: ~5 words}}.
+before {{redacted: ~26 chars, (b)(1)}}.
 
 <!-- file_page: 2 -->
 
