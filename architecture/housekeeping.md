@@ -212,6 +212,37 @@ ones is identical". That is a real loosening and is recorded here as one, not sl
 in: it must be an explicit decision, because the reason a reviewer can trust a
 housekeeping commit is that the guarantee is mechanical rather than a promise.
 
+## Decisions from 2026-08-20
+
+**The chapter check uses a model, and reads the contents page.** An earlier note here
+argued most of it was deterministic. Overruled by Mark, and he is right on the
+evidence: a normalised match against the contents page got 19 of 27 headings, and the
+remainder - the two `# UNTITLED`, and telling a part from a chapter where the book
+does not number the parts - is judgement. The model reads the contents page to work
+out which chapter is which.
+
+**Scope: our markings, not the author's words.** The heading TEXT belongs to the
+book. What is broken is *our* markup around it - where a chapter begins, what level
+it sits at, whether it carries its number. The check corrects the marking and takes
+the title from the book's own contents page. It never rewrites a title into something
+the book does not say.
+
+**Request housekeeping from a record.** A reviewer looking at a record should be able
+to ask for a housekeeping pass on it, rather than waiting for a corpus run.
+
+**A stale proposal must not apply. CONFIRMED GAP, not hypothetical:** `apply_items`
+locates the field and replaces it without ever comparing `item.current` against what
+the record now holds. So a proposal generated before a reviewer edited that field
+silently overwrites the newer value. Mark reached this by asking what happens if the
+record changes between propose and approve; the answer is that today it clobbers.
+The fix is the one he described: an item that no longer matches the record is
+discarded rather than applied, and the record goes back in the queue for a fresh
+pass. Do NOT lock reviewers out while a pass is pending - the failure is cheap to
+detect and re-run, and a lock would make the common case wait for the rare one.
+
+**Keep the name.** Mark talked himself out of and back into "housekeeping" in one
+breath. It is right: not a review, just tidying.
+
 ## Open questions
 
 - **Whether `posted_by` / `posted_date` should join `GATED_FRONTMATTER_ALLOW`.**
