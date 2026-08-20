@@ -75,10 +75,31 @@ What the workbench can show depends on the copyright status of the source and wh
 |---|---|---|---|
 | `public_domain` / `open_licence` | Shown | Served directly from storage | Shown |
 | `publicly_accessible` (web articles, YouTube, podcasts) | Shown | Embedded or linked from original source URL | Shown |
-| `licensed` (explicit permission from rights holder) | Shown | Served directly from storage | Shown |
+| `licensed` (explicit permission from rights holder) | Shown | Gated unless the permission is evidenced - see below | Gated unless evidenced |
 | `restricted` (books, paywalled papers, documentaries) | Shown | Gated: hash verification or manual access grant | Gated: hash verification or manual access grant |
 
-Only `restricted` gates any content. All other statuses show everything freely.
+**Public serving is an allow-list, not a deny-list.** Only `public_domain`,
+`open_licence` and `publicly_accessible` are served publicly on status alone. Every
+other value - including `licensed`, including an unrecognised or missing one - is
+gated. This matches the implementation (`SNAPSHOT_PUBLIC` in the workbench's
+`prerender.py`), and the direction matters: a deny-list leaks whenever a new status
+is added or a field is absent, an allow-list merely over-gates, which is a
+correction rather than a disclosure.
+
+**`licensed` does not serve freely on the strength of the word.** Permission is
+specific - it may cover quotation and not redistribution, it may have expired, it
+may have come from someone without the standing to grant it. What makes the status
+real is the evidence beside it: `holder`, `granted_by`, `granted_at`, `licence_url`,
+`expires`. A `licensed` record carrying none of those is indistinguishable from a
+mislabelled `restricted` one, so it is treated as restricted.
+
+That is not hypothetical. On 2026-08-20 all seventeen `licensed` records in the
+store - *Communion*, *Thinking, Fast and Slow*, *Imminent*, *Dark Mission* and
+others - carried `status: licensed` and nothing else. No permission had been sought
+from any of those rights holders. They were commercial books, which this table's own
+`restricted` row describes exactly, and they have since been reclassified. Had the
+serving code followed this document instead of its own allow-list, all seventeen
+would have been published in full.
 
 For copyrighted sources, there are two independent paths to unlock the ingested markdown view:
 
