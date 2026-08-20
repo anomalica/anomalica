@@ -33,6 +33,8 @@ This is stated here rather than only in the digest spec because the mistake is m
 
 **There is no `---`-fenced annotation form.** `---` closes the frontmatter and never opens anything again: every subsequent occurrence is ordinary body text - a markdown thematic break, which prose uses freely as a section divider. A parser that treats a bare `---` in the body as opening a fence will discard everything to the next one, and it will do so **silently**, because the result is still a well-formed record that simply contains less. One 622KB book parsed to 88KB (14.2%) that way, yielding 9 claims and a digest written at exit 0.
 
+**The fix is in the reader, never in the body.** The ingester used to rewrite a standalone body `---` to `***` so a naive reader could not trip. That was removed 2026-08-20: it repaired the document instead of the parser, and in a corpus whose whole claim is faithful reproduction, silently substituting a character the source printed is the worse failure. All ten parsers in the pipeline are already correct - six non-greedy regexes and four `split("---", 2)` calls, every one stopping at the FIRST closing fence - so the collision cannot occur. A reader splits once at the top and never looks again. If one is ever found that does not, fix that reader.
+
 The rule for recognising an annotation is therefore positive and total: **a block annotation is an HTML comment whose content parses as a YAML mapping with a known annotation key; nothing else is an annotation.** Anything failing that test is content. A consumer never needs to infer a delimiter, and a construct absent from this document is not one a parser may invent.
 
 ## Frontmatter
