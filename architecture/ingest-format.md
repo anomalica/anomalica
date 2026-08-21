@@ -418,6 +418,10 @@ The body carries the extracted content only - the ingester does not inject the t
 
 YAML inside HTML comments. Single-field annotations use inline comments. Multi-field annotations use multi-line comments. Used for structural markers that sit between content.
 
+> **Adding an annotation type carries three obligations, not two.** Update this document in the same change, and update the emitter - both understood. The third is easy to miss: **decide and record how the pre-digest treats it**, stripped or preserved as context, and tell the digester. The digester cannot infer the disposition of a type it has never seen, so an unexempted new annotation is invisible to claim extraction - the model never sees the text, and nothing errors. Cheap to write down now; expensive to discover in a digest six weeks later.
+
+
+
 ### Page boundary
 
 ```markdown
@@ -771,7 +775,9 @@ A marking that **is** struck through - a declassification stroke ruled through a
 
 The response is text-preservation-first: the marking's wording is kept intact and readable, nothing is lost, and a reviewer applies the stroke by hand with the workbench's strike control.
 
-**A stroke is preserved in two places, and they are not alternatives.** The strikethrough records what the page *shows*. The declassification itself is *release provenance* and belongs in [`release.markings`](#release-and-declassification), verbatim as stamped, because that is where a consumer looks to learn a document was declassified - it must not have to infer it from body formatting. **A struck banner is emitted as prose carrying the stroke, never as a `{{classification: ...}}` annotation.** The annotation asserts a marking *in force*; a struck banner is a marking *removed*, so tagging one is asserting the opposite of what the page says - wrong on its own terms, before any question of stripping. The stripping is the second reason: annotations are removed before extraction, so a stroke applied to one is removed with it, and a reviewer striking a tagged banner in the workbench strikes something that does not survive.
+**A stroke is preserved in two places, and they are not alternatives.** The strikethrough records what the page *shows*. The declassification itself is *release provenance* and belongs in [`release.markings`](#release-and-declassification), verbatim as stamped, because that is where a consumer looks to learn a document was declassified - it must not have to infer it from body formatting. **Striking a marking means REPLACING it with prose, not decorating it.** A reviewer's stroke turns `{{classification: SECRET//REL TO USA, FVEY}}` into `~~(SECRET//REL TO USA, FVEY)~~`; the annotation is gone, not wrapped. This is a property of the format rather than one editor's behaviour, and it is load-bearing for two different consumer designs that fail in unrelated ways without it. Wrapping produces `~~{{classification: X}}~~`, and every annotation stripper then removes the marker and leaves `~~~~` around nothing. A consumer that indexes prose for selection fails earlier and more quietly: such an index must exclude `{{...}}` spans - otherwise a reviewer could not place a note over words a marker already sits in - so the banner text is not in the index at all, the selection cannot be located, and the strike silently declines. Ordinary prose is still wrapped as usual; only a marking is replaced.
+
+**A struck banner is emitted as prose carrying the stroke, never as a `{{classification: ...}}` annotation.** The annotation asserts a marking *in force*; a struck banner is a marking *removed*, so tagging one is asserting the opposite of what the page says - wrong on its own terms, before any question of stripping. The stripping is the second reason: annotations are removed before extraction, so a stroke applied to one is removed with it, and a reviewer striking a tagged banner in the workbench strikes something that does not survive.
 
 Measured 2026-08-21 on a re-extracted Misrep record, the emitter does both: five banners tagged as annotations (`SECRET`, `SECRET//REL TO USA, FVEY`, `S/RELIDO`) and one struck caveat emitted as prose (`~~NOFORN~~`). The prose case is the useful half of the evidence - the model is **inconsistent here, not incapable**, which is what the reflex finding predicts rather than contradicting it.
 
