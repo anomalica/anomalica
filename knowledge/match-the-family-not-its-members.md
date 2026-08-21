@@ -18,3 +18,24 @@ An overlay family is defined by its PREFIX. A pattern that enumerates its suffix
 Match by the invariant that defines the family - the prefix, the type-group, the interface - not by listing its current members. Where you must enumerate, assert the GENERAL case in a test: "any overlay-prefixed marker is stripped", not "highlight-start and highlight-end are stripped". Then adding a new member without extending the handler fails the test, instead of passing while the member leaks. The failure mode here is always silent - the enumeration keeps working for the cases it names and quietly ignores the rest - which is why it must be a test that fails, not a review that has to remember.
 
 Related: [which layer is authoritative](which-layer-is-authoritative.md) and [validating embedding spaces](validating-embedding-spaces.md) - all three are cases where a check that looked complete was silently measuring, or matching, less than it appeared to.
+
+## It recurs one level up
+
+The same file has now produced the same failure twice, at two levels of
+the same pattern.
+
+`_OVERLAY_MARKER` in `anomalica_common.pre_digest` originally enumerated
+**suffixes** - `(start|end)` - so `{{highlight-context: ...}}` reached the
+model input the day it was specified. The fix matched any suffix within a
+family, which closed the suffix hole.
+
+It left the **family** list enumerated: `(highlight|link|note|cites)`. That
+is the identical shape one level up, and it is what let
+`{{classification: ...}}` through into claim extraction.
+
+Fixing an enumeration by widening it inside one axis does not remove the
+enumeration - it moves the hole outward. Ask which axis is still a list of
+names, and whether the safe answer there is an allow-list or a deny-list.
+Here the allow-list fails open: an unlisted family is passed through to the
+model rather than held back, so every future annotation type is a leak
+until someone adds it.

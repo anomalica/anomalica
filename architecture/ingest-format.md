@@ -418,7 +418,9 @@ The body carries the extracted content only - the ingester does not inject the t
 
 YAML inside HTML comments. Single-field annotations use inline comments. Multi-field annotations use multi-line comments. Used for structural markers that sit between content.
 
-> **Adding an annotation type carries three obligations, not two.** Update this document in the same change, and update the emitter - both understood. The third is easy to miss: **decide and record how the pre-digest treats it**, stripped or preserved as context, and tell the digester. The digester cannot infer the disposition of a type it has never seen, so an unexempted new annotation is invisible to claim extraction - the model never sees the text, and nothing errors. Cheap to write down now; expensive to discover in a digest six weeks later.
+> **Adding an annotation type carries three obligations, not two.** Update this document in the same change, and update the emitter - both understood. The third is easy to miss: **decide and record how the pre-digest treats it**, stripped or preserved as context, and tell the digester. The digester cannot infer the disposition of a type it has never seen.
+>
+> **The fallback is currently the unsafe direction, so do not rely on it.** `anomalica_common.pre_digest` matches an **allow-list** of four families (`highlight`, `link`, `note`, `cites`); anything outside them passes straight through to the model as literal text. So an undecided annotation type is not hidden from extraction - it is *shown* to it, and our own syntax arrives in the model input as if it were source text. That is why `{{classification: ...}}` reaches claim extraction today. This lives in the shared module, so it binds the assimilator as well as the digester. If the fallback is later inverted to strip-by-default, the obligation is unchanged and only the consequence of forgetting changes - from "our syntax reached the model" to "a new annotation went missing". Cheap to write down now; expensive to discover in a digest six weeks later.
 
 
 
