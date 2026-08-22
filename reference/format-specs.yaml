@@ -227,6 +227,11 @@ types:
           versioned id)."}
       - {name: ai_usage, type: list, required: false, status: provisional, description: "Per-stage AI-processing provenance
           carried forward onto this digest (model, token counts). Data kept, not publicly surfaced."}
+      - {name: review_state, type: object, required: false, description: "The source record's review state AT EXTRACTION TIME
+          - provenance, like prompts/pre_digest/ai_usage. {reviewed (bool), coverage (fraction of sections observed), checked_at}.
+          NEVER resolve current review state from this: the ingest's review sidecar is the single source of truth and gating
+          consumers read it at import/rebuild, so a review takes effect without re-digestion. ABSENT means NOT RECORDED, never
+          unreviewed - three distinguishable states. coverage is a fraction because review is per-section (0046)."}
       - {name: prompts, type: list, required: false, description: "Which prompt produced each pass, so the digest is attributable
           to an exact prompt (mirrors 0010-auditable-assembly). One entry per pass: {pass, id, version, sha256, file}. An
           override is recorded as version 'override' with the file's own hash. Absent on pre-stamping digests."}

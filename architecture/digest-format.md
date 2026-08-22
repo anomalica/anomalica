@@ -249,6 +249,23 @@ rewrite - the fields clear as records re-digest and articles re-assemble,
 which happens anyway, so old artefacts may still carry them. See
 [0037](../decisions/0037-ai-operation-ledger.md), amended.
 
+### `review_state`
+
+The source record's review state **at extraction time**. Provenance, alongside `prompts`, `pre_digest` and `ai_usage` - it records the conditions an extraction ran under, and nothing more.
+
+```yaml
+review_state:
+  reviewed: false           # true | false - was the source reviewed when this ran
+  coverage: 0.0             # fraction of sections observed at that moment
+  checked_at: '2026-08-22T04:11:07Z'
+```
+
+**Never resolve current review state from this field.** The ingest's review sidecar is the single source of truth; anything that gates behaviour - the assimilator's page gate, the assembler, review-priority ranking - reads the *current* state from the record at import or rebuild. A snapshot used as authority would freeze a record's status at the moment it was digested, so a review would not take effect until re-digestion, which is the opposite of what the field is for ([0046](../decisions/0046-format-conditional-review-gate.md)).
+
+**Absent means not recorded, never unreviewed.** Digests written before this field existed carry no review state at all, and reading their absence as `reviewed: false` would assert something about extractions that were never measured. Three states, all distinguishable: present-and-false, present-and-true, absent.
+
+`coverage` is a fraction rather than a flag because review is measured per section, so a record is reviewed in parts. A digest that ran at 0.4 coverage is a different provenance fact from one that ran at 0.0.
+
 ### `prompts`
 
 Optional. Which prompt produced each extraction pass, so a digest is
