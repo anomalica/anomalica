@@ -73,12 +73,39 @@ The rule is not "be more careful" - it is **prefer the instrument that reads
 the thing itself over one that reads a rendering of it**. The rendering is
 nearly always the one nearest to hand, which is why it keeps winning.
 
-The same rule appears one layer down in
-[ingest-format.md](../architecture/ingest-format.md), as a guard written
-against *position* rather than *notation*: enumerating the notations a
-construct might use misses the next one silently, so test the structural
-fact instead - a speaker description is the whole value of its comment,
-which is what identifies it, not the punctuation it happens to carry.
+The same rule is stated one layer down in
+[ingest-format.md](../architecture/ingest-format.md), which gives both forms
+in order - test the position first, and where no positional test exists:
+
+> **Test the least lossy value available at that point** - the name wherever
+> a name exists, a derived form like a slug only where nothing else does. A
+> component far downstream receives derivatives rather than originals, and
+> the lossy one is usually the one nearest to hand: `[interviewer 2]`
+> slugifies to `interviewer-2`, indistinguishable from a legitimate slug,
+> while the display title beside it still carries the brackets exactly as it
+> carries the accent in "Jacques Vallée".
+
+Same rule, different layer: a slug is a rendering of a name the way `ps`
+output is a rendering of an argv.
+
+### A fourth instance, while writing this note
+
+The `ps | cut` row above was not the last one. Verifying that quotation, this
+note's author ran `grep -rn 'lossy' architecture/ | cut -c1-230`, and the cut
+landed before the phrase "least lossy" - so the passage appeared to contain
+only the position-not-notation guard. On that basis another component was
+told its citation was substantively wrong. It was not; only its filename was.
+
+The same instrument, the same blind spot, twice in one evening, the second
+time while documenting the first. Reading the line without a width limit
+settles it in one command:
+
+```bash
+grep -rn 'lossy' architecture/ | fold -w 100 -s   # never | cut
+```
+
+Which is the practical form of the whole note: a width limit is a rendering
+choice, and applying one to evidence turns the evidence into a rendering too.
 
 Related, all the same family seen from the *code* side rather than the
 instrument side:
