@@ -181,7 +181,13 @@ A bare image (`jpg`, `jpeg`, `png`, `webp`) is a photographed or scanned **docum
 
 The two are orthogonal, and they come apart immediately. The same email is `web` when scraped from a publication, `pdf` when it arrives inside a FOIA release, and RFC822 when downloaded as `.eml`. Making email a sixth `source_type` would therefore make every email inside a PDF invisible to it - and the corpus already holds that case.
 
-`document_type` is an open set - `email`, `letter`, `memo`, `report`, `statute`, `affidavit`, `transcript`, `interview` - naming the artefact's form, never its subject. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. Omit it where the form adds nothing a handler or reader could not already infer; it exists to drive extraction, not to classify for its own sake.
+`document_type` is an open set - `email`, `letter`, `memo`, `report`, `statute`, `affidavit`, `transcript`, `interview` - naming the artefact's form, never its subject. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. It exists to drive extraction, not to classify for its own sake.
+
+**Emit it only where it is derivable without inference; otherwise leave it absent.** The test is whether the artefact *states* its own form, not whether it resembles one. RFC822 headers parse or they do not, and a page headed `MEMORANDUM FOR RECORD` says what it is - both derivable. A photographed page that merely *looks* like a memo is not, and asking a model to choose between `memo`, `letter`, `report` and `slide` from appearance is asking for a judgement it cannot ground, which returns a fluent value indistinguishable from a correct one.
+
+Absence is the not-evidenced marker here as everywhere else in this format, and it is the useful state: **a missing `document_type` invites a human to look, while a wrong one does not.** A reviewer sets it where it matters; as with other reviewer corrections, the who and when ride on the git commit rather than an inline stamp.
+
+This also keeps the field one kind of thing. Were derived and guessed values to share it with no way to tell them apart, a consumer would hold two different classes of value under one name - the shape that has bitten this format repeatedly - and the fix would be a basis marker, which is worse than simply not guessing.
 
 **It describes the WHOLE record, so it never applies to a container.** FOIA release 18-F-0324 is a `pdf` whose body contains many emails; its `document_type` is not `email`, because the record is the release. Correspondence inside a container is marked in the body instead, with [message boundaries](#message-boundary). A record-level `document_type: email` asserts the entire record is one message - an `.eml`, or a page publishing a single message.
 
