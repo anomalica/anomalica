@@ -83,7 +83,42 @@ that cost a separate investigation the day before.
    field" was testable - re-digest and re-count - and nobody tested it until the
    re-digest happened for other reasons and the number did not move.
 
+## The note did not prevent the recurrence (2026-08-21)
+
+Three weeks later the same shape arrived seven more times in one afternoon, twice
+at *this* boundary - the parser's field list dropping a newly specified
+`curation` block, and the emitter's field list destroying `pre_digest`,
+`run_kind` and `record.speakers` on any round trip. This note existed, named the
+function, and was not enough.
+
+The reason it was not enough is that "allow-list" made it read as a
+data-copying bug, so nobody recognised the same fault wearing other clothes:
+
+- a corpus sweep keyed on a lower-case `unnamed` prefix, blind to every
+  capitalised description
+- its replacement keyed on name *shape*, which flagged a real surname and still
+  missed the case it was written for
+- an extraction prompt teaching a category with one worked example, so the model
+  matched the example instead of applying the category
+- a guard placed on node *minting* while references and speakers resolved through
+  an unguarded matcher
+- a database column that was only ever SET and never cleared, leaving a record
+  pointing at a node that had just been retired
+
+**The unifying cause is not enumeration. It is that adding is easy to write and
+removing has to be thought about**, so the removing half gets skipped and nothing
+fails loudly when it does. Every one of these handled the case it was written for
+and stayed silent on the case that arrived later. An allow-list is just the most
+recognisable costume.
+
+So the question to ask of any write path, guard or sweep is not "does it list
+everything?" but **"what happens to the case this was not written for?"** - and
+specifically, what removes, clears, or rejects, given that only the adding half
+tends to get built.
+
 Related: [absence is not a verdict](absence-is-not-a-verdict.md) - the empty
 column read as a state; [the diligent version is the wrong
 one](the-diligent-version-is-the-wrong-one.md) - the same preference for an
-authoritative structure over an enumerated one.
+authoritative structure over an enumerated one; [a condition that cannot
+fire](a-condition-that-cannot-fire.md) - the check that would have caught it
+being the one that structurally could not.
