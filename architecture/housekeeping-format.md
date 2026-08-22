@@ -164,8 +164,27 @@ shows plainly that a metadata change was made after the fact and by whom.
 
 ## What it must never do
 
-- Write to the body. Enforced above.
+- Write to the body. Enforced above - `apply_patch` splices frontmatter lines and
+  raises `BodyChanged` if the body differs by a byte.
+
+  **A body-scoped operation therefore needs its own equally hard guard, never a
+  relaxation of this one.** A speaker rename is the first such case: it changes
+  every `<!-- speaker: ... -->` comment, so it cannot go through the frontmatter
+  path at all. Its guard is that every byte OUTSIDE those comments is identical,
+  that the only comments changed are those the approved item names, and that the
+  frontmatter `speakers:` roster is reconciled in the same apply. A guarantee with
+  an exception carved into it stops being a property of the system, which is the
+  whole reason this check runs even where it could not have failed.
 - Set a field it has no evidence for. Absent beats guessed.
+- **Invent a plausible real name for someone it cannot identify.** Where a proposal
+  names a person - a speaker, a creator - and the evidence does not identify them,
+  it must propose a bracketed description (`[interviewer 2]`) or propose nothing.
+  Never a guess that looks like a name. This is the one failure of this component
+  that nothing downstream can catch: a fabricated name is structurally identical to
+  a correct one, passes every check, and once approved becomes the record's own
+  account of who was speaking. The test for whether a value names anybody, and the
+  notation for when it does not, are in
+  [ingest-format.md](ingest-format.md#square-brackets-mean-this-is-a-description-not-a-name).
 - Mark a record as human-reviewed. Housekeeping examines metadata; review verifies the
   body against the source. Independent states.
 - Run on the metered API or OpenRouter. Subscription only, pinned at dispatch.
