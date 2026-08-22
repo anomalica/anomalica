@@ -31,7 +31,7 @@ types:
     serialisation: markdown + YAML frontmatter
     spec_doc: architecture/ingest-format.md
     summary: One file per ingested source - the interchange between the ingester and the digester.
-    source_types: [pdf, audio, video, web, ebook]
+    source_types: [pdf, audio, video, web, ebook, image]
     # `formats` on a field lists the source_types it applies to, ONLY where the spec states
     # it. A field with no `formats` key applies to all source_types (or is reviewer-optional).
     fields:
@@ -39,7 +39,10 @@ types:
           when word-level timestamps are present."}
       - {name: title, type: string, required: true, description: "Document or episode title. Always quoted. Lives only in
           frontmatter, never injected into the body."}
-      - {name: source_type, type: string, required: true, description: "One of pdf, audio, video, web, ebook."}
+      - {name: source_type, type: string, required: true, description: "HOW the source arrived: pdf, audio, video, web, ebook,\n
+          \         image. Orthogonal to document_type (WHAT it is) - a photographed slide and a scanned pdf of the same memo
+          differ\n          in source_type and share a document_type. `image` (jpg/jpeg/png/webp) is a photographed or scanned
+          document,\n          handled on the pdf vision path and hashed as source BYTES like any scan; it is not a container."}
       - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts
           that carry per-word `{{t:}}` markers."}
       # CURRENT FLAT FIELDS (2026-08-16). These are what records actually carry - 242 of 257 live
@@ -127,7 +130,8 @@ types:
       - {name: snapshots, type: list, required: false, formats: [web], description: "Sibling capture artefacts. Each: role
           (page_render | single_file), hash (sha256 of bytes), content_type (MIME). Exposes PDF renders and frozen-page captures
           for web records."}
-      - {name: pages, type: integer, required: false, formats: [pdf], description: "Page count for documents."}
+      - {name: pages, type: integer, required: false, formats: [pdf, image], description: "Page count for documents.\n          Always
+          1 for source_type image - a photographed or scanned page is a single-page document."}
       - {name: duration, type: number, required: false, formats: [audio, video], description: "Length of the FILE in seconds,
           measured from the archived original - NOT the transcript's span. A file ending in silence or outro music runs on
           past its last word; writing the last segment's end here understated every record in the corpus by up to 82s."}

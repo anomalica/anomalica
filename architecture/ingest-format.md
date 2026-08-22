@@ -170,12 +170,14 @@ A claim's authoritative provenance is a reference to its source record (the `rec
 
 ### Document type
 
-`source_type` records **how a source was acquired** (`pdf`, `audio`, `video`, `web`, `ebook`). `document_type` records **what it is** - the form of the artefact, independent of how it reached us.
+`source_type` records **how a source was acquired** (`pdf`, `audio`, `video`, `web`, `ebook`, `image`). `document_type` records **what it is** - the form of the artefact, independent of how it reached us.
 
 ```yaml
 source_type: web
 document_type: email
 ```
+
+A bare image (`jpg`, `jpeg`, `png`, `webp`) is a photographed or scanned **document**, not a new container: it runs the PDF handler's vision path, is hashed as source bytes like any other scan, and carries `pages: 1` with a single `file_page: 1`. It is the clearest case of the split - a photographed slide and a scanned PDF of the same memo differ in `source_type` and share a `document_type`. TIFF and HEIC are deferred: browsers cannot render them, so they need a decoded display derivative in `snapshots[]` first.
 
 The two are orthogonal, and they come apart immediately. The same email is `web` when scraped from a publication, `pdf` when it arrives inside a FOIA release, and RFC822 when downloaded as `.eml`. Making email a sixth `source_type` would therefore make every email inside a PDF invisible to it - and the corpus already holds that case.
 
