@@ -32,11 +32,27 @@ made the single gate wrong in both directions.
 **Non-transcript formats - `pdf`, `web`, `ebook`, `image` - may be
 digested before human review.** Digestion is auto-queued after ingest.
 
-**Audio and video remain gated.** A whisper-derived transcript requires
-human review before digestion, because the review is part of producing
-the material rather than checking it. This is not a quality preference
-and must not be relaxed on throughput grounds; the artefact is
-incomplete until a human has named the speakers.
+**Audio and video must be gated - and the gate does not exist yet.** A
+whisper-derived transcript requires human review before digestion,
+because the review is part of producing the material rather than checking
+it. This is not a quality preference and must not be relaxed on
+throughput grounds; the artefact is incomplete until a human has named
+the speakers.
+
+Say plainly what follows from the Context above: since nothing enforces a
+review verdict today, this is a gate to **build**, not one to retain. The
+interim threshold is therefore the current behaviour - **none**, audio is
+digestible in code exactly as everything else is - and it is recorded
+here so it is visible rather than assumed. Until the scheduler implements
+the gate, audio's exemption is a convention held by whoever dispatches
+work.
+
+**The threshold itself is unset and must not stay that way.** "Reviewed
+enough to digest" is a fraction of sections, not a flag, and leaving it
+unstated means it resolves to whatever the code happens to do - which is
+the accidental-policy failure this record exists to correct, reintroduced
+one level down. The number is the digester's and workbench's to set, with
+a stated reason; this record requires that it be set, not what it is.
 
 **A digest records the source's review state at extraction time.** The
 field is provenance - "this extraction ran on unreviewed material" - and
