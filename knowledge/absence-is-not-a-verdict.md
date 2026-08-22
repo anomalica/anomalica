@@ -5,9 +5,12 @@ was observed and found acceptable.** Whenever a schema or a metric cannot
 distinguish "not looked at" from "looked at and fine", it will silently
 report the second, and it will do so in the flattering direction.
 
-This has appeared five times in one week, in five different components,
-each time discovered separately. It is worth recognising by shape rather
-than rediscovering per instance.
+This is the most reliably recurring failure in the project. It was worth
+writing down after five instances in one week, across five components,
+each found separately; the sections below have since roughly doubled that
+and none of them was found by looking for it. Recognise it by shape rather
+than rediscovering it per instance - and expect the next one to arrive
+looking like a fact about the world rather than a fact about a query.
 
 | Where | Absence meant | Would have been read as |
 |---|---|---|
