@@ -767,6 +767,10 @@ Declassified government documents carry security classification markings at two 
 
 **Document level.** The overall classification banner (`(SECRET//REL TO USA, FVEY)`, `(SECRET//NOFORN)`) goes in the frontmatter `classification` field, verbatim with the surrounding parentheses stripped. In-body repetitions of that same banner - the page headers and footers that restate it - are redundant with the frontmatter and stripped from the body.
 
+**A struck overall banner still goes in `classification`.** The field records what the document *was* marked - it is the prior state, not an assertion that the marking is in force. That is what "original" means in its definition, and it has to be: every declassified release in this corpus carries a marking that is no longer in force, so a field asserting current classification would be wrong on essentially every record rather than on this one.
+
+The strike rule that bars a struck banner from being tagged applies to the **inline** `{{classification: ...}}` annotation, which asserts a marking over a span of text at a position. The frontmatter field makes no such assertion, so there is no conflict between the two rules and no need for a separate `declassified_from`. Both halves of the fact are already kept: `classification` holds what it was marked, and [`release`](#release-and-declassification) holds the declassification that removed it. Dropping the repeated struck banner from the body as furniture therefore loses nothing - it is the one place the fact is *not* needed.
+
 **Portion level.** Markings that classify a specific portion and differ from the document banner (`(S//REL)`, `(U)`, `(S/RELIDO)` prefixing a paragraph or section heading) are preserved as an inline annotation at the start of the portion they govern:
 
 ```markdown
