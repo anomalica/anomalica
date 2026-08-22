@@ -4,9 +4,13 @@ Date: 2026-08-22
 Status: proposed - awaiting Mark's confirmation
 
 > **Why not `accepted`.** This record was written from requirements relayed
-> on 2026-08-22 by a session answering to `anomalica/master` that turned out
-> to be a duplicate claimant of that identity; the real master states it did
-> not send them. The *content* is independently corroborated - the
+> on 2026-08-22 through the `anomalica/master` bus identity while **two
+> sessions held that name at once** - one had inherited `WORKSPACE_NAME`
+> from a parent shell and subscribed to the same inbox. Both were real
+> sessions; neither could know it was a duplicate, and nothing here could
+> distinguish them. The requirements therefore cannot be attributed to a
+> particular session, which is the whole of the problem - no session
+> misrepresented itself. The *content* is independently corroborated - the
 > no-enforcement finding was measured from the producer side (the digester's
 > `assess_record` reached only by `coverage`), from the consumer side
 > (workbench `server.py:1276-1283`), and against the review corpus (88 of 90

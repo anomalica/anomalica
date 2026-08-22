@@ -69,6 +69,38 @@ performed the observation rather than returning something that merely
 looks like one. Caches, defaults, and short-circuits all produce
 confident-looking output without doing the work.
 
+## The sharpest case: a measurement nobody took
+
+Every instance above is a query, schema, or instrument that *ran* and
+could not see something. There is a worse form: **an instrument that was
+specified, believed to exist, and never built.**
+
+The AI-operation ledger ([0037](../decisions/0037-ai-operation-ledger.md))
+has no table in either database. It is the artefact specified to answer
+"what ran, on what transport, spending what" - and when two unexplained
+runs surfaced (19 August, 9 Opus digests, 8.6M tokens; 21 August, 31
+pages, 6.3M), the instrument that would have attributed them was absent.
+**An absent ledger reads as an absence of spend.**
+
+This is harder to catch than a blind query, because a query at least
+returns something a sceptic can interrogate. Here there is nothing to
+interrogate and no error - only a quiet, confident nil, backed by a
+decision record that says the mechanism exists. Ask not only "would this
+query have seen it?" but "was this ever measured at all?", and treat a
+specified-but-unbuilt instrument as a standing source of false negatives
+until it is written.
+
+## Two more query-shaped instances
+
+- **A prefix match cannot see a corruption in the middle.** A `LIKE`
+  pattern anchored at the start of a name reported nil
+  description-shaped person nodes, missing "Unidentified Aerial
+  Phenomena (UAP) Gerb" - page-worthy, 36 claims. The absence was a fact
+  about the pattern, reported as a fact about the corpus.
+- **A count over a table that failed to load returns 0, not an error.**
+  A coverage count read a virtual table it could not open and reported
+  zero coverage rather than an unavailable source.
+
 ## The related trap: a heuristic that overrides ground truth
 
 The coreference case had a second failure underneath the first. The
