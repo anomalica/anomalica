@@ -1,7 +1,21 @@
 # 0046. Digestion before review, for non-transcript formats
 
 Date: 2026-08-22
-Status: accepted
+Status: proposed - awaiting Mark's confirmation
+
+> **Why not `accepted`.** This record was written from requirements relayed
+> on 2026-08-22 by a session answering to `anomalica/master` that turned out
+> to be a duplicate claimant of that identity; the real master states it did
+> not send them. The *content* is independently corroborated - the
+> no-enforcement finding was measured from the producer side (the digester's
+> `assess_record` reached only by `coverage`), from the consumer side
+> (workbench `server.py:1276-1283`), and against the review corpus (88 of 90
+> verdicts digestible, mean observed coverage 0.98) - so nothing here is
+> suspected of being wrong. But it records a policy change this record itself
+> says Mark owns, and he has not confirmed it. Marking it `accepted` would
+> assert a ratification that has not happened, which is the same fault as a
+> documented safety property nothing enforces: it gets relied on. Flip to
+> `accepted` on his word; amend if he decides otherwise.
 
 ## Context
 
@@ -53,6 +67,11 @@ unstated means it resolves to whatever the code happens to do - which is
 the accidental-policy failure this record exists to correct, reintroduced
 one level down. The number is the digester's and workbench's to set, with
 a stated reason; this record requires that it be set, not what it is.
+
+One constraint on whoever sets it: it must be **section-aware, not a
+corpus fraction**. The sharp case below - a record reviewed everywhere
+except the sections feeding published claims - passes any whole-record
+threshold while being the least ready material in the corpus.
 
 **A digest records the source's review state at extraction time.** The
 field is provenance - "this extraction ran on unreviewed material" - and
