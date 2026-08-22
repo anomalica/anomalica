@@ -104,9 +104,12 @@ types:
           a leak by nobody). Keep them separate: folding disclosure into audience lets an unauthenticated document inherit
           a compelled release's credibility. Narrative in ingest-format.md."}
       - {name: document_type, type: string, required: false, description: "WHAT the artefact is (email, letter, memo, report,
-          statute, affidavit, transcript, interview), orthogonal to source_type which is HOW it was acquired. Open set. Describes
-          the WHOLE record, so never set on a container: a FOIA pdf holding many emails is not document_type email - its correspondence
-          is marked in the body with message-boundary annotations. See ingest-format.md."}
+          statute, affidavit, transcript, interview), orthogonal to source_type which is HOW it was acquired. Open set. EMIT
+          ONLY WHERE DERIVABLE WITHOUT INFERENCE - the artefact STATES its form (RFC822 headers parse; a page headed MEMORANDUM
+          FOR RECORD) - otherwise ABSENT for a reviewer to set. Never model-judged from appearance: a guessed value is indistinguishable
+          from a derived one and a wrong value stops a human looking, where absence invites it. Describes the WHOLE record,
+          so never set on a container: a FOIA pdf holding many emails is not document_type email - its correspondence is marked
+          in the body with message-boundary annotations. See ingest-format.md."}
       - {name: email, type: object, required: false, description: "Format-native email structure where document_type is email,
           parsed deterministically from RFC822 headers (stdlib email parser, no model). {from, to, cc, subject, in_reply_to,
           references} with participants as {name, address}. Does NOT repeat published_date or creators - the Date header IS
