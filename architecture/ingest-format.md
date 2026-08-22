@@ -496,6 +496,10 @@ The list is not closed. Any description a reviewer needs is written the same way
 
 **A description is not a pseudonym or a partial name.** `Mrs. Smith`, `Annika`, `UAP Gerb` are what somebody is called, however incomplete - they stay unbracketed. The test is whether the value would still identify this person if you met them: a name would, a description would not.
 
+**`Name (description)` is a NAME, and the distinction is load-bearing.** `Sally (Budd Hopkins abductee)`, `Dave (SR-71 pilot)`, `Dr. X (French physician)`, `A Friend (anonymous army sergeant)` - a given name or a pseudonym carrying a disambiguating parenthetical. Around twenty real people in the corpus are written this way and they DO match across records, which is the whole point of the parenthetical: it tells two Sallys apart. Only a value that is *entirely* a description is bracketed. Anything treating brackets or parentheses as a signal must survive this form - a guard that reads `Sally (Budd Hopkins abductee)` as anonymous silently removes twenty people from the graph, and one that splits on the comma inside the parenthetical mangles the name outright (`'widow of Louis Emrich) Emrich (Mrs.'` is a real example of the second, from a natural-order migration).
+
+**A sweep for descriptions is written against name SHAPE, not a leading word.** The failure to avoid: a query keyed on a lower-case `unnamed` prefix, which misses `Senior U.S. Intelligence Officer (Anonymous)` and every capitalised description. That is the enumeration mistake again - the leading word is a notation, and the notation varies. Ask instead whether the value names anybody.
+
 ### Mathematics
 
 Equations are transcribed as LaTeX, delimited `\[ ... \]` for display and `\( ... \)` inline.
