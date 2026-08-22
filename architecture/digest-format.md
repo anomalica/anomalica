@@ -40,11 +40,11 @@ two sides for any given record.
 ## Document structure
 
 The order of top-level keys is fixed: `schema`, `extracted_at`, `model`,
-`ai_usage`, `prompts`, `pre_digest`, `record`, `terminology`, `nodes`,
-`domain_claims`, `infrastructure_claims`. Null and empty values are omitted - if
-a record has no infrastructure claims, the key is absent rather than present with
-`[]`. `ai_usage`, `prompts`, `pre_digest`, and `terminology` are optional blocks
-(see below).
+`ai_usage`, `prompts`, `pre_digest`, `curation`, `record`, `terminology`,
+`nodes`, `domain_claims`, `infrastructure_claims`. Null and empty values are
+omitted - if a record has no infrastructure claims, the key is absent rather
+than present with `[]`. `ai_usage`, `prompts`, `pre_digest`, `curation`, and
+`terminology` are optional blocks (see below).
 
 ```yaml
 schema: anomalica/digest/1
@@ -282,6 +282,46 @@ the registry's per-version `added` dates.
 **Digests without `prompts` or `pre_digest` have unrecoverable provenance.** The 23 canonical digests written before these blocks landed record neither a prompt sha nor a `prep_version`, and neither is derivable from the artefact - `extracted_at` narrows the prompt to a registry era, not to a version. Such a digest cannot be attributed, reproduced, or compared against another model's output, which makes it unusable as an eval baseline.
 
 The resolution is re-digestion rather than back-stamping, because a guessed provenance stamp is worse than an absent one. Recorded here because it changes what a corpus-wide run *is*: a run that re-digests those 23 alongside new records **replaces** the canonical corpus rather than extending it, yielding one generation at one model, one prompt sha, and one prep version. That uniformity is the point - a corpus of mixed, partly-unknown generations cannot support the model and prompt comparisons the eval depends on.
+
+### `curation`
+
+Optional. Present only when a human changed a value in this digest after
+extraction. Absent means the file is model output as emitted.
+
+```yaml
+curation:
+  - at: '2026-08-21T14:40:00+00:00'
+    by: Mark
+    changed: [nodes]
+    why: >-
+      Anonymous person nodes rewritten to the bracketed description form
+      (ingest-format.md). Three names; no re-extraction.
+```
+
+**Without it, a hand-edited digest is indistinguishable from model output**, and
+the file goes on asserting that a named model on a named prompt version produced
+a value a person wrote. Nothing downstream can catch it: an edit to `nodes`
+leaves the body untouched, so `pre_digest.sha256` still matches and the
+staleness check stays silent - correctly, because the *source* did not change.
+The one check that would notice a digest diverging from its extraction is
+exactly the one that cannot fire.
+
+The cost of the gap is not hypothetical or cosmetic. The whole model-comparison
+method rests on a digest being what a model emitted - a single 27-model
+comparison run over one record is worthless if edited and unedited artefacts mix
+silently, and no reader of the corpus could separate them afterwards. A digest
+carrying `curation` is still usable for everything except being cited as that
+model's unmodified output, which is precisely the distinction that has to
+survive.
+
+**A commit message is not a substitute.** Git history is a different artefact
+from the file, and every consumer that reads a digest without its repository -
+an eval harness, a copied corpus, a downstream import - sees only the file. The
+provenance has to travel with the data.
+
+**Prefer re-extraction where it is affordable.** Curation records an edit
+honestly; it does not make the edit as good as a clean run. Where a rule changed
+and the budget allows, re-digest instead and leave the block absent.
 
 ### `pre_digest`
 
