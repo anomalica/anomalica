@@ -468,6 +468,23 @@ Producers (the digester, the converter, future tooling) must:
 - Universally unique identifiers are RFC 4122 version 4 in lowercase
   hex form.
 
+Readers must:
+
+- **Pass document-level blocks through whole rather than enumerating them.** A
+  parser listing the blocks it knows (`pre_digest`, `prompts`, `run_kind`,
+  `ai_usage`, ...) silently drops the next one added, and the failure is
+  invisible: the consumer sees a well-formed digest missing a field it never
+  knew to ask for. This is how `curation` came to be specified and unreadable on
+  the same day - the block existed in the file and every consumer reading it
+  through the shared parser still saw the digest as unmodified model output,
+  which is the one thing the block exists to prevent.
+
+  Where a block must be withheld from a particular consumer - `ai_usage` must
+  not reach the graph, which feeds the public site - that is the CONSUMER's
+  policy, applied after parsing. Parsing is not the place to decide what a
+  consumer is allowed to see: offer everything and let each consumer choose, or
+  every future field inherits an old policy decision by accident.
+
 ## Planned: multi-model digestion and canonical reconciliation
 
 Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md); not yet built. Today the relationship is 1:1 (one model, one digest, `model: <alias>`). The planned direction:
