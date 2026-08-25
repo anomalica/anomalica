@@ -8,6 +8,37 @@ How the pipeline fits together, end to end. A living document.
 
 What remains below is the one thing neither the diagram nor the per-component docs carry: the connected story of how data moves between the stages.
 
+## knowledge.db is three files (WAL, since 2026-08-25)
+
+The assimilator's graph at `~/.local/share/assimilator/knowledge.db` runs in SQLite
+**WAL mode**. That means it is not one file:
+
+    knowledge.db
+    knowledge.db-wal     recent committed transactions live here, not in the main file
+    knowledge.db-shm     shared-memory index for the above
+
+**Anything that copies, backs up or ships the graph must take all three**, or run
+`PRAGMA wal_checkpoint(TRUNCATE)` first, or copy with `sqlite3 source ".backup dest"`.
+A copy of `knowledge.db` alone is a torn snapshot missing whatever is still in the
+`-wal`.
+
+The failure mode is the dangerous kind: when the database is idle the last writer
+checkpoints and **both sidecars disappear**, so a copy taken at a quiet moment is
+complete and a copy taken under load is silently short. It passes testing and fails
+in production.
+
+**Why it was changed.** The previous `journal_mode=delete` means a reader holds a
+shared lock that blocks every writer. Three processes write to this graph - the
+hourly assimilate timer, the scheduler's dispatch runner, and manual commands - and
+a long analytical read made it unwritable for the read's whole duration. Measured
+2026-08-25: a 30,020-query nearest-neighbour scan caused a merge pass to fail on its
+first statement with "database is locked" despite a 300-second busy timeout. Under
+WAL a reader does not block a writer; verified by running that exact case, where a
+write completed in 0.00s with a reader mid-scan of every claim.
+
+`infrastructure.db` is deliberately unchanged and still in delete mode: it is small
+and has shown no contention.
+
 ## Data flow
 
 The ingester writes ingests to the access-controlled ingests repository. The digester reads from that repository and, before extracting, derives a materialised **pre-digest** from each record - the deterministic model-prep (irrelevant regions removed, footnotes inlined, word-timestamps stripped) applied so that the exact model input is itself an inspectable, stored artefact ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)). It extracts claims and nodes from the pre-digest and writes digests to the public digests repository. Both the ingester and digester need access to the ingests repository; public exposure of any individual ingest is then gated by that record's copyright status. (Planned direction: the digester may run several models per record and a selector stage picks one selected digest from them; only the selected digest is assimilated - [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md).)
