@@ -104,6 +104,42 @@ until it is written.
   A coverage count read a virtual table it could not open and reported
   zero coverage rather than an unavailable source.
 
+## A wrong comment is worse than no comment
+
+The scheduler's digest index carried this, verbatim:
+
+    # Canonical digests sit at the root of digests/; the variants/ subtree is
+    # deliberately not scanned.
+
+directly above `for y in records.rglob("*.yaml")`, which scans it. Every
+model-comparison variant entered the index as an importable digest, and the queue
+emitted five import jobs that could never succeed.
+
+The bug is ordinary. What made it survive is the comment. **A confident, wrong
+comment terminates the search**: anyone auditing the predicate reads it, agrees
+that variants are excluded, and stops - so the comment does not merely fail to
+help, it actively prevents the check that would have caught the code beneath it.
+No comment at all would have sent the same reader to the loop.
+
+This is the same family as the rest of this note. An absent row, an instrument
+that was not running, a probe that found nothing, and a comment asserting the
+opposite of the code all produce the same outcome: a reader concludes "checked,
+fine" and moves on. The difference is only in what supplied the false
+reassurance.
+
+Practical form:
+
+- **Treat a comment as a claim to verify, not as evidence.** Especially a comment
+  that says what the code does NOT do - exclusions and negative guarantees are the
+  ones that rot, because nothing fails when they stop being true.
+- **When a comment and the code disagree, the comment is usually older than the
+  bug.** It described the intent at the time; the implementation drifted, or never
+  matched. Do not "fix the comment" without checking which side is wrong.
+- **Write comments about WHY, not about what the code excludes.** A comment saying
+  "variants are not scanned" is a fact that can rot silently. A guard function
+  named `canonical_digests` cannot - if it stops excluding variants, its own tests
+  fail.
+
 ## The related trap: a heuristic that overrides ground truth
 
 The coreference case had a second failure underneath the first. The
