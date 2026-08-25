@@ -11,14 +11,15 @@ That note is about a *gap* being read as a finding. This one is about a
 *confident wrong reading* produced by the instrument itself. The tell is the
 same in both: at no point does anything fail.
 
-Three instances found in a single evening, 2026-08-22, each while chasing a
-different fault, none found by looking for this pattern.
+Instances found while chasing unrelated faults, none by looking for this
+pattern. The first three landed in a single evening, 2026-08-22.
 
 | Instrument | Question asked | What it actually answered | Read as |
 |---|---|---|---|
 | `systemctl --user is-active` | Is the backend healthy? | Is a unit currently in a start attempt? | Healthy - through **129 consecutive restarts** |
 | `dict.get("utilisation", 0)` | What is the GPU doing? | Nothing; the key is `util` | A real, precise **0%** while the card was pinned at 100% |
 | `ps -o args= \| cut -c1-95` | What is the full command line? | The first 95 characters of it | `--reload-dir backend` truncated to `--reload`, then reported as a duplicated flag |
+| `ls sidecar record 2>/dev/null` | Does this sidecar have no record? | Do **both** globs match? | ~90 confident orphans, of which one was real |
 
 ## Why each one is invisible
 
@@ -113,6 +114,49 @@ instrument side:
 [a condition that cannot fire](a-condition-that-cannot-fire.md),
 [an allow-list drops the next field](an-allow-list-drops-the-next-field.md),
 [measuring tells you what is, not what survives](measuring-tells-you-what-is-not-what-survives.md).
+
+## A fifth: an exit code answering a compound question
+
+The instances above are *partial* answers - a truncation, a defaulted key. This
+one is different in mechanism and worth separating, because no value is
+truncated and nothing is missing.
+
+Sweeping `ingests/store` for sidecars whose record had gone, the test was:
+
+```bash
+ls ${h}*.md v1/${h}*.md >/dev/null 2>&1 || echo "orphan: $h"
+```
+
+`ls` exits non-zero when **either** argument matches nothing. So it answers "do
+both of these exist?", while the question asked was "does the sidecar exist
+without a record?". Every record that was live but had no archived twin - the
+overwhelming majority - failed the test and was reported as an orphan. About
+ninety of them, each one a plausible-looking hash.
+
+Redone against explicit sets, the real answer was **one**:
+
+```python
+live = {p.name.split(".")[0] for p in store.glob("*.md")}
+orphans = [p for p in store.glob("*.json") if p.name.split(".")[0] not in live]
+```
+
+The general form: **a compound command collapses several conditions into one
+exit code, and the code cannot say which condition failed.** Any shell test
+whose subject is more than one thing has this property. It is the same family
+as a width limit - both discard the distinction you were about to reason from -
+but it arrives without any visible truncation to notice.
+
+**The tell was recognition, not the instrument**, which is the uncomfortable
+part. The list was believable and internally consistent; what broke it was
+spotting records that had been read by hand an hour earlier and were certainly
+not orphans. That is luck dressed as diligence. It would not have worked on
+unfamiliar data, and it is not a check anybody can plan to perform - which is
+the argument for testing the sets directly rather than hoping to notice.
+
+The near-miss was the more expensive half. The false count was about to be
+written into a component's design as a permanent documented exception - a false
+rule, in the place people go to look up rules, where nothing would have
+questioned it again.
 
 ## A process can outlive the shell that owns it
 
