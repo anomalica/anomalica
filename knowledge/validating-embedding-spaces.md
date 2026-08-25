@@ -73,6 +73,29 @@ allowed to lead, it would have merged the task force into the phenomenon.
 
 So: use the table to reject a low score, never to accept a high one.
 
+**Relatives are the worst case, and they are not a tuning problem.** A sweep over
+50,191 candidate node pairs surfaced six pairs of DIFFERENT PEOPLE scoring higher
+than the merges that were executed that day on spec and claim evidence:
+
+| pair | cosine | actually |
+|------|--------|----------|
+| Nikita / Sergei Khrushchev | 0.975 | father and son |
+| Ryan / Kevin Hammons | 0.965 | son and father, same book |
+| Peter / Sam Khoury | 0.964 | brothers; one witnesses the other's encounter |
+| James / Bruce Leininger | 0.962 | son and father, same case |
+| Atlantis / Atlant | 0.936 | both Billy Meier's sons |
+| Whitley / Karl Strieber | 0.932 | son and dead father |
+
+Relatives share a surname, a source record, a topic and a vocabulary, so the
+vectors cannot separate them **even in principle** - there is no threshold that
+admits the true duplicates and excludes these, because these score higher. And
+the damage is undetectable after the fact: a father's testimony absorbed into his
+son's page reads perfectly well.
+
+**Use similarity to GENERATE candidates. Never to accept one.** Every pair still
+needs a human or an adjudicating pass that reads the claims.
+
+
 Corollaries worth stating, because each was nearly got wrong:
 
 - **A single cosine is not evidence.** "These scored 0.79" says nothing; "these scored
