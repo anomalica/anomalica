@@ -49,6 +49,30 @@ initially flagged as worryingly low - a reason to doubt the merge. It is the 99t
 percentile. Fewer than one random pair in a hundred reaches it. The instinct was inverted,
 and only the distribution showed it.
 
+**The table is NECESSARY AND NOT SUFFICIENT, and the same decision proved it.** Hours
+after measuring the baseline, the merge it was measured for was argued from it - and the
+argument was wrong. Recomputed across the same neighbourhood:
+
+| pair | cosine | verdict |
+|------|--------|---------|
+| UAP-topic <-> UAPTF project | 0.876 | **different** entities, spec rules them apart |
+| UAP-concept <-> UFO topic | 0.841 | **different** entities, separate acronym entries |
+| UAP-concept <-> UAP-topic | 0.790 | **same** entity |
+
+Two pairs the spec explicitly keeps apart outrank the pair that is genuinely one thing, and
+all three sit above the p99.9. The neighbourhood is **saturated**: every UAP-shaped name
+scores 0.75-0.93 against every other, so being unusual carries no information there -
+everything is unusual by construction. A similarity score feels most authoritative exactly
+where it means least.
+
+**When the space is saturated, fall back to evidence about the world rather than about the
+vectors.** What settled that merge was that the three nodes shared zero records and zero
+claims - a source-disjointness argument - plus reading the claims. Both are facts about the
+corpus. The cosine was decoration on a conclusion reached another way, and had it been
+allowed to lead, it would have merged the task force into the phenomenon.
+
+So: use the table to reject a low score, never to accept a high one.
+
 Corollaries worth stating, because each was nearly got wrong:
 
 - **A single cosine is not evidence.** "These scored 0.79" says nothing; "these scored
