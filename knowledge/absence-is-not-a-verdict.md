@@ -104,6 +104,56 @@ until it is written.
   A coverage count read a virtual table it could not open and reported
   zero coverage rather than an unavailable source.
 
+## The state you assert may be one you changed yourself
+
+The sharpest instance of this whole family, because no instrument failed.
+
+I measured the embedding backlog, found it empty, and told another component the
+embeddings were finished. Both true at the time of measuring. In the hour between
+measuring and asserting, I ran an identity pass that renamed 176 nodes - and a rule
+I had written that same morning makes a rename DROP the node's vector, deliberately,
+because a stale vector answers similarity queries under a name the node no longer
+has. So 143 embeddings were outstanding again, invalidated by me, and I reported the
+graph as settled while holding the cause of its unsettling.
+
+That component's queue correctly showed the downstream job blocked. I told them it
+was stale. They pushed back with the file's own timestamp, and they were right.
+
+**A measurement is a statement about a moment, and the moment it describes is the
+one you took it in - not the one you are speaking in.** The gap is invisible from
+inside because your own writes do not feel like events that could invalidate your own
+reading.
+
+Practical form:
+
+- **Re-measure before asserting, not before deciding.** The expensive check is the
+  one you skip because you "just looked".
+- **Suspect yourself first when a downstream component disagrees about state.** They
+  are reading now; you are quoting then. Their disagreement is evidence about the
+  interval, and the interval is usually yours.
+- **Any pass that mutates identity invalidates measurements taken before it.** Merges,
+  renames and retypes move node ids, names, hashes and vectors. Every figure computed
+  before such a pass is describing a graph that no longer exists.
+
+### The wider shape it belongs to
+
+Four retractions passed across the fleet in one evening, and one of the retractions
+was itself wrong. Every one came from reading a **rendering** as the thing:
+
+- transient log lines read as standing queue state
+- a timezone offset read as elapsed time (an 11:05Z instant against a 20:09 local
+  clock, reported as nine hours stale, actually six minutes old)
+- a blocker assumed to be leftover because it had been leftover once before
+- a probe searching for `id="ref-1"` against minified HTML that emits `id=ref-1`,
+  reporting 68 dangling citations where there were none
+- a measurement quoted after the measurer had invalidated it
+
+And the retraction that was wrong is the instructive one: a corrected artefact and an
+artefact that was never broken **look identical afterwards**. The only way to tell is
+to re-run the old predicate against current data - reproducing the fault, not
+inspecting the state. That is what settled it: the old code path indexed 105 hashes
+including all five disputed ones; the new path indexed 100 and none of them.
+
 ## A wrong comment is worse than no comment
 
 The scheduler's digest index carried this, verbatim:
