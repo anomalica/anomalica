@@ -27,6 +27,22 @@ checkpoints and **both sidecars disappear**, so a copy taken at a quiet moment i
 complete and a copy taken under load is silently short. It passes testing and fails
 in production.
 
+**A commit no longer changes the file's mtime or size.** The write goes to the
+`-wal`; the main file is untouched until a checkpoint. Measured 2026-08-25:
+
+    before write            db.mtime_ns …168287   wal absent
+    after committed write   db.mtime_ns …168287   wal 4152 bytes   <- main file unchanged
+    after checkpoint        db.mtime_ns …075750   wal 0
+
+So **anything that caches or polls on `knowledge.db`'s mtime is broken**: it serves
+stale data for as long as the graph is busy, and starts working the moment the graph
+goes idle and checkpoints. Right under test, wrong under load - the same shape as the
+copy problem. An mtime check is the obvious way to ask "has the graph changed since I
+last looked", so this population is larger than the set of things that copy the file.
+
+Fingerprint the `-wal` as well as the main file. Not the `-shm`: readers touch that,
+so including it rebuilds the cache on every read rather than every write.
+
 **Why it was changed.** The previous `journal_mode=delete` means a reader holds a
 shared lock that blocks every writer. Three processes write to this graph - the
 hourly assimilate timer, the scheduler's dispatch runner, and manual commands - and
