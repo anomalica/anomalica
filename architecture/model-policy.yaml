@@ -249,8 +249,8 @@ models:
       input: 15.0
       output: 75.0
     status: approved
-    rationale: The strongest model we have access to. Not allowed to write pages, because Anthropic watermarks. It is also
-      the most expensive here by some way, so it is chosen for a task that needs it rather than used by default.
+    rationale: The strongest model we have access to, and the most expensive by a wide margin. Not used for anything at present.
+      It cannot write articles because we cannot establish whether Anthropic watermarks its output.
   - id: claude-sonnet-5
     provider: anthropic
     context: 1000000
@@ -258,8 +258,8 @@ models:
       input: 2.0
       output: 10.0
     status: approved
-    rationale: The everyday model for pulling claims out of records. Its tokeniser changed with the 5 series, so cost figures
-      measured on older Sonnet versions do not carry over.
+    rationale: Pulls claims out of source documents, and wrote most of the articles here before the watermarking rule barred
+      it from writing. Its tokeniser changed with the 5 series, so older cost measurements do not carry over.
   - id: claude-haiku-4-5
     provider: anthropic
     context: 200000
@@ -267,8 +267,8 @@ models:
       input: 1.0
       output: 5.0
     status: approved
-    rationale: 'Used where it is accurate enough, because it is cheaper. Note the smaller 200,000-token window: a job that
-      fits on Sonnet may not fit here.'
+    rationale: Used where it is accurate enough, because it is cheaper. Its 200,000-token window is the smallest here, so
+      a job that fits on Sonnet may not fit on it.
   - id: openai/gpt-5.6-luna
     provider: openai
     context: 400000
@@ -276,8 +276,8 @@ models:
       input: 0.2
       output: 1.2
     status: approved
-    rationale: The cheap model in its family. Fast and accurate at copying text out of documents. It writes noticeably less
-      than larger models, which matters on pages where we want every source cited.
+    rationale: The cheap model in its family, and quick at copying text out of documents accurately. It writes less than larger
+      models when nothing tells it how long to be.
   - id: openai/gpt-5.6-sol
     provider: openai
     context: 1050000
@@ -286,7 +286,7 @@ models:
       output: 10.0
     status: approved
     rationale: The writing model in the same family as Luna, and third in independent rankings for English prose. The two
-      models above it are Claude Opus 5 and Kimi K3.
+      above it are Claude Opus 5 and Kimi K3.
   - id: moonshotai/kimi-k3
     provider: moonshot
     context: 1048576
@@ -294,13 +294,12 @@ models:
       input: 3.0
       output: 15.0
     status: candidate
-    rationale: Second in independent rankings for English prose, behind Claude Opus 5 and ahead of every OpenAI model. Open
-      weights, so we can run it ourselves and know there is no watermark.
+    rationale: Second in independent rankings for English prose, ahead of every OpenAI model. Its weights are published, so
+      it can be run without going through a provider at all.
   - id: deepseek/deepseek-v4-flash
     provider: deepseek
     status: candidate
-    rationale: A cheap fast model worth testing. Not tested yet, and its watermarking is unknown, so it cannot write pages
-      either way.
+    rationale: A cheap fast model with published weights. Not tested here yet.
   - id: z-ai/glm-5.3-flash
     provider: z-ai
     status: candidate
