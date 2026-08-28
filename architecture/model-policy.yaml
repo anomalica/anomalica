@@ -81,7 +81,7 @@ models:
     rationale: >-
       The most capable model available to us and the default for the subscription path. Barred from reader-facing writing
       by the watermarking rule, not by capability. Burns the shared plan allowance fastest of any model, so it is a deliberate
-      choice rather than a default. #magic___^_^___line
+      choice rather than a default.
   - id: claude-sonnet-5
     provider: anthropic
     context: 1000000
@@ -89,7 +89,7 @@ models:
     status: approved
     rationale: >-
       The workhorse for extraction and structuring. Its tokenizer changed with the 5 series, which invalidated every per-kilobyte
-      figure measured against earlier Sonnet versions - do not carry old constants across. #magic___^_^___line
+      figure measured against earlier Sonnet versions - do not carry old constants across.
   - id: claude-haiku-4-5
     provider: anthropic
     context: 200000
@@ -97,7 +97,7 @@ models:
     status: approved
     rationale: >-
       Preferred where recall holds, to spend less of the plan. Note the 200k context: it is the only Claude model here that
-      cannot take a large brief, so a stage that fits comfortably on Sonnet may not fit here. #magic___^_^___line
+      cannot take a large brief, so a stage that fits comfortably on Sonnet may not fit here.
   - id: openai/gpt-5.6-luna
     provider: openai
     context: 400000
@@ -106,13 +106,13 @@ models:
     rationale: >-
       The metered default for ingestion and for reader-facing writing. Matched Claude Sonnet on faithful transcription of
       two hard pages (a declassified report and an equation-heavy paper) at a twelfth of Sonnet's output price, and OpenAI
-      does not watermark - which is what makes it eligible for pages and translations where the Claude models are not. #magic___^_^___line
+      does not watermark - which is what makes it eligible for pages and translations where the Claude models are not.
   - id: deepseek/deepseek-v4-flash
     provider: deepseek
     status: candidate
     rationale: >-
       Flash-tier candidate, not yet benchmarked. Watermarking state unknown, so it is barred from reader-facing stages until
-      checked regardless of how it benchmarks. #magic___^_^___line
+      checked regardless of how it benchmarks.
   - id: z-ai/glm-5.3-flash
     provider: z-ai
     status: candidate
@@ -154,7 +154,7 @@ stages:
     rationale: >-
       Audio and video use local Whisper and spend nothing. This stage covers the metered document path only. Faithfulness
       matters more than reasoning here, and the spend gate defaults to a zero ceiling so every run is priced and confirmed
-      before a provider is constructed. #magic___^_^___line
+      before a provider is constructed.
   - id: digest
     purpose: Extract claims and nodes from a reviewed ingest.
     reader_facing: false
@@ -162,14 +162,14 @@ stages:
     deny: []
     rationale: >-
       Output is structured data, not prose, so watermarking does not apply. This is the quality-critical stage: an extraction
-      error propagates into every page built from the claim, and no later stage can detect it. #magic___^_^___line
+      error propagates into every page built from the claim, and no later stage can detect it.
   - id: assimilate
     purpose: Match, merge and score entities across digests.
     reader_facing: false
     priority: [claude-sonnet-5, claude-haiku-4-5]
     deny: []
     rationale: >-
-      Judgement over short comparisons rather than long-form generation. #magic___^_^___line
+      Judgement over short comparisons rather than long-form generation.
   - id: synthesise
     purpose: Build a brief from graph claims for the writer.
     reader_facing: false
@@ -177,7 +177,7 @@ stages:
     deny: []
     rationale: >-
       The brief is an internal artefact, but it is published alongside the page so readers can see what the writer was given.
-      It is not reader-facing PROSE - it is a manifest we render - so the watermarking rule does not reach it. #magic___^_^___line
+      It is not reader-facing PROSE - it is a manifest we render - so the watermarking rule does not reach it.
   - id: assemble
     purpose: Write a reader-facing article or record page.
     reader_facing: true
@@ -187,7 +187,7 @@ stages:
       The page a reader reads. Watermarking providers are barred here, which is the single most consequential rule in this
       file: it excludes the models we otherwise rate highest. Pages already built by a barred model are not being rebuilt
       to remove watermarks - pages churn naturally as new claims make them stale, so the corpus turns over without a bulk
-      rebuild. #magic___^_^___line
+      rebuild.
   - id: translate
     purpose: Render an article into another language.
     reader_facing: true
@@ -195,7 +195,7 @@ stages:
     deny: ["anthropic/*", "google/*", "*:unknown-watermarking"]
     rationale: >-
       Reader-facing text in every respect the English page is. No language is currently enabled; the rule is set before the
-      need arrives rather than after. #magic___^_^___line
+      need arrives rather than after.
   - id: housekeep
     purpose: Tidy headings, chapters and structure on an ingested record.
     reader_facing: false
