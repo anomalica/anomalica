@@ -104,6 +104,45 @@ until it is written.
   A coverage count read a virtual table it could not open and reported
   zero coverage rather than an unavailable source.
 
+## A field that answers uniformly says nothing, and looks like it says everything
+
+The most expensive form of this fault: not a query that cannot see, but a column
+that is populated, typed, well named, and constant.
+
+**The instance (2026-08-28).** Designing a ranking to decide which claims survive a
+per-page cap, the obvious signal is `claims.confidence`. It exists, it is a REAL
+column, it is exactly what you would rank by. It is 1.0 on all 31,066 claims.
+`claim_role` is the second thing you would reach for - official_explanation,
+witness_testimony, investigation_finding, cover_up_evidence, a CHECK constraint
+enumerating them - and it is null on all 31,066.
+
+Ranking by either would have produced a ranking that ran, sorted, returned results,
+and ordered by nothing at all. Every page would have been built from an arbitrary
+subset while the code read as though it were selecting the strongest evidence.
+
+**A schema tells you what CAN be recorded, never what IS.** A column's existence is
+a claim about intent by whoever wrote the migration. Populated-ness is a separate
+fact and it is not visible from the schema, the model class, the type annotation, or
+the field name - all of which looked right here.
+
+The check is one query per field and it takes seconds:
+
+    SELECT COUNT(*), COUNT(field), COUNT(DISTINCT field) FROM table
+
+Three numbers. Rows, non-null, distinct. **A distinct count of 1 means the field
+cannot discriminate anything**, however meaningful its name. Run it on every field a
+ranking, filter or gate depends on, before designing against it - not after, when
+the design is what has to change.
+
+What made it survive scrutiny here: the fields that ARE usable sit beside them in
+the same table. `attestation` is 76% populated with four real values;
+`origin_kind` is 98% populated. So a spot check of the table looks healthy, and the
+two dead fields are invisible unless you ask about them specifically.
+
+This is the same family as the rest of this note - a check that reads as done and is
+not - but the false reassurance comes from the schema rather than from a query, a
+comment or an instrument. It is the hardest to see because nothing is missing.
+
 ## The state you assert may be one you changed yourself
 
 The sharpest instance of this whole family, because no instrument failed.
