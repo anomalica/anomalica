@@ -13,327 +13,240 @@
 # model choices would be the one place on the site where nobody could check us.
 
 schema: anomalica/model-policy/1
-updated: 2026-08-28
-
-# ---------------------------------------------------------------------------
-# Watermarking
-#
-# Load-bearing, not trivia. Anomalica reproduces source material faithfully and
-# publishes text that readers are invited to check against sources. Provider
-# watermarking embeds a detectable signal in generated text; on reader-facing
-# output that signal travels into quotations of our pages and into any corpus
-# built from them, and it marks as synthetic text whose value is that it tracks
-# a real source. So watermarking models are barred from reader-facing writing.
-# They remain fine for extraction, classification and structuring, where the
-# output is data we re-render rather than prose a reader reads.
-#
-# THREE STATES, NOT TWO. `unknown` is not `clean`. A provider nobody has checked
-# has not passed a check. Treating silence as absence is how an unevaluated model
-# becomes eligible by default.
-# ---------------------------------------------------------------------------
-
+updated: '2026-08-28'
 watermarking:
   anthropic:
     state: watermarks
-    since: 2026-08-02
-    rationale: >-
-      Anthropic began watermarking model output on 2026-08-02. Verified against the provider's own announcement, not inferred
-      from behaviour.
+    since: '2026-08-02'
+    rationale: Anthropic started watermarking its output on 2 August 2026.
   google:
     state: watermarks
-    rationale: >-
-      Google watermarks generated text (SynthID). Applies to the Gemini family.
+    rationale: Google watermarks generated text across the Gemini family.
   openai:
     state: clean
-    rationale: >-
-      No text watermarking as of the last check. This is the reason the metered ingestion default is an OpenAI model rather
-      than a cheaper alternative.
+    rationale: No text watermarking as of the date above.
   deepseek:
     state: unknown
-    rationale: ~
+    rationale: null
+  moonshot:
+    state: open_weights
+    rationale: Kimi K3's weights are published and can be downloaded and run. A watermark is added at the moment text is generated,
+      so a copy we run cannot have one, and a hosted copy can be checked against ours.
   z-ai:
     state: unknown
-    rationale: ~
+    rationale: null
   qwen:
     state: unknown
-    rationale: ~
-
-# ---------------------------------------------------------------------------
-# Aliases
-#
-# The Claude subscription transport takes bare names (`sonnet`), while this file
-# names real model ids (`claude-sonnet-5`) so a reader can tell which version
-# actually ran. Both are legitimate; the map is how they meet. Resolve an alias
-# to its id BEFORE applying policy, so `unlisted means refused` never fires on a
-# naming difference - a lane failing closed for the wrong reason is
-# indistinguishable from one working correctly.
-# ---------------------------------------------------------------------------
-
+    rationale: null
 aliases:
   opus: claude-opus-5
   sonnet: claude-sonnet-5
   haiku: claude-haiku-4-5
-
-
-# Definitions, as data rather than comments: the public page renders these, and
-# a label with no explanation would force whoever builds that page to write the
-# definition themselves - which is the one kind of prose they must not author.
-
 status_meanings:
-  approved: Evaluated and in use, or available for use.
-  candidate: Worth evaluating. Not yet benchmarked, and not eligible until it is.
-  unevaluated: >-
-    Listed so it cannot be dispatched by default. No evidence either way.
-  blacklisted: Must not be dispatched, for the reason recorded against it.
-
+  approved: In use, or ready to use.
+  candidate: Worth testing. Not tested yet, and not used until it is.
+  unevaluated: Listed so it cannot be picked by accident. No evidence either way.
+  blacklisted: Must not be used, for the reason given.
 watermarking_meanings:
-  watermarks: >-
-    The provider embeds a detectable signal in generated text. Barred from writing anything a reader reads.
-  clean: >-
-    No text watermarking as of the date recorded. Eligible for reader-facing writing.
-  unknown: >-
-    Nobody has checked. Treated as watermarking, because a provider nobody has checked has not passed a check.
-
-# ---------------------------------------------------------------------------
-# Denial
-#
-# A deny entry names EITHER a provider glob (`anthropic/*`) or a single model id
-# (`claude-opus-5`). Both granularities are legitimate and they answer different
-# questions: a provider glob bars a whole family including models not yet
-# released, which is the only form that cannot be outrun by a release; a model id
-# bars one specific thing without judging its siblings, which is what you want
-# for a model that failed a benchmark or is deprecated.
-#
-# TWO LAYERS, AND THE GLOBAL ONE IS ABSOLUTE.
-#
-#   global deny   applies everywhere and no stage can exempt itself. For a model
-#                 that must not run at all - withdrawn, unsafe, or barred by a
-#                 decision that is not about any one stage.
-#
-#   stage deny    additional restriction for that stage only. This is where
-#                 nearly everything belongs, because a model is rarely wrong
-#                 everywhere - watermarking bars a model from writing pages
-#                 while leaving it right for extraction.
-#
-# A model must pass BOTH layers. Denial beats priority: a model listed in a
-# stage's `priority` and also denied is denied, and that is not a contradiction
-# to be resolved in favour of the priority list - it is how a stage inherits a
-# global bar without its priority list being rewritten.
-# ---------------------------------------------------------------------------
-
+  watermarks: The provider adds a hidden signal to the text it generates. Not allowed to write anything a reader reads.
+  clean: No watermarking, as far as we can tell on the date shown. Allowed to write for readers.
+  open_weights: The weights are published, so we generate the text ourselves. A watermark is added when text is generated,
+    not stored in the weights, so a model we run cannot carry one. This is stronger than a provider saying it does not watermark,
+    because we can check it instead of believing it.
+  unknown: Nobody has checked, and the weights are closed, so nobody can. Treated as watermarking.
 deny:
-  - pattern: "google/*"
-    reason: >-
-      No Google model is approved for any stage. The family watermarks generated text, and nothing here has been benchmarked
+  - pattern: google/*
+    reason: No Google model is approved for any stage. The family watermarks generated text, and nothing here has been benchmarked
       against an alternative that does not. Listed globally rather than per stage so it cannot be admitted by an omission
       in a new stage.
-# ---------------------------------------------------------------------------
-# Models
-#
-# `status` is our position on the model, not the provider's:
-#   approved     - evaluated and in use, or available for use
-#   candidate    - worth evaluating, not yet benchmarked
-#   unevaluated  - listed so it is not silently eligible; no evidence either way
-#   blacklisted  - must not be dispatched, for the stated reason
-#
-# Prices are USD per million tokens and go stale. They are here so a cost
-# estimate can be computed from one place; treat a divergent invoice as
-# evidence this file is out of date, not as evidence the invoice is wrong.
-# ---------------------------------------------------------------------------
-
 models:
   - id: claude-opus-5
     provider: anthropic
     context: 1000000
-    price: {input: 15.00, output: 75.00}
+    price:
+      input: 15.0
+      output: 75.0
     status: approved
-    rationale: >-
-      The most capable model available to us. Barred from reader-facing writing by the watermarking rule, not by capability.
-      It is also the most expensive model here by a wide margin, so it is a deliberate choice for a task that needs it rather
-      than a default.
+    rationale: The strongest model we have access to. Not allowed to write pages, because Anthropic watermarks. It is also
+      the most expensive here by some way, so it is chosen for a task that needs it rather than used by default.
   - id: claude-sonnet-5
     provider: anthropic
     context: 1000000
-    price: {input: 2.00, output: 10.00}
+    price:
+      input: 2.0
+      output: 10.0
     status: approved
-    rationale: >-
-      The workhorse for extraction and structuring. Its tokenizer changed with the 5 series, which invalidated every per-kilobyte
-      figure measured against earlier Sonnet versions - do not carry old constants across.
+    rationale: The everyday model for pulling claims out of records. Its tokeniser changed with the 5 series, so cost figures
+      measured on older Sonnet versions do not carry over.
   - id: claude-haiku-4-5
     provider: anthropic
     context: 200000
-    price: {input: 1.00, output: 5.00}
+    price:
+      input: 1.0
+      output: 5.0
     status: approved
-    rationale: >-
-      Preferred where recall holds, to spend less of the plan. Note the 200k context: it is the only Claude model here that
-      cannot take a large brief, so a stage that fits comfortably on Sonnet may not fit here.
+    rationale: 'Used where it is accurate enough, because it is cheaper. Note the smaller 200,000-token window: a job that
+      fits on Sonnet may not fit here.'
   - id: openai/gpt-5.6-luna
     provider: openai
     context: 400000
-    price: {input: 0.20, output: 1.20}
+    price:
+      input: 0.2
+      output: 1.2
     status: approved
-    rationale: >-
-      The metered default for ingestion and for reader-facing writing. Matched Claude Sonnet on faithful transcription of
-      two hard pages (a declassified report and an equation-heavy paper) at a twelfth of Sonnet's output price, and OpenAI
-      does not watermark - which is what makes it eligible for pages and translations where the Claude models are not.
+    rationale: The cheap model in its family. Fast and accurate at copying text out of documents. It writes noticeably less
+      than larger models, which matters on pages where we want every source cited.
+  - id: openai/gpt-5.6-sol
+    provider: openai
+    context: 1050000
+    price:
+      input: 2.0
+      output: 10.0
+    status: approved
+    rationale: The writing model in the same family as Luna, and third in independent rankings for English prose. The two
+      models above it are Claude Opus 5 and Kimi K3.
+  - id: moonshotai/kimi-k3
+    provider: moonshot
+    context: 1048576
+    price:
+      input: 3.0
+      output: 15.0
+    status: candidate
+    rationale: Second in independent rankings for English prose, behind Claude Opus 5 and ahead of every OpenAI model. Open
+      weights, so we can run it ourselves and know there is no watermark.
   - id: deepseek/deepseek-v4-flash
     provider: deepseek
     status: candidate
-    rationale: >-
-      Flash-tier candidate, not yet benchmarked. Watermarking state unknown, so it is barred from reader-facing stages until
-      checked regardless of how it benchmarks.
+    rationale: A cheap fast model worth testing. Not tested yet, and its watermarking is unknown, so it cannot write pages
+      either way.
   - id: z-ai/glm-5.3-flash
     provider: z-ai
     status: candidate
-    rationale: ~
-
+    rationale: null
   - id: qwen/qwen3.8-flash-next
     provider: qwen
     status: candidate
-    rationale: ~
-
-# ---------------------------------------------------------------------------
-# Stages
-#
-# Per stage, not global. A model can be right for extraction and forbidden for
-# writing. `deny` is evaluated before `allow`, and both accept provider-prefix
-# globs.
-#
-# DENY BY PROVIDER PREFIX, NOT BY MODEL ID. A deny list naming individual models
-# silently admits every model released after it was written - which is precisely
-# when a new watermarking model would appear. `anthropic/*` cannot be outrun by
-# a release.
-#
-# `priority` is an ordered preference, tried in order. It is a quality ordering
-# and must not be collapsed into the pace or cost ordering the scheduler
-# applies: policy decides what is permissible, priority decides what is best,
-# pace decides what is urgent. Three orderings, three kinds of authority.
-#
-# UNLISTED MEANS REFUSED. A stage asking for a model this file does not list
-# fails closed and does not dispatch. Warn-and-proceed would make the policy
-# advisory, and an advisory policy is not a policy.
-# ---------------------------------------------------------------------------
-
+    rationale: null
 stages:
-  # `uses_model: false` is a positive assertion, not an omission: the stage is
-  # deterministic and must never be filed in a lane that gates on spend. A free
-  # local job listed under a model is withheld whenever metered spend is off,
-  # which produces a lane that silently does nothing.
-  #
-  # `enforced_by` names who refuses a disallowed model. Not every stage is
-  # dispatched by the scheduler; a stage it does not dispatch needs its own
-  # component to apply the policy, or nothing does.
-
   - id: ingest
     purpose: Extract text faithfully from a source document.
     uses_model: true
     reader_facing: false
     enforced_by: scheduler
-    priority: [openai/gpt-5.6-luna]
+    priority:
+      - openai/gpt-5.6-luna
     deny: []
-    rationale: >-
-      Audio and video are transcribed by a local model and call no provider. This stage covers document extraction only. Faithfulness
-      matters more than reasoning here, and the cost gate defaults to a zero ceiling so every run is priced and confirmed
-      before a provider is constructed.
+    rationale: Audio and video are transcribed by Whisper, which we run ourselves and which calls no provider. This stage
+      covers documents only. Copying the text accurately matters more than reasoning about it.
   - id: digest
     purpose: Extract claims and nodes from a reviewed ingest.
     uses_model: true
     reader_facing: false
     enforced_by: scheduler
-    priority: [claude-sonnet-5, claude-haiku-4-5]
+    priority:
+      - claude-sonnet-5
+      - claude-haiku-4-5
     deny: []
-    rationale: >-
-      Output is structured data, not prose, so watermarking does not apply. This is the quality-critical stage: an extraction
-      error propagates into every page built from the claim, and no later stage can detect it.
+    rationale: 'The output is structured data, not prose, so watermarking does not apply. This is the stage where accuracy
+      matters most: a mistake here ends up on every page built from that claim, and nothing later can catch it.'
   - id: assimilate
     purpose: Match, merge and score entities across digests.
     uses_model: true
     reader_facing: false
     enforced_by: assimilator
-    priority: [claude-sonnet-5, claude-haiku-4-5]
+    priority:
+      - claude-sonnet-5
+      - claude-haiku-4-5
     deny: []
-    rationale: >-
-      The scheduler dispatches this component's local jobs (import, embed, propose-pages) but not its model calls, which happen
-      inside its own run. So the assimilator applies this policy itself. A stage nobody enforces is a stage with no policy.
-
+    rationale: Deciding whether two names refer to the same person or organisation.
+  - id: consolidate
+    purpose: Merge entities that are the same thing.
+    uses_model: true
+    reader_facing: false
+    enforced_by: assimilator
+    priority:
+      - claude-sonnet-5
+      - claude-haiku-4-5
+    deny: []
+    rationale: Merging entities that turn out to be the same thing.
   - id: corroborate
     purpose: Judge whether two similar claims corroborate each other.
     uses_model: true
     reader_facing: false
     enforced_by: scheduler
-    priority: [claude-sonnet-5, claude-haiku-4-5]
+    priority:
+      - claude-sonnet-5
+      - claude-haiku-4-5
     deny: []
-    rationale: >-
-      A judgement over two short texts, not long-form generation, so the cheapest model that holds is the right one. It previously
-      defaulted to Opus, which is the most expensive way to answer a yes-or-no question.
+    rationale: Deciding whether two similar claims support each other. A short yes-or-no judgement, so the cheapest capable
+      model is the right one.
   - id: verify
     purpose: Check that assertions in an assembled article trace to graph sources.
     uses_model: true
     reader_facing: false
     enforced_by: scheduler
-    priority: [claude-sonnet-5]
-    deny: ["openai/*"]
-    rationale: >-
-      Verification must not use the same model or provider that wrote the text (decision 0010). Since reader-facing writing
-      is OpenAI under the watermarking rule, verification is denied OpenAI - the two rules are opposites by design, and together
-      they guarantee two providers in two jurisdictions across write-then-check.
+    priority:
+      - claude-sonnet-5
+    deny:
+      - openai/*
+    rationale: Checking that what an article says can be traced back to a source. This must not use the same provider that
+      wrote the text, so it is denied OpenAI - the opposite of the writing rule, and together they guarantee two different
+      providers.
   - id: variant
     purpose: Run the same extraction across models to compare quality.
     uses_model: true
     reader_facing: false
     enforced_by: scheduler
-    priority: [claude-sonnet-5, claude-haiku-4-5, openai/gpt-5.6-luna]
+    priority:
+      - claude-sonnet-5
+      - claude-haiku-4-5
+      - openai/gpt-5.6-luna
     deny: []
-    rationale: >-
-      The one stage whose purpose is to dispatch models we have not settled on, so its priority list is a comparison set rather
-      than a preference order. A candidate model may run here before it is approved anywhere else - that is how it stops being
-      a candidate.
+    rationale: Running the same extraction across several models to compare them. The only stage whose job is to try models
+      we have not settled on.
   - id: synthesise
     purpose: Build a brief from graph claims for the writer.
     uses_model: false
     reader_facing: false
-    enforced_by: ~
-    rationale: >-
-      Deterministic: a graph slice in, a brief out. The brief is a manifest we render, not prose anything writes. It was once
-      listed under Sonnet, which filed a free local job into the external-spend lane and withheld it whenever metered spend
-      was off - a lane that silently did nothing.
+    enforced_by: null
+    rationale: Code, not a model. It takes a slice of the graph and writes out a list of claims for the writer to work from.
   - id: assemble
     purpose: Write a reader-facing article or record page.
     uses_model: true
     reader_facing: true
     enforced_by: scheduler
-    priority: [openai/gpt-5.6-luna]
-    deny: ["anthropic/*"]
-    rationale: >-
-      The page a reader reads. Watermarking providers are barred here, which is the single most consequential rule in this
-      file: it excludes the models we otherwise rate highest. Pages already built by a barred model are not being rebuilt
-      to remove watermarks - pages churn naturally as new claims make them stale, so the corpus turns over without a bulk
-      rebuild.
+    priority:
+      - openai/gpt-5.6-sol
+      - openai/gpt-5.6-luna
+    deny:
+      - anthropic/*
+    rationale: 'The page a reader reads. Watermarking providers are barred here, which rules out the models we otherwise rate
+      highest. Pages already written by a barred model are not being rebuilt: they get rewritten anyway as new claims come
+      in.'
   - id: translate
     purpose: Render an article into another language.
     uses_model: true
     reader_facing: true
     enforced_by: scheduler
-    priority: [openai/gpt-5.6-luna]
-    deny: ["anthropic/*"]
-    rationale: >-
-      Reader-facing text in every respect the English page is. No language is currently enabled; the rule is set before the
-      need arrives rather than after.
+    priority:
+      - openai/gpt-5.6-sol
+      - openai/gpt-5.6-luna
+    deny:
+      - anthropic/*
+    rationale: The same text in another language, so the same rule applies. No language is switched on yet.
   - id: housekeep
     purpose: Rule-based tidying of an ingested record.
     uses_model: false
     reader_facing: false
-    enforced_by: ~
-    rationale: >-
-      Deterministic and spends nothing. Split from housekeep-research because one stage id covering both would hide a paid
-      path under a free-sounding name - the same conflation as gating PDF ingestion behind the digest switch.
+    enforced_by: null
+    rationale: Code, not a model. Rule-based tidying of a record after it is ingested.
   - id: housekeep-research
     purpose: Model-assisted cleanup - chapter titles, headings, structure.
     uses_model: true
     reader_facing: false
     enforced_by: scheduler
-    priority: [claude-haiku-4-5]
+    priority:
+      - claude-haiku-4-5
     deny: []
-    rationale: >-
-      Cheapest model that holds, because it fires on an interval across many records. Never runs on an ingest that has already
-      been reviewed, and is gated to fire only when something has actually changed.
+    rationale: Tidying that needs judgement - chapter titles, headings, structure. Runs across many records on a timer, so
+      it uses the cheapest model that copes. Never runs on a record a person has already reviewed.
