@@ -74,6 +74,26 @@ aliases:
   sonnet: claude-sonnet-5
   haiku: claude-haiku-4-5
 
+
+# Definitions, as data rather than comments: the public page renders these, and
+# a label with no explanation would force whoever builds that page to write the
+# definition themselves - which is the one kind of prose they must not author.
+
+status_meanings:
+  approved: Evaluated and in use, or available for use.
+  candidate: Worth evaluating. Not yet benchmarked, and not eligible until it is.
+  unevaluated: >-
+    Listed so it cannot be dispatched by default. No evidence either way.
+  blacklisted: Must not be dispatched, for the reason recorded against it.
+
+watermarking_meanings:
+  watermarks: >-
+    The provider embeds a detectable signal in generated text. Barred from writing anything a reader reads.
+  clean: >-
+    No text watermarking as of the date recorded. Eligible for reader-facing writing.
+  unknown: >-
+    Nobody has checked. Treated as watermarking, because a provider nobody has checked has not passed a check.
+
 # ---------------------------------------------------------------------------
 # Denial
 #
@@ -106,7 +126,7 @@ deny:
     reason: >-
       No Google model is approved for any stage. The family watermarks generated text, and nothing here has been benchmarked
       against an alternative that does not. Listed globally rather than per stage so it cannot be admitted by an omission
-      in a new stage. #magic___^_^___line
+      in a new stage.
 # ---------------------------------------------------------------------------
 # Models
 #
@@ -128,9 +148,9 @@ models:
     price: {input: 15.00, output: 75.00}
     status: approved
     rationale: >-
-      The most capable model available to us and the default for the subscription path. Barred from reader-facing writing
-      by the watermarking rule, not by capability. Burns the shared plan allowance fastest of any model, so it is a deliberate
-      choice rather than a default.
+      The most capable model available to us. Barred from reader-facing writing by the watermarking rule, not by capability.
+      It is also the most expensive model here by a wide margin, so it is a deliberate choice for a task that needs it rather
+      than a default.
   - id: claude-sonnet-5
     provider: anthropic
     context: 1000000
@@ -212,9 +232,9 @@ stages:
     priority: [openai/gpt-5.6-luna]
     deny: []
     rationale: >-
-      Audio and video use local Whisper and spend nothing. This stage covers the metered document path only. Faithfulness
-      matters more than reasoning here, and the spend gate defaults to a zero ceiling so every run is priced and confirmed
-      before a provider is constructed. #magic___^_^___line
+      Audio and video are transcribed by a local model and call no provider. This stage covers document extraction only. Faithfulness
+      matters more than reasoning here, and the cost gate defaults to a zero ceiling so every run is priced and confirmed
+      before a provider is constructed.
   - id: digest
     purpose: Extract claims and nodes from a reviewed ingest.
     uses_model: true
@@ -224,7 +244,7 @@ stages:
     deny: []
     rationale: >-
       Output is structured data, not prose, so watermarking does not apply. This is the quality-critical stage: an extraction
-      error propagates into every page built from the claim, and no later stage can detect it. #magic___^_^___line
+      error propagates into every page built from the claim, and no later stage can detect it.
   - id: assimilate
     purpose: Match, merge and score entities across digests.
     uses_model: true
@@ -245,7 +265,7 @@ stages:
     deny: []
     rationale: >-
       A judgement over two short texts, not long-form generation, so the cheapest model that holds is the right one. It previously
-      defaulted to Opus, which is the most expensive way to answer a yes-or-no question. #magic___^_^___line
+      defaulted to Opus, which is the most expensive way to answer a yes-or-no question.
   - id: verify
     purpose: Check that assertions in an assembled article trace to graph sources.
     uses_model: true
@@ -256,7 +276,7 @@ stages:
     rationale: >-
       Verification must not use the same model or provider that wrote the text (decision 0010). Since reader-facing writing
       is OpenAI under the watermarking rule, verification is denied OpenAI - the two rules are opposites by design, and together
-      they guarantee two providers in two jurisdictions across write-then-check. #magic___^_^___line
+      they guarantee two providers in two jurisdictions across write-then-check.
   - id: variant
     purpose: Run the same extraction across models to compare quality.
     uses_model: true
@@ -267,7 +287,7 @@ stages:
     rationale: >-
       The one stage whose purpose is to dispatch models we have not settled on, so its priority list is a comparison set rather
       than a preference order. A candidate model may run here before it is approved anywhere else - that is how it stops being
-      a candidate. #magic___^_^___line
+      a candidate.
   - id: synthesise
     purpose: Build a brief from graph claims for the writer.
     uses_model: false
@@ -276,7 +296,7 @@ stages:
     rationale: >-
       Deterministic: a graph slice in, a brief out. The brief is a manifest we render, not prose anything writes. It was once
       listed under Sonnet, which filed a free local job into the external-spend lane and withheld it whenever metered spend
-      was off - a lane that silently did nothing. #magic___^_^___line
+      was off - a lane that silently did nothing.
   - id: assemble
     purpose: Write a reader-facing article or record page.
     uses_model: true
@@ -288,7 +308,7 @@ stages:
       The page a reader reads. Watermarking providers are barred here, which is the single most consequential rule in this
       file: it excludes the models we otherwise rate highest. Pages already built by a barred model are not being rebuilt
       to remove watermarks - pages churn naturally as new claims make them stale, so the corpus turns over without a bulk
-      rebuild. #magic___^_^___line
+      rebuild.
   - id: translate
     purpose: Render an article into another language.
     uses_model: true
@@ -298,7 +318,7 @@ stages:
     deny: ["anthropic/*"]
     rationale: >-
       Reader-facing text in every respect the English page is. No language is currently enabled; the rule is set before the
-      need arrives rather than after. #magic___^_^___line
+      need arrives rather than after.
   - id: housekeep
     purpose: Rule-based tidying of an ingested record.
     uses_model: false
@@ -306,7 +326,7 @@ stages:
     enforced_by: ~
     rationale: >-
       Deterministic and spends nothing. Split from housekeep-research because one stage id covering both would hide a paid
-      path under a free-sounding name - the same conflation as gating PDF ingestion behind the digest switch. #magic___^_^___line
+      path under a free-sounding name - the same conflation as gating PDF ingestion behind the digest switch.
   - id: housekeep-research
     purpose: Model-assisted cleanup - chapter titles, headings, structure.
     uses_model: true
