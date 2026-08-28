@@ -238,9 +238,7 @@ watermarking_meanings:
   unknown: We could not establish it either way. Treated the same as watermarking.
 deny:
   - pattern: google/*
-    reason: No Google model is approved for any stage. The family watermarks generated text, and nothing here has been benchmarked
-      against an alternative that does not. Listed globally rather than per stage so it cannot be admitted by an omission
-      in a new stage.
+    reason: Refused everywhere, not only for writing. The watermarking table records the evidence and the date it was checked.
 models:
   - id: claude-opus-5
     provider: anthropic
@@ -402,9 +400,9 @@ stages:
       - openai/gpt-5.6-sol
       - openai/gpt-5.6-luna
     deny: []
-    rationale: 'The page a reader reads. Watermarking providers are barred here, which rules out the models we otherwise rate
-      highest. Pages already written by a barred model are not being rebuilt: they get rewritten anyway as new claims come
-      in.'
+    rationale: 'The page a reader reads. Which models may write it is decided by the watermarking table, not by a list kept
+      here. Pages already written by a model that is now barred are not being rebuilt: they get rewritten anyway as new claims
+      come in.'
     deny_watermarking:
       - watermarks
       - unknown
