@@ -40,10 +40,22 @@ Five properties, each chosen against a specific failure:
 disagrees with the file, the component is wrong. A file that documents what the
 code does drifts silently and is worth nothing at the moment it matters.
 
-**Deny by provider prefix, never by model id.** `anthropic/*`, not a list of
-model names. A deny list naming individual models silently admits every model
-released after it was written - which is exactly when a new watermarking model
-appears. A prefix cannot be outrun by a release.
+**Deny accepts a provider glob or a single model id, in two layers.** Both
+granularities are kept because they answer different questions. A provider glob
+(`anthropic/*`) bars a family including models not yet released, and is the only
+form that cannot be outrun by a release - which matters most for watermarking,
+where the risk is a new model becoming eligible by not being on a list. A model
+id (`claude-opus-5`) bars one thing without judging its siblings, which is what a
+failed benchmark or a deprecation calls for.
+
+The layers are a global deny that no stage can exempt itself from, and a per-stage
+deny that adds to it. Nearly everything belongs at stage level, because a model is
+rarely wrong everywhere: watermarking bars a model from writing pages while
+leaving it correct for extraction. The global layer is for a model that must not
+run at all, and exists so a bar cannot be lost through an omission in a stage
+added later. A model must pass both layers, and denial beats priority - a model
+both prioritised and denied is denied, which is how a stage inherits a global bar
+without its priority list being rewritten.
 
 **Watermarking has three states: watermarks, clean, unknown.** Unknown is not
 clean. A provider nobody has checked has not passed a check, and unknown-state

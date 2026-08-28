@@ -75,6 +75,39 @@ aliases:
   haiku: claude-haiku-4-5
 
 # ---------------------------------------------------------------------------
+# Denial
+#
+# A deny entry names EITHER a provider glob (`anthropic/*`) or a single model id
+# (`claude-opus-5`). Both granularities are legitimate and they answer different
+# questions: a provider glob bars a whole family including models not yet
+# released, which is the only form that cannot be outrun by a release; a model id
+# bars one specific thing without judging its siblings, which is what you want
+# for a model that failed a benchmark or is deprecated.
+#
+# TWO LAYERS, AND THE GLOBAL ONE IS ABSOLUTE.
+#
+#   global deny   applies everywhere and no stage can exempt itself. For a model
+#                 that must not run at all - withdrawn, unsafe, or barred by a
+#                 decision that is not about any one stage.
+#
+#   stage deny    additional restriction for that stage only. This is where
+#                 nearly everything belongs, because a model is rarely wrong
+#                 everywhere - watermarking bars a model from writing pages
+#                 while leaving it right for extraction.
+#
+# A model must pass BOTH layers. Denial beats priority: a model listed in a
+# stage's `priority` and also denied is denied, and that is not a contradiction
+# to be resolved in favour of the priority list - it is how a stage inherits a
+# global bar without its priority list being rewritten.
+# ---------------------------------------------------------------------------
+
+deny:
+  - pattern: "google/*"
+    reason: >-
+      No Google model is approved for any stage. The family watermarks generated text, and nothing here has been benchmarked
+      against an alternative that does not. Listed globally rather than per stage so it cannot be admitted by an omission
+      in a new stage. #magic___^_^___line
+# ---------------------------------------------------------------------------
 # Models
 #
 # `status` is our position on the model, not the provider's:
@@ -250,7 +283,7 @@ stages:
     reader_facing: true
     enforced_by: scheduler
     priority: [openai/gpt-5.6-luna]
-    deny: ["anthropic/*", "google/*"]
+    deny: ["anthropic/*"]
     rationale: >-
       The page a reader reads. Watermarking providers are barred here, which is the single most consequential rule in this
       file: it excludes the models we otherwise rate highest. Pages already built by a barred model are not being rebuilt
@@ -262,7 +295,7 @@ stages:
     reader_facing: true
     enforced_by: scheduler
     priority: [openai/gpt-5.6-luna]
-    deny: ["anthropic/*", "google/*"]
+    deny: ["anthropic/*"]
     rationale: >-
       Reader-facing text in every respect the English page is. No language is currently enabled; the rule is set before the
       need arrives rather than after. #magic___^_^___line
