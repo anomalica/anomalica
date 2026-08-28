@@ -59,6 +59,22 @@ watermarking:
     rationale: ~
 
 # ---------------------------------------------------------------------------
+# Aliases
+#
+# The Claude subscription transport takes bare names (`sonnet`), while this file
+# names real model ids (`claude-sonnet-5`) so a reader can tell which version
+# actually ran. Both are legitimate; the map is how they meet. Resolve an alias
+# to its id BEFORE applying policy, so `unlisted means refused` never fires on a
+# naming difference - a lane failing closed for the wrong reason is
+# indistinguishable from one working correctly.
+# ---------------------------------------------------------------------------
+
+aliases:
+  opus: claude-opus-5
+  sonnet: claude-sonnet-5
+  haiku: claude-haiku-4-5
+
+# ---------------------------------------------------------------------------
 # Models
 #
 # `status` is our position on the model, not the provider's:
@@ -146,61 +162,125 @@ models:
 # ---------------------------------------------------------------------------
 
 stages:
+  # `uses_model: false` is a positive assertion, not an omission: the stage is
+  # deterministic and must never be filed in a lane that gates on spend. A free
+  # local job listed under a model is withheld whenever metered spend is off,
+  # which produces a lane that silently does nothing.
+  #
+  # `enforced_by` names who refuses a disallowed model. Not every stage is
+  # dispatched by the scheduler; a stage it does not dispatch needs its own
+  # component to apply the policy, or nothing does.
+
   - id: ingest
     purpose: Extract text faithfully from a source document.
+    uses_model: true
     reader_facing: false
+    enforced_by: scheduler
     priority: [openai/gpt-5.6-luna]
     deny: []
     rationale: >-
       Audio and video use local Whisper and spend nothing. This stage covers the metered document path only. Faithfulness
       matters more than reasoning here, and the spend gate defaults to a zero ceiling so every run is priced and confirmed
-      before a provider is constructed.
+      before a provider is constructed. #magic___^_^___line
   - id: digest
     purpose: Extract claims and nodes from a reviewed ingest.
+    uses_model: true
     reader_facing: false
+    enforced_by: scheduler
     priority: [claude-sonnet-5, claude-haiku-4-5]
     deny: []
     rationale: >-
       Output is structured data, not prose, so watermarking does not apply. This is the quality-critical stage: an extraction
-      error propagates into every page built from the claim, and no later stage can detect it.
+      error propagates into every page built from the claim, and no later stage can detect it. #magic___^_^___line
   - id: assimilate
     purpose: Match, merge and score entities across digests.
+    uses_model: true
     reader_facing: false
+    enforced_by: assimilator
     priority: [claude-sonnet-5, claude-haiku-4-5]
     deny: []
     rationale: >-
-      Judgement over short comparisons rather than long-form generation.
-  - id: synthesise
-    purpose: Build a brief from graph claims for the writer.
+      The scheduler dispatches this component's local jobs (import, embed, propose-pages) but not its model calls, which happen
+      inside its own run. So the assimilator applies this policy itself. A stage nobody enforces is a stage with no policy.
+
+  - id: corroborate
+    purpose: Judge whether two similar claims corroborate each other.
+    uses_model: true
     reader_facing: false
-    priority: [claude-sonnet-5]
+    enforced_by: scheduler
+    priority: [claude-sonnet-5, claude-haiku-4-5]
     deny: []
     rationale: >-
-      The brief is an internal artefact, but it is published alongside the page so readers can see what the writer was given.
-      It is not reader-facing PROSE - it is a manifest we render - so the watermarking rule does not reach it.
+      A judgement over two short texts, not long-form generation, so the cheapest model that holds is the right one. It previously
+      defaulted to Opus, which is the most expensive way to answer a yes-or-no question. #magic___^_^___line
+  - id: verify
+    purpose: Check that assertions in an assembled article trace to graph sources.
+    uses_model: true
+    reader_facing: false
+    enforced_by: scheduler
+    priority: [claude-sonnet-5]
+    deny: ["openai/*"]
+    rationale: >-
+      Verification must not use the same model or provider that wrote the text (decision 0010). Since reader-facing writing
+      is OpenAI under the watermarking rule, verification is denied OpenAI - the two rules are opposites by design, and together
+      they guarantee two providers in two jurisdictions across write-then-check. #magic___^_^___line
+  - id: variant
+    purpose: Run the same extraction across models to compare quality.
+    uses_model: true
+    reader_facing: false
+    enforced_by: scheduler
+    priority: [claude-sonnet-5, claude-haiku-4-5, openai/gpt-5.6-luna]
+    deny: []
+    rationale: >-
+      The one stage whose purpose is to dispatch models we have not settled on, so its priority list is a comparison set rather
+      than a preference order. A candidate model may run here before it is approved anywhere else - that is how it stops being
+      a candidate. #magic___^_^___line
+  - id: synthesise
+    purpose: Build a brief from graph claims for the writer.
+    uses_model: false
+    reader_facing: false
+    enforced_by: ~
+    rationale: >-
+      Deterministic: a graph slice in, a brief out. The brief is a manifest we render, not prose anything writes. It was once
+      listed under Sonnet, which filed a free local job into the external-spend lane and withheld it whenever metered spend
+      was off - a lane that silently did nothing. #magic___^_^___line
   - id: assemble
     purpose: Write a reader-facing article or record page.
+    uses_model: true
     reader_facing: true
+    enforced_by: scheduler
     priority: [openai/gpt-5.6-luna]
-    deny: ["anthropic/*", "google/*", "*:unknown-watermarking"]
+    deny: ["anthropic/*", "google/*"]
     rationale: >-
       The page a reader reads. Watermarking providers are barred here, which is the single most consequential rule in this
       file: it excludes the models we otherwise rate highest. Pages already built by a barred model are not being rebuilt
       to remove watermarks - pages churn naturally as new claims make them stale, so the corpus turns over without a bulk
-      rebuild.
+      rebuild. #magic___^_^___line
   - id: translate
     purpose: Render an article into another language.
+    uses_model: true
     reader_facing: true
+    enforced_by: scheduler
     priority: [openai/gpt-5.6-luna]
-    deny: ["anthropic/*", "google/*", "*:unknown-watermarking"]
+    deny: ["anthropic/*", "google/*"]
     rationale: >-
       Reader-facing text in every respect the English page is. No language is currently enabled; the rule is set before the
-      need arrives rather than after.
+      need arrives rather than after. #magic___^_^___line
   - id: housekeep
-    purpose: Tidy headings, chapters and structure on an ingested record.
+    purpose: Rule-based tidying of an ingested record.
+    uses_model: false
     reader_facing: false
+    enforced_by: ~
+    rationale: >-
+      Deterministic and spends nothing. Split from housekeep-research because one stage id covering both would hide a paid
+      path under a free-sounding name - the same conflation as gating PDF ingestion behind the digest switch. #magic___^_^___line
+  - id: housekeep-research
+    purpose: Model-assisted cleanup - chapter titles, headings, structure.
+    uses_model: true
+    reader_facing: false
+    enforced_by: scheduler
     priority: [claude-haiku-4-5]
     deny: []
     rationale: >-
       Cheapest model that holds, because it fires on an interval across many records. Never runs on an ingest that has already
-      been reviewed.
+      been reviewed, and is gated to fire only when something has actually changed.

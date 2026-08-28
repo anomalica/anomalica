@@ -61,6 +61,24 @@ says "not yet documented", which is true and invites correction. A generated
 justification for our own model choices would be the one claim on the site that
 readers could not check - and the one most flattering to us.
 
+**A stage that uses no model says so.** `uses_model: false` is a positive
+assertion, not an omission. A deterministic stage listed under a model gets filed
+into the lane that gates on spend, and is then withheld whenever metered spend is
+off - producing a lane that silently does nothing. That has happened once
+already, to brief synthesis.
+
+**Every stage names who enforces it.** The scheduler does not dispatch every
+model call; the assimilator makes its own inside its run. A stage the scheduler
+does not dispatch needs its component to apply the policy, or nothing does, and
+"the policy exists" would be true while nothing checked it.
+
+**Aliases resolve before policy applies.** The subscription transport takes bare
+names (`sonnet`); this file names real ids (`claude-sonnet-5`) so a reader can
+tell which version ran. An alias map joins them. Applying `unlisted means
+refused` to an unresolved alias would fail every Claude dispatch on a naming
+difference rather than a policy one - and a lane failing closed for the wrong
+reason looks exactly like one working correctly.
+
 Policy is also kept distinct from two orderings it is often confused with. The
 policy decides what is permissible; a stage's `priority` list decides what is
 best; the scheduler's pace decides what is urgent. Three orderings with three
