@@ -56,6 +56,33 @@ record:
   producer: Elizondo, Luis
   date: '2024'
   reference: null
+  copyright_status: licensed
+
+### `copyright_status`
+
+Flattened from the ingest record's nested `copyright.status`. The digest carries
+the STATUS ONLY, never the whole copyright block, so nothing else in it is
+republished. Values are those of the ingest record: `public_domain`,
+`open_licence`, `publicly_accessible`, `licensed`, `restricted`.
+
+**Absent means UNKNOWN, and a consumer must treat unknown as NOT DISTRIBUTABLE.**
+Every digest produced before 2026-08-28 lacks the field, so absence is common and
+says nothing about the source's licence. A consumer that reads absent as
+permitted would treat the entire pre-existing corpus as freely publishable.
+
+It is carried because a field that must be JOINED is a field that gets forgotten.
+The status was previously held only in the ingest record, on the reasoning that
+access-control state should have exactly one authoritative home - which is correct
+in principle and produced a near-miss in practice: with the graph unable to see
+copyright, verbatim excerpts from 13 copyrighted books reached 85% of proposed
+pages before anyone noticed.
+
+**It is a snapshot, not an authority.** Copyright status lives in record
+frontmatter, and frontmatter changes are invisible to `pre_digest.sha256`, which
+covers the body. A licence that changes after digestion leaves every digest
+asserting the old status with no staleness check able to detect it. A consumer
+FILTERING or PROPOSING may use the carried value; a consumer making a PUBLISH
+decision should resolve the record by `content_hash` and read the store.
 
 nodes:
   - id: dea95da2-a779-4012-88d5-d443d7f8f4b3
