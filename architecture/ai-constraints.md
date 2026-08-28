@@ -26,3 +26,17 @@ Artificial intelligence assembles content from existing sources. It does not cre
 | **Assembler** | Arranging knowledge graph data into articles, applying directives, per-language assembly |
 | **Assembler** | Extracting directives from human edits, classifying edits as presentational or meaning-altering |
 | **Verification** | Independent model verifies that assertions in assembled articles trace to knowledge graph sources |
+
+## Which models, and why
+
+Where AI is used is above. WHICH model runs at each stage, and which models are
+refused, is a separate question with its own source of truth:
+[architecture/model-policy.yaml](model-policy.yaml), reasoned in
+[decision 0047](../decisions/0047-centralised-model-policy.md).
+
+That file is authoritative over any component's own choice, is read at runtime by
+every component that dispatches a model call, and is published to readers as a
+generated page. The rule with the widest reach: models whose providers watermark
+generated text are barred from reader-facing writing (pages, translations), and a
+provider whose watermarking state is unknown is treated as watermarking rather
+than as clean.
