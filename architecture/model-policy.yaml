@@ -2,28 +2,227 @@ schema: anomalica/model-policy/1
 updated: '2026-08-28'
 watermarking:
   anthropic:
-    state: watermarks
+    state: unknown
+    confidence: high
+    open_weights: false
+    checked: '2026-08-28'
+    evidence: 'Anthropic announced text watermarking on 2026-08-14: "Future Claude models will generate text that contains
+      a watermark", and "Claude''s text watermark is a version of the SynthID-Text approach published by Google DeepMind"
+      - a sampling-time scheme that "changes the source of randomness used when making some of those choices during text generation",
+      so "Nothing is added to the text and there are no hidden characters". The support article states "Claude models launched
+      on or after August 2, 2026 support marking at launch" and that "Marking will apply to output from supported models wherever
+      Claude is offered, worldwide", covering Claude Platform (API), Claude, Claude Code, Claude Cowork and Claude Tag, plus
+      cloud partners (AWS, Google Cloud). The driver is EU AI Act Article 50 transparency; Anthropic says "We will soon be
+      offering a watermark detection API. We''re in the process of working out the details of its implementation." Separately,
+      C2PA signed provenance metadata is applied to generated image files (.svg/.png/.jpg) - that is metadata, distinct from
+      the in-text statistical watermark. Anthropic has never published downloadable weights for any Claude model; all releases
+      are hosted-API only (its 2026 open-weights position paper argues against a ban but does not release Claude weights).'
+    sources:
+      - https://www.anthropic.com/news/claude-text-watermark
+      - https://support.claude.com/en/articles/16266773-how-claude-marks-ai-generated-content
+      - https://techcrunch.com/2026/08/11/anthropic-says-it-will-watermark-text-generated-by-its-ai-models/
+      - https://techcrunch.com/2026/08/15/anthropic-shares-more-details-about-how-claudes-new-watermarks-will-work/
     since: '2026-08-02'
-    rationale: Anthropic started watermarking its output on 2 August 2026.
+    caveat: 'The three models named in the question all launched BEFORE the 2026-08-02 cutoff - Haiku 4.5 (Oct 2025), Sonnet
+      5 (2026-06-30), Opus 5 (2026-07-24) - so none of them was marked at launch. They sit in the EU AI Act transition period:
+      "we''re working to add watermarking for those models as well... This will be rolled out over the coming months." Anthropic
+      has published no model-by-model coverage table and no retrofit date, so as of 2026-08-28 it is NOT established that
+      output from Opus 5, Sonnet 5 or Haiku 4.5 carries a watermark today; only that it is intended to. No public detector
+      exists yet (detection API still unreleased), so this cannot be verified independently - third-party claims of "tested,
+      not watermarked" are unverifiable without the key. Two further scope limits Anthropic states: code carries little or
+      no watermark (functional code has too little word-choice freedom), and short passages may not contain enough signal
+      to detect. Direction of travel is clear: treat any post-2026-08-02 Claude model as watermarked, and assume the named
+      three become watermarked without notice.'
   google:
     state: watermarks
-    rationale: Google watermarks generated text across the Gemini family.
+    confidence: high
+    open_weights: false
+    checked: '2026-08-28'
+    evidence: 'Google DeepMind''s own SynthID page states: "We''ve expanded SynthID to watermarking and identifying text generated
+      by the Gemini app and web experience," and describes the mechanism as adjusting per-token probability scores during
+      generation ("not noticeable to the human eye"), i.e. a statistical sampling-time watermark, not metadata. The peer-reviewed
+      Nature paper (23 Oct 2024, "Scalable watermarking for identifying large language model outputs") says outright: "non-distortionary
+      SynthID-Text has been productionized and is currently watermarking responses in Gemini and Gemini Advanced," validated
+      over roughly 20 million live responses (thumbs-up rate differed by 0.01%). Text watermarking was announced on 14 May
+      2024. For the hosted API specifically, a Google staff member on the official Google AI Developers Forum first said on
+      2026-08-05 "Generated text from the API is NOT SynthID-watermarked," then posted a correction on 2026-08-19: "After
+      checking further with the team, it turns out that text generated via the Gemini API IS actually SynthID-watermarked...
+      This also applies to text generated through Google AI Studio and/or antigravity!" Google also open-sourced SynthID-Text
+      as a logits processor (Hugging Face Transformers v4.46.0+) for developers to apply to their own models.'
+    sources:
+      - https://deepmind.google/models/synthid/
+      - https://deepmind.google/blog/watermarking-ai-generated-text-and-video-with-synthid/
+      - https://www.nature.com/articles/s41586-024-08025-4
+      - https://pmc.ncbi.nlm.nih.gov/articles/PMC11499265/
+    since: '2024-05-14'
+    caveat: 'Three real gaps. (1) The API is the weakest link evidentially: the only statement that Gemini API / AI Studio
+      output is watermarked is a forum post by a Google employee that reversed his own answer two weeks earlier; no Google
+      documentation, model card, or Vertex AI page states it, and the poster''s follow-up question about when API watermarking
+      started was left unanswered. Treat the app/web experience as documented fact and the API as staff-asserted but undocumented.
+      (2) There is no way to verify independently: the SynthID Detector portal is waitlisted (journalists/researchers) and
+      its published modality list is images, video and audio; the Gemini Apps verification help page covers "images, videos,
+      and audio" only. Detection needs Google''s secret key. (3) The watermark is fragile by design - it degrades under paraphrase,
+      translation and heavy editing, and short outputs carry too little signal. On weights: the Gemini family is closed, API-only,
+      so hosted generation is the only path and it carries the watermark. Gemma is Google''s separate open-weights family
+      - a self-hosted Gemma emits no watermark unless the operator deliberately enables the open-sourced SynthID-Text logits
+      processor. The "since" date is the text-watermarking announcement for the Gemini app; the API start date is unknown.'
   openai:
     state: clean
-    rationale: No text watermarking as of the date above.
+    confidence: high
+    open_weights: false
+    checked: '2026-08-28'
+    evidence: 'OpenAI''s own API guide "Content provenance" enumerates exactly which signals it applies and to what: "C2PA
+      Content Credentials | Images | Signed metadata with issuer and AI-use details" and "SynthID | Images and audio | A watermark
+      embedded directly in supported media". Text is absent from that list; no GPT-5.6 model (Sol, Terra, Luna) is mentioned
+      as carrying any provenance signal, and the verification API only checks images and audio. OpenAI''s help-centre provenance
+      page, updated 2026-08-02 (the day EU AI Act Article 50 transparency obligations began), states forward-looking intent
+      rather than deployment: "Consistent with our commitments under the European Commission''s Code of Practice on Transparency
+      of AI-generated content, our goal is to expand provenance signals to all modalities including text" - and OpenAI told
+      City A.M. it is "currently working through the details", giving no timeline. Reporting through late August 2026 agrees:
+      InfoQ''s roundup of Article 50 compliance credits statistical token-sampling text watermarking to Anthropic (Claude
+      models released on or after 2 August 2026) and Google (SynthID-Text in Gemini), and describes OpenAI''s measures as
+      C2PA metadata plus SynthID on images/audio only. OpenAI built a cryptographic text watermark years ago (WSJ, August
+      2024) and deliberately shelved it over paraphrase/translation fragility and disproportionate flagging of non-native
+      English writers; that decision has not been reversed.'
+    sources:
+      - https://developers.openai.com/api/docs/guides/content-provenance
+      - https://help.openai.com/en/articles/8912793-provenance-signals-content-credentials-synthid-in-openai-generated-content
+      - https://openai.com/index/advancing-content-provenance/
+      - https://www.infoq.com/news/2026/08/eu-ai-content-watermark/
+    caveat: No OpenAI page says categorically "we do not watermark text" - the conclusion rests on their provenance docs enumerating
+      covered modalities and excluding text, plus a goal statement that only makes sense if text is not yet covered. OpenAI
+      has signed the EU Code of Practice on Transparency of AI-Generated Content and has publicly committed to extending provenance
+      signals to text, so this is a status that could change with little notice; re-check before relying on it long-term.
+      Separately, invisible Unicode characters (narrow no-break spaces and similar) are sometimes observed in ChatGPT web
+      output - these are chat-interface rendering artefacts, not a watermark, and do not appear in API output. Note also that
+      if a text watermark ships it would apply at hosted sampling time only.
   deepseek:
-    state: unknown
-    rationale: null
+    state: clean
+    confidence: high
+    open_weights: true
+    checked: '2026-08-28'
+    evidence: 'DeepSeek publishes V4-Pro and V4-Flash weights openly on Hugging Face under the MIT licence ("This repository
+      and the model weights are licensed under the MIT License"), and neither model card mentions watermarking, content labelling,
+      or any AI-generated-content identifier. DeepSeek''s Open Platform Terms of Service place the disclosure duty on the
+      developer, not on the model: "You shall clearly disclose to your end users that the Output content is generated by AI,
+      and may contain errors or omissions" - DeepSeek makes no claim to embed anything in the output itself. DeepSeek''s own
+      1 September 2025 compliance announcement under China''s Measures for Labeling of AI-Generated Content and the mandatory
+      standard GB 45438-2025 describes exactly two mechanisms: an explicit visible notice ("Content generated by AI, for reference
+      only" shown in the interface and appended to generated text) and an implicit identifier written into FILE METADATA (content
+      type, service-provider name/code, content number) - both explicitly outside the scope of statistical text watermarking,
+      and neither survives copy-paste. No DeepSeek research publication describes a text watermarking scheme and DeepSeek
+      publishes no detector; third-party detection of DeepSeek text (Originality.ai, Sapling) is stylometric classification,
+      which is what you would expect in the absence of a watermark.'
+    sources:
+      - https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro
+      - https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash
+      - https://cdn.deepseek.com/policies/en-US/deepseek-open-platform-terms-of-service.html
+      - https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html
+    caveat: 'Two limits. First, DeepSeek''s hosted API sampling stack is closed and unaudited, so absence of documentation
+      cannot strictly disprove a hidden sampling-time watermark on the API path - the finding rests on DeepSeek discussing
+      AI-content marking openly and describing only labels plus metadata. Second, China''s GB 45438-2025 says implicit identifiers
+      should include "watermarks where feasible", so a future move is regulatorily plausible; watch for it. None of this affects
+      self-hosted use: a statistical text watermark is applied at sampling time by whatever code runs the model, so MIT-licensed
+      weights you run yourself cannot carry a DeepSeek watermark under any circumstances.'
   moonshot:
-    state: open_weights
-    rationale: Kimi K3's weights are published and can be downloaded and run. A watermark is added at the moment text is generated,
-      so a copy we run cannot have one, and a hosted copy can be checked against ours.
+    state: clean
+    confidence: medium
+    open_weights: true
+    checked: '2026-08-28'
+    evidence: 'No Moonshot documentation, model card, research paper, or announcement describes a statistical text watermark,
+      and they publish no detection tool. The Kimi API docs return nothing on watermark/水印/标识; the Kimi-K2-Thinking and Kimi-K3
+      model cards make "no mention of watermarking in generated outputs". The only adjacent clause is regulatory-compliance
+      language in the terms of service: platform ToS s3.3(3) forbids "Deleting, altering, or concealing the identification
+      marks of artificially generated content that we have labeled, including both explicit and implicit", and the consumer
+      agreement says "您不得以任何方式删除、篡改、隐匿 Kimi 智能助手在输出内容中生成的深度合成服务标识" - this tracks China''s 标识办法 / GB 45438-2025, where for
+      text the mandated implicit label is file metadata (service-provider name, content number, timestamp, model info) and
+      a digital watermark is "recommended... but this is not mandated". Weights are freely downloadable: K2/K2-Instruct/K2-Thinking
+      under a Modified MIT Licence on Hugging Face, K3 (published 27 July 2026) under a bespoke Kimi K3 Licence with revenue/attribution
+      thresholds but unrestricted download. Separately, the only prominent "watermark + Chinese AI" story is US Treasury''s
+      claim that American LLMs'' watermarks were found in Chinese models via distillation - other labs'' marks surviving into
+      Chinese models, not Moonshot applying its own.'
+    sources:
+      - https://platform.kimi.ai/docs/agreement/modeluse
+      - https://www.kimi.com/user/agreement/modelUse
+      - https://platform.kimi.ai/docs/introduction
+      - https://huggingface.co/moonshotai/Kimi-K2-Thinking
+    caveat: 'Two gaps. (1) Moonshot has never made a public negative statement ("we do not watermark"), so this is an absence-of-evidence
+      conclusion across their docs, ToS, privacy policy, model cards and press coverage, not a denial. (2) The ToS phrase
+      "implicit" identification marks is the one genuine ambiguity: read narrowly it is the GB 45438-2025 file-metadata implicit
+      label (out of scope here), but the standard also permits content-embedded digital watermarks as an implicit label, and
+      Moonshot publishes no technical detail on which they use for text delivered as an API JSON string, where there is no
+      file to carry metadata. No third-party analysis of Kimi output for token-distribution bias or zero-width characters
+      was found either way. Regardless of the hosted API, open weights mean any self-hosted Kimi deployment carries no Moonshot
+      watermark.'
   z-ai:
-    state: unknown
-    rationale: null
+    state: clean
+    confidence: medium
+    open_weights: true
+    checked: '2026-08-28'
+    evidence: 'No Z.ai surface describes a text watermark. The GLM-5 technical report (arXiv 2602.15763), the zai-org/GLM-5
+      README, the GLM-5.1 API guide, the GLM-5.2 and GLM-5.3-Flash model cards, and the BigModel platform docs contain no
+      watermarking scheme, no announcement, and no detection tool; the only near-match is Z.ai''s Terms of Use, which says
+      "you may not remove, modify, or obscure any AI identifiers added to Outputs by Z.ai, regardless of the form in which
+      such identifiers are presented" - a legal clause naming no technical method, consistent with China''s labelling regime
+      rather than a sampling-time watermark. That regime pushes away from text watermarking: GB 45438-2025 and the CAC Labelling
+      Measures (in force 2025-09-01) require for TEXT an explicit visible label ("AI"/"生成") plus an implicit identifier in
+      FILE METADATA, while content-embedded digital watermarks are encouraged for audio/image/video and are not mandated for
+      text. Third-party surveys of who watermarks text as of August 2026 name only Anthropic (SynthID-Text-derived, every
+      Claude model from 2026-08-02) and Google (SynthID); Z.ai/Zhipu/GLM appear in none of them, and Z.ai is not among the
+      EU Transparency Code of Practice signatories. Structurally it could not bind anyway: GLM-5.1, GLM-5.2 and GLM-5.3-Flash
+      (320B-A18B, released 2026-08-26) are MIT-licensed open weights on Hugging Face under zai-org, so self-hosted inference
+      carries no provider-side sampling watermark; only the flagship GLM-5.3 weights were still held back pending safety evaluation
+      as of late August 2026.'
+    sources:
+      - https://docs.z.ai/legal-agreement/terms-of-use
+      - https://docs.z.ai/guides/llm/glm-5.1
+      - https://docs.bigmodel.cn/cn/guide/start/introduction
+      - https://arxiv.org/abs/2602.15763
+    caveat: Z.ai has never made an explicit public statement either way - there is no "we do not watermark" denial to point
+      at, so this is an absence-of-evidence finding across their docs, papers, repo and model cards rather than a positive
+      disclaimer. The Terms of Use "AI identifiers ... regardless of the form in which such identifiers are presented" clause
+      is deliberately broad and would legally cover a hidden signal if they ever added one; it is the single piece of text
+      that cannot be fully ruled out, though it names no method and matches the Chinese visible-label-plus-metadata scheme.
+      No independent statistical test of GLM API output for a green-list/Gumbel-style watermark has been published, so the
+      hosted API path is unverified empirically. SaferAI's external GLM-5.2 evaluation notes Z.ai published no safety framework,
+      pre-deployment testing commitments or risk assessment at all, so silence on watermarking sits inside a broader silence
+      on published safety posture - it is weaker evidence than silence from a lab that documents provenance work in detail.
+      Behaviour could also differ between the international z.ai endpoint and the mainland open.bigmodel.cn endpoint, which
+      faces the CAC rules directly; nothing found distinguishes the two. Open weights make the question moot for any locally
+      run GLM regardless of what the API does.
   qwen:
-    state: unknown
-    rationale: null
+    state: clean
+    confidence: medium
+    open_weights: true
+    checked: '2026-08-28'
+    evidence: 'No Alibaba/Qwen documentation, model card, technical report or announcement describes a statistical text watermark.
+      Stanford''s Foundation Model Transparency Index company report for Alibaba/Qwen3 (Dec 2025) records no disclosure at
+      all on watermarking or provenance for text outputs. Positive counter-evidence: Alibaba''s own way of spotting AI text
+      is a CLASSIFIER, not a key-based watermark detector - the AI Guardrails / content-moderation docs describe "AI生成文本鉴别"
+      via the `text_aigc_detector` service, which flags text that "疑似由AI生成合成" (appears to be AI-generated); a provider that
+      watermarked its own text would verify the key instead of guessing. Alibaba does watermark other modalities, which sharpens
+      the contrast: the Qwen-Image API exposes a `watermark` parameter, and the SASE `CreateWmEmbedTask` API embeds and extracts
+      digital watermarks for images, audio, video and document files - none of it token-level watermarking of chat/completion
+      text. The Chinese labelling regime Qwen complies with (Measures + mandatory standard GB 45438-2025, in force 1 Sept
+      2025) requires a visible label plus an implicit label in FILE METADATA; a digital watermark inside the content itself
+      is explicitly encouraged but not mandated, so the widely-reported "Doubao, DeepSeek, Qwen and Ernie labelled 150 billion
+      pieces of content" figure is metadata and visible labels, which the question excludes. Open weights: Qwen3 models are
+      Apache 2.0 and freely downloadable on Hugging Face (e.g. Qwen/Qwen3-235B-A22B, ~406k downloads in the last month), so
+      any self-hosted Qwen carries no provider-side watermark regardless of what the hosted API does.'
+    sources:
+      - https://crfm.stanford.edu/fmti/December-2025/company-reports/Alibaba_FinalReport_FMTI2025.html
+      - https://help.aliyun.com/zh/document_detail/2979119.html
+      - https://help.aliyun.com/zh/sase/getting-started/aigc-logo-addition-guide
+      - https://www.alibabacloud.com/help/en/model-studio/qwen-image-api
+    caveat: 'No published third-party statistical probe of Qwen''s hosted API for a watermark. The ETH SRI black-box watermark-detection
+      work (arXiv 2405.20777, ICLR 2025) tested GPT-4, Claude 3 and Gemini 1.0 Pro - finding no strong evidence of a watermark
+      - but did not cover Qwen, and I found no later study that did. So "clean" rests on (a) absence across Alibaba''s own
+      docs, research output and transparency reporting, (b) their AI-text detection being classifier-based, and (c) the Chinese
+      standard not requiring in-content text watermarks - not on a direct measurement of the API. Two things not established
+      either way: whether Alibaba adds any hidden marker to Tongyi/Qwen Chat consumer output (a metadata/ID scheme would satisfy
+      the law and is out of scope here anyway), and whether some future Qwen serving path adds one. Also note the flagship
+      top-end model (Qwen3.x-Max) is served API-only under a bespoke licence rather than Apache 2.0, so "open weights" holds
+      for the downloadable Qwen3 line, not literally every Qwen model.'
 aliases:
   opus: claude-opus-5
   sonnet: claude-sonnet-5
@@ -34,12 +233,9 @@ status_meanings:
   unevaluated: Listed so it cannot be picked by accident. No evidence either way.
   blacklisted: Must not be used, for the reason given.
 watermarking_meanings:
-  watermarks: The provider adds a hidden signal to the text it generates. Not allowed to write anything a reader reads.
-  clean: No watermarking, as far as we can tell on the date shown. Allowed to write for readers.
-  open_weights: The weights are published, so we generate the text ourselves. A watermark is added when text is generated,
-    not stored in the weights, so a model we run cannot carry one. This is stronger than a provider saying it does not watermark,
-    because we can check it instead of believing it.
-  unknown: Nobody has checked, and the weights are closed, so nobody can. Treated as watermarking.
+  watermarks: The provider puts a hidden signal in the text it generates, so it can later be identified as machine-written.
+  clean: We looked and found no text watermarking on the date shown. What we checked is recorded against each provider.
+  unknown: We could not establish it either way. Treated the same as watermarking.
 deny:
   - pattern: google/*
     reason: No Google model is approved for any stage. The family watermarks generated text, and nothing here has been benchmarked
@@ -246,3 +442,4 @@ deny_watermarking_note: 'Reader-facing stages refuse a model by its provider wat
   names. The list of banned providers is worked out from the watermarking table above every time, so a provider added there
   is enforced immediately and a state that changes takes effect without anyone editing a stage. A name list would have to
   be updated by hand, and the failure would be silent: a provider nobody added is a provider nobody blocked.'
+watermarking_checked: '2026-08-28'
