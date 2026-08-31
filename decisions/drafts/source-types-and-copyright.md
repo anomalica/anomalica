@@ -71,12 +71,34 @@ The workbench is publicly accessible. Anyone can use it to audit the full proven
 
 What the workbench can show depends on the copyright status of the source and whether the viewer can demonstrate they have a legitimate copy:
 
-| Copyright status | Digested claims | Original source | Ingested markdown |
-|---|---|---|---|
-| `public_domain` / `open_licence` | Shown | Served directly from storage | Shown |
-| `publicly_accessible` (web articles, YouTube, podcasts) | Shown | Embedded or linked from original source URL | Shown |
-| `licensed` (explicit permission from rights holder) | Shown | Gated unless the permission is evidenced - see below | Gated unless evidenced |
-| `restricted` (books, paywalled papers, documentaries) | Shown | Gated: hash verification or manual access grant | Gated: hash verification or manual access grant |
+| Copyright status | Digested claims | Supporting quotes | Original source | Ingested markdown |
+|---|---|---|---|---|
+| `public_domain` / `open_licence` | Shown | Shown | Served directly from storage | Shown |
+| `publicly_accessible` (web articles, YouTube, podcasts) | Shown | Shown | Embedded or linked from original source URL | Shown |
+| `licensed` (explicit permission from rights holder) | Shown | **Shown** | Gated unless the permission is evidenced - see below | Gated unless evidenced |
+| `restricted` (books, paywalled papers, documentaries) | Shown | **Shown** | Gated: hash verification or manual access grant | Gated: hash verification or manual access grant |
+
+
+**A SUPPORTING QUOTE IS NEVER GATED, WHATEVER THE STATUS.** The `Supporting quotes`
+column above is `Shown` on every row, including `restricted`, and that is not an
+oversight to be tidied up. It is the Quotation policy earlier in this document,
+restated in the table because the table is what people actually read when deciding.
+If you are about to remove short attributed quotes because their source is a
+copyrighted book, STOP - you are about to delete lawful quotation the platform
+depends on, and it has happened before.
+
+**Over-gating is NOT free, and the allow-list sentence below is about SOURCES, not
+quotes.** "An allow-list merely over-gates, which is a correction rather than a
+disclosure" is true of serving a full body: withholding one costs a reader one
+document. Removing supporting quotes costs something different and worse - a claim
+with no quote beside it looks unevidenced, so stripping quotes makes the platform
+look like it cannot support its own assertions. That is a false statement about our
+evidence, published at scale. Deleting 5,400 quotes and deleting nothing are BOTH
+errors; neither is the safe default.
+
+**The artefacts this table governs are the source body and the ingested markdown.**
+If you are deciding about something not listed here, it is not covered by these rows
+and you must not reason by analogy from them. Ask.
 
 **Public serving is an allow-list, not a deny-list.** Only `public_domain`,
 `open_licence` and `publicly_accessible` are served publicly on status alone. Every
