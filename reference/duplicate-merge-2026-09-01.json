@@ -1,0 +1,80 @@
+{
+  "schema": "anomalica/duplicate-merge/1",
+  "executed_at": "2026-08-31T23:37:12Z",
+  "by": "operator/anomalica-curation",
+  "why": "Duplicate nodes in the Roswell mould, done BEFORE any embedding search over the 630 unresolved Nimitz claims: a neighbourhood search needs correct nodes to land on, or it resolves claims onto fragments and creates the next cleanup.",
+  "place_convention_settled": {
+    "decision": "Country as the SHORT form (UK, USA), then nation, then place, comma-separated.",
+    "evidence": "Measured over the live graph rather than chosen: USA 463 nodes, UK 29 against United Kingdom 14. 'UK, England, X' is the dominant second level at 22 nodes, with an optional county ('UK, England, Shropshire, RAF Shawbury').",
+    "so": "Rendlesham Forest is 'UK, England, Rendlesham Forest', matching its neighbours RAF Woodbridge, RAF Bentwaters and RAF Lakenheath."
+  },
+  "merges": {
+    "places": {
+      "UK, England, Rendlesham Forest": {
+        "claims": 8,
+        "absorbed": [
+          "United Kingdom, Suffolk, Rendlesham Forest",
+          "United Kingdom, England, Rendlesham Forest",
+          "Rendlesham Forest"
+        ],
+        "confirmed": "all three held claims about the same December 1980 Suffolk site - Halt's patrol, Penniston and Burroughs, the joint UK-US facility"
+      },
+      "USA, District of Columbia, Washington": {
+        "claims": 72,
+        "absorbed": ["USA, Washington, D.C.", "USA, D.C., Washington", "USA, District of Columbia"]
+      },
+      "others": [
+        "UK, England, Brighton",
+        "UK, England, Salisbury",
+        "UK, England, Cambridge",
+        "UK, England, RAF Lakenheath",
+        "Mexico, Ciudad Acu\u00f1a",
+        "Afghanistan, Kandahar",
+        "Canada, Yukon",
+        "Nepal, Pokhara",
+        "Russia, Petrozavodsk",
+        "USA"
+      ]
+    },
+    "events": {
+      "1980 Rendlesham Forest incident": {
+        "claims": 49,
+        "absorbed": ["RAF Woodbridge / Rendlesham Forest incident"]
+      },
+      "1997 Phoenix Lights": {
+        "claims": 9,
+        "absorbed": ["1997 Phoenix Lights incident"]
+      },
+      "1948 Aztec, New Mexico alleged Unidentified Aerial Phenomena (UAP) crash retrieval": {
+        "absorbed": [
+          "1948 Aztec New Mexico alleged Unidentified Flying Object (UFO) crash",
+          "Aztec New Mexico UAP Crash"
+        ]
+      },
+      "Kenneth Arnold Unidentified Flying Object (UFO) sighting": {
+        "absorbed": ["Kenneth Arnold Sighting"]
+      }
+    },
+    "organisations": ["UK Ministry of Defence", "Canada Department of Transport"],
+    "documents": ["DEBRIEFED ep. 87: Bob Lazar Just Revealed His BIGGEST Secret"],
+    "person_typed": ["Harvard Medical School - see the type warning below"]
+  },
+  "my_own_duplicates_from_earlier_today": "Two of these were MINE. Re-pointing the London claims this morning I minted 'UK, England, Brighton' and 'UK, England, Salisbury' without checking for the 'United Kingdom, England, ...' forms that already existed. Both pre-existing nodes were empty so nothing was lost, and the form I minted is the convention-correct one, but I created duplicates while cleaning duplicates. A find-or-mint should normalise the country prefix before deciding a node is absent.",
+  "NOT_merged": {
+    "Rendlesham Forest Nuclear Bunker UAP Hover 1980 / Rendlesham Witness Drugging and Hypnosis Event": "empty sub-events of the same incident, not duplicates of it - left standing",
+    "Rendlesham Forest Penniston Sketch (object), the two Rendlesham documents": "different types; no cross-type merges",
+    "USA, Washington DC, {Pentagon, Capitol, White House, ...}": "distinct sub-places, not duplicates. Their PREFIX disagrees with the settled convention and is a rename job, not a merge.",
+    "USA, Washington, {Mount Rainier, Whidbey Island, Mount St. Helens, Renton}": "WASHINGTON STATE, not the District. 'Washington' at the second level is ambiguous between the two and must never be merged on the shared word."
+  },
+  "warnings": {
+    "type_error": "'Harvard Medical School' is typed PERSON. Merging its surname-first twin ('School, Harvard Medical', an artefact of the person-name migration applied to a non-person) tidied the duplicate but did not fix the type. Retyping is not a merge operation.",
+    "washington_convention": "Three spellings of the District are in use - 'USA, District of Columbia, X' (61 claims), 'USA, Washington DC, X' (57), 'USA, Washington, D.C.' (now merged). The city duplicates are merged; the sub-place PREFIXES are not normalised. Recommend 'District of Columbia' because it cannot collide with Washington State, which the graph also holds."
+  },
+  "integrity": {
+    "claims": "31066 before and after",
+    "claim_node_refs": "65353 before and after",
+    "live_nodes": "10378 -> 10353 (25 retired, matching 25 victims)",
+    "backup": "~/.local/share/assimilator/knowledge.pre-dupmerge-20260901-083539.db",
+    "reversible": "every merge is ledger-backed and undoable by merge_id"
+  }
+}
