@@ -1,0 +1,77 @@
+{
+  "schema": "anomalica/claim-repoint/1",
+  "executed_at": "2026-08-31T23:25:51Z",
+  "by": "operator/anomalica-curation",
+  "node": "2004 USS Nimitz UAP encounter",
+  "node_refs": {
+    "before": 1381,
+    "after": 1257
+  },
+  "method": "Every claim read individually. A claim was treated as misattached only if its text names another event and never mentions Nimitz, Tic Tac, Fravor, Princeton or 2004. Provenance was used to PRIORITISE reading, never to decide: 558 of these claims entered from one record, which tells you they arrived together and nothing about their subject.",
+  "destinations": {
+    "1964 Socorro UAP encounter": {
+      "moved": 39,
+      "before": 0,
+      "after": 39,
+      "note": "The Socorro event had NO populated node at all - three empty fragments and every claim on Nimitz. Two fragments merged (a45ea4de); the FBI butane-tank report kept separate, since the corpus treats it as a distinct report from the same week."
+    },
+    "Roswell incident (1947)": {
+      "moved": 33,
+      "after": 182
+    },
+    "1980 Rendlesham Forest incident": {
+      "moved": 22,
+      "after": 44
+    },
+    "1948 Roswell UFO incident": {
+      "moved": 10,
+      "minted": true,
+      "note": "NOT put on the 1947 node. These claims say 1948 and the digest DECLARES an event node of this name - it was captured rather than created. Filing a 1948 claim on a 1947 node is the exact year conflict the matcher guard exists to prevent."
+    },
+    "Phoenix Lights": {
+      "moved": 4,
+      "after": 9
+    },
+    "1948 Mantell UFO incident": {
+      "moved": 4,
+      "minted": true
+    },
+    "1948 Aztec, New Mexico alleged Unidentified Aerial Phenomena (UAP) crash retrieval": {
+      "moved": 4
+    },
+    "1950 McMinnville UFO photographs": {
+      "moved": 2,
+      "minted": true,
+      "note": "A McMinnville UFO FESTIVAL node exists and would have been the wrong home. The claims are about Paul Trent's 1950 photographs."
+    },
+    "Roswell UFO Festival": {
+      "moved": 2,
+      "minted": true,
+      "note": "Same trap the other way: two claims about the annual festival, not the 1947 incident."
+    },
+    "1964 Socorro Butane-Tank UAP FBI Report": {
+      "moved": 2
+    },
+    "Kenneth Arnold Unidentified Flying Object (UFO) sighting": {
+      "moved": 1,
+      "note": "f14cba03 names Roswell only as a time reference - 'a couple of weeks before the Roswell crashes'. Its subject is Arnold's sighting."
+    }
+  },
+  "flagged_for_you": [
+    {
+      "claim": "5cf33c62",
+      "text": "Chris Ramsey states that the Roswell crash and the sighting by Kenneth Arnold, followed by the Aztec crash, prompted government and military interest in UFOs, leading to the formation of Project Grudge, which later turned into Project Blue Book.",
+      "why": "Names three events and is about none of them - its subject is the formation of Project Grudge. Assigning it to any one event would be a guess, so it is LEFT on the Nimitz node, wrong but visible, rather than moved to a plausible home."
+    }
+  ],
+  "integrity": {
+    "claims": "31066 before, 31066 after",
+    "claim_node_refs": "65354 -> 65353",
+    "the_one_reduction": "a claim that already referenced its destination; the duplicate collapsed rather than a reference being lost",
+    "backup": "~/.local/share/assimilator/knowledge.pre-nimitz-20260901-082459.db"
+  },
+  "not_done": {
+    "claims_naming_no_event": 851,
+    "why": "851 claims on this node name neither Nimitz nor another event. Keyword matching cannot settle them and provenance must not: 558 share one source record, and a book about the whole phenomenon discusses Nimitz and a dozen other cases, which is how these arrived. Marked NOT ESTABLISHED rather than resolved by proxy."
+  }
+}
