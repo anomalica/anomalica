@@ -119,3 +119,42 @@ measurement that reads as a fact about the world when it is a fact about the ins
 - **A model card's usage example encodes its author's use case, not yours.** Ours pointed at a retrieval stack, which is why the defect was invisible from the card. Read the card for what the tensor *is* (dtype, quantisation range, whether pooling is internal), not for how to use it.
 - **Never bless an unstamped vector as current.** An embedding with no recorded provenance predates the tracking, which means it predates whatever fix prompted the tracking. Mark it stale and re-embed; stamping it current makes the corruption permanent and invisible to staleness checks.
 - **Batching is not free when pooling is internal to the export.** Padding can leak into the result, making a vector depend on what else shared its request. Check probe 4 before batching for speed.
+
+## A validation set drawn from cases where the method already worked
+
+Found 2026-09-01, trying to resolve 630 claims sitting on the wrong event node.
+
+kNN over claim text measured **75.3% top-1 and 91.4% precision at 63% recall** on
+what looked like a properly hard validation set: claims attached to an event whose
+name their text does not contain. Applied to the real target it was wrong **19 times
+in the 47 cases where any independent check existed**.
+
+The validation set was built from claims **already correctly attached**. A claim is
+only in that population because its true event had other claims - otherwise nothing
+would have attached it correctly in the first place. So the answer was guaranteed to
+be present in its own neighbourhood. The target set is the opposite case: 59% of
+event nodes hold fewer than three claims and 237 hold none. When the true event is
+sparse, kNN cannot vote for it and votes for the nearest well-populated event
+instead.
+
+This is the same shape as tuning a matcher against the merge ledger, where pairs
+appear *because* the matcher missed them. Both are validation sets conditioned on
+the outcome being measured.
+
+**The test:** ask what had to be true for a case to enter the validation set. If the
+answer includes "the method already worked here", or "a human already succeeded
+here", the measurement is an upper bound on a different population, not an estimate
+for yours.
+
+**And what the instrument actually measures.** Semantic similarity is TOPIC
+similarity, not identity. "A witness suffered numbness after a close encounter" is
+near-identical prose whichever event it describes - seventeen claims about a 1962
+Verona observation and the Delphos Kansas encounter were confidently grouped as one
+French case because they share physiological after-effects. No threshold fixes that;
+it is what the embedding is for.
+
+**It improves as the graph does.** Socorro went from zero claims to 39 in one
+morning of reading, and is now findable by neighbourhood where it was invisible
+before. A method that fails on a sparse graph is worth re-running on a denser one
+rather than abandoning - but the re-run needs its own validation, not this one's
+number. See [[absence-is-not-a-verdict]].
