@@ -1,0 +1,36 @@
+{
+  "schema": "anomalica/method-evaluation/1",
+  "generated_at": "2026-08-31T23:56:33Z",
+  "question": "Can the embedding neighbourhood resolve the 630 claims left on the Nimitz node?",
+  "answer": "NO. Nothing was applied to the graph. The 630 remain NOT ESTABLISHED.",
+  "two_formulations_tested": {
+    "claim_text_vs_event_node_NAME": {
+      "easy_gold": "57.6% top-1 over the 342 claims re-pointed by reading today",
+      "realistic_gold": "19.5% top-1 over 400 claims attached to an event they do NOT name",
+      "best_precision": "~50%, at 10% recall",
+      "null_distribution": "random claim/event pairs: mean 0.383, sd 0.065, p99 0.564, max 0.598",
+      "verdict": "unusable - a short name against prose is the weak form of the comparison"
+    },
+    "kNN_over_claim_TEXT": {
+      "realistic_gold": "75.3% top-1, and 91.4% precision at 63% recall with a 0.60 vote share",
+      "verdict": "looked usable, and IS NOT - see the bias below"
+    }
+  },
+  "why_the_91_percent_does_not_transfer": "The validation population was claims ALREADY correctly attached to an event. A claim is only in that population because its true event had other claims - otherwise nothing would have attached it correctly in the first place. So the answer was guaranteed present in its own neighbourhood. The 630 are the opposite case: 59% of event nodes hold fewer than 3 claims and 237 hold none, and Socorro held ZERO until this morning. When the true event is sparse, kNN cannot vote for it and votes for the nearest well-populated event instead. Same bias structure as the merge-ledger corpus: a validation set drawn from cases where the method already worked.",
+  "measured_on_the_actual_target": {
+    "high_confidence_assignments": 227,
+    "of_which_the_claim_names_the_assigned_event": 28,
+    "of_which_the_claim_names_a_DIFFERENT_event": 19,
+    "so": "40% wrong wherever an independent check exists, against a promised 91.4%",
+    "no_neighbour_on_any_event_at_all": 264,
+    "worked_examples": [
+      "17 claims assigned to 'Aveyron case' are about a 1962 Verona observation and the Delphos Kansas encounter - grouped by PHYSIOLOGICAL AFTER-EFFECTS, not by event",
+      "13 assigned to Roswell are about Takala cables, Westall and the Deadhorse shoot-down",
+      "one assigned to Kaikoura names JAL Flight 1628; two assigned elsewhere name Westall"
+    ],
+    "clusters_that_WERE_right": "1952 Washington DC flap (9), 1967 Malmstrom (9), 1991 North West Cape (14) - all events that already held claims, which is the point"
+  },
+  "what_the_method_actually_measures": "Topic similarity, not event identity. 'A witness suffered numbness after a close encounter' is near-identical prose whichever event it describes. That is not a tuning problem and no threshold fixes it.",
+  "what_would_change_the_answer": "Seeding the sparse events. Socorro went from 0 claims to 39 today by reading, and it is now findable by neighbourhood where it was invisible before. A second kNN pass AFTER more events carry claims would do better than this one - the instrument improves as the graph does, so this is worth re-running later rather than abandoning.",
+  "not_done": "No claim was moved. 630 stay marked NOT ESTABLISHED on the Nimitz node."
+}
