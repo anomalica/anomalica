@@ -2,7 +2,7 @@
   "schema": "anomalica/merge-record/1",
   "executed_at": "2026-08-31T23:01:27Z",
   "by": "operator/anomalica-curation",
-  "why": "Roswell was fragmented across 48 nodes with two live pages for one event. The event cluster is merged here; the peripheral document and object duplicates are left for curator review. Run AFTER the matching fix (33efcaa): a merge deposits every victim name as an alias on the survivor, and under the previous unguarded alias comparison those boilerplate-shaped aliases immediately captured unrelated events - which is how the Nimitz node reached 118. Verified against the post-merge graph: pre-fix code misdirects 4 of 5 probe events, fixed code misdirects none.",
+  "why": "Roswell was fragmented across 48 nodes with two live pages for one event. The event cluster is merged here; the peripheral document and object duplicates are left for curator review. Run AFTER the matching fix (33efcaa): a merge deposits every victim name as an alias on the survivor, and under the previous unguarded alias comparison those boilerplate-shaped aliases immediately captured unrelated events - which is how the Nimitz node reached 118. Verified against the post-merge graph: pre-fix code misdirects 4 of 5 probe events, fixed code misdirects none. Every future merge in this corpus depends on the fix: the operation that repairs fragmentation is also the one that arms the next round of it.",
   "clusters": [
     {
       "kind": "event",
@@ -87,5 +87,19 @@
       "1947-roswell-incident.yaml",
       "roswell-unidentified-flying-object-ufo-crash.yaml"
     ]
-  }
+  },
+  "ordering_proof": {
+    "method": "Five unrelated event names run against the SAME post-merge graph under both versions of the matcher, so the graph is held constant and only the comparison changes.",
+    "probes": [
+      "2004 USS Nimitz UFO incident",
+      "1964 Socorro UFO incident",
+      "1948 Mantell UFO incident",
+      "1980 Rendlesham Forest UFO incident",
+      "1947 Aztec UFO crash"
+    ],
+    "pre_fix": "Socorro, Mantell and Rendlesham resolve to Nimitz; Aztec resolves to Roswell. 4 of 5 wrong.",
+    "fixed": "Nimitz to Nimitz, Rendlesham to Rendlesham, the rest mint new nodes. 0 of 5 wrong.",
+    "conclusion": "A merge deposits every victim name as an alias on the survivor, so this merge minted ten boilerplate-shaped Roswell aliases. Merging first would have begun capturing unrelated events in the same run - Aztec immediately."
+  },
+  "rule_learned": "A rename is not cosmetic once a page is published: the page slug derives from the node name, so renaming strands the brief and breaks the artefact chain downstream. Prefer the published name over the conventional one while a page exists; take the convention form only when the page is being rebuilt anyway."
 }
