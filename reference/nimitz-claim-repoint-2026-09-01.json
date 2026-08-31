@@ -68,10 +68,78 @@
     "claims": "31066 before, 31066 after",
     "claim_node_refs": "65354 -> 65353",
     "the_one_reduction": "a claim that already referenced its destination; the duplicate collapsed rather than a reference being lost",
-    "backup": "~/.local/share/assimilator/knowledge.pre-nimitz-20260901-082459.db"
+    "backup": "~/.local/share/assimilator/knowledge.pre-nimitz-20260901-082459.db",
+    "second_pass": {
+      "claims": "31066 before and after",
+      "claim_node_refs": "65353 before and after - a clean move, nothing dropped",
+      "backup": "~/.local/share/assimilator/knowledge.pre-228-20260901-083011.db"
+    }
   },
   "not_done": {
     "claims_naming_no_event": 851,
     "why": "851 claims on this node name neither Nimitz nor another event. Keyword matching cannot settle them and provenance must not: 558 share one source record, and a book about the whole phenomenon discusses Nimitz and a dozen other cases, which is how these arrived. Marked NOT ESTABLISHED rather than resolved by proxy."
+  },
+  "second_pass": {
+    "executed_at": "2026-08-31T23:30:49Z",
+    "claims_moved": 222,
+    "node_refs": {
+      "before": 1257,
+      "after": 1035
+    },
+    "method": "Vocabulary taken from the graph's OWN event node names rather than words I choose, with the year compared - my first version excluded digits and would have absorbed claims saying 1991 into a node named 1973. Clusters were then verified by READING them, not trusted from their label.",
+    "clusters_REJECTED_by_reading": {
+      "Cold War (2)": "both only mention the Cold War as context - a 1962 Verona sighting, a 1967 Montana posting",
+      "Younger Dryas (1)": "a passing mention inside a belief about Varginha",
+      "Dr. X's 1968 French UFO encounter (3)": "matched on the word 'french' alone; the claims are about the Delphos Kansas ring, a trawler off Urville, and a man outside a gym in Gretz-Armainvilliers"
+    },
+    "year_conflicts_given_their_own_node": {
+      "1991 North West Cape UAP sighting": "29 claims say 1990-1991; the existing node is named 1973",
+      "1980 Texas diamond-shaped UAP encounter": "8 claims describe a December 1980 encounter; the node is named 1950 Del Rio",
+      "1952 Los Alamos National Laboratory UAP sighting": "2 claims say July 1952; the node is named 1950"
+    },
+    "destinations": {
+      "Kaikoura UAP Sighting": 38,
+      "1991 North West Cape UAP sighting": 29,
+      "Aveyron case": 18,
+      "Council Bluffs Iowa UAP Incident 1977": 18,
+      "Belgian Wave UAP Sightings": 14,
+      "RAF Bentwaters UAP Sighting 1956": 9,
+      "1980 Texas diamond-shaped UAP encounter": 8,
+      "Aguadilla Puerto Rico UAP Sighting": 8,
+      "Kecksburg UAP Crash 1965": 8,
+      "Petrozavodsk UAP Sighting 1977": 7,
+      "Maralinga 1960 UAP Sighting": 6,
+      "North West Cape 1973 UAP Sighting": 6,
+      "1997 Pentagon UAP Briefing": 6,
+      "Lake Erie Coast Guard UAP Incident 1988": 5,
+      "Davis California UAP Orb Incident 2007": 5,
+      "Woomera 1954 UAP Sighting": 5,
+      "1950 Del Rio, Texas alleged Unidentified Aerial Phenomena (UAP) crash retrieval": 4,
+      "Los Alamos 1950 UAP Sighting": 3,
+      "1952 Los Alamos National Laboratory UAP sighting": 2,
+      "Kimball Pacific UAP Sighting 1952": 2,
+      "RAF Tornado UAP Encounter 1990": 2,
+      "RAF Cosford UAP Sighting 1993": 2,
+      "RAF Shawbury UAP Sighting 1993": 2,
+      "1967 Malmstrom nuclear missile Unidentified Flying Object (UFO) incident": 2,
+      "Michigan UAP Sightings 1966": 1,
+      "Ukrainian SSR Byelo Air Base UAP Incident 1982": 1,
+      "TWA Lake Huron UAP Encounter 1981": 1,
+      "1947 East Coast Cylinder UAP Report": 1,
+      "1953 Swedish Flying Lozenge Sighting": 1,
+      "Hudson Valley Boomerang UAP Incident 1982": 1,
+      "1947 Southern Australia UAP Formation Sightings": 1,
+      "Tully Queensland UAP Sighting 1966": 1,
+      "Learmonth 1987 UAP Sighting": 1,
+      "Byelokoroviche Nuclear Base UAP 1982": 1,
+      "Kadena Air Force Base UAP Sighting": 1,
+      "Dulce Canyon UAP Sighting 1987": 1,
+      "2023 Chinese spy balloon incident": 1
+    }
+  },
+  "NOT_ESTABLISHED": {
+    "count": 630,
+    "WARNING": "The Nimitz node holds 1,035 refs of which only 405 mention Nimitz, Tic Tac, Fravor, Princeton or 2004. THE REMAINING 630 ARE UNVERIFIED, NOT VERIFIED-CORRECT. A reader finding a tidier node should not read that as a clean bill: 135 name more than one event and are ambiguous, 489 name no event at all, and 6 were clustered but rejected on reading.",
+    "why_not_resolved": "Keyword matching cannot settle them and provenance must not: 558 share one source record, and a book about the whole phenomenon discusses Nimitz alongside a dozen other cases, which is how they arrived here. Resolving them by proxy would be the original mechanism with better manners."
   }
 }
