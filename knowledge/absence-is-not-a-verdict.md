@@ -279,6 +279,34 @@ Three found in one hour across three components, all passing, all trusted:
 None of these was careless. Each was a reasonable thing to write, and each
 returned a plausible number every time it ran.
 
+### The test caught its own author, twenty minutes later
+
+Worth recording because it is the only evidence that the question above is
+operational rather than merely true.
+
+Having written the test down, I suggested a refinement to another component's
+rebuild signal: use `gone` (brief claim ids no longer in the graph) against the
+brief's total, rather than the count of claims remaining, on the reasoning that a
+node losing forty claims and gaining forty reads as unchanged.
+
+It is wrong, and wrong by the same mechanism the whole investigation was about.
+Re-ingestion mints entirely fresh claim ids, so for any re-ingested record `gone`
+is 100% BY CONSTRUCTION whatever happened to the evidence. It measures id churn,
+not loss, and cannot distinguish a node that was wiped from one that was
+re-extracted and doubled - both replace every id. Tested over 752 pages it
+disagreed with the existing signal on 22, and was wrong on all 22, including a
+node that had grown four and a half times and would have been blocked as a
+collapse.
+
+Apply the test: **if the node had NOT lost its evidence, would `gone` have told
+me?** No. It reads 100% either way. Twenty minutes between writing the question
+down and proposing something that fails it.
+
+The surviving signal works because it measures the HARM rather than the
+mechanism - "will the rebuilt page be thin" rather than "did the ids change". That
+distinction generalises: a measurement of a mechanism that correlates with the
+thing you care about is fine until the correlation breaks, and it breaks silently.
+
 ### Applying it
 
 - **Feed it a case you know should fail.** The estimate should have been run
