@@ -844,6 +844,128 @@ A highlight marks a span a reviewer judged significant - gold to keep, an exampl
 A highlight is a pair of inline markers sharing a short opaque id:
 
 ```markdown
+
+The {{highlight-start: a1}}remote viewers with the NSA{{highlight-end: a1}} were getting this.
+```
+
+The id lets highlights **overlap**: two spans that cross are told apart by their ids, so a close matches the right open even when another highlight opened in between.
+
+```markdown
+{{highlight-start: a1}}quick brown {{highlight-start: b2}}fox{{highlight-end: a1}} jumps{{highlight-end: b2}}
+```
+
+Ids are opaque, unique within a record, minted by the authoring UI (reviewers never type these markers), and **never reused**: a deleted id is never reissued - a new id is always above every id the record has ever *mentioned*, in any overlay construct (a marker, a context edge, or a link payload), including an id that only a retained dangling reference still names. Deletions leave harmless gaps. That makes an id a permanent handle, which every id reference depends on: [context links](#highlight-context-links) between highlights, and the (record-hash + id) address that makes a [cross-record link](#cross-record-links) shareable. A reused id would silently re-point a reference at an unrelated span - and for a cross-record link, from *outside* the record, where no writer could repair it. Non-reuse is what lets the orphan machinery protect a stale reference by leaving it safely dangling rather than silently rebinding.
+
+Non-reuse is enforced across edits by persisting the id high-water in frontmatter, `overlay_next_id`. Without it the guarantee would be a fiction: a counter held only in memory resets on reload, and deriving the high-water from the ids *currently* in the body lowers it when the highest marker is deleted, reissuing that id. Persisting it means neither a reload nor a deletion of the highest marker can lower it. The only property the field carries is that **it only ever increases** - it is the authoring UI's next-id counter, not a decodable index: records may also hold legacy or hand-written ids that are not counter renderings, and the counter simply refuses to collide with them. It is lazily migratable: when absent, derive the high-water from the largest id *mentioned anywhere* in the body - markers and references alike, since a dangling context edge or a link payload can be the only thing still naming an id - then clamp up to the authoring UI's minimum id (a fresh record starts at that minimum, not zero; the exact value is the UI's, kept out of this contract). Overlay ids share **one id space per record** across every overlay construct (highlights, span notes, links, and the references between them), so a single counter keeps every id unambiguous and every reference - in-record and the external `record-hash + id` link address - safe.
+
+**Span extent and orphan handling.** A matched pair is bounded only by its own start and end markers - a highlight may span any range, including across paragraph breaks and speaker turns (a highlight over a multi-speaker back-and-forth is valid). An edit can delete one half of a pair: a `highlight-start` with no matching end auto-closes at the end of the body; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
+
+**Highlights are stripped from the pre-digest and never reach the extraction model.** Unlike the content notes above, a highlight carries no content - it is a reviewer's pointer, an evaluation and curation signal only. Letting the model see it would bias extraction and destroy its value as a blind recall signal ([0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)); the `{{t:}}` timestamp markers are stripped the same way. Authored content notes (`{{...}}`, keyed or keyless) are the exception - they are preserved into the pre-digest as context, exactly as bracket meta-notes are.
+
+This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
+
+### Highlight context links
+
+A highlight can carry a **context link** to one or more *earlier* highlights in the same record that it needs in order to be understood. The case: an early highlight introduces who a person is; a later highlight has them only as "he said..." - the later span depends on the earlier one for its meaning. The link is one-directional and points backwards, and it is untyped - one generic "needs this for context" edge, not a vocabulary of edge kinds (type it later only if real use demands it).
+
+Highlights already carry ids, so a context link is not a new marker pair - it is a small standalone annotation naming ids, reserved key `highlight-context`. Its value is a flow list whose first id is the highlight that needs context and whose remaining ids are the earlier highlights it depends on:
+
+```markdown
+{{highlight-start: h7}}he said the craft was recovered intact{{highlight-end: h7}}
+{{highlight-context: [h7, h3]}}
+```
+
+Here highlight `h7` depends on `h3` - say, the earlier span that named the person `h7` now only calls "he". A highlight may depend on several: `{{highlight-context: [h7, h3, h5]}}`. Because it references ids, not position, the annotation may sit anywhere in the body; the authoring UI places it at the dependent highlight, and reviewers never type it. A referenced highlight can be legitimately deleted, and because ids are never reused ([Highlights](#highlights)) that reference cannot rebind to a different span - it simply becomes unresolvable. A dangling `highlight-context` (its dependent highlight gone, or a target no longer present) is **retained and rendered as unresolved** for the reviewer to decide on, never silently dropped: the intent to link is a signal worth keeping. This differs from a half-deleted highlight *pair*, which auto-closes - that is structural repair of a span, not a semantic reference. These ids are per-record and short; they are NOT usable across records - a cross-record reference uses the [cross-record link](#cross-record-links) form, keyed on `content_hash` + quote, never a bare id.
+
+**Context links strip from the pre-digest with their highlights.** They carry no content and live entirely on the highlights, which are already stripped - so `highlight-context` joins `highlight-*` in the strip-entirely bucket and the model never sees it. No new pre-digest rule.
+
+The point of chains is evaluation. **A chain of context-linked highlights is one gold unit**, not several independent spans: the expected extraction merges the linked spans and *resolves the coreference* - it must name the person the later span only calls "he", using the earlier span. That makes a reviewer's gold a direct measure of cross-passage coreference and attribution on long transcripts - one of the few things that actually separates models on hard content, and exactly what a claim's `speaker` and `refs` have to get right. An extraction must carry the resolved referent across the chain - the person a later span only calls "he" is named from the earlier span, not left as the bare pronoun. How that is scored is the grader's: span recall plus a chain-level attribution check, not an all-or-nothing verdict on the whole chain (a partly-resolved chain must score above a wholly-missed one, or the gold loses the discrimination it exists for). A useful side-effect worth the reviewer knowing: chains remove the pressure to draw one big highlight with an irrelevant interior just to reach the context it needs - reviewers highlight tightly and link, which also keeps the gold clean.
+
+Additive within `anomalica/record/1` - a consumer that does not recognise `highlight-context` ignores it - so no `schema` bump.
+
+### Span notes
+
+A span note attaches free text to a word *range* - "what was on screen here", external context that spans a period the words alone do not carry. It is the ranged counterpart to the keyless point note (`{{laughs}}`, anchored to one spot): a span note has a start and an end the reviewer can drag to re-range.
+
+A span note is a pair of inline markers sharing a short opaque id. `note-start` carries a YAML flow list `[id, text]`; `note-end` carries the id:
+
+```markdown
+{{note-start: [a1, "on-screen caption: the witness's own drawing of the craft"]}} ... spanned words ... {{note-end: a1}}
+```
+
+The flow list keeps the note flat - no nested braces to confuse the `}}` scan - and the text is quoted per YAML when it contains colons or quotes. Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers. Overlap, extent, and orphan handling are the same as [Highlights](#highlights): spans are told apart by id and may cross speaker turns and paragraph breaks, an unmatched half auto-closes at the end of the body, and an end with no live open is dropped.
+
+**Unlike a highlight, a span note carries content and is preserved into the pre-digest.** The markers (`note-start` / `note-end` and their ids) are stripped from prose - for search and display, and from the model input - but the note's *text* is re-surfaced into the pre-digest as a context note, exactly like the keyed and keyless content notes, so the model reads it as interpretive context. This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
+
+### Cross-record links
+
+A cross-record link is a reviewer-authored reference from a span in this record to another record - typically to a specific part of it. The use case: an interview mentions a document; that document is ingested as its own record; the reviewer links the mentioning phrase to the document, so a reader (and other content) can follow the reference to the exact passage cited.
+
+It is the third paired-marker `{{ }}` type, alongside [highlights](#highlights) and [span notes](#span-notes), and shares their machinery. `link-start` carries a flat YAML flow list; `link-end` carries the id:
+
+```markdown
+{{link-start: [a1, "sha256:7bf2c20d..."]}} the AARO historical record report {{link-end: a1}}
+```
+
+with an optional anchor into the target - a verbatim quote from it:
+
+```markdown
+{{link-start: [a1, "sha256:7bf2c20d...", "unidentified anomalous phenomena remain unexplained"]}} that passage {{link-end: a1}}
+```
+
+The list is flat (no nested braces, so the `}}` scan stays safe), with up to three elements: the opaque **id**, the target's **`content_hash`**, and an optional **target quote**. Ids, overlap, extent, and orphan handling are exactly as [Highlights](#highlights) - spans are told apart by id, may cross paragraph and speaker boundaries, an unmatched half auto-closes at the end of the body, and reviewers never type the markers.
+
+Three rules make a link durable:
+
+- **Target by content hash, never by symlink.** The link pins the target's `content_hash` (`store/{hash}.md`), never its `records/` symlink name - archives move symlinks out from under name lookups. The hash records exactly what was linked.
+- **Resolve through supersession at render time.** The pinned hash is stable identity; if the target has since been superseded ([Versioning and supersession](#versioning-and-supersession)), resolution follows the chain to the current record so the link still lands. The pinned hash is what was cited; the chain is how it stays reachable.
+- **Anchor by quote, re-derived - the same as a claim.** When an anchor is given it is a verbatim quote from the target, and the precise location within the target (a `HH:MM:SS.d-HH:MM:SS.d` range for a timestamped record, a page or character span for text) is re-derived by aligning that quote against the target - exactly as a claim's `location` is recovered ([digest-format.md](digest-format.md), digester `f4dcab2`), never authored directly. A quote survives the target's re-extraction; a raw offset would not.
+
+**Links are stripped from the pre-digest, like highlights.** A link is a reviewer's navigation pointer, not source content: the `link-start` / `link-end` markers and their payload are removed before extraction, and the spanned prose stays as ordinary text, so the model reads the referring phrase unchanged and extraction is unaffected. Additive within `anomalica/record/1` - a consumer that does not recognise the markers treats the spanned text as prose - so no `schema` bump.
+
+Each link is individually addressable by its id (the source record's hash plus the link id), which is what makes it shareable and referenceable from other content. The shareable URL scheme, and any **backlink** view (a target showing which records link to it, *derived* by scanning forward links, never stored on the target), are the workbench's and site's to render against this contract.
+
+## The bracket meta-notation
+
+A square-bracket note - `[...]` - in the pre-digest is a *description of what is present*, not verbatim source content. It reaches the model as context, and the digester reads it as meta. It appears in two places:
+
+- **Images**, rendered into the pre-digest from the [image annotation](#image): `[image]` alone, `[image: DESCRIPTION]`, and `[caption: CAPTION]`.
+- **Transcript event notes** - non-verbal events such as laughter, applause, or an inaudible passage. These are now authored as keyless inline annotations (`{{laughs}}`, `{{applause}}`, `{{inaudible}}`; see [Inline annotations](#inline-annotations)); older records carry the legacy bracket form (`[laughs]`) pending migration. Either records what occurred, not words anyone spoke.
+
+**The load-bearing rule: the meta framing is never a verbatim claim; genuine content described inside it still is.** The digester may use a `[...]` note as context, but must never turn the FRAMING into a spoken or written claim - `[laughs]` never becomes "someone laughed"; `[caption: Credit Getty]` never becomes an attribution claim; a bare `[image]` never becomes a claim. But genuine content that a description transcribes - `[image: the text of a screenshotted tweet]`, `[image: a chart's figures]` - is a real statement the source makes through that image, and stays extractable as a claim, sourced to the image. The brackets frame *where* content came from; the content inside a description is still content.
+
+Because event notes appear only in transcripts (which carry no markdown links) and image notes are generated by the pre-digest with an `image:` or `caption:` prefix, `[...]` meta-notes do not collide with ordinary bracketed prose.
+
+**Relationship to `{{...}}` inline annotations.** Reviewer-authored notes are all `{{...}}` now - keyed when the note has a subject (`{{Fravor: holds up photograph}}`, `{{classification: U}}`) and keyless for a bare event (`{{laughs}}`). The `[...]` bracket form is reserved for two non-authored uses: [speaker descriptions](#square-brackets-mean-this-is-a-description-not-a-name) (`[speaker 3]`, `[interviewer 2]`, `[narrator]`) inside `<!-- speaker: -->` comments, and the image and caption meta the pre-digest renders from image annotations (`[image: ...]`, `[caption: ...]`). A bare `[...]` sitting in a stored record body that is neither of those is therefore *literal source content* (`[sic]`, an editor's `[bracketed]` clarification inside a quote), not an annotation - which is exactly why authored notes moved to `{{...}}`: to stop colliding with the brackets real source text contains. Where they are annotations, both forms are metadata, never prose, and both obey the never-a-verbatim-claim rule above.
+
+## Parser behaviour
+
+1. Extract the first `---` fenced block as frontmatter (standard markdown frontmatter).
+2. Find all `<!-- ... -->` HTML comments in the body. Parse the content of each as YAML. All HTML comments are annotations.
+3. Text between annotation blocks is content.
+4. Within content blocks, scan for `{{...}}` patterns and parse the interior as YAML (inline annotations).
+
+## Output directory structure
+
+```
+store/          # hash-named record files (source of truth)
+  7bf2c20d...md
+  7bf2c20d...verification.json
+  e27169e8...md
+  _pipeline_versions.yaml   # {media_type: current_version} manifest
+  v1/                       # superseded records, retired here
+    3211a96e...md
+records/        # human-readable symlinks
+  2023-07-26-pdf-fravor-written-statement.md -> ../store/7bf2c20d...md
+  2020-09-08-video-lex-fridman-122-david-fravor.md -> ../store/e27169e8...md
+media/          # extracted images, per-record subdirectories
+  11c66b201...
+    abc123def4567.png
+    f80921a3b56c.jpg
+  9a254b6ba...
+    abc123def4567.png   # same image, separate copy per record
+```
+
 ### Cited works
 
 A passage in which the speaker NAMES a work - a book, a report, a film. Records what
@@ -982,126 +1104,6 @@ the same inversion that duplicate records produce, where the corpus looks
 better-corroborated the more often one statement is repeated. Where the hash is
 present and the original is ingested, corroboration counts the original ONCE.
 
-The {{highlight-start: a1}}remote viewers with the NSA{{highlight-end: a1}} were getting this.
-```
-
-The id lets highlights **overlap**: two spans that cross are told apart by their ids, so a close matches the right open even when another highlight opened in between.
-
-```markdown
-{{highlight-start: a1}}quick brown {{highlight-start: b2}}fox{{highlight-end: a1}} jumps{{highlight-end: b2}}
-```
-
-Ids are opaque, unique within a record, minted by the authoring UI (reviewers never type these markers), and **never reused**: a deleted id is never reissued - a new id is always above every id the record has ever *mentioned*, in any overlay construct (a marker, a context edge, or a link payload), including an id that only a retained dangling reference still names. Deletions leave harmless gaps. That makes an id a permanent handle, which every id reference depends on: [context links](#highlight-context-links) between highlights, and the (record-hash + id) address that makes a [cross-record link](#cross-record-links) shareable. A reused id would silently re-point a reference at an unrelated span - and for a cross-record link, from *outside* the record, where no writer could repair it. Non-reuse is what lets the orphan machinery protect a stale reference by leaving it safely dangling rather than silently rebinding.
-
-Non-reuse is enforced across edits by persisting the id high-water in frontmatter, `overlay_next_id`. Without it the guarantee would be a fiction: a counter held only in memory resets on reload, and deriving the high-water from the ids *currently* in the body lowers it when the highest marker is deleted, reissuing that id. Persisting it means neither a reload nor a deletion of the highest marker can lower it. The only property the field carries is that **it only ever increases** - it is the authoring UI's next-id counter, not a decodable index: records may also hold legacy or hand-written ids that are not counter renderings, and the counter simply refuses to collide with them. It is lazily migratable: when absent, derive the high-water from the largest id *mentioned anywhere* in the body - markers and references alike, since a dangling context edge or a link payload can be the only thing still naming an id - then clamp up to the authoring UI's minimum id (a fresh record starts at that minimum, not zero; the exact value is the UI's, kept out of this contract). Overlay ids share **one id space per record** across every overlay construct (highlights, span notes, links, and the references between them), so a single counter keeps every id unambiguous and every reference - in-record and the external `record-hash + id` link address - safe.
-
-**Span extent and orphan handling.** A matched pair is bounded only by its own start and end markers - a highlight may span any range, including across paragraph breaks and speaker turns (a highlight over a multi-speaker back-and-forth is valid). An edit can delete one half of a pair: a `highlight-start` with no matching end auto-closes at the end of the body; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
-
-**Highlights are stripped from the pre-digest and never reach the extraction model.** Unlike the content notes above, a highlight carries no content - it is a reviewer's pointer, an evaluation and curation signal only. Letting the model see it would bias extraction and destroy its value as a blind recall signal ([0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)); the `{{t:}}` timestamp markers are stripped the same way. Authored content notes (`{{...}}`, keyed or keyless) are the exception - they are preserved into the pre-digest as context, exactly as bracket meta-notes are.
-
-This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
-
-### Highlight context links
-
-A highlight can carry a **context link** to one or more *earlier* highlights in the same record that it needs in order to be understood. The case: an early highlight introduces who a person is; a later highlight has them only as "he said..." - the later span depends on the earlier one for its meaning. The link is one-directional and points backwards, and it is untyped - one generic "needs this for context" edge, not a vocabulary of edge kinds (type it later only if real use demands it).
-
-Highlights already carry ids, so a context link is not a new marker pair - it is a small standalone annotation naming ids, reserved key `highlight-context`. Its value is a flow list whose first id is the highlight that needs context and whose remaining ids are the earlier highlights it depends on:
-
-```markdown
-{{highlight-start: h7}}he said the craft was recovered intact{{highlight-end: h7}}
-{{highlight-context: [h7, h3]}}
-```
-
-Here highlight `h7` depends on `h3` - say, the earlier span that named the person `h7` now only calls "he". A highlight may depend on several: `{{highlight-context: [h7, h3, h5]}}`. Because it references ids, not position, the annotation may sit anywhere in the body; the authoring UI places it at the dependent highlight, and reviewers never type it. A referenced highlight can be legitimately deleted, and because ids are never reused ([Highlights](#highlights)) that reference cannot rebind to a different span - it simply becomes unresolvable. A dangling `highlight-context` (its dependent highlight gone, or a target no longer present) is **retained and rendered as unresolved** for the reviewer to decide on, never silently dropped: the intent to link is a signal worth keeping. This differs from a half-deleted highlight *pair*, which auto-closes - that is structural repair of a span, not a semantic reference. These ids are per-record and short; they are NOT usable across records - a cross-record reference uses the [cross-record link](#cross-record-links) form, keyed on `content_hash` + quote, never a bare id.
-
-**Context links strip from the pre-digest with their highlights.** They carry no content and live entirely on the highlights, which are already stripped - so `highlight-context` joins `highlight-*` in the strip-entirely bucket and the model never sees it. No new pre-digest rule.
-
-The point of chains is evaluation. **A chain of context-linked highlights is one gold unit**, not several independent spans: the expected extraction merges the linked spans and *resolves the coreference* - it must name the person the later span only calls "he", using the earlier span. That makes a reviewer's gold a direct measure of cross-passage coreference and attribution on long transcripts - one of the few things that actually separates models on hard content, and exactly what a claim's `speaker` and `refs` have to get right. An extraction must carry the resolved referent across the chain - the person a later span only calls "he" is named from the earlier span, not left as the bare pronoun. How that is scored is the grader's: span recall plus a chain-level attribution check, not an all-or-nothing verdict on the whole chain (a partly-resolved chain must score above a wholly-missed one, or the gold loses the discrimination it exists for). A useful side-effect worth the reviewer knowing: chains remove the pressure to draw one big highlight with an irrelevant interior just to reach the context it needs - reviewers highlight tightly and link, which also keeps the gold clean.
-
-Additive within `anomalica/record/1` - a consumer that does not recognise `highlight-context` ignores it - so no `schema` bump.
-
-### Span notes
-
-A span note attaches free text to a word *range* - "what was on screen here", external context that spans a period the words alone do not carry. It is the ranged counterpart to the keyless point note (`{{laughs}}`, anchored to one spot): a span note has a start and an end the reviewer can drag to re-range.
-
-A span note is a pair of inline markers sharing a short opaque id. `note-start` carries a YAML flow list `[id, text]`; `note-end` carries the id:
-
-```markdown
-{{note-start: [a1, "on-screen caption: the witness's own drawing of the craft"]}} ... spanned words ... {{note-end: a1}}
-```
-
-The flow list keeps the note flat - no nested braces to confuse the `}}` scan - and the text is quoted per YAML when it contains colons or quotes. Ids are opaque, unique within a record, and minted by the authoring UI; reviewers never type these markers. Overlap, extent, and orphan handling are the same as [Highlights](#highlights): spans are told apart by id and may cross speaker turns and paragraph breaks, an unmatched half auto-closes at the end of the body, and an end with no live open is dropped.
-
-**Unlike a highlight, a span note carries content and is preserved into the pre-digest.** The markers (`note-start` / `note-end` and their ids) are stripped from prose - for search and display, and from the model input - but the note's *text* is re-surfaced into the pre-digest as a context note, exactly like the keyed and keyless content notes, so the model reads it as interpretive context. This is additive within `anomalica/record/1`: a consumer that does not recognise the markers treats the wrapped text as ordinary content, so it needs no `schema` bump.
-
-### Cross-record links
-
-A cross-record link is a reviewer-authored reference from a span in this record to another record - typically to a specific part of it. The use case: an interview mentions a document; that document is ingested as its own record; the reviewer links the mentioning phrase to the document, so a reader (and other content) can follow the reference to the exact passage cited.
-
-It is the third paired-marker `{{ }}` type, alongside [highlights](#highlights) and [span notes](#span-notes), and shares their machinery. `link-start` carries a flat YAML flow list; `link-end` carries the id:
-
-```markdown
-{{link-start: [a1, "sha256:7bf2c20d..."]}} the AARO historical record report {{link-end: a1}}
-```
-
-with an optional anchor into the target - a verbatim quote from it:
-
-```markdown
-{{link-start: [a1, "sha256:7bf2c20d...", "unidentified anomalous phenomena remain unexplained"]}} that passage {{link-end: a1}}
-```
-
-The list is flat (no nested braces, so the `}}` scan stays safe), with up to three elements: the opaque **id**, the target's **`content_hash`**, and an optional **target quote**. Ids, overlap, extent, and orphan handling are exactly as [Highlights](#highlights) - spans are told apart by id, may cross paragraph and speaker boundaries, an unmatched half auto-closes at the end of the body, and reviewers never type the markers.
-
-Three rules make a link durable:
-
-- **Target by content hash, never by symlink.** The link pins the target's `content_hash` (`store/{hash}.md`), never its `records/` symlink name - archives move symlinks out from under name lookups. The hash records exactly what was linked.
-- **Resolve through supersession at render time.** The pinned hash is stable identity; if the target has since been superseded ([Versioning and supersession](#versioning-and-supersession)), resolution follows the chain to the current record so the link still lands. The pinned hash is what was cited; the chain is how it stays reachable.
-- **Anchor by quote, re-derived - the same as a claim.** When an anchor is given it is a verbatim quote from the target, and the precise location within the target (a `HH:MM:SS.d-HH:MM:SS.d` range for a timestamped record, a page or character span for text) is re-derived by aligning that quote against the target - exactly as a claim's `location` is recovered ([digest-format.md](digest-format.md), digester `f4dcab2`), never authored directly. A quote survives the target's re-extraction; a raw offset would not.
-
-**Links are stripped from the pre-digest, like highlights.** A link is a reviewer's navigation pointer, not source content: the `link-start` / `link-end` markers and their payload are removed before extraction, and the spanned prose stays as ordinary text, so the model reads the referring phrase unchanged and extraction is unaffected. Additive within `anomalica/record/1` - a consumer that does not recognise the markers treats the spanned text as prose - so no `schema` bump.
-
-Each link is individually addressable by its id (the source record's hash plus the link id), which is what makes it shareable and referenceable from other content. The shareable URL scheme, and any **backlink** view (a target showing which records link to it, *derived* by scanning forward links, never stored on the target), are the workbench's and site's to render against this contract.
-
-## The bracket meta-notation
-
-A square-bracket note - `[...]` - in the pre-digest is a *description of what is present*, not verbatim source content. It reaches the model as context, and the digester reads it as meta. It appears in two places:
-
-- **Images**, rendered into the pre-digest from the [image annotation](#image): `[image]` alone, `[image: DESCRIPTION]`, and `[caption: CAPTION]`.
-- **Transcript event notes** - non-verbal events such as laughter, applause, or an inaudible passage. These are now authored as keyless inline annotations (`{{laughs}}`, `{{applause}}`, `{{inaudible}}`; see [Inline annotations](#inline-annotations)); older records carry the legacy bracket form (`[laughs]`) pending migration. Either records what occurred, not words anyone spoke.
-
-**The load-bearing rule: the meta framing is never a verbatim claim; genuine content described inside it still is.** The digester may use a `[...]` note as context, but must never turn the FRAMING into a spoken or written claim - `[laughs]` never becomes "someone laughed"; `[caption: Credit Getty]` never becomes an attribution claim; a bare `[image]` never becomes a claim. But genuine content that a description transcribes - `[image: the text of a screenshotted tweet]`, `[image: a chart's figures]` - is a real statement the source makes through that image, and stays extractable as a claim, sourced to the image. The brackets frame *where* content came from; the content inside a description is still content.
-
-Because event notes appear only in transcripts (which carry no markdown links) and image notes are generated by the pre-digest with an `image:` or `caption:` prefix, `[...]` meta-notes do not collide with ordinary bracketed prose.
-
-**Relationship to `{{...}}` inline annotations.** Reviewer-authored notes are all `{{...}}` now - keyed when the note has a subject (`{{Fravor: holds up photograph}}`, `{{classification: U}}`) and keyless for a bare event (`{{laughs}}`). The `[...]` bracket form is reserved for two non-authored uses: [speaker descriptions](#square-brackets-mean-this-is-a-description-not-a-name) (`[speaker 3]`, `[interviewer 2]`, `[narrator]`) inside `<!-- speaker: -->` comments, and the image and caption meta the pre-digest renders from image annotations (`[image: ...]`, `[caption: ...]`). A bare `[...]` sitting in a stored record body that is neither of those is therefore *literal source content* (`[sic]`, an editor's `[bracketed]` clarification inside a quote), not an annotation - which is exactly why authored notes moved to `{{...}}`: to stop colliding with the brackets real source text contains. Where they are annotations, both forms are metadata, never prose, and both obey the never-a-verbatim-claim rule above.
-
-## Parser behaviour
-
-1. Extract the first `---` fenced block as frontmatter (standard markdown frontmatter).
-2. Find all `<!-- ... -->` HTML comments in the body. Parse the content of each as YAML. All HTML comments are annotations.
-3. Text between annotation blocks is content.
-4. Within content blocks, scan for `{{...}}` patterns and parse the interior as YAML (inline annotations).
-
-## Output directory structure
-
-```
-store/          # hash-named record files (source of truth)
-  7bf2c20d...md
-  7bf2c20d...verification.json
-  e27169e8...md
-  _pipeline_versions.yaml   # {media_type: current_version} manifest
-  v1/                       # superseded records, retired here
-    3211a96e...md
-records/        # human-readable symlinks
-  2023-07-26-pdf-fravor-written-statement.md -> ../store/7bf2c20d...md
-  2020-09-08-video-lex-fridman-122-david-fravor.md -> ../store/e27169e8...md
-media/          # extracted images, per-record subdirectories
-  11c66b201...
-    abc123def4567.png
-    f80921a3b56c.jpg
-  9a254b6ba...
-    abc123def4567.png   # same image, separate copy per record
-```
 
 ### Store
 
