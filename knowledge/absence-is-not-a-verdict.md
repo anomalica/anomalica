@@ -244,3 +244,54 @@ the gold was built against.
 Related: [reading-a-model-comparison](reading-a-model-comparison.md) - a
 metric identical across every arm is discriminating nothing, which is the
 same class of silence.
+
+## The test: could this instrument have returned the disconfirming answer?
+
+Every instance in this note is the same fault, and after collecting a dozen of
+them the useful output is not a longer list of shapes to watch for. It is one
+question to ask of any check before trusting it:
+
+**If the thing I am looking for were NOT true, could this instrument have told
+me?**
+
+Not "is this check careful". Not "did I write it correctly". Whether the
+apparatus is *capable* of producing the answer that would disconfirm you. An
+instrument that cannot is not a weak check, it is not a check - it is a machine
+for confirming whatever you already believed, and it returns a number while doing
+it.
+
+Three found in one hour across three components, all passing, all trusted:
+
+- **A probe stricter than the system it measures.** Comparing digest ref names to
+  graph node names EXACTLY, when the importer deliberately resolves through
+  aliases, acronym forms and fuzzy matching. It reported the system's correct
+  behaviour as failure and produced "991 lost nodes", which was withdrawn one
+  message before it would have been repeated forever.
+- **A question that cannot fail.** Resolving a record through the hash THE PAGE
+  cites, to ask whether the record exists. That hash is the stale one by
+  definition, so the check answers "missing" for every page it examines. Ten
+  pages read as blocked on an upstream component that had done nothing wrong.
+- **An estimate with no input.** A pre-flight cost estimate that took the model
+  name, multiplied two constants, and never opened the file. Nineteen pages, from
+  a 9 KiB digest to a 2.4 MiB one, all quoted $0.05. It sat under every spend
+  decision in the project and was structurally incapable of varying.
+
+None of these was careless. Each was a reasonable thing to write, and each
+returned a plausible number every time it ran.
+
+### Applying it
+
+- **Feed it a case you know should fail.** The estimate should have been run
+  against two inputs of wildly different size before it was believed. Any check
+  that has never once returned "no" has not been tested, only executed.
+- **Ask what the check would say about a healthy system.** If the answer is the
+  same as what it says now, the check is not measuring the system.
+- **A recommended signal is an instrument too.** I gave another component a
+  rebuild signal - live node, drift above zero, some claims remaining - and it
+  passes for a page built from a 4-claim fragment of a 95-claim event. My own
+  signal contradicted my own warning about that page in the same conversation.
+  They caught it by adding a fourth state (evidence collapse: current claims below
+  half the brief's) rather than by following the rule I gave them.
+- **Absent measurement is not a pass.** When a page was missing from a manifest
+  entirely, the right move was falling back to the slower direct check rather than
+  letting the gap read as a clean bill. A silence is not a result.
