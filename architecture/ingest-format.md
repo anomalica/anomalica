@@ -854,9 +854,46 @@ The id lets highlights **overlap**: two spans that cross are told apart by their
 {{highlight-start: a1}}quick brown {{highlight-start: b2}}fox{{highlight-end: a1}} jumps{{highlight-end: b2}}
 ```
 
-Ids are opaque, unique within a record, minted by the authoring UI (reviewers never type these markers), and **never reused**: a deleted id is never reissued - a new id is always above every id the record has ever *mentioned*, in any overlay construct (a marker, a context edge, or a link payload), including an id that only a retained dangling reference still names. Deletions leave harmless gaps. That makes an id a permanent handle, which every id reference depends on: [context links](#highlight-context-links) between highlights, and the (record-hash + id) address that makes a [cross-record link](#cross-record-links) shareable. A reused id would silently re-point a reference at an unrelated span - and for a cross-record link, from *outside* the record, where no writer could repair it. Non-reuse is what lets the orphan machinery protect a stale reference by leaving it safely dangling rather than silently rebinding.
+Ids are opaque, unique within a record (one id names one highlight - which may have several parts, see above - never two different highlights), minted by the authoring UI (reviewers never type these markers), and **never reused**: a deleted id is never reissued - a new id is always above every id the record has ever *mentioned*, in any overlay construct (a marker, a context edge, or a link payload), including an id that only a retained dangling reference still names. Deletions leave harmless gaps. That makes an id a permanent handle, which every id reference depends on: [context links](#highlight-context-links) between highlights, and the (record-hash + id) address that makes a [cross-record link](#cross-record-links) shareable. A reused id would silently re-point a reference at an unrelated span - and for a cross-record link, from *outside* the record, where no writer could repair it. Non-reuse is what lets the orphan machinery protect a stale reference by leaving it safely dangling rather than silently rebinding.
 
 Non-reuse is enforced across edits by persisting the id high-water in frontmatter, `overlay_next_id`. Without it the guarantee would be a fiction: a counter held only in memory resets on reload, and deriving the high-water from the ids *currently* in the body lowers it when the highest marker is deleted, reissuing that id. Persisting it means neither a reload nor a deletion of the highest marker can lower it. The only property the field carries is that **it only ever increases** - it is the authoring UI's next-id counter, not a decodable index: records may also hold legacy or hand-written ids that are not counter renderings, and the counter simply refuses to collide with them. It is lazily migratable: when absent, derive the high-water from the largest id *mentioned anywhere* in the body - markers and references alike, since a dangling context edge or a link payload can be the only thing still naming an id - then clamp up to the authoring UI's minimum id (a fresh record starts at that minimum, not zero; the exact value is the UI's, kept out of this contract). Overlay ids share **one id space per record** across every overlay construct (highlights, span notes, links, and the references between them), so a single counter keeps every id unambiguous and every reference - in-record and the external `record-hash + id` link address - safe.
+
+**A highlight may be EXTENDED: one id, more than one pair.** The evidence for a
+single claim is often not contiguous - the part that matters sits at the top and
+the bottom of a long paragraph, with material in between that belongs to neither.
+Drawing one span over the whole paragraph is not merely untidy, it changes what
+the highlight MEANS: a highlight is the unit of expected extraction, one highlight
+standing for one claim, so a span that swallows three other topics tells the
+grader "one claim from all of this" and stops saying which.
+
+So the same id may open and close more than once. Each occurrence is a PART; the
+parts together are one highlight, one id, one expected claim:
+
+```markdown
+{{highlight-start: a1}}the part that matters{{highlight-end: a1}} ... a long
+digression about something else ... {{highlight-start: a1}}and its conclusion{{highlight-end: a1}}
+```
+
+**This changes what a HIGHLIGHT is, not what a PAIR is**, and the distinction is
+load-bearing. A pair still delimits one contiguous run, still overlaps and nests
+by id, and still auto-closes when half of it is deleted - all unchanged. Only the
+rule "one highlight is one pair" becomes "one highlight is one or more pairs
+sharing its id". [Span notes](#span-notes), [cross-record
+links](#cross-record-links) and [external passages](#external-passages) inherit
+the PAIR rules from this section by reference and are therefore untouched: each of
+those remains exactly one pair, and a repeated id in them is still malformed.
+
+Extending mints no new id - that is the point of it - so `overlay_next_id` and the
+never-reuse guarantee are unaffected, and the (record-hash + id) address of a
+[cross-record link](#cross-record-links) still resolves to one highlight.
+
+**Parts are joined with an elision marker, never concatenated.** A consumer
+building the expected text for a multi-part highlight joins the parts in body
+order with ` [...] `. Concatenating them directly manufactures a sentence the
+source never uttered - the first part's opening running into the last part's
+ending - which is exactly the false-quotation failure the format works hardest to
+avoid. The marker is the ordinary editorial elision and says plainly that material
+was omitted between them.
 
 **Span extent and orphan handling.** A matched pair is bounded only by its own start and end markers - a highlight may span any range, including across paragraph breaks and speaker turns (a highlight over a multi-speaker back-and-forth is valid). An edit can delete one half of a pair: a `highlight-start` with no matching end auto-closes at the end of the body; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
 
