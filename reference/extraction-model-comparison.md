@@ -16,6 +16,39 @@ of the Claude tiers. On the Jon Stewart record - 197 reviewer highlights, 109
 context chains - Opus is first or tied-first on every axis. Both measurements are
 real; they disagree because one record is not a sample.
 
+## NOT YET RUN - read the table above as four models, not as the field
+
+**The four rows are an accident of which runs happened to exist on a record that
+has gold, not a considered field.** GLM-5.2 appears because someone ran 5.2
+months ago, not because 5.2 was preferred to 5.3. A reader seeing
+opus/sonnet/haiku/glm-5.2 would reasonably assume OpenAI was tested and lost. It
+was not tested at all.
+
+Never run for extraction against reviewer gold, as of 2026-09-01:
+
+| model | status |
+|---|---|
+| openai/gpt-5.6-luna | running now |
+| openai/gpt-5.6-terra | NOT A CANDIDATE HERE - article-writing tier, different gold |
+| openai/gpt-5.6-sol | NOT A CANDIDATE HERE - article-writing tier, different gold |
+| qwen/qwen3.8-max | not run - $3.83 |
+| z-ai/glm-5.3 | not run - $2.80; only 5.2 has been measured |
+| deepseek/deepseek-v4-pro | running now |
+| moonshotai/kimi-k3 | not run - $9.26, the dearest in the field |
+
+The blocker is the shared $3/day OpenRouter budget, not a judgement about any of
+them. Terra and Sol are excluded on purpose rather than on cost: they are
+candidates for ARTICLE WRITING, judged on citation density against entity pages,
+not on recall against highlights. Testing them here would measure the wrong
+thing.
+
+**The question this sweep exists to answer** is what runs claim extraction if
+Claude becomes unusable - the watermarking retrofit is announced, undated and
+undetectable, and claim text is published prose. The permitted candidates are
+Qwen3.8-max, GLM-5.3, DeepSeek and Luna. A claim that Luna is unfit for claim extraction was made on a public MRCR
+score - a synthetic needle-in-haystack task, not this job - and is being settled
+by measurement rather than left standing.
+
 ## Graded against reviewer gold
 
 Record: `2026-01-02-video-the-alien-interview-tape-might-be-real-jon-stewart`
@@ -42,31 +75,6 @@ so a gap under about 2 points is not a difference.
 - **GLM-5.2 reaching Opus-adjacent scores matters commercially**, since it is a
   fraction of the price. On this record it gives up 2.1 points of recall and 3.9
   of coref against Opus.
-
-## NOT YET RUN - read the table above as four models, not as the field
-
-**The four rows are an accident of which runs happened to exist on a record that
-has gold, not a considered field.** GLM-5.2 appears because someone ran 5.2
-months ago, not because 5.2 was preferred to 5.3. A reader seeing
-opus/sonnet/haiku/glm-5.2 would reasonably assume OpenAI was tested and lost. It
-was not tested at all.
-
-Never run for extraction against reviewer gold, as of 2026-09-01:
-
-| model | status |
-|---|---|
-| openai/gpt-5.6-luna | running now |
-| openai/gpt-5.6-terra | not run - $7.35 for the four records |
-| openai/gpt-5.6-sol | not run against gold ($6.18); has a McDonald-record data point |
-| qwen/qwen3.8-max | not run - $3.83 |
-| z-ai/glm-5.3 | not run - $2.80; only 5.2 has been measured |
-| deepseek/deepseek-v4-pro | running now |
-| moonshotai/kimi-k3 | not run - $9.26, the dearest in the field |
-
-The blocker is the shared $3/day OpenRouter budget, not a judgement about any of
-them. A claim that Luna is unfit for claim extraction was made on a public MRCR
-score - a synthetic needle-in-haystack task, not this job - and is being settled
-by measurement rather than left standing.
 
 ### Claim count is not capability
 
