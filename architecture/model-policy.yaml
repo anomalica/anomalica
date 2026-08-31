@@ -285,8 +285,9 @@ models:
     price:
       input: 0.2
       output: 1.2
-    rationale: The cheap model in its family, and quick at copying text out of documents accurately. It writes less than larger
-      models when nothing tells it how long to be.
+    rationale: The fast, cheap end of its family. OpenAI points it at repetitive work with clear rules - extracting fields,
+      tagging and classifying records - which is what our extraction stage does. It writes less than larger models when nothing
+      tells it how long to be.
     used_for:
       - ingest
       - variant
@@ -299,20 +300,20 @@ models:
     price:
       input: 2.0
       output: 10.0
-    rationale: The writing model in the same family as Luna, and third in independent rankings for English prose. The two
-      above it are Claude Opus 5 and Kimi K3.
+    rationale: The flagship of its family - the one OpenAI points at the hardest work. Its listed $2/$10 is promotional through
+      at least 21 November 2026; standard is $4/$20, so this price will roughly double.
     used_for:
       - assemble
       - translate
     tested: true
+    price_note: promotional to 2026-11-21; standard 4.0/20.0
   - id: openai/gpt-5.6-terra
     provider: openai
     context: 1050000
     price:
       input: 2.0
       output: 12.0
-    rationale: The third model in the same family as Luna and Sol. Untested here; listed so it can be picked without a policy
-      change once it has been.
+    rationale: The balanced middle of its family, the closest match to Sonnet in role. Untested here.
     used_for:
       - assemble
       - translate
@@ -502,3 +503,6 @@ reader_facing_note: WATERMARKING APPLIES TO CLAIM TEXT, NOT ONLY TO ARTICLES. A 
   our wording, not the source's. So `digest` produces reader-facing prose even though its output is stored as data, and the
   watermarking rule reaches it. It was previously reasoned that extraction was exempt because the output is structured; the
   structure is the container, not the content.
+tiers_note: 'Each family has the same three tiers and they map across: Sol/Opus for the hardest work, Terra/Sonnet for ordinary
+  production, Luna/Haiku for high-volume rule-following work. Choosing a tier is a separate question from choosing a provider,
+  and a stage that needs the top tier from a non-watermarking provider wants Sol, not Luna.'
