@@ -246,6 +246,7 @@ models:
       establish whether Anthropic watermarks its output.
     used_for:
       - digest
+      - verify
     tested: true
   - id: claude-sonnet-5
     provider: anthropic
@@ -356,17 +357,18 @@ stages:
   - id: ingest
     purpose: Extract text faithfully from a source document.
     uses_model: true
-    reader_facing: false
     enforced_by: scheduler
     priority:
       - openai/gpt-5.6-luna
     deny: []
     rationale: Audio and video are transcribed by Whisper, which we run ourselves and which calls no provider. This stage
       covers documents only. Copying the text accurately matters more than reasoning about it.
+    output: reproduction
+    output_note: The model transcribes a document rather than composing. Its output is the source's words, gated behind proof
+      of possession, and a watermark on a reproduction marks our copy of someone else's text rather than an assertion of ours.
   - id: digest
     purpose: Extract claims and nodes from a reviewed ingest.
     uses_model: true
-    reader_facing: false
     enforced_by: scheduler
     priority:
       - claude-opus-5
@@ -378,10 +380,15 @@ stages:
       single-chunk sources go to Haiku, whose recall holds and which is lighter on shared capacity. Sonnet is the middle.
       Accuracy matters more here than anywhere else: a mistake ends up on every page built from that claim and nothing later
       can catch it.'
+    output: published_prose
+    output_note: The claim text is a sentence the model writes in our words - "David Fravor was a United States Navy pilot
+      for 18 years" is ours, not the source's - and it appears on every page built from that claim.
+    deny_watermarking:
+      - watermarks
+      - unknown
   - id: assimilate
     purpose: Match, merge and score entities across digests.
     uses_model: true
-    reader_facing: false
     enforced_by: assimilator
     priority:
       - claude-sonnet-5
@@ -389,10 +396,16 @@ stages:
     deny: []
     rationale: The same kind of judgement as consolidate, over names rather than records. Getting it wrong splits one person
       into several, or merges two people into one.
+    output: published_label
+    output_note: Mostly a same-or-different decision, which is never published. But the surviving canonical name becomes a
+      page title, so a small amount of model wording does reach readers. Treated as published prose because a page title is
+      quoted and indexed like any other text.
+    deny_watermarking:
+      - watermarks
+      - unknown
   - id: consolidate
     purpose: Merge entities that are the same thing.
     uses_model: true
-    reader_facing: false
     enforced_by: assimilator
     priority:
       - claude-sonnet-5
@@ -400,10 +413,15 @@ stages:
     deny: []
     rationale: Comparing two entity records and deciding if they describe one thing. Short judgements, so the cheaper model
       is usually enough.
+    output: published_label
+    output_note: 'As assimilate: the decision is internal, the surviving name is public. Treated as published prose because
+      a page title is quoted and indexed like any other text.'
+    deny_watermarking:
+      - watermarks
+      - unknown
   - id: corroborate
     purpose: Judge whether two similar claims corroborate each other.
     uses_model: true
-    reader_facing: false
     enforced_by: scheduler
     priority:
       - claude-sonnet-5
@@ -411,22 +429,26 @@ stages:
     deny: []
     rationale: Deciding whether two similar claims support each other. A short yes-or-no judgement, so the cheapest capable
       model is the right one.
+    output: internal
+    output_note: A yes-or-no verdict over two claims. Never published in any form.
   - id: verify
     purpose: Check that assertions in an assembled article trace to graph sources.
     uses_model: true
-    reader_facing: false
     enforced_by: scheduler
     priority:
       - claude-sonnet-5
+      - claude-opus-5
     deny:
       - openai/*
-    rationale: Checking that what an article says can be traced back to a source. This must not use the same provider that
-      wrote the text, so it is denied OpenAI - the opposite of the writing rule, and together they guarantee two different
-      providers.
+    rationale: Checking that an article traces back to its sources. Must not be the provider that wrote the article, so it
+      refuses OpenAI while writing is OpenAI. Nothing it writes is published, so a watermarking provider is fine here - and
+      Claude is the strongest option available for the job.
+    output: internal
+    output_note: A verdict on whether an article traces to its sources, plus reasoning nobody publishes. The output is a check,
+      not text.
   - id: variant
     purpose: Run the same extraction across models to compare quality.
     uses_model: true
-    reader_facing: false
     enforced_by: scheduler
     priority:
       - claude-sonnet-5
@@ -435,16 +457,18 @@ stages:
     deny: []
     rationale: Running the same extraction across several models to compare them. The only stage whose job is to try models
       we have not settled on.
+    output: internal
+    output_note: Comparison digests, used to judge models against each other. Never published.
   - id: synthesise
     purpose: Build a brief from graph claims for the writer.
     uses_model: false
-    reader_facing: false
     enforced_by: null
     rationale: Code, not a model. Nothing is written here, so there is nothing to watermark and nothing to spend.
+    output: internal
+    output_note: Code, not a model.
   - id: assemble
     purpose: Write a reader-facing article or record page.
     uses_model: true
-    reader_facing: true
     enforced_by: scheduler
     priority:
       - openai/gpt-5.6-sol
@@ -454,13 +478,14 @@ stages:
     rationale: 'The page a reader reads. Which models may write it is decided by the watermarking table, not by a list kept
       here. Pages already written by a model that is now barred are not being rebuilt: they get rewritten anyway as new claims
       come in.'
+    output: published_prose
+    output_note: The article a reader reads.
     deny_watermarking:
       - watermarks
       - unknown
   - id: translate
     purpose: Render an article into another language.
     uses_model: true
-    reader_facing: true
     enforced_by: scheduler
     priority:
       - openai/gpt-5.6-sol
@@ -468,25 +493,33 @@ stages:
       - openai/gpt-5.6-luna
     deny: []
     rationale: The same text in another language, so the same rule applies. No language is switched on yet.
+    output: published_prose
+    output_note: The same article in another language.
     deny_watermarking:
       - watermarks
       - unknown
   - id: housekeep
     purpose: Rule-based tidying of an ingested record.
     uses_model: false
-    reader_facing: false
     enforced_by: null
     rationale: Code, not a model. Fixed rules only, so it costs nothing and runs on every record.
+    output: internal
+    output_note: Code, not a model.
   - id: housekeep-research
     purpose: Model-assisted cleanup - chapter titles, headings, structure.
     uses_model: true
-    reader_facing: false
     enforced_by: scheduler
     priority:
       - claude-haiku-4-5
     deny: []
     rationale: Tidying that needs judgement - chapter titles, headings, structure. Runs across many records on a timer, so
       it uses the cheapest model that copes. Never runs on a record a person has already reviewed.
+    output: published_label
+    output_note: Chapter titles and headings, which are shown on record pages. Treated as published prose because a page title
+      is quoted and indexed like any other text.
+    deny_watermarking:
+      - watermarks
+      - unknown
 deny_watermarking_note: 'Reader-facing stages refuse a model by its provider watermarking state, not by a list of provider
   names. The list of banned providers is worked out from the watermarking table above every time, so a provider added there
   is enforced immediately and a state that changes takes effect without anyone editing a stage. A name list would have to
@@ -498,11 +531,17 @@ model_fields_note: '`used_for` lists the stages that may pick this model, derive
   the model. There is deliberately no global approved/candidate status: a model is right for a job or it is not, and a single
   word cannot say that. A status field would also be a second answer to a question the stages already answer, free to drift
   from them.'
-reader_facing_note: WATERMARKING APPLIES TO CLAIM TEXT, NOT ONLY TO ARTICLES. A claim's text is a sentence written by the
-  extracting model and published on record and entity pages - 'David Fravor was a United States Navy pilot for 18 years' is
-  our wording, not the source's. So `digest` produces reader-facing prose even though its output is stored as data, and the
-  watermarking rule reaches it. It was previously reasoned that extraction was exempt because the output is structured; the
-  structure is the container, not the content.
 tiers_note: 'Each family has the same three tiers and they map across: Sol/Opus for the hardest work, Terra/Sonnet for ordinary
   production, Luna/Haiku for high-volume rule-following work. Choosing a tier is a separate question from choosing a provider,
   and a stage that needs the top tier from a non-watermarking provider wants Sol, not Luna.'
+output_kinds:
+  internal: The model emits a decision, a verdict or a comparison that is never published. Watermarking cannot reach a reader,
+    so it is not a consideration and every provider is eligible.
+  reproduction: The model reproduces someone else's words rather than composing its own. Gated separately by copyright; watermarking
+    is not the control that matters.
+  published_label: A short piece of model wording - a page title, a heading - that readers see. Treated as published prose.
+  published_prose: Sentences the model composed, published for readers. Watermarking providers are refused here.
+output_kinds_note: The question is not whether a stage is 'reader-facing' but whether THE MODEL'S OWN WORDS GET PUBLISHED.
+  A verifier reads published text and returns a verdict; nothing it writes reaches anyone, so a watermark in it is inert and
+  barring a provider there costs quality for no benefit. This distinction was previously collapsed into one boolean, which
+  barred watermarking providers from checking work they were already allowed to read.
