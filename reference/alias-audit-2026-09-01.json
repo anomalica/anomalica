@@ -1,0 +1,383 @@
+{
+  "schema": "anomalica/alias-audit/6",
+  "generated_at": "2026-08-31T23:07:01Z",
+  "scope": "every alias on a live node",
+  "method": "Two passes, and only the second produces a removal list. Pass one counts name-EXTENSION aliases - the node's name is a strict subset of the alias's tokens - which is the shape the Nimitz ratchet produces. That count alone is NOT a fault list: most extensions are legitimate ('John Greenewald' plus 'jr', 'United States Department of Justice' on 'Department of Justice'). Pass two keeps only what a RULE can settle rather than what I judge: a PLACE alias whose most-specific component names a different place from the node's. A place cannot be in two countries, so this needs no vocabulary and carries no seeding bias. An alias that is merely DEEPER inside the same lineage is precision, not error, and is excluded ('South Korea, Busan' on 'South Korea').\n\nA heuristic I tried and DISCARDED, recorded so it is not retried: flagging an alias whose extra tokens match some other live node's name. It fires on 'United States Department of Justice' because a 'United States' place node exists, which is coincidence rather than evidence. It is the same seed-vocabulary bias the Nimitz audit warned about and it produced mostly noise.",
+  "population": {
+    "live_aliases": 2000,
+    "name_extension_aliases": 412,
+    "of_which_type_prefix_junk": 180,
+    "of_which_name_particles": 66,
+    "note": "The extension count is context, not a defect count. The type-prefix entries are an artefact of 'topic: X' names reaching the graph and are harmless as aliases, though they show strip_type_prefix is not applied everywhere."
+  },
+  "misplaced_place_aliases": {
+    "count": 41,
+    "by_node": {
+      "United Kingdom, London": 15,
+      "Bolivia, Santa Cruz": 15,
+      "USA, District of Columbia, Washington": 3,
+      "USA, New Mexico, Kirtland Air Force Base": 2,
+      "USA, New York, Manhattan, West Fifty-fifth Street": 2,
+      "USA, California, Edwards Air Force Base": 1,
+      "USA, South Dakota, Ellsworth Air Force Base": 1,
+      "USA, Virginia, Lake Ridge": 1,
+      "USA, Texas, Sheppard Air Force Base": 1
+    },
+    "entries": [
+      {
+        "alias": "USA, California",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "California",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Alameda",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Alameda",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Central Valley",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Central Valley",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Downey",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Downey",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Fresno",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Fresno",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Livermore",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Livermore",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Los Gatos",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Los Gatos",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Malibu",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Malibu",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Moss Beach",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Moss Beach",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Petaluma",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Petaluma",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Sacramento",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Sacramento",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Santa Monica",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Santa Monica",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Vandenberg",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Vandenberg",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, West Antelope Valley",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "West Antelope Valley",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "USA, California, Whittier",
+        "on_node": "Bolivia, Santa Cruz",
+        "node_id": "035d430f-e166-402a-9c79-0c085a20a611",
+        "alias_most_specific": "Whittier",
+        "node_most_specific": "Santa Cruz",
+        "claims_on_node": 20
+      },
+      {
+        "alias": "UK, England, Boston",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Boston",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Bowers Gifford",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Bowers Gifford",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Brighton",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Brighton",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Burford",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Burford",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Cornwall",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Cornwall",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Liverpool",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Liverpool",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, London, Caxton Hall",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Caxton Hall",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, London, Chelsea",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Chelsea",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, London, Chiswick",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Chiswick",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Oxford",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Oxford",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, RAF Cosford",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "RAF Cosford",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, RAF Woodbridge",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "RAF Woodbridge",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Salisbury",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Salisbury",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Scole",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Scole",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "UK, England, Shrewsbury",
+        "on_node": "United Kingdom, London",
+        "node_id": "134433ac-c317-4826-9edd-5f732f74521c",
+        "alias_most_specific": "Shrewsbury",
+        "node_most_specific": "London",
+        "claims_on_node": 38
+      },
+      {
+        "alias": "USA, Washington D.C.",
+        "on_node": "USA, District of Columbia, Washington",
+        "node_id": "9da33243-6854-43d4-b60d-fbeeb284787e",
+        "alias_most_specific": "Washington D.C.",
+        "node_most_specific": "Washington",
+        "claims_on_node": 46
+      },
+      {
+        "alias": "USA, Washington, Richland",
+        "on_node": "USA, District of Columbia, Washington",
+        "node_id": "9da33243-6854-43d4-b60d-fbeeb284787e",
+        "alias_most_specific": "Richland",
+        "node_most_specific": "Washington",
+        "claims_on_node": 46
+      },
+      {
+        "alias": "USA, Washington, Seattle",
+        "on_node": "USA, District of Columbia, Washington",
+        "node_id": "9da33243-6854-43d4-b60d-fbeeb284787e",
+        "alias_most_specific": "Seattle",
+        "node_most_specific": "Washington",
+        "claims_on_node": 46
+      },
+      {
+        "alias": "USA, New Mexico, Holloman Air Force Base",
+        "on_node": "USA, New Mexico, Kirtland Air Force Base",
+        "node_id": "d7df79b1-965e-4b47-adc4-1bdbae683082",
+        "alias_most_specific": "Holloman Air Force Base",
+        "node_most_specific": "Kirtland Air Force Base",
+        "claims_on_node": 5
+      },
+      {
+        "alias": "USA, New Mexico, Walker Air Force Base",
+        "on_node": "USA, New Mexico, Kirtland Air Force Base",
+        "node_id": "d7df79b1-965e-4b47-adc4-1bdbae683082",
+        "alias_most_specific": "Walker Air Force Base",
+        "node_most_specific": "Kirtland Air Force Base",
+        "claims_on_node": 5
+      },
+      {
+        "alias": "USA, New York, Manhattan, East Seventy-fifth Street",
+        "on_node": "USA, New York, Manhattan, West Fifty-fifth Street",
+        "node_id": "4bde0b63-7fe4-4f19-a502-a24c68e75529",
+        "alias_most_specific": "East Seventy-fifth Street",
+        "node_most_specific": "West Fifty-fifth Street",
+        "claims_on_node": 7
+      },
+      {
+        "alias": "USA, New York, Manhattan, West Seventy-sixth Street",
+        "on_node": "USA, New York, Manhattan, West Fifty-fifth Street",
+        "node_id": "4bde0b63-7fe4-4f19-a502-a24c68e75529",
+        "alias_most_specific": "West Seventy-sixth Street",
+        "node_most_specific": "West Fifty-fifth Street",
+        "claims_on_node": 7
+      },
+      {
+        "alias": "USA, California, Vandenberg Air Force Base",
+        "on_node": "USA, California, Edwards Air Force Base",
+        "node_id": "bfd491e5-8e60-456c-bb6c-da2fb39d96f0",
+        "alias_most_specific": "Vandenberg Air Force Base",
+        "node_most_specific": "Edwards Air Force Base",
+        "claims_on_node": 13
+      },
+      {
+        "alias": "USA, North Dakota, Minot Air Force Base",
+        "on_node": "USA, South Dakota, Ellsworth Air Force Base",
+        "node_id": "a31f485f-1a64-494b-ab7f-d5b55bc724b5",
+        "alias_most_specific": "Minot Air Force Base",
+        "node_most_specific": "Ellsworth Air Force Base",
+        "claims_on_node": 4
+      },
+      {
+        "alias": "USA, Texas, Perrin Air Force Base",
+        "on_node": "USA, Texas, Sheppard Air Force Base",
+        "node_id": "ceb6f042-116a-4000-852a-6509fbbe2ca8",
+        "alias_most_specific": "Perrin Air Force Base",
+        "node_most_specific": "Sheppard Air Force Base",
+        "claims_on_node": 3
+      },
+      {
+        "alias": "USA, Lake Erie",
+        "on_node": "USA, Virginia, Lake Ridge",
+        "node_id": "2797087b-d941-4a5d-af92-7f1312b7ecd0",
+        "alias_most_specific": "Lake Erie",
+        "node_most_specific": "Lake Ridge",
+        "claims_on_node": 4
+      }
+    ]
+  },
+  "removal": {
+    "executed_at": "2026-08-31T23:07:37Z",
+    "by": "operator/anomalica-curation",
+    "removed": 40,
+    "aliases_before": 2001,
+    "aliases_after": 1961,
+    "kept_despite_the_rule": [
+      {
+        "alias": "USA, Washington D.C.",
+        "why": "D.C. is District of Columbia - the same place under a synonym the rule cannot see"
+      }
+    ],
+    "what_this_does_NOT_do": "Stripping stops FUTURE capture. It releases nothing already captured: the claims wrongly attached to these nodes keep their refs, exactly as measured on Nimitz where 1,381 refs were identical before and after the strip. The California claims still sit on the Bolivian node and the Oxford and Burford claims still sit on London. Re-pointing them is separate work and is not done here.",
+    "why_stripping_is_the_right_repair": "The aliases are not merely noise, they are load-bearing: an exact alias resolves at tier 1, BEFORE any similarity comparison, so the matcher fix does not stop them - verified, 'USA, California, Fresno' still resolved to the Bolivian node with the fixed matcher in place. Once the alias is gone the next digest naming Fresno mints a correct node instead.",
+    "claims_on_affected_nodes_at_strip_time": {
+      "035d430f-e166-402a-9c79-0c085a20a611": 20,
+      "134433ac-c317-4826-9edd-5f732f74521c": 38,
+      "9da33243-6854-43d4-b60d-fbeeb284787e": 46,
+      "d7df79b1-965e-4b47-adc4-1bdbae683082": 5,
+      "4bde0b63-7fe4-4f19-a502-a24c68e75529": 7,
+      "bfd491e5-8e60-456c-bb6c-da2fb39d96f0": 13,
+      "a31f485f-1a64-494b-ab7f-d5b55bc724b5": 4,
+      "ceb6f042-116a-4000-852a-6509fbbe2ca8": 3,
+      "2797087b-d941-4a5d-af92-7f1312b7ecd0": 4
+    }
+  }
+}
