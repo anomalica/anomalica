@@ -299,14 +299,23 @@ models:
     provider: deepseek
     status: candidate
     rationale: A cheap fast model with published weights. Not tested here yet.
+    price:
+      input: 0.0886
+      output: 0.1772
   - id: z-ai/glm-5.3-flash
     provider: z-ai
     status: candidate
     rationale: null
-  - id: qwen/qwen3.8-flash-next
+    price:
+      input: 0.075
+      output: 0.25
+  - id: qwen/qwen3.8-flash
     provider: qwen
     status: candidate
     rationale: null
+    price:
+      input: 0.15
+      output: 0.47
 stages:
   - id: ingest
     purpose: Extract text faithfully from a source document.
