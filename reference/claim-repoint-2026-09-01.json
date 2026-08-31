@@ -1,0 +1,69 @@
+{
+  "schema": "anomalica/claim-repoint/1",
+  "executed_at": "2026-08-31T23:17:08Z",
+  "by": "operator/anomalica-curation",
+  "why": "The alias strip stopped further capture but released nothing already captured. These are the claims themselves, moved to the place their own text names.",
+  "method": "Every claim on both nodes read individually and judged from its CONTENT, never from the node it was sitting on - assuming a polluted node is wholly polluted is the inverse of the mistake that created it. 18 of 58 were correct where they were and left alone.",
+  "results": {
+    "claims_examined": 58,
+    "kept": 18,
+    "repointed": 39,
+    "refs_dropped": 2,
+    "place_nodes_minted": 25,
+    "Bolivia, Santa Cruz": {
+      "before": 20,
+      "after": 1,
+      "kept": "the 1979 Santa Cruz, Bolivia 'Moon Dust' object - genuinely Bolivian"
+    },
+    "United Kingdom, London": {
+      "before": 38,
+      "after": 17,
+      "kept": "17 genuinely London claims - John Dee, Caxton Hall, the Institute of Psychiatry, a North London palliative care team"
+    }
+  },
+  "integrity": {
+    "claims": "31066 before, 31066 after",
+    "claim_node_refs": "65356 -> 65354",
+    "both_reductions_accounted_for": [
+      {
+        "claim": "1a3d855c",
+        "what": "gravitational waves detected in Louisiana and Washington",
+        "why": "already referenced USA, Louisiana - its London ref was purely spurious, so removing it added nothing back"
+      },
+      {
+        "claim": "c3bce38d",
+        "what": "the Nimitz deployment was a two-month joint workup at sea",
+        "why": "names no place at all and already referenced the Nimitz event. A place ref was wrong, and inferring one from the deployment area would be a guess"
+      }
+    ],
+    "backup": "~/.local/share/assimilator/knowledge.pre-repoint-20260901-081615.db"
+  },
+  "seed": "The digest 2023-11-17-ebook-in-plain-sight.yaml names BOTH 'Santa Cruz, Bolivia' and 'Santa Cruz, California'. One record, two different Santa Cruzes: the Bolivian node was created first and the Californian name then matched it on the last component, after which the shared 'USA, California, ' prefix carried the rest of the state in.",
+  "minted_place_nodes": [
+    "UK, England, Bowers Gifford",
+    "UK, England, Brighton",
+    "UK, England, Burford",
+    "UK, England, Cornwall",
+    "UK, England, Nottingham",
+    "UK, England, Oxford",
+    "UK, England, RAF Woodbridge",
+    "UK, England, Salisbury",
+    "UK, England, Scole",
+    "UK, England, Shrewsbury",
+    "USA, California",
+    "USA, California, Alameda",
+    "USA, California, Downey",
+    "USA, California, Fresno",
+    "USA, California, Livermore",
+    "USA, California, Los Gatos",
+    "USA, California, Malibu",
+    "USA, California, Moss Beach",
+    "USA, California, Petaluma",
+    "USA, California, Sacramento",
+    "USA, California, Santa Cruz",
+    "USA, California, Santa Monica",
+    "USA, California, Vandenberg Air Force Base",
+    "USA, California, West Antelope Valley",
+    "USA, California, Whittier"
+  ]
+}
