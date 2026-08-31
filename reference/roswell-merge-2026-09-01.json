@@ -1,0 +1,91 @@
+{
+  "schema": "anomalica/merge-record/1",
+  "executed_at": "2026-08-31T23:01:27Z",
+  "by": "operator/anomalica-curation",
+  "why": "Roswell was fragmented across 48 nodes with two live pages for one event. The event cluster is merged here; the peripheral document and object duplicates are left for curator review. Run AFTER the matching fix (33efcaa): a merge deposits every victim name as an alias on the survivor, and under the previous unguarded alias comparison those boilerplate-shaped aliases immediately captured unrelated events - which is how the Nimitz node reached 118. Verified against the post-merge graph: pre-fix code misdirects 4 of 5 probe events, fixed code misdirects none.",
+  "clusters": [
+    {
+      "kind": "event",
+      "survivor": "Roswell incident (1947)",
+      "survivor_id": "b8ea9860-ae6e-4835-8114-6a6626f28797",
+      "claims_after": 149,
+      "merge_id": "a98541fa-8d8a-4665-9bd9-23298ac0559d",
+      "victims": [
+        "1947 Roswell Unidentified Aerial Phenomena (UAP) crash",
+        "Roswell Unidentified Flying Object (UFO) crash",
+        "1947 Roswell incident",
+        "1947 Roswell crash and debris retrieval",
+        "Roswell UAP Crash",
+        "Roswell UFO crash, 1947"
+      ],
+      "evidence": "same event confirmed from claim CONTENT, not names"
+    },
+    {
+      "kind": "place",
+      "survivor": "USA, New Mexico, Roswell Army Air Field",
+      "survivor_id": "c4d61dc5-9e3c-4d24-8feb-b7de06605d9f",
+      "claims_after": 12,
+      "merge_id": "3f39a276-bb42-4393-8c3f-4533bb341887",
+      "victims": [
+        "Roswell Army Air Field (place)",
+        "USA, New Mexico, Roswell Army Air Field (empty)"
+      ]
+    },
+    {
+      "kind": "document",
+      "survivor": "1994 US Air Force Roswell report",
+      "merge_id": "61c1524b-e7d3-4054-a48e-461b5269b274",
+      "victims": ["Roswell Air Force 1994 Report"]
+    },
+    {
+      "kind": "document",
+      "survivor": "The Day After Roswell",
+      "merge_id": "79d013e8-308c-4080-9979-a1defaba3ae1",
+      "victims": ["The Day After Roswell by Philip Corso"]
+    }
+  ],
+  "integrity": {
+    "claims": "31066 before, 31066 after",
+    "claim_node_refs": "65356 before, 65356 after",
+    "live_nodes": "10357 -> 10347 (10 retired, matching the 10 victims)",
+    "backup": "~/.local/share/assimilator/knowledge.pre-roswell-20260901-075453.db"
+  },
+  "not_merged": [
+    {
+      "nodes": ["Roswell Army Air Field (organisation, 8 claims)"],
+      "why": "cross-type against the place node; an airfield is both a site and a unit, curator judgement"
+    },
+    {
+      "nodes": ["USA, Nevada, Roswell (3 claims)"],
+      "why": "a different state from the New Mexico city; looks like an extraction error, not a duplicate"
+    },
+    {
+      "nodes": [
+        "The Roswell Report: Fact versus Fiction (1995)",
+        "The Roswell Report: Case Closed (1997)",
+        "Government Accountability Office (GAO) Roswell Report (1995)"
+      ],
+      "why": "three DISTINCT reports; the shared title stem is not evidence of duplication"
+    },
+    {
+      "nodes": [
+        "1995 General Accounting Office review",
+        "1997 Edgar Mitchell fax",
+        "2007 Roswell horseshoe-object sighting",
+        "Clinton Roswell Records Review 1995",
+        "Trump Roswell Comment 2020"
+      ],
+      "why": "distinct events that merely name Roswell"
+    }
+  ],
+  "survivor_name": "Kept as 'Roswell incident (1947)' rather than moved to the '1947 Roswell incident' convention. The convention form is better, but the live 5,625-word page is published at slug roswell-incident-1947 and renaming stranded its brief (doctor: brief-stranded-by-rename 14 -> 15). Not worth churning a published page for a naming preference.",
+  "pages": {
+    "safe_to_redirect": "/en/events/roswell-uap-crash/ -> /en/events/roswell-incident-1947/",
+    "reason": "its source node 166c5533 is retired by this merge; the target node is live with 149 claims",
+    "orphaned_briefs": [
+      "roswell-uap-crash.yaml",
+      "1947-roswell-incident.yaml",
+      "roswell-unidentified-flying-object-ufo-crash.yaml"
+    ]
+  }
+}
