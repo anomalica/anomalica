@@ -227,11 +227,6 @@ aliases:
   opus: claude-opus-5
   sonnet: claude-sonnet-5
   haiku: claude-haiku-4-5
-status_meanings:
-  approved: In use, or ready to use.
-  candidate: Worth testing. Not tested yet, and not used until it is.
-  unevaluated: Listed so it cannot be picked by accident. No evidence either way.
-  blacklisted: Must not be used, for the reason given.
 watermarking_meanings:
   watermarks: The provider puts a hidden signal in the text it generates, so it can later be identified as machine-written.
   clean: We looked and found no text watermarking on the date shown. What we checked is recorded against each provider.
@@ -246,76 +241,103 @@ models:
     price:
       input: 5.0
       output: 25.0
-    status: approved
     rationale: The strongest model we have access to, at $5/$25 per million tokens - two and a half times Sonnet on input,
       not the outlier it was once priced at. Not used for anything at present. It cannot write articles because we cannot
       establish whether Anthropic watermarks its output.
+    used_for: []
+    tested: false
   - id: claude-sonnet-5
     provider: anthropic
     context: 1000000
     price:
       input: 2.0
       output: 10.0
-    status: approved
     rationale: Pulls claims out of source documents, and wrote most of the articles here before the watermarking rule barred
       it from writing. Its tokeniser changed with the 5 series, so older cost measurements do not carry over.
+    used_for:
+      - digest
+      - assimilate
+      - consolidate
+      - corroborate
+      - verify
+      - variant
+    tested: true
   - id: claude-haiku-4-5
     provider: anthropic
     context: 200000
     price:
       input: 1.0
       output: 5.0
-    status: approved
     rationale: Used where it is accurate enough, because it is cheaper. Its 200,000-token window is the smallest here, so
       a job that fits on Sonnet may not fit on it.
+    used_for:
+      - digest
+      - assimilate
+      - consolidate
+      - corroborate
+      - variant
+      - housekeep-research
+    tested: true
   - id: openai/gpt-5.6-luna
     provider: openai
     context: 400000
     price:
       input: 0.2
       output: 1.2
-    status: approved
     rationale: The cheap model in its family, and quick at copying text out of documents accurately. It writes less than larger
       models when nothing tells it how long to be.
+    used_for:
+      - ingest
+      - variant
+      - assemble
+      - translate
+    tested: true
   - id: openai/gpt-5.6-sol
     provider: openai
     context: 1050000
     price:
       input: 2.0
       output: 10.0
-    status: approved
     rationale: The writing model in the same family as Luna, and third in independent rankings for English prose. The two
       above it are Claude Opus 5 and Kimi K3.
+    used_for:
+      - assemble
+      - translate
+    tested: true
   - id: moonshotai/kimi-k3
     provider: moonshot
     context: 1048576
     price:
       input: 3.0
       output: 15.0
-    status: candidate
     rationale: Second in independent rankings for English prose, ahead of every OpenAI model. Its weights are published, so
       it can be run without going through a provider at all.
+    used_for: []
+    tested: false
   - id: deepseek/deepseek-v4-flash
     provider: deepseek
-    status: candidate
     rationale: A cheap fast model with published weights. Not tested here yet.
     price:
       input: 0.0886
       output: 0.1772
+    used_for: []
+    tested: false
   - id: z-ai/glm-5.3-flash
     provider: z-ai
-    status: candidate
     rationale: null
     price:
       input: 0.075
       output: 0.25
+    used_for: []
+    tested: false
   - id: qwen/qwen3.8-flash
     provider: qwen
-    status: candidate
     rationale: null
     price:
       input: 0.15
       output: 0.47
+    used_for: []
+    tested: false
 stages:
   - id: ingest
     purpose: Extract text faithfully from a source document.
@@ -451,3 +473,13 @@ deny_watermarking_note: 'Reader-facing stages refuse a model by its provider wat
   be updated by hand, and the failure would be silent: a provider nobody added is a provider nobody blocked.'
 watermarking_checked: '2026-08-28'
 prices_checked: '2026-08-31'
+model_fields_note: '`used_for` lists the stages that may pick this model, derived from the stage priority lists rather than
+  asserted separately. A model with an empty list is not used - which is a fact about our pipeline, not a judgement about
+  the model. There is deliberately no global approved/candidate status: a model is right for a job or it is not, and a single
+  word cannot say that. A status field would also be a second answer to a question the stages already answer, free to drift
+  from them.'
+reader_facing_note: WATERMARKING APPLIES TO CLAIM TEXT, NOT ONLY TO ARTICLES. A claim's text is a sentence written by the
+  extracting model and published on record and entity pages - 'David Fravor was a United States Navy pilot for 18 years' is
+  our wording, not the source's. So `digest` produces reader-facing prose even though its output is stored as data, and the
+  watermarking rule reaches it. It was previously reasoned that extraction was exempt because the output is structured; the
+  structure is the container, not the content.
