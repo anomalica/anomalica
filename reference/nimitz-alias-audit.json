@@ -1,0 +1,747 @@
+{
+  "schema": "anomalica/alias-audit/5",
+  "generated_at": "2026-08-31T22:27:14.994346+00:00",
+  "node": "2004 USS Nimitz UAP encounter",
+  "node_id": "ae7507ac-dcb4-4689-bb0e-7c2e8ab4c5ac",
+  "method": "An alias is stripped if it names a subject that is not the Nimitz encounter. Seed vocabulary comes from the node's own NAME only - hand-adding associated words biases toward keeping, which is how '2015 USS Roosevelt UAP incursion' survived two passes. 'uss' is stopped as a ship prefix, the naval 'the'. better_match_advisory is where the alias probably belongs; it is NOT the justification for removal and is sometimes spurious.",
+  "aliases": [
+    {
+      "alias": "1923 Jacques Bordas first Unidentified Flying Object (UFO) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Jacques Bordas"
+    },
+    {
+      "alias": "1947 Aztec, New Mexico Unidentified Flying Object (UFO) crash",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1948 Aztec New Mexico alleged Unidentified Flying Object (UFO) crash"
+    },
+    {
+      "alias": "1947 Eyre Peninsula Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Australia, South Australia, Eyre Peninsula"
+    },
+    {
+      "alias": "1947 Gogeldrie Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Australia, New South Wales, Gogeldrie"
+    },
+    {
+      "alias": "1947 Kenneth Arnold Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Kenneth Arnold"
+    },
+    {
+      "alias": "1947 Pitanga, Brazil Unidentified Flying Object (UFO) landing",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Brazil, Paran\u00e1, Pitanga"
+    },
+    {
+      "alias": "1947 Roswell Unidentified Flying Object (UFO) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New Mexico, Roswell"
+    },
+    {
+      "alias": "1947-07 Roswell Unidentified Flying Object (UFO) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New Mexico, Roswell"
+    },
+    {
+      "alias": "1947-08 East Coast cylinder Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1947 East Coast Cylinder UAP Report"
+    },
+    {
+      "alias": "1948 Mantell Unidentified Flying Object (UFO) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Thomas F. Mantell"
+    },
+    {
+      "alias": "1948 Roswell Unidentified Flying Object (UFO) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New Mexico, Roswell"
+    },
+    {
+      "alias": "1950 Los Alamos Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Los Alamos National Laboratory"
+    },
+    {
+      "alias": "1950 Mariana Unidentified Flying Object (UFO) photograph case",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Salem Lights Photograph 1952"
+    },
+    {
+      "alias": "1950 McMinnville Unidentified Flying Object (UFO) photographs",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "McMinnville Unidentified Flying Object (UFO) Festival"
+    },
+    {
+      "alias": "1952 Hanford nuclear site Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "1952 Kimball-Radford Pacific Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Kimball Pacific UAP Sighting 1952"
+    },
+    {
+      "alias": "1952 Los Alamos Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Los Alamos National Laboratory"
+    },
+    {
+      "alias": "1952 Salem Lights Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Salem Lights Photograph 1952"
+    },
+    {
+      "alias": "1952 Tremonton Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "1952 Washington DC Unidentified Flying Object (UFO) flap",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Washington DC UFO Flap 1952"
+    },
+    {
+      "alias": "1952 Washington, D.C. Unidentified Flying Object (UFO) flap",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Washington DC UFO Flap 1952"
+    },
+    {
+      "alias": "1953 Ellsworth Air Force Base Unidentified Aerial Phenomena (UAP) pursuit",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, South Dakota, Ellsworth Air Force Base"
+    },
+    {
+      "alias": "1953 Perrin Air Force Base Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, California, Edwards Air Force Base"
+    },
+    {
+      "alias": "1953 US Navy carrier squadron Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Carrier Airborne Early Warning Squadron 117 (VAW-117)"
+    },
+    {
+      "alias": "1953-12 Swedish flying lozenge Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1953 Swedish Flying Lozenge Sighting"
+    },
+    {
+      "alias": "1954 Woomera Canberra aircraft Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Canberra aircraft"
+    },
+    {
+      "alias": "1955 Trans-Caucasus Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Trans-Caucasus Region"
+    },
+    {
+      "alias": "1956 RAF Bentwaters-Lakenheath Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "RAF Bentwaters"
+    },
+    {
+      "alias": "1956 Takala Unidentified Aerial Phenomena (UAP) landing",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Apollo 11 Moon landing"
+    },
+    {
+      "alias": "1960 Wewak Maralinga Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Maralinga 1960 UAP Sighting"
+    },
+    {
+      "alias": "1961 Barney Hill Unidentified Flying Object (UFO) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Barney Hill"
+    },
+    {
+      "alias": "1961 Pakistan Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Pakistan"
+    },
+    {
+      "alias": "1962 Barcelos, Brazil Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Brazil, Amazonas, Barcelos"
+    },
+    {
+      "alias": "1962 Verona, Italy Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Italy, Veneto, Verona"
+    },
+    {
+      "alias": "1963 Whidbey Island Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, Washington, Whidbey Island"
+    },
+    {
+      "alias": "1964 Lonnie Zamora Socorro Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Socorro Zamora UAP Encounter 1964"
+    },
+    {
+      "alias": "1964 Socorro Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New Mexico, Socorro"
+    },
+    {
+      "alias": "1964 Socorro Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New Mexico, Socorro"
+    },
+    {
+      "alias": "1964 Socorro Unidentified Flying Object (UFO) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New Mexico, Socorro"
+    },
+    {
+      "alias": "1964 Vandenberg missile warhead Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "1965 Kecksburg Pennsylvania Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, Pennsylvania, Kecksburg"
+    },
+    {
+      "alias": "1965 Kecksburg Unidentified Aerial Phenomena (UAP) crash",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Kecksburg UAP Crash 1965"
+    },
+    {
+      "alias": "1966 Aluche Unidentified Flying Object (UFO) landing",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Apollo 11 Moon landing"
+    },
+    {
+      "alias": "1966 Darenberger Unidentified Flying Object (UFO) contact",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Close Encounters of the Fifth Kind (CE5) contact protocol"
+    },
+    {
+      "alias": "1966 Swamp Gas Unidentified Flying Object (UFO) sightings, Michigan",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1966 Michigan swamp gas Unidentified Aerial Phenomena (UAP) sightings"
+    },
+    {
+      "alias": "1966 Temple, Oklahoma Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, Oklahoma, Temple"
+    },
+    {
+      "alias": "1966 Tully Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Tully Queensland UAP Sighting 1966"
+    },
+    {
+      "alias": "1966 Westall High School Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Westall High School"
+    },
+    {
+      "alias": "1966 Westall Unidentified Flying Object (UFO) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Westall Unidentified Flying Object (UFO) sighting 1966"
+    },
+    {
+      "alias": "1966 Westall school Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Westall High School"
+    },
+    {
+      "alias": "1966-1967 Aveyron Unidentified Flying Object (UFO) sightings",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1947 Southern Australia UAP Formation Sightings"
+    },
+    {
+      "alias": "1967 Andrade Unidentified Flying Object (UFO) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Andrade"
+    },
+    {
+      "alias": "1967 Malmstrom Air Force Base Unidentified Flying Object (UFO) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, Montana, Malmstrom Air Force Base"
+    },
+    {
+      "alias": "1967 San Jose de Valderas Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Carlos (San Jose de Valderas Unidentified Flying Object (UFO) witness)"
+    },
+    {
+      "alias": "1968 Dr. X Unidentified Flying Object (UFO) sighting in southern France",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, California, Southern California"
+    },
+    {
+      "alias": "1968 France Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Gretz-Armainvilliers France UAP Sighting 1990"
+    },
+    {
+      "alias": "1969 Jimmy Carter Leary, Georgia Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Jimmy Carter"
+    },
+    {
+      "alias": "1971 Delphos, Kansas Unidentified Flying Object (UFO) landing",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, Kansas, Delphos"
+    },
+    {
+      "alias": "1971-09 Costa Rica Unidentified Aerial Phenomena (UAP) photograph",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Costa Rica UAP Photograph 1971"
+    },
+    {
+      "alias": "1972 Kadena SR-71 Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Kadena Air Force Base UAP Sighting"
+    },
+    {
+      "alias": "1973 Carteret, Normandy Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "France, Normandy, Carteret"
+    },
+    {
+      "alias": "1973 Gallup poll on Unidentified Flying Object (UFO) belief",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Gallup UAP Poll 2020"
+    },
+    {
+      "alias": "1973 Jeff Carter Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Jeff Carter"
+    },
+    {
+      "alias": "1973 North West Cape Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "North West Cape 1973 UAP Sighting"
+    },
+    {
+      "alias": "1973 Vorilhon Unidentified Flying Object (UFO) contact",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Close Encounters of the Fifth Kind (CE5) contact protocol"
+    },
+    {
+      "alias": "1973 wave of United States Unidentified Flying Object (UFO) sightings",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "2024-2025 drone sightings over United Kingdom and United States"
+    },
+    {
+      "alias": "1976 Iranian pilot Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Dave (SR-71 pilot)"
+    },
+    {
+      "alias": "1977 Council Bluffs Iowa Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Council Bluffs Iowa UAP Incident 1977"
+    },
+    {
+      "alias": "1977 Petrozavodsk Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Petrozavodsk UAP Sighting 1977"
+    },
+    {
+      "alias": "1978 Japan Airlines Flight 1628 Alaska Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Japan Airlines Flight 1628 Boeing 747"
+    },
+    {
+      "alias": "1978 Kaikoura Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Kaikoura UAP Sighting"
+    },
+    {
+      "alias": "1979 Santa Cruz, Bolivia Unidentified Aerial Phenomena (UAP) report",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Bolivia, Santa Cruz"
+    },
+    {
+      "alias": "1980 Cash-Landrum Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Cash-Landrum Incident"
+    },
+    {
+      "alias": "1980 Rendlesham Forest Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1980 Rendlesham Forest incident"
+    },
+    {
+      "alias": "1980-12 Texas diamond-shaped Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "1981 Lake Huron TWA Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "TWA Lake Huron UAP Encounter 1981"
+    },
+    {
+      "alias": "1982 Byelo Air Base Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Ukrainian SSR Byelo Air Base UAP Incident 1982"
+    },
+    {
+      "alias": "1982 Byelokoroviche Soviet missile base Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Byelokoroviche Nuclear Base UAP 1982"
+    },
+    {
+      "alias": "1982 Hudson Valley Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Hudson Valley Boomerang UAP Incident 1982"
+    },
+    {
+      "alias": "1983 Westchester County triangular Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New York, Westchester County"
+    },
+    {
+      "alias": "1986 Japan Airlines Flight 1628 Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Japan Airlines Flight 1628 Boeing 747"
+    },
+    {
+      "alias": "1987 Dulce canyon Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Dulce Canyon UAP Sighting 1987"
+    },
+    {
+      "alias": "1987 North West Cape Learmonth Special Air Service (SAS) Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Special Air Service (SAS) Regiment"
+    },
+    {
+      "alias": "1988 Ariel School Unidentified Flying Object (UFO) incident, Zimbabwe",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Zimbabwe, Ariel School"
+    },
+    {
+      "alias": "1988 Lake Erie Coast Guard Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Lake Erie Coast Guard UAP Incident 1988"
+    },
+    {
+      "alias": "1989-1990 Belgian Wave Unidentified Aerial Phenomena (UAP) sightings",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Belgian Wave UAP Sightings"
+    },
+    {
+      "alias": "1990 Gretz-Armainvilliers Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Gretz-Armainvilliers France UAP Sighting 1990"
+    },
+    {
+      "alias": "1990 North Sea RAF Tornado Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "RAF Tornado UAP Encounter 1990"
+    },
+    {
+      "alias": "1990 North West Cape Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "North West Cape 1973 UAP Sighting"
+    },
+    {
+      "alias": "1991 North West Cape Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "North West Cape 1973 UAP Sighting"
+    },
+    {
+      "alias": "1993 RAF Cosford Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "RAF Cosford UAP Sighting 1993"
+    },
+    {
+      "alias": "1993 RAF Shawbury Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "RAF Shawbury UAP Sighting 1993"
+    },
+    {
+      "alias": "1994 Ariel School Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Zimbabwe, Ariel School"
+    },
+    {
+      "alias": "1996 Varginha Unidentified Flying Object (UFO) incident, Brazil",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Brazil, Varginha"
+    },
+    {
+      "alias": "1997 Phoenix Lights Unidentified Aerial Phenomena (UAP) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1997 Phoenix Lights incident"
+    },
+    {
+      "alias": "1997-04 Pentagon Unidentified Aerial Phenomena (UAP) briefing",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "2009 Pentagon Advanced Aerospace Threat Identification Program (AATIP) briefing summary"
+    },
+    {
+      "alias": "1998 Defense Intelligence Agency Unidentified Aerial Phenomena (UAP) briefing",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Defense Intelligence Agency (DIA)"
+    },
+    {
+      "alias": "2004 Aguadilla Puerto Rico Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Aguadilla Puerto Rico UAP Sighting"
+    },
+    {
+      "alias": "2004 Nimitz UAP Encounter",
+      "verdict": "keep",
+      "why": "names Nimitz itself",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "2004 USS Nimitz Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "keep",
+      "why": "names Nimitz itself",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "2004 USS Nimitz Unidentified Aerial Phenomena (UAP) encounter near San Diego",
+      "verdict": "keep",
+      "why": "names Nimitz itself",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "2004 USS Nimitz Unidentified Flying Object (UFO) incident",
+      "verdict": "keep",
+      "why": "names Nimitz itself",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "2007-08 Davis California Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Davis California UAP Orb Incident 2007"
+    },
+    {
+      "alias": "2008 Allison Kruse Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Allison Kruse"
+    },
+    {
+      "alias": "2010-11 Murrysville Unidentified Flying Object (UFO) filming incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Vandenberg Atlas ICBM UAP Filming 1964"
+    },
+    {
+      "alias": "2015 Navy Unidentified Aerial Phenomena (UAP) encounters",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Navy pilots describe encounters with UFOs (60 Minutes, 2021-05-17)"
+    },
+    {
+      "alias": "2015 USS Roosevelt Unidentified Aerial Phenomena (UAP) incursions",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USS Theodore Roosevelt"
+    },
+    {
+      "alias": "2017-12 New York Times Unidentified Aerial Phenomena (UAP) disclosure",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "2017 New York Times disclosure of Pentagon Unidentified Flying Object (UFO) videos"
+    },
+    {
+      "alias": "2023 Yukon Unidentified Aerial Phenomena (UAP) shootdown",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Yukon UAP Shoot-Down 2023"
+    },
+    {
+      "alias": "2023-02 Deadhorse, Alaska Unidentified Aerial Phenomena (UAP) shoot-down",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Alaska UAP Shoot-Down 2023"
+    },
+    {
+      "alias": "Annual Roswell Unidentified Flying Object (UFO) Festival",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "Ariel School Unidentified Aerial Phenomena (UAP) sighting 1994",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Zimbabwe, Ariel School"
+    },
+    {
+      "alias": "August 25, 2012 Rey Hernandez Unidentified Flying Object (UFO) sighting",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Rey Hernandez"
+    },
+    {
+      "alias": "Aztec New Mexico Unidentified Flying Object (UFO) crash",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "1948 Aztec New Mexico alleged Unidentified Flying Object (UFO) crash"
+    },
+    {
+      "alias": "Cash-Landrum Unidentified Flying Object (UFO) incident, Dayton, Texas",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Cash-Landrum Incident"
+    },
+    {
+      "alias": "Magenta Unidentified Flying Object (UFO) crash",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Roswell wreckage (alleged crash debris)"
+    },
+    {
+      "alias": "Russian ICBM base Unidentified Flying Object (UFO) incident, Ukraine",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Ukraine, Byelo Air Base"
+    },
+    {
+      "alias": "STS-48 Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "STS-61 (Hubble Servicing Mission)"
+    },
+    {
+      "alias": "STS-80 Unidentified Aerial Phenomena (UAP) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "STS-61 (Hubble Servicing Mission)"
+    },
+    {
+      "alias": "Socorro, New Mexico Unidentified Flying Object (UFO) landing",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, New Mexico, Socorro"
+    },
+    {
+      "alias": "Tic Tac Sighting",
+      "verdict": "keep",
+      "why": "names Nimitz itself",
+      "better_match_advisory": null
+    },
+    {
+      "alias": "Utah drone Unidentified Aerial Phenomena (UAP) encounter",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "USA, Utah, Dugway Proving Ground"
+    },
+    {
+      "alias": "Varginha Unidentified Flying Object (UFO) incident",
+      "verdict": "strip",
+      "why": "names a subject that is not the Nimitz encounter",
+      "better_match_advisory": "Wall Street Journal article on the Varginha Unidentified Flying Object (UFO) incident (1996-07-12)"
+    }
+  ]
+}
