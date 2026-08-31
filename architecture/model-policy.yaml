@@ -244,11 +244,12 @@ models:
     provider: anthropic
     context: 1000000
     price:
-      input: 15.0
-      output: 75.0
+      input: 5.0
+      output: 25.0
     status: approved
-    rationale: The strongest model we have access to, and the most expensive by a wide margin. Not used for anything at present.
-      It cannot write articles because we cannot establish whether Anthropic watermarks its output.
+    rationale: The strongest model we have access to, at $5/$25 per million tokens - two and a half times Sonnet on input,
+      not the outlier it was once priced at. Not used for anything at present. It cannot write articles because we cannot
+      establish whether Anthropic watermarks its output.
   - id: claude-sonnet-5
     provider: anthropic
     context: 1000000
@@ -440,3 +441,4 @@ deny_watermarking_note: 'Reader-facing stages refuse a model by its provider wat
   is enforced immediately and a state that changes takes effect without anyone editing a stage. A name list would have to
   be updated by hand, and the failure would be silent: a provider nobody added is a provider nobody blocked.'
 watermarking_checked: '2026-08-28'
+prices_checked: '2026-08-31'
