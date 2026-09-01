@@ -236,6 +236,7 @@ deny:
     reason: Refused everywhere, not only for writing. The watermarking table records the evidence and the date it was checked.
 models:
   - id: claude-opus-5
+    tier: flagship
     provider: anthropic
     context: 1000000
     price:
@@ -249,6 +250,7 @@ models:
       - verify
     tested: true
   - id: claude-sonnet-5
+    tier: middle
     provider: anthropic
     context: 1000000
     price:
@@ -265,6 +267,7 @@ models:
       - variant
     tested: true
   - id: claude-haiku-4-5
+    tier: light
     provider: anthropic
     context: 200000
     price:
@@ -281,6 +284,7 @@ models:
       - housekeep-research
     tested: true
   - id: openai/gpt-5.6-luna
+    tier: light
     provider: openai
     context: 1050000
     price:
@@ -296,6 +300,7 @@ models:
       - translate
     tested: true
   - id: openai/gpt-5.6-sol
+    tier: flagship
     provider: openai
     context: 1050000
     price:
@@ -309,6 +314,7 @@ models:
     tested: true
     price_note: promotional to 2026-11-21; standard 4.0/20.0
   - id: openai/gpt-5.6-terra
+    tier: middle
     provider: openai
     context: 1050000
     price:
@@ -320,6 +326,7 @@ models:
       - translate
     tested: true
   - id: moonshotai/kimi-k3
+    tier: flagship
     provider: moonshot
     context: 1048576
     price:
@@ -330,6 +337,7 @@ models:
     used_for: []
     tested: false
   - id: deepseek/deepseek-v4-flash
+    tier: light
     provider: deepseek
     rationale: A cheap fast model with published weights. Not tested here yet.
     price:
@@ -339,6 +347,7 @@ models:
     tested: false
     context: 1048576
   - id: z-ai/glm-5.3-flash
+    tier: light
     provider: z-ai
     rationale: null
     price:
@@ -348,6 +357,7 @@ models:
     tested: false
     context: 1310720
   - id: qwen/qwen3.8-flash
+    tier: light
     provider: qwen
     rationale: null
     price:
