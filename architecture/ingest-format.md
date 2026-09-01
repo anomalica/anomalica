@@ -187,7 +187,20 @@ A bare image (`jpg`, `jpeg`, `png`, `webp`) is a photographed or scanned **docum
 
 The two are orthogonal, and they come apart immediately. The same email is `web` when scraped from a publication, `pdf` when it arrives inside a FOIA release, and RFC822 when downloaded as `.eml`. Making email a sixth `source_type` would therefore make every email inside a PDF invisible to it - and the corpus already holds that case.
 
-`document_type` is an open set - `email`, `letter`, `memo`, `report`, `statute`, `affidavit`, `transcript`, `interview` - naming the artefact's form, never its subject. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. It exists to drive extraction, not to classify for its own sake.
+`document_type` is a **closed set** naming the artefact's form, never its subject:
+
+```
+book  paper  report  article  letter  email  statement  form  transcript  slide
+interview  documentary  podcast  lecture  broadcast  recording
+```
+
+It was open until 2026-09-01 and is closed now because it is displayed: the workbench shows it as a record's primary type and offers it as a dropdown, and a field rendered to a reviewer and used to weigh evidence cannot be free text - a value nobody else uses is a value nothing can query. The sixteen were derived from what the corpus actually holds rather than proposed and then fitted to. Additions go through a change to this document. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. It exists to drive extraction, not to classify for its own sake.
+
+**A title that names the form is derivation, not inference.** The test above asks whether the artefact states its own form; a title is the artefact speaking. "Full Documentary", "DEBRIEFED", "Interviewed by Art Bell", "Ep. 47", "Incident Report", "Statement to Congress", "briefing slide 9" each name a form outright, and are derivable exactly as an RFC822 header is. A title that merely suggests one is not.
+
+**Form-words can be verbs, and the verb case states nothing.** "Tajik Air Pilots Report Unidentified Flying Object" is not a report. `report`, `form` and `statement` all double as verbs, so derivation from them is anchored to noun position - trailing, following a colon or number, leading, or in a fixed compound (Incident Report, Sighting Report). `documentary` and `podcast` cannot be verbs and need no anchor. Where the grammar is ambiguous the value is absent, which costs a reviewer one decision and costs a reader nothing.
+
+**A container states nothing about its contents.** An EPUB is a delivery format, so `book` is an assumption about it rather than a derivation from it; a PDF is not a report. Both stay absent unless the artefact names its own form. This is the same rule that keeps `document_type: email` off a FOIA release containing many emails.
 
 **Emit it only where it is derivable without inference; otherwise leave it absent.** The test is whether the artefact *states* its own form, not whether it resembles one. RFC822 headers parse or they do not, and a page headed `MEMORANDUM FOR RECORD` says what it is - both derivable. A photographed page that merely *looks* like a memo is not, and asking a model to choose between `memo`, `letter`, `report` and `slide` from appearance is asking for a judgement it cannot ground, which returns a fluent value indistinguishable from a correct one.
 
@@ -198,6 +211,16 @@ This also keeps the field one kind of thing. Were derived and guessed values to 
 **It describes the WHOLE record, so it never applies to a container.** FOIA release 18-F-0324 is a `pdf` whose body contains many emails; its `document_type` is not `email`, because the record is the release. Correspondence inside a container is marked in the body instead, with [message boundaries](#message-boundary). A record-level `document_type: email` asserts the entire record is one message - an `.eml`, or a page publishing a single message.
 
 **Not to be confused with the nested `document_type` in 15 legacy records.** Those carry a `provenance:` block of war.gov reading-room catalogue metadata whose `document_type: AUD` is *war.gov's own* cataloguing code, a foreign vocabulary that happens to share the word. Only the top-level field is this vocabulary. The two do not collide mechanically - different nesting levels - but a reader meeting both in one corpus will reasonably assume they are one scheme, so the legacy code should be namespaced as source-native metadata when that block is reconciled.
+
+### File format
+
+`file_format` records **the format of the file we hold** - `pdf`, `epub`, `html`, `jpg`, `opus`. Always present, always derived, never editable: the file is what it is, and a reviewer correcting it would be asserting something about bytes rather than about meaning.
+
+It completes the split `source_type` was making badly on its own. `source_type` says how a source was acquired, `document_type` what the artefact is, `file_format` what we actually store. The three come apart: a briefing slide acquired as a photograph is `source_type: image`, `document_type: slide`, `file_format: jpg`; the same slide inside a scanned deck is `pdf` / `slide` / `pdf`.
+
+**For audio and video records it names the audio we keep, not the source medium.** Video is never stored - the pipeline keeps the extracted audio and the transcript - so `file_format: opus` is the honest description of the file, and a record's video origin lives in its `source_url` and its `document_type`. This is not a loss: the corpus already holds "Victor Interviewed by Art Bell" as `source_type: video`, which is a radio broadcast republished with no picture track, so the medium field was wrong on real records before it was removed.
+
+**One token per format.** The `archived_ext` it supersedes carries `opus` on 197 records and `ogg` on 15 for the same opus-in-ogg audio; `file_format` normalises to `opus`.
 
 ### Email headers
 
