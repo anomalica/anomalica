@@ -80,3 +80,35 @@ comparison sent four of five to the wrong node, the fixed one none.
   [[the-first-spelling-wins]] for why greedy first-wins resolution makes the
   blast radius large, and [[absence-is-not-a-verdict]] for the habit of checking
   the direction that would disconfirm you.
+
+## It generalises past comparisons: one side of a seam
+
+Three more instances the same day, and only the first is about comparing things.
+The common shape is a rule applied on one side of a boundary and not the other,
+with the correct behaviour sitting a few lines or one directory away.
+
+- **Two comparison paths.** The alias comparison unguarded beside the guarded
+  name comparison; `_component_similarity` unguarded beside the guarded
+  whole-name path.
+- **Two ends of a normalisation.** Country forms were normalised on INCOMING
+  place names but not on the ones already stored, so the fix that was meant to
+  stop duplicates would have minted them - `UK, London` failing to find
+  `United Kingdom, London`. The fix is only complete when both sides agree.
+- **Two copies of an output.** `prune_retired_briefs` ran during synthesis on the
+  SOURCE brief directory and never on the PUBLISHED one, so every merge and
+  rename tidied one side and left the other pointing at a node that had moved.
+  23 published briefs were unbuildable - 7 for retired nodes, 16 at a slug their
+  node no longer had, which is one entity getting two pages.
+
+**The question to ask of any rule:** where else does this data exist, and does
+the rule reach there? Not "is the rule correct" - it usually is - but "is it
+applied everywhere the thing it protects can be found". A rule that runs on the
+write path and not the read path, on the new rows and not the old ones, or on
+the working copy and not the published one, is not half-safe. It is unsafe in
+exactly the cases nobody is looking at, because the half that works is the half
+someone tested.
+
+**Why it stays hidden:** each of these was correct on the path its author was
+looking at, so every test they wrote passed. The divergence only shows when
+something moves at volume - all three surfaced on a day that moved more nodes
+than the corpus normally sees in a month.
