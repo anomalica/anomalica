@@ -472,6 +472,7 @@ stages:
   - id: assemble
     purpose: Write a reader-facing article or record page.
     uses_model: true
+    reader_facing: true
     enforced_by: scheduler
     priority:
       - openai/gpt-5.6-sol
@@ -489,6 +490,7 @@ stages:
   - id: translate
     purpose: Render an article into another language.
     uses_model: true
+    reader_facing: true
     enforced_by: scheduler
     priority:
       - openai/gpt-5.6-sol
