@@ -282,7 +282,7 @@ models:
     tested: true
   - id: openai/gpt-5.6-luna
     provider: openai
-    context: 400000
+    context: 1050000
     price:
       input: 0.2
       output: 1.2
@@ -333,10 +333,11 @@ models:
     provider: deepseek
     rationale: A cheap fast model with published weights. Not tested here yet.
     price:
-      input: 0.0886
-      output: 0.1772
+      input: 0.0809
+      output: 0.1618
     used_for: []
     tested: false
+    context: 1048576
   - id: z-ai/glm-5.3-flash
     provider: z-ai
     rationale: null
@@ -345,6 +346,7 @@ models:
       output: 0.25
     used_for: []
     tested: false
+    context: 1310720
   - id: qwen/qwen3.8-flash
     provider: qwen
     rationale: null
@@ -353,6 +355,7 @@ models:
       output: 0.47
     used_for: []
     tested: false
+    context: 1000000
 stages:
   - id: ingest
     purpose: Extract text faithfully from a source document.
@@ -525,7 +528,7 @@ deny_watermarking_note: 'Reader-facing stages refuse a model by its provider wat
   is enforced immediately and a state that changes takes effect without anyone editing a stage. A name list would have to
   be updated by hand, and the failure would be silent: a provider nobody added is a provider nobody blocked.'
 watermarking_checked: '2026-08-28'
-prices_checked: '2026-08-31'
+prices_checked: '2026-09-01'
 model_fields_note: '`used_for` lists the stages that may pick this model, derived from the stage priority lists rather than
   asserted separately. A model with an empty list is not used - which is a fact about our pipeline, not a judgement about
   the model. There is deliberately no global approved/candidate status: a model is right for a job or it is not, and a single
@@ -545,3 +548,9 @@ output_kinds_note: The question is not whether a stage is 'reader-facing' but wh
   A verifier reads published text and returns a verdict; nothing it writes reaches anyone, so a watermark in it is inert and
   barring a provider there costs quality for no benefit. This distinction was previously collapsed into one boolean, which
   barred watermarking providers from checking work they were already allowed to read.
+context_selection_note: 'Every model carries `context`, its input limit in tokens. A stage that assembles a large input must
+  pick a model whose window fits it, measured from the actual input rather than assumed: an article brief ranges from 12 claims
+  to 2,600, so one model cannot be right for the whole range. Where the input is small the smaller and cheaper model is correct;
+  where it is large the choice is constrained before quality is considered. A brief truncated to fit a window silently loses
+  evidence - claims cut from a brief cannot be cited, and nothing downstream can tell they existed. Fit first, then quality,
+  then cost.'

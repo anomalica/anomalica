@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refresh model prices in architecture/model-policy.yaml from OpenRouter.
+"""Refresh model prices and context windows in architecture/model-policy.yaml from OpenRouter.
 
 The policy file is the single table: the public model-policy page renders it and
 every component picks its model through it. Prices in it went stale twice in one
@@ -45,7 +45,11 @@ def live_prices() -> dict[str, tuple[float, float]]:
     for m in data:
         p = m.get("pricing") or {}
         try:
-            out[m["id"]] = (float(p["prompt"]) * 1e6, float(p["completion"]) * 1e6)
+            out[m["id"]] = (
+                float(p["prompt"]) * 1e6,
+                float(p["completion"]) * 1e6,
+                m.get("context_length"),
+            )
         except (KeyError, TypeError, ValueError):
             continue
     return out
@@ -68,6 +72,13 @@ def main() -> int:
         if (old.get("input"), old.get("output")) != (new["input"], new["output"]):
             changed.append((mid, old, new))
             model["price"] = new
+        # Context decides which stages a model can serve at all - a brief that does not
+        # fit is silently truncated, so a stale window is worse than a stale price.
+        if live[2] and model.get("context") != live[2]:
+            changed.append(
+                (mid, {"context": model.get("context")}, {"context": live[2]})
+            )
+            model["context"] = live[2]
 
     doc["prices_checked"] = date.today().isoformat()
     header = POLICY.read_text().split("schema:")[0]
@@ -75,9 +86,13 @@ def main() -> int:
         header + yaml.dump(doc, sort_keys=False, allow_unicode=True, width=100)
     )
 
+    def _show(d: dict) -> str:
+        if "context" in d:
+            return f"context {d['context'] or 'unset'}"
+        return f"{d.get('input')}/{d.get('output')}" if d else "unpriced"
+
     for mid, old, new in changed:
-        was = f"{old.get('input')}/{old.get('output')}" if old else "unpriced"
-        print(f"  changed  {mid:28s} {was} -> {new['input']}/{new['output']}")
+        print(f"  changed  {mid:28s} {_show(old)} -> {_show(new)}")
     for mid in missing:
         print(f"  NOT LISTED, kept as recorded: {mid}", file=sys.stderr)
     print(
