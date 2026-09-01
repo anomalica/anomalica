@@ -103,6 +103,39 @@ The same notation is the right way to write an anonymous actor a source only DES
 
 Callsigns paired with redacted personnel (FASTEAGLE 01, FASTEAGLE 02) follow the same logic: the callsign is the aircraft-and-pilot together on a specific mission, not a durable identifier. Reference the actual aircraft type and the identified pilot (where named) as separate nodes; mention the callsign in claim text.
 
+## Cross-cutting rule: capitalisation
+
+**Sentence case. The first character is capitalised; everything after it is
+lowercase unless it is a proper noun or an acronym.**
+
+    Alien abduction          not  alien abduction, and not Alien Abduction
+    Time travel              not  time travel
+    Nonhuman intelligence (NHI)
+    Roswell incident (1947)  unchanged - already sentence case
+    Luis Elizondo            unchanged - a proper noun throughout
+
+Node names are page titles on a public site, so a lowercase initial reads as a
+typo. But TITLE case is the wrong correction and would be worse: "Alien
+Abduction" and "Time Travel" assert that the phrase is the proper name of a
+specific thing, when it is a common-noun subject heading. Sentence case says
+"this is the subject of this page"; title case says "this is what it is called".
+Most of the corpus is already sentence case ("Gimbal video", "1980 Rendlesham
+Forest incident"), so this states the practice rather than changing it.
+
+**It bites on topics and almost nowhere else.** Every other type is named after
+something that carries its own capitals - a person, an organisation, a place, a
+document. A topic is a common-noun phrase, which is why 27 of them sit lowercase
+while no person or organisation does.
+
+**A name whose own conventional form begins lowercase keeps it** - `pH`,
+`iPhone`, a surname particle standing alone. The rule capitalises a name that
+merely was not capitalised, never one that is deliberately lowercase. Scripts
+without case are unaffected (see non-Latin names below).
+
+**Matching is unaffected.** The matcher and the alias index are case-insensitive,
+so recasing a canonical name cannot orphan a reference - which is what makes
+this safe to apply as a pass rather than a migration.
+
 ## Classification rules
 
 These rules are used by the extraction pipeline to assign domain types. Apply them in order.
