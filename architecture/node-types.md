@@ -132,9 +132,17 @@ while no person or organisation does.
 merely was not capitalised, never one that is deliberately lowercase. Scripts
 without case are unaffected (see non-Latin names below).
 
-**Matching is unaffected.** The matcher and the alias index are case-insensitive,
-so recasing a canonical name cannot orphan a reference - which is what makes
-this safe to apply as a pass rather than a migration.
+**Matching survives a recase, but not because the matcher is case-insensitive.**
+It is not: the exact-name lookup is `WHERE name = ?` with no `COLLATE NOCASE`,
+so a recased node stops matching at tier 1. Case is folded one tier down, at the
+equivalence check, which is where a recased name is caught - and the importer
+then records that as an alias, so the lowercase form is learned and tier 1
+matches it thereafter. It self-heals.
+
+Stated precisely because the safety is load-bearing and the obvious summary is
+wrong: anyone removing or reordering the equivalence tier would break recased
+names silently, and "the matcher is case-insensitive" would have told them there
+was nothing to break.
 
 ## Classification rules
 
