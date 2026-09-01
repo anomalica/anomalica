@@ -1,0 +1,25 @@
+{
+  "schema": "anomalica/name-repair/1",
+  "executed_at": "2026-09-01T04:46:25Z",
+  "by": "operator/anomalica-curation",
+  "reported_by": "anomalica/workbench - the corrupt names were visible on its Topics tab and it had no way to fix them",
+  "fault": "An acronym expanded while sitting inside ANOTHER acronym's gloss, nesting one expansion inside the other. Two shapes, and the existing guards saw neither - they ask whether THIS acronym is already expanded, while here a DIFFERENT acronym's expansion is damaged and the one being substituted is genuinely unexpanded.",
+  "examples": {
+    "inside the brackets": "'Helicopter Antisubmarine Squadron 6 (HS-6)' -> '... (Helicopter Anti-Submarine Squadron 6 (HS-6))'",
+    "within the gloss itself": "'Mutual UFO Network (MUFON)' -> 'Mutual Unidentified Flying Object (UFO) Network (MUFON)' - MUFON's own expansion corrupted from the inside",
+    "self-repeat": "'weapons of mass destruction (Weapons of Mass Destruction (WMD))'"
+  },
+  "why_the_squadron_guard_missed_it": "It tests for an exact substring of OUR wording. The source wrote 'Antisubmarine' where the table says 'Anti-Submarine' - the variant-wording miss the code's own comment predicted, written for the programme acronyms and never extended to the squadron prefixes.",
+  "code_fix": "30ffb76 - substitution skips any match inside a parenthetical or inside another acronym's full expansion. Verified over every digest: names the importer would now nest = 0.",
+  "repair": {
+    "renamed": 75,
+    "merged": 4,
+    "note": "Where the corrected name already existed the corrupt duplicate was MERGED into it rather than renamed - extrasensory perception, PTSD, EEG and VFA-11 each had both forms live.",
+    "left_alone": 14,
+    "left_alone_why": "legitimate titles whose descriptive parenthetical contains an acronym, e.g. 'Exploring Space with a Camera (National Aeronautics and Space Administration (NASA) SP-168)' and '\"Blinded by the Light\" (Mutual UFO Network (MUFON) Journal)'. Nesting is correct there."
+  },
+  "not_done": {
+    "lowercase_titles": 57,
+    "why": "57 page-proposed nodes start lowercase - 'alien abduction', 'telepathy', 'levitation'. They read as typos on the site. NOT repaired: capitalisation is a naming-convention decision, not a corruption, and 'topic' names may be deliberately lowercase as common nouns. Needs a convention before a pass."
+  }
+}
