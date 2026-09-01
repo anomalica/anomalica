@@ -49,6 +49,49 @@ Qwen3.8-max, GLM-5.3, DeepSeek and Luna. A claim that Luna is unfit for claim ex
 score - a synthetic needle-in-haystack task, not this job - and is being settled
 by measurement rather than left standing.
 
+## PER-RECORD VARIANCE EXCEEDS PER-MODEL VARIANCE
+
+**The single most important number on this page.** Measured 2026-09-01:
+
+| model | across records | spread |
+|---|---|---:|
+| haiku | 0.437 - 0.842 | **40 points** |
+| sonnet | 0.594 - 0.834 | **24 points** |
+| *all four models on one record* | 0.437 - 0.650 | *21 points* |
+
+The same model varies MORE from record to record than four different models vary
+on one record. So a model comparison run on a single record measures the record
+at least as much as it measures the model.
+
+Concretely: haiku scored **0.842** on Coulthart Q&A and **0.437** on Jon Stewart.
+Opus scored 0.650 on Jon Stewart. Comparing haiku-on-Coulthart against
+opus-on-Jon-Stewart would rank haiku well above opus, and it would be an artefact
+of which record each happened to run on.
+
+**Do not compare scores across records.** A model ordering is only meaningful
+within one record, and a general claim needs the same models on the same several
+records.
+
+This is why the earlier "Opus is worse than Sonnet" claim was retracted, and it
+is now quantified rather than asserted.
+
+### Per-record results
+
+| record | gold units | chains | model | recall | fidelity | coref |
+|---|---:|---:|---|---:|---:|---:|
+| Jon Stewart | 193 | 101 | opus | 0.650 | 0.939 | 0.914 |
+| Jon Stewart | 193 | 101 | glm-5.2 | 0.629 | 0.936 | 0.875 |
+| Jon Stewart | 193 | 101 | sonnet | 0.617 | 0.942 | 0.911 |
+| Jon Stewart | 193 | 101 | haiku | 0.437 | 0.776 | 0.783 |
+| Raymond Fowler | 69 | 18 | sonnet | 0.834 | 0.978 | 0.765 |
+| Coulthart Q&A | 43 | 7 | haiku | 0.842 | 1.000 | 1.000 |
+| Oval Office | 22 | 6 | sonnet | 0.622 | 0.955 | 1.000 |
+| Garry Nolan | 48 | 12 | sonnet | 0.594 | 0.959 | 0.625 |
+
+Jon Stewart is the hardest record in the set and the only one where every model
+has run - 52% of its units are context chains against 16-27% elsewhere. Rows with
+one model are not comparisons; they are the beginning of one.
+
 ## Graded against reviewer gold
 
 Record: `2026-01-02-video-the-alien-interview-tape-might-be-real-jon-stewart`
