@@ -210,3 +210,29 @@ The source of truth for the knowledge graph is the collection of digests in the 
 The SQLite database (a lightweight file-based database) is built and maintained by the assimilator, which imports the digests into the graph (see [assimilator.md](assimilator.md)). It serves as the query and distribution format - downloadable, torrentable, and verifiable - but is derived data, not primary. If deleted, it can be rebuilt from the digests. Embedding vectors are stored separately from core data to keep the primary download small.
 
 The assimilator MAINTAINS the graph, it does not merely import it. Import is mechanical (claims by record). Maintenance is a curation pass whose primary signal is PROVENANCE OVERLAP: each claim carries `record_id` + `location_in_record`, so the same source with an overlapping location is a DUPLICATE (collapsed by supersede - the worse claim retired, the better kept), while different sources asserting the same fact are CORROBORATION (both kept, linked, counting as independent support). This operationalises the load-bearing invariant - count independence by provenance root, never by claim-count - and is the [0038](../decisions/0038-graph-curation-replayable-ledger.md) curation layer extended from nodes to claims (cases provenance cannot settle go through the cheap-model judge + confirm machinery; see [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)).
+
+
+## A repair applied to one side of a seam
+
+Four faults this project has hit share one shape: the correct behaviour existed, a
+few lines or one directory away, and was not applied on both sides of a boundary.
+
+- The name comparison applied a guard; the alias comparison beside it did not. Result:
+  118 aliases naming other events accumulated on one node, and a lookup for
+  "1947 Roswell UFO incident" returned a 2004 Navy encounter.
+- The whole-name comparison applied the guard; the place-component comparison did not.
+  Result: fifteen Californian cities became aliases of a Bolivian town, and claims
+  about Santa Monica were filed under Bolivia.
+- Country names were normalised on incoming data and not on stored nodes, so the next
+  import minted the duplicates the normalisation existed to prevent.
+- Stale briefs were pruned in the source directory and not in the published one, so
+  every merge cleaned up one copy and left the consumer's pointing at a node that had
+  moved.
+
+The failure is not carelessness and is not caught by testing the repair: each fix works
+on the side it was applied to. It is caught by asking, of any correction, WHERE ELSE
+THIS COMPARISON, NORMALISATION OR CLEANUP HAPPENS - and treating a boundary between two
+copies, two directories, or two code paths as the place to look first.
+
+The general form: a system with two representations of the same thing needs every rule
+applied to both, or the rule creates a divergence rather than removing one.
