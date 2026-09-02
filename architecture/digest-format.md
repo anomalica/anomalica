@@ -525,6 +525,11 @@ Reading the verdicts:
 - `entails` / `window` - the weaker case; the quote does not carry the
   claim on its own, the record around it does. Report the two entailed
   fractions separately, never averaged.
+  An `entails`/`window` with `score` under 0.5 is a near-tie: on 34
+  constructed claims that go beyond the record (invented years, inferred
+  motives, merged sources) the seven that came out `entails` all scored
+  0.39-0.42, and nine good claims sat in the same band. No gate is applied;
+  the review order below puts them first.
 - `neutral` - not warranted even by the surrounding record.
 - `contradicts` - the quote (or, with `premise: window`, the record)
   denies the claim.
