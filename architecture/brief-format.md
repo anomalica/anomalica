@@ -24,6 +24,12 @@ The top-level fields - `schema`, `brief_hash`, `page`, `generated`, `related_nod
 
 `page.slug` and `related_nodes[].slug` are resolved by the synthesiser at emission via the canonical slugifier (`metadata.explicit_slug` if present, else the shared anomalica-common slugifier - first-last for persons, with deterministic disambiguation; see [node slugs](node-types.md#node-slugs)). They are pre-resolved into the brief because the assembler is writer-only and does not read node metadata; an unresolved slug would silently break pattern-slug URLs and their cross-links.
 
+## `size` and `truncated`
+
+`size.tokens_estimated` is how much of the consuming stage's context window the brief's claim material occupies **as a consumer renders it**: each claim's `content` and `original_excerpt` at 2.7 characters per token, plus a flat line of framing per claim (attribution, date, record). It is not the size of the YAML file, which carries roughly four characters of ids, hashes, slugs and provenance for every character of claim text, none of which reaches a model: the largest brief is 3.6 MB on disk and renders to about 286,000 tokens. `size.sized_against` is the smallest context window among the models the consuming stage may use (from `model-policy.yaml`), so the brief fits whichever the scheduler picks. The estimate errs high; the binding check is the consumer's, made on the prompt it actually builds.
+
+`truncated` is **absent** when the brief carries every claim the node holds, so its presence is the signal. When present it gives `kept`, `available`, and `why`, which names the constraint that bound - the token budget, or the per-event source cap - because the two call for different responses: one for a larger model, the other for nothing.
+
 ## `claims` (the selection)
 
 An ordered list of claims - the selection, and the only facts the writer may use. Nothing outside it can enter the prose; this is what makes 0008 enforceable by construction. Order is the synthesiser's. Each claim's fields - `claim_id`, `claim_hash`, `content`, `original_excerpt`, `claim_type`, `attestation`, `speaker`, `node_refs`, `date`/`date_end`, `location_in_record`, `evidence`, `provenance` - are listed in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief` (`body.claims`). Note `provenance.content_hash` and `friendly_name`: they link each claim back to its source ingest.
