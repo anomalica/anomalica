@@ -11,6 +11,7 @@ Jargon and unexplained acronyms select out readers and give cover to imprecision
 - Spell out every acronym on first use in every document; do not assume the reader has read any other document. "Freedom of Information Act (FOIA)" first, then "FOIA".
 - If an acronym appears fewer than three times in a document, spell it out every time. It earns its place only if the full phrase recurs often enough to be genuinely awkward.
 - Universally understood computing terms are fine without expansion: URL, PDF, HTML. When in doubt, spell it out.
+- Page titles (article headlines) are the one exception: exactly two acronyms are written bare in a title, with no expansion and no bracketed gloss - UFO and UAP. No others. They are the platform's own subject, so no reader arrives without them; expanding UAP would force every title to settle "Anomalous" (the official United States term since late 2022) against "Aerial" (dominant in older sources); and a bare UFO translates into the reader's own language (OVNI, НЛО) where a bracketed English expansion does not. The rule covers the title only: body prose keeps the assembler prompt's wider safe set, and node names keep "Full Name (ACRONYM)" always (see [node-types.md](../architecture/node-types.md)), so a title and its slug diverge for these two ("UFO" at `/topics/unidentified-flying-object-ufo`) by design. A proper name that contains the words keeps them: "Unidentified Aerial Phenomena Task Force (UAPTF)" is that office's name, not a gloss, and UAPTF is not on the list. Decided by Mark, 2026-09-03.
 
 ### Jargon
 
