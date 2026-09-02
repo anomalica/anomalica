@@ -412,14 +412,12 @@ models:
     price:
       input: 0.0
       output: 0.0
-    rationale: >-
-      Trial 2026-09-02 (assimilator/reports/reranker-eval-2026-09-02.md). Ranks the merge queue; never decides. Against 178
-      human-merged pairs and 337 constructed negatives (the ledger holds one human rejection), AUC 0.867 with claims and 0.980
-      names only, against the rules' 0.716; same-type pairs 0.867 against 0.546. At a cut of 0.9 with claims, precision 0.67
-      and recall 0.63; names only 0.91 and 0.96. Finds 80 of the 100 human-merged pairs the rules never surface, given a shortlist;
-      fails on relatives and co-witnesses (48 of 269 same-surname pairs scored as one person). On the live queue it moves
-      the fuzzy rule's false positives (Austria and Australia at 0.88) to the bottom. GPU run of 1.5 minutes for 327 pairs
-      at about 2.7 GB of device memory; CPU works at 12 seconds per pair. Shipped behind a flag, default off.
+    rationale: A small model run on our own machine that, given two names from the knowledge graph, judges whether they refer
+      to the same thing - "Cmdr. Fravor" and "David Fravor", or two spellings of one country. It only orders the list a reviewer
+      works through; nothing merges without a person. Tried on 2026-09-02 against 178 pairs a reviewer had already merged,
+      it ranked them well ahead of our older name-matching rules and found most of the true pairs those rules had never noticed.
+      Its known weakness is relatives and people from the same case, whom it tends to treat as one person, so a second check
+      stays in front of any such merge.
     used_for:
       - rerank
     tested: true
