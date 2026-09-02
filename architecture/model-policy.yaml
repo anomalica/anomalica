@@ -1,11 +1,11 @@
 schema: anomalica/model-policy/1
-updated: '2026-08-28'
+updated: '2026-09-02'
 watermarking:
   anthropic:
-    state: unknown
+    state: watermarks
     confidence: high
     open_weights: false
-    checked: '2026-08-28'
+    checked: '2026-09-02'
     evidence: 'Anthropic announced text watermarking on 2026-08-14: "Future Claude models will generate text that contains
       a watermark", and "Claude''s text watermark is a version of the SynthID-Text approach published by Google DeepMind"
       - a sampling-time scheme that "changes the source of randomness used when making some of those choices during text generation",
@@ -16,7 +16,11 @@ watermarking:
       offering a watermark detection API. We''re in the process of working out the details of its implementation." Separately,
       C2PA signed provenance metadata is applied to generated image files (.svg/.png/.jpg) - that is metadata, distinct from
       the in-text statistical watermark. Anthropic has never published downloadable weights for any Claude model; all releases
-      are hosted-API only (its 2026 open-weights position paper argues against a ban but does not release Claude weights).'
+      are hosted-API only (its 2026 open-weights position paper argues against a ban but does not release Claude weights).
+      Re-checked 2026-09-02: the support article now states "Models currently supported include Fable 5.1 and Mythos 5.1",
+      that marking is in progress for models launched before 2026-08-02, and that "Embedded watermarks will apply to all generated
+      text" - so the state is no longer unknown. Anthropic watermarks; the models this project uses (Sonnet 5, Opus 5, Haiku
+      4.5) are scheduled to follow.'
     sources:
       - https://www.anthropic.com/news/claude-text-watermark
       - https://support.claude.com/en/articles/16266773-how-claude-marks-ai-generated-content
@@ -370,6 +374,7 @@ stages:
   - id: ingest
     purpose: Extract text faithfully from a source document.
     uses_model: true
+    reader_facing: true
     enforced_by: scheduler
     priority:
       - openai/gpt-5.6-luna
@@ -379,6 +384,9 @@ stages:
     output: reproduction
     output_note: The model transcribes a document rather than composing. Its output is the source's words, gated behind proof
       of possession, and a watermark on a reproduction marks our copy of someone else's text rather than an assertion of ours.
+    deny_watermarking:
+      - watermarks
+      - unknown
   - id: digest
     purpose: Extract claims and nodes from a reviewed ingest.
     uses_model: true
