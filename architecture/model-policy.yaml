@@ -414,7 +414,7 @@ models:
       output: 0.0
     rationale: A small model run on our own machine that, given two names from the knowledge graph, judges whether they refer
       to the same thing - "Cmdr. Fravor" and "David Fravor", or two spellings of one country. It only orders the list a reviewer
-      works through; nothing merges without a person. Tried on 2026-09-02 against 178 pairs a reviewer had already merged,
+      works through; nothing merges without a person. Tried on 2026-09-02 against 90 pairs a reviewer had already merged,
       it ranked them well ahead of our older name-matching rules and found most of the true pairs those rules had never noticed.
       Its known weakness is relatives and people from the same case, whom it tends to treat as one person, so a second check
       stays in front of any such merge.
