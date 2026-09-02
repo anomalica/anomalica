@@ -30,6 +30,12 @@ The top-level fields - `schema`, `brief_hash`, `page`, `generated`, `related_nod
 
 `truncated` is **absent** when the brief carries every claim the node holds, so its presence is the signal. When present it gives `kept`, `available`, and `why`, which names the constraint that bound - the token budget, or the per-event source cap - because the two call for different responses: one for a larger model, the other for nothing.
 
+## `entailment` (per claim, and per page)
+
+The digester checks each claim against its own excerpt: does the excerpt (premise) entail the claim text (hypothesis)? A claim that was assessed carries `entailment: {label, score, model}` - `label` is `entails`, `neutral` or `contradicts`, `score` the model's probability of that label, `model` the checker's id. The block is **absent** when the claim was not assessed (a digest that predates the check, or a claim with no excerpt); absence never means neutral. The page-level `entailment` block summarises the carried claims: `assessed`, `unassessed`, the three label counts, and `entailed_fraction` (entails over assessed, `null` when nothing was assessed).
+
+Both are surfaced, not applied. The entailed fraction is the first component of the evidence score, whose definition is still open; until it is defined nothing selects, orders, hides or hedges a claim on this field, and a consumer should not either.
+
 ## `claims` (the selection)
 
 An ordered list of claims - the selection, and the only facts the writer may use. Nothing outside it can enter the prose; this is what makes 0008 enforceable by construction. Order is the synthesiser's. Each claim's fields - `claim_id`, `claim_hash`, `content`, `original_excerpt`, `claim_type`, `attestation`, `speaker`, `node_refs`, `date`/`date_end`, `location_in_record`, `evidence`, `provenance` - are listed in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief` (`body.claims`). Note `provenance.content_hash` and `friendly_name`: they link each claim back to its source ingest.
