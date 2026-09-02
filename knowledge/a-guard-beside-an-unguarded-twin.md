@@ -112,3 +112,22 @@ someone tested.
 looking at, so every test they wrote passed. The divergence only shows when
 something moves at volume - all three surfaced on a day that moved more nodes
 than the corpus normally sees in a month.
+
+## The same seam, in a file path (2026-09-02)
+
+A page's identity is `/<section>/<slug>`, and the slug is deliberately disambiguated
+only within a node type, because two types never share a URL. The brief file - the
+artefact that feeds that page - was keyed on `<slug>.yaml` alone. So the rule "the
+pair is the identity" reached the URL and not the file, and an event and a project
+both named "Apollo 14" had one brief between them. Nothing was wrong on either side
+of the seam; the scheduler matched briefs by node id (correct), the synthesiser
+disambiguated within a type (correct), and the two together re-emitted the loser
+on every pass all night.
+
+The tell was the same as before: the half that worked was the half someone had
+tested. URL collisions had been thought about (a commit message explains why hex
+suffixes were removed from them). File collisions had not, because the file was
+"just where the brief goes". Ask of any identity rule: every place this thing is
+stored or named, does the rule reach there? The fix was to give the file the same
+two halves as the page (`<section>/<slug>.yaml`), and four consumers had each
+composed the old path themselves.
