@@ -92,6 +92,15 @@ AI is central to the platform and its use is communicated openly - never hidden,
 
 AI is involved at every stage (extraction, graph-building, assembly, translation) - unavoidable black boxes. The platform's answer is to make each box's inputs and outputs visible: the source document, the digest extracted from it, the assembled article, the verification report. The aim is not to remove the need for trust but to make every step as verifiable as possible.
 
+**Watermarked models do not write what readers read, and do not reproduce sources.** Some providers embed a
+statistical watermark in generated text (Google, and Anthropic for models launched from 2026-08-02, extending to
+earlier models). On a reproduction or a published page that signal marks as synthetic the very text readers are
+invited to check against sources. The model policy (`architecture/model-policy.yaml`,
+[decision 0047](../decisions/0047-centralised-model-policy.md)) therefore refuses any provider not verified clean for the ingest, assemble
+and translate stages. Stages whose output is a judgement or a structured claim rather than prose (digest,
+assimilate, verify) may use them. The policy file is enforced in code and is the source of truth; this paragraph
+only explains it.
+
 ## Editorial positions are stated, never encoded
 
 Anomalica will hold positions. Some are unavoidable: which sources are
