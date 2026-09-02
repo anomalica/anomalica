@@ -416,7 +416,8 @@ to `knowledge.db`, `infrastructure_claims` to `infrastructure.db` (see
 [graph-schema.md](graph-schema.md)).
 
 Field order per claim: `id`, `type`, `attestation`, `speaker?`,
-`location?`, `date?` or `date_range?`, `refs?`, `quote?`, `text`.
+`location?`, `date?` or `date_range?`, `refs?`, `quote?`, `text`,
+`entailment?`.
 
 `type` is one of the six claim types defined in `node-types.md`:
 `observation`, `testimony`, `hearsay`, `opinion`, `measurement`,
@@ -482,6 +483,62 @@ elided both pass fidelity, only broken fails.
 
 `text` is the only required content field. A claim with neither a
 `quote` nor a `text` is malformed.
+
+### `entailment`
+
+Does the source warrant the claim as written? Written by the digester's
+last extraction step and by `digester check` on older digests; a local
+natural-language-inference classifier, no model calls.
+
+```yaml
+entailment:
+  label: entails        # entails | neutral | contradicts
+  score: 0.973          # probability of `label`, 3 decimals
+  model: MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli
+  premise: quote        # quote | window
+```
+
+Present on every claim that has a non-empty `quote` and `text`; absent
+means *not assessed* (no quote, or a digest that predates the check),
+which consumers must not read as neutral.
+
+The check runs in two stages, and `premise` says which one produced the
+verdict. Stage one takes the speaker name plus the `quote` as premise and
+the `text` as hypothesis; `entails` or `contradicts` there is final. Only
+a `neutral` goes to stage two, whose premise is the record text 800
+characters either side of the located quote; that verdict is final. A
+quote that cannot be located in the record gets stage one only.
+
+Why two stages: measured on 50 hand-labelled claims (2026-09-02), the
+bare quote licenses about a quarter of good claims. The rest are neutral
+at p 0.9-1.0, not because they are wrong but because a claim text is
+written self-contained - it names the speaker, expands the acronym,
+resolves "that document" - and the quote carries none of that. The
+surrounding record does, and with it 38 of 45 good claims entail while
+11 of 12 mutated contradictions are still caught. That quarter is the
+observed warrant gap of the corpus: a reader shown only the quote is
+shown the licence for about one claim in four.
+
+Reading the verdicts:
+
+- `entails` / `quote` - the strong case; the quote alone carries the claim.
+- `entails` / `window` - the weaker case; the quote does not carry the
+  claim on its own, the record around it does. Report the two entailed
+  fractions separately, never averaged.
+- `neutral` - not warranted even by the surrounding record.
+- `contradicts` - the quote (or, with `premise: window`, the record)
+  denies the claim.
+
+Review order: `contradicts` by score descending, `neutral` by score
+descending, `entails`/`window` by score ascending, `entails`/`quote` by
+score ascending, not assessed last. `score` is the probability of the
+label given, so a `contradicts` at 0.9 is a confident contradiction.
+
+Known weak spots of the classifier: unit conversions in the text
+("5'10" against "1.78 metres"; knots against km/h) and redaction tokens
+in the quote both read as contradiction or neutral more often than they
+should. Stage one uses the base checkpoint above; stage two the large
+sibling `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli`.
 
 ## Round-tripping
 
