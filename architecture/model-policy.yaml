@@ -456,10 +456,9 @@ stages:
       can catch it.'
     output: published_prose
     output_note: The claim text is a sentence the model writes in our words - "David Fravor was a United States Navy pilot
-      for 18 years" is ours, not the source's - and it appears on every page built from that claim.
-    deny_watermarking:
-      - watermarks
-      - unknown
+      for 18 years" is ours, not the source's - and it appears on every page built from that claim. Decision 2026-09-02 (Mark): extraction stays
+      on Claude via the subscription. The watermark bar applies to reader-facing and reproduction stages (assemble,
+      translate, ingest), not to a one-sentence claim whose verbatim quote sits beside it.
   - id: assimilate
     purpose: Match, merge and score entities across digests.
     uses_model: true
@@ -474,9 +473,6 @@ stages:
     output_note: Mostly a same-or-different decision, which is never published. But the surviving canonical name becomes a
       page title, so a small amount of model wording does reach readers. Treated as published prose because a page title is
       quoted and indexed like any other text.
-    deny_watermarking:
-      - watermarks
-      - unknown
   - id: consolidate
     purpose: Merge entities that are the same thing.
     uses_model: true
@@ -490,9 +486,6 @@ stages:
     output: published_label
     output_note: 'As assimilate: the decision is internal, the surviving name is public. Treated as published prose because
       a page title is quoted and indexed like any other text.'
-    deny_watermarking:
-      - watermarks
-      - unknown
   - id: corroborate
     purpose: Judge whether two similar claims corroborate each other.
     uses_model: true
@@ -593,9 +586,6 @@ stages:
     output: published_label
     output_note: Chapter titles and headings, which are shown on record pages. Treated as published prose because a page title
       is quoted and indexed like any other text.
-    deny_watermarking:
-      - watermarks
-      - unknown
   - id: check
     purpose: Test whether each claim is warranted by its quote, or by the record around it.
     uses_model: true
