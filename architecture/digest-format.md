@@ -227,6 +227,8 @@ ai_usage:
     tokens:
       input: 208331
       output: 39436
+    route: cli               # cli | api | openrouter | opencode; `mixed` if a run crossed routes
+    effort: low              # CLI route only: the resolved ANOMALICA_CLI_EFFORT (low | medium | high | xhigh | max)
   - stage: transcribe        # LOCAL (gpu/cpu) stage: wall-time, no tokens
     model: whisperx-large-v3
     duration_s: 412.7
@@ -257,8 +259,13 @@ dev layer. Nothing is lost by deriving: `extracted_at` already dates the
 run, so which price era applied stays recoverable without a stored basis.
 
 The closed contract is therefore `stage`, `model`, `model_version?`,
-`tokens{input, output}` for AI stages and `stage`, `model`, `duration_s`
-for local ones. A producer builds an entry explicitly from those fields
+`tokens{input, output}`, `route?`, `effort?` for AI stages and `stage`,
+`model`, `duration_s` for local ones. `route` and `effort` say how the
+tokens were spent: every extraction before 2026-09-02 ran on the
+subscription CLI at effort `low` without the artefact recording it, and
+those entries are stamped `effort: low` retrospectively (except the
+effort-medium variants of 2026-09-02); an entry without `effort` on the
+CLI route is one the stamping did not reach. A producer builds an entry explicitly from those fields
 rather than forwarding an SDK usage object minus a few keys: an
 unspecified block accepts anything, which is exactly how a cost field
 crept in, and a closed list means the next SDK field cannot drift into an
