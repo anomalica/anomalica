@@ -235,6 +235,16 @@ watermarking_meanings:
   watermarks: The provider puts a hidden signal in the text it generates, so it can later be identified as machine-written.
   clean: We looked and found no text watermarking on the date shown. What we checked is recorded against each provider.
   unknown: We could not establish it either way. Treated the same as watermarking.
+  moritzlaurer:
+    state: clean
+    confidence: high
+    open_weights: true
+    checked: '2026-09-02'
+    evidence: 'Open-weight classifier checkpoints (MIT licence) published on Hugging Face by an individual researcher and
+      run on our own hardware. A classifier emits a label and a probability, not text, so there is no generated text to watermark;
+      and open weights run locally cannot carry a provider-side sampling watermark in any case.'
+    sources:
+      - https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli
 deny:
   - pattern: google/*
     reason: Refused everywhere, not only for writing. The watermarking table records the evidence and the date it was checked.
@@ -370,6 +380,44 @@ models:
     used_for: []
     tested: false
     context: 1000000
+  - id: MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli
+    tier: light
+    provider: moritzlaurer
+    context: 512
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: A 184-million-parameter natural-language-inference classifier run on our own machine. It writes nothing; it
+      labels a premise and a hypothesis as entails, neutral or contradicts. Stage one of the per-claim entailment check, the
+      quote against the claim. Validated on 50 hand-labelled claims and 12 planted contradictions (2026-09-02).
+    used_for:
+      - check
+    tested: true
+  - id: MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli
+    tier: middle
+    provider: moritzlaurer
+    context: 512
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: The larger sibling, used only for stage two of the entailment check, where a claim the quote alone leaves neutral
+      is re-checked against the record text around the quote.
+    used_for:
+      - check
+    tested: true
+  - id: Qwen/Qwen3-Reranker-0.6B
+    tier: light
+    provider: qwen
+    context: 32000
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: A 0.6-billion-parameter cross-encoder run on our own machine. It scores whether two candidate nodes name the
+      same real-world entity and writes nothing. Ranks the merge-candidate queue the workbench shows a reviewer. Under trial
+      against the human merge decisions in the curation repo (2026-09-02).
+    used_for:
+      - rerank
+    tested: false
 stages:
   - id: ingest
     purpose: Extract text faithfully from a source document.
@@ -543,6 +591,31 @@ stages:
     deny_watermarking:
       - watermarks
       - unknown
+  - id: check
+    purpose: Test whether each claim is warranted by its quote, or by the record around it.
+    uses_model: true
+    enforced_by: digester
+    priority:
+      - MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli
+      - MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli
+    deny: []
+    rationale: A classifier, not a writer. It emits one of three labels and a probability per claim, on our own machine at
+      no cost, as the last step of digest and as a backfill over existing digests. The verdict is stored in the digest and
+      shown to reviewers; it never removes or rewords a claim. Measured 2026-09-02 on our own claims, the quote alone warrants
+      about a quarter of good claims; the surrounding record warrants most of the rest.
+    output: internal
+    output_note: A label per claim, never prose.
+  - id: rerank
+    purpose: Rank candidate node merges for human review.
+    uses_model: true
+    enforced_by: assimilator
+    priority:
+      - Qwen/Qwen3-Reranker-0.6B
+    deny: []
+    rationale: Scores each pair of candidate nodes on whether they name the same entity, so the review queue shows real duplicates
+      first. Nothing merges without a human, and the model writes nothing.
+    output: internal
+    output_note: A score per candidate pair, never prose.
 deny_watermarking_note: 'Reader-facing stages refuse a model by its provider watermarking state, not by a list of provider
   names. The list of banned providers is worked out from the watermarking table above every time, so a provider added there
   is enforced immediately and a state that changes takes effect without anyone editing a stage. A name list would have to
