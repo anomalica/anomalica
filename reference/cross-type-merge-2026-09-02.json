@@ -1,0 +1,178 @@
+{
+  "schema": "anomalica/duplicate-merge/1",
+  "executed_at": "2026-09-02T02:59:50Z",
+  "by": "operator/anomalica-curation",
+  "why": "Cross-type same-name pairs. node-types.md sends these to adjudication on claim content, never automatic merge; each pair here was read. The Apollo missions: the decision tree asks 'named goal-aimed effort with a sponsor and temporal scope' before 'single date', the corpus files Apollo 1-18 as projects, and three Apollo pages are published under /projects/, so the project node survives and the event fragments fold in. SETI: neither node names a specific programme; both hold claims about the endeavour as a whole, so the topic survives. Two of these pairs (Apollo 14, SETI) had both sides proposed for a page and, sharing one brief slug, alternated the scheduler's synthesise lane forever.",
+  "merges": [
+    {
+      "survivor": {
+        "id": "86002941-4b26-48e5-8629-0d332b938ca9",
+        "name": "Apollo 11",
+        "node_type": "project",
+        "refs_before": 89,
+        "refs_after": 89
+      },
+      "victims": [
+        {
+          "id": "351b4ef1-a61b-4091-a5ff-0c3e7c03ff2b",
+          "name": "Apollo 11",
+          "node_type": "event",
+          "refs": 0
+        }
+      ],
+      "merge_id": "01ff6c2b-0cc9-45bf-a045-c6f2ed6ad98f",
+      "merged": 1
+    },
+    {
+      "survivor": {
+        "id": "663c59e3-0b99-4577-b723-d5d1337aa119",
+        "name": "Apollo 12",
+        "node_type": "project",
+        "refs_before": 34,
+        "refs_after": 35
+      },
+      "victims": [
+        {
+          "id": "330b2d06-b9d6-4813-9f54-9f7f5d62d999",
+          "name": "Apollo 12",
+          "node_type": "event",
+          "refs": 1
+        }
+      ],
+      "merge_id": "2d875f13-45bf-4743-8014-67ed1407faf7",
+      "merged": 1
+    },
+    {
+      "survivor": {
+        "id": "34552508-15df-4575-b1ee-16f20c026e18",
+        "name": "Apollo 13",
+        "node_type": "project",
+        "refs_before": 3,
+        "refs_after": 4
+      },
+      "victims": [
+        {
+          "id": "b2afd39f-ed8c-402b-9431-3e8a85136d2e",
+          "name": "Apollo 13",
+          "node_type": "event",
+          "refs": 1
+        }
+      ],
+      "merge_id": "0c2ec204-6369-4c6d-9b98-d5375107c316",
+      "merged": 1
+    },
+    {
+      "survivor": {
+        "id": "7efff432-778d-4597-9fd7-0c9a141e8e2b",
+        "name": "Apollo 14",
+        "node_type": "project",
+        "refs_before": 31,
+        "refs_after": 70
+      },
+      "victims": [
+        {
+          "id": "d538b2d3-df5e-4278-8b99-f4eb3d3b1921",
+          "name": "Apollo 14",
+          "node_type": "event",
+          "refs": 34
+        },
+        {
+          "id": "47ccf73c-3603-4a0b-89d1-b77081be6aea",
+          "name": "Apollo 14 lunar landing mission",
+          "node_type": "event",
+          "refs": 5
+        },
+        {
+          "id": "685367bb-a13b-42f9-b706-613e8517e1ee",
+          "name": "Apollo 14 landing, 1971",
+          "node_type": "event",
+          "refs": 2
+        },
+        {
+          "id": "854679be-3e61-4ddd-a3d0-6a8dce2bf8a5",
+          "name": "Apollo 14 Mission",
+          "node_type": "event",
+          "refs": 0
+        }
+      ],
+      "merge_id": "e3c5ce88-72e7-42d9-b695-542ac842773e",
+      "merged": 4
+    },
+    {
+      "survivor": {
+        "id": "f7c95e10-c632-4ab2-bd6c-19102858c5db",
+        "name": "Apollo 15",
+        "node_type": "project",
+        "refs_before": 15,
+        "refs_after": 16
+      },
+      "victims": [
+        {
+          "id": "daa9dcd8-0452-4d9b-8e9a-1955a81193ea",
+          "name": "Apollo 15",
+          "node_type": "event",
+          "refs": 1
+        }
+      ],
+      "merge_id": "9b079e9d-c7c3-411f-9eb6-fc9cfb24ec93",
+      "merged": 1
+    },
+    {
+      "survivor": {
+        "id": "bb31f7ea-899c-4373-872c-8c326d325928",
+        "name": "Apollo 16",
+        "node_type": "project",
+        "refs_before": 12,
+        "refs_after": 15
+      },
+      "victims": [
+        {
+          "id": "15bf5f37-ee05-4834-a203-1a7bf46898fd",
+          "name": "Apollo 16",
+          "node_type": "event",
+          "refs": 3
+        }
+      ],
+      "merge_id": "4db7f24f-89fd-4fe1-8ff5-a7966de21e3e",
+      "merged": 1
+    },
+    {
+      "survivor": {
+        "id": "c76ec8f2-cf2e-4693-b24c-b3ce9c5879d0",
+        "name": "Apollo 17",
+        "node_type": "project",
+        "refs_before": 1,
+        "refs_after": 79
+      },
+      "victims": [
+        {
+          "id": "8671e6b7-b36f-418a-a532-8a67c5f91010",
+          "name": "Apollo 17",
+          "node_type": "event",
+          "refs": 78
+        }
+      ],
+      "merge_id": "d6fbd4c6-4a18-454d-b793-658830b002ca",
+      "merged": 1
+    },
+    {
+      "survivor": {
+        "id": "782e22a7-0df0-4c32-86ac-095f5ac2ec32",
+        "name": "Search for Extraterrestrial Intelligence (SETI)",
+        "node_type": "topic",
+        "refs_before": 12,
+        "refs_after": 18
+      },
+      "victims": [
+        {
+          "id": "d94477e4-4d22-4eae-bb58-06988f024414",
+          "name": "Search for Extraterrestrial Intelligence (SETI)",
+          "node_type": "project",
+          "refs": 7
+        }
+      ],
+      "merge_id": "f7d32c22-679a-40ab-b47f-264a4460f9c4",
+      "merged": 1
+    }
+  ]
+}
