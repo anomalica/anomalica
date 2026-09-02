@@ -1,5 +1,5 @@
 schema: anomalica/model-policy/1
-updated: '2026-09-02'
+updated: '2026-09-03'
 watermarking:
   anthropic:
     state: watermarks
@@ -277,6 +277,7 @@ models:
       - assimilate
       - consolidate
       - corroborate
+      - relate
       - verify
       - variant
     tested: true
@@ -294,6 +295,7 @@ models:
       - assimilate
       - consolidate
       - corroborate
+      - relate
       - variant
       - housekeep-research
     tested: true
@@ -496,6 +498,22 @@ stages:
       model is the right one.
     output: internal
     output_note: A yes-or-no verdict over two claims. Never published in any form.
+  - id: relate
+    purpose: Judge whether two records refer to the same specific subject (an incident, operation, programme or document),
+      producing possibly-related record pairs for human review. Experimental.
+    uses_model: true
+    enforced_by: assimilator
+    priority:
+      - claude-haiku-4-5
+      - claude-sonnet-5
+    deny: []
+    rationale: 'The corroborate pass answers "same fact" at embedding similarity 0.90 and above. This question is "same specific
+      subject" at 0.65-0.75, which only a model reading both claim lists can answer. Haiku with a strict prompt gave zero
+      false positives on nine test pairs and found three real links similarity had missed (2026-09-02). Experiment cleared
+      by Mark 2026-09-03.'
+    output: internal
+    output_note: A verdict and a short phrase naming the shared subject, never reader-facing. The review queue is a workbench
+      surface; nothing merges or links without a person.
   - id: verify
     purpose: Check that assertions in an assembled article trace to graph sources.
     uses_model: true

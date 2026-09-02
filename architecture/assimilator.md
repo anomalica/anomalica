@@ -33,6 +33,8 @@ Evidence scores are algorithmic, not editorial - no human assigns a score. Input
 ### Corroborate (AI-assisted)
 `corroborate` is the one AI-assisted graph pass wired today: cross-record same-fact verification (does a claim in record A assert the same fact as a claim in record B?). A related AI-assisted claim de-duplication function, `deduplicate_claims`, exists in the `consolidate` module but is not yet wired to a command.
 
+`relate` (experimental) asks a different question: not "same fact" but "same specific subject" - whether two records refer to the same incident, operation, programme or document, which claim similarity alone does not surface (such pairs sit at embedding similarity 0.65-0.75, below the 0.90 the corroborate pass accepts). It shortlists record pairs by claim-neighbour hits, sends both records' claim lists to a model chosen via the model policy's `relate` stage, and writes proposals - a verdict and a short phrase naming the shared subject - to a `record_relations` table in `knowledge.db` (derived, rebuildable) for human confirmation in the workbench. It does not merge, link claims, or feed scoring. Evidence: the assimilator's `reports/cross-source-linking-2026-09-02/README.md`.
+
 ### Embeddings and hybrid search
 Generates vector embeddings for nodes and claims and provides hybrid (vector plus keyword) search over the graph. (Modules: `embeddings`, `search`; commands: `embed`, `search`.) Embeddings are stored separately from the core data.
 
