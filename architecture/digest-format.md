@@ -26,10 +26,10 @@ understand.
 
 ```
 digests/
-  records/
-    2020-04-27-web-statement-by-the-department-of-defense-on-the-release-of.yaml
-    2024-08-19-ebook-imminent-inside-the-pentagon-s-hunt-for-ufos.yaml
-    ...
+  2020-04-27-web-statement-by-the-department-of-defense-on-the-release-of.yaml
+  2024-08-19-ebook-imminent-inside-the-pentagon-s-hunt-for-ufos.yaml
+  ...
+  variants/
 ```
 
 One YAML file per record. Filenames mirror the friendly filenames in
@@ -533,7 +533,7 @@ Readers must:
 
 Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md); not yet built. Today the relationship is 1:1 (one model, one digest, `model: <alias>`). The planned direction:
 
-- **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored at `digests/variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml` (a top-level `variants/` tree, NOT under `records/`, because the assimilator globs `records/` recursively and would otherwise import them). The variant key carries the model AND the prompt hash ([0039 amendment 2026-07-04](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)), so a prompt tune on the same model never overwrites the prior output. This layout is built; the variants store now.
+- **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored at `digests/variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml` (a `variants/` subtree beside the canonical digests at the root of `digests/`; the assimilator globs `**/*.yaml` there and drops anything under `variants/`, so they are never imported). The variant key carries the model AND the prompt hash ([0039 amendment 2026-07-04](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)), so a prompt tune on the same model never overwrites the prior output. This layout is built; the variants store now.
 - **One canonical** at the unchanged `digests/{friendly-name}.yaml` - a SELECTED per-model digest, not a merge: the selector picks one whole variant as the canonical (no claim-clustering, no dedup-across-variants, no best-phrasing synthesis). Until the selector lands the canonical is latest-written by a production run. It is the only digest the assimilator imports; the variants are inert.
 - **Schema `anomalica/digest/2`** (lands with the selector): `model` carries the versioned id; the canonical gains `selected_from` (the candidate variants and the winner) - its presence distinguishes a canonical from a variant.
 - **Independence**: multiple models on one source are alternatives, not corroboration - zero added independence. The evidence model counts independence by provenance-root, not claim-count (decision 0039).

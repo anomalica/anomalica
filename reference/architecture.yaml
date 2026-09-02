@@ -20,7 +20,7 @@ nodes:
     desc: "Converts raw sources into structured text records. Per-format handlers: PDF, web, audio/video (transcription via
       whisperx + speaker diarisation), ebook. Runs on the local graphics card."
     output: "One markdown + YAML record per source (to Ingests), plus the original file and the complete raw transcript (to
-      sources/)."
+      records/)."
     contains: "Just code - an open-source tool. The records it produces inherit the source's copyright, but the ingester itself
       is public."
     copyright: "PUBLIC - open-source code."
@@ -51,7 +51,7 @@ nodes:
       like the ingest. Extraction into public claims is what crosses that boundary; the digests onward are public, the pre-digest
       is not."
   archive:
-    kind: "Data store (sources/)"
+    kind: "Data store (records/)"
     zone: "source"
     desc: "Durable archive of the original raw files plus the complete raw AI transcripts (full whisperx + pyannote output,
       confidences and all). Lets a record be re-rendered to a new format without re-running it on the graphics card."
@@ -64,8 +64,8 @@ nodes:
     zone: "source"
     desc: "Off-machine object storage - a cloud storage bucket - holding the source originals so a non-embeddable local file
       can be served to readers and the archive survives loss of the local machine or link-rot at the origin. The originals
-      are pushed here from the sources/ archive, routed by copyright."
-    output: "Originals served to readers; a durable backup of the sources/ archive."
+      are pushed here from the records/ archive, routed by copyright."
+    output: "Originals served to readers; a durable backup of the records/ archive."
     contains: "The original source files - a mix of public-domain and copyrighted material, held in separate zones by status."
     copyright: "Split by status and enforced by the storage zone itself: public-domain and openly-licensed originals sit in
       an open zone (served by a direct URL); copyrighted originals sit in a token-authenticated zone and are only ever handed
@@ -202,7 +202,6 @@ nodes:
     output: "Logo, palette, tokens."
     contains: "Design assets."
     copyright: "PUBLIC."
-
 links:
   ingester:
     - label: "View on GitHub"

@@ -33,7 +33,7 @@ two visible records.
 
 What is NOT the problem: `content_hash` for audio/video is not body-derived. It
 is `hash_file(asset_path)` - the source-asset SHA-256, archived at
-`sources/{content_hash}.{ext}` - and is stable across re-EXTRACTION of identical
+`records/{content_hash}.{ext}` - and is stable across re-EXTRACTION of identical
 bytes. It rotates only across re-DOWNLOAD. A `source_hash` field for these types
 would be byte-identical to `content_hash` and would not give a more stable
 identity. The only identity stable across re-downloads is the LOGICAL source
@@ -87,7 +87,7 @@ has a live root record:
 - the new record's frontmatter carries `supersedes: <old_content_hash>`;
 - the prior record's frontmatter is stamped `superseded_by: <new_content_hash>`,
   the prior file is moved from `store/{hash}.md` to `store/v1/{hash}.md`, and its
-  `records/` symlink is removed.
+  `by-name/` symlink is removed.
 
 The frontmatter flag is the SOURCE OF TRUTH; the `store/v1/` location is a
 derived convenience so a non-recursive `store/*.md` glob naturally excludes
@@ -133,7 +133,7 @@ canonical audio/video output; until then a consumer's dedup (hide
 
 `source_hash` remains web/ebook-only. For audio/video/pdf, `content_hash`
 already IS the source-asset SHA-256 (the archived asset lives at
-`sources/{content_hash}.{ext}`), so it already serves the workbench's
+`records/{content_hash}.{ext}`), so it already serves the workbench's
 source-asset review-identity tier (review-workbench.md, "Possession key"). A
 separate `source_hash` for these types would be byte-identical and is not
 emitted.
@@ -196,7 +196,7 @@ never by re-fetching.** A re-fetch can return different bytes - a page
 changes, a server re-encodes - and would silently convert a
 re-identification into a re-acquisition, giving the record an identity
 that reflects today's fetch rather than the artefact actually held. The
-asset is already archived under `sources/`; hash that.
+asset is already archived under `records/`; hash that.
 
 The one-off migration to source-anchored identity is itself a
 re-identification of every web, ebook, and excerpt record. It is stamped

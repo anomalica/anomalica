@@ -256,7 +256,7 @@ Taking the `Date` header as `published_date` is a correction, not a refinement. 
 
 ### The archived original
 
-Every record whose source was archived carries `archived_ext` - the bare extension of that archived object, which lives at `sources/{content_hash}.{archived_ext}`. That pair is the whole address: consumers build it to fetch or play the source (the workbench serving a reviewer the audio behind a transcript, for instance).
+Every record whose source was archived carries `archived_ext` - the bare extension of that archived object, which lives at `records/{content_hash}.{archived_ext}` (the content delivery network still serves it under its pre-rename `/sources/` prefix - [naming-migration.md](naming-migration.md), step 6). That pair is the whole address: consumers build it to fetch or play the source (the workbench serving a reviewer the audio behind a transcript, for instance).
 
 **The extension is not derivable, and must never be re-derived from `container`.** `codec` and `container` under `processing.source` describe the STREAM; the extension is a property of the FILE. yt-dlp writes `.opus` while reporting `container: ogg`, and a file downloaded as `.ogg` reports an identical stream - so the same metadata legitimately backs both extensions. Before this field existed, 76 of 122 records said `container: ogg` against a `.opus` file on disk, and a container-derived URL 404'd for the majority of the library. There is no glob on the CDN, so a wrong extension is simply a miss. Write the extension down; never infer it.
 
@@ -264,7 +264,7 @@ Every record whose source was archived carries `archived_ext` - the bare extensi
 
 ### The waveform peaks sidecar
 
-An audio or video record may carry a peaks sidecar at `sources/{content_hash}.peaks.json` (schema `anomalica/peaks/1`) - an amplitude envelope of the archived original, computed once at archive time. A reviewer aligning a word's timestamp needs to see the sound's onset; the envelope is what draws that waveform.
+An audio or video record may carry a peaks sidecar at `records/{content_hash}.peaks.json` (schema `anomalica/peaks/1`) - an amplitude envelope of the archived original, computed once at archive time. A reviewer aligning a word's timestamp needs to see the sound's onset; the envelope is what draws that waveform.
 
 ```json
 {"schema": "anomalica/peaks/1", "hex_hash": "5a05136d...",
@@ -279,8 +279,8 @@ One unsigned byte per bin, base64. Each bin is the **maximum** absolute sample i
 
 | Object | Open for |
 |--------|----------|
-| The archived original (`sources/{hash}.{archived_ext}`) | `public_domain`, `open_licence` |
-| Its peaks (`sources/{hash}.peaks.json`) | `public_domain`, `open_licence`, **`publicly_accessible`** |
+| The archived original (`records/{hash}.{archived_ext}`) | `public_domain`, `open_licence` |
+| Its peaks (`records/{hash}.peaks.json`) | `public_domain`, `open_licence`, **`publicly_accessible`** |
 
 So for a `publicly_accessible` source the audio stays gated while its peaks are served openly. The reasoning: peaks are in the same disclosure class as the transcript body, which is already public for those sources - the sources are publicly accessible already, ours are just more accurate transcripts, and an envelope is a weaker derivative still (100 amplitudes per second, no words, cannot reconstruct the audio). Everything outside both lists - `licensed`, `restricted`, unknown, absent - fails closed.
 
@@ -422,7 +422,7 @@ These are DEFAULTS, not licence determinations - a government site can host a co
 
 ### Web record snapshots
 
-For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `sources/` directory. The frontmatter exposes them like this:
+For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `records/` directory. The frontmatter exposes them like this:
 
 ```yaml
 source_hash: sha256:904c041f...   # raw post-render HTML asset
@@ -977,7 +977,7 @@ The list is flat (no nested braces, so the `}}` scan stays safe), with up to thr
 
 Three rules make a link durable:
 
-- **Target by content hash, never by symlink.** The link pins the target's `content_hash` (`store/{hash}.md`), never its `records/` symlink name - archives move symlinks out from under name lookups. The hash records exactly what was linked.
+- **Target by content hash, never by symlink.** The link pins the target's `content_hash` (`store/{hash}.md`), never its `by-name/` symlink name - archives move symlinks out from under name lookups. The hash records exactly what was linked.
 - **Resolve through supersession at render time.** The pinned hash is stable identity; if the target has since been superseded ([Versioning and supersession](#versioning-and-supersession)), resolution follows the chain to the current record so the link still lands. The pinned hash is what was cited; the chain is how it stays reachable.
 - **Anchor by quote, re-derived - the same as a claim.** When an anchor is given it is a verbatim quote from the target, and the precise location within the target (a `HH:MM:SS.d-HH:MM:SS.d` range for a timestamped record, a page or character span for text) is re-derived by aligning that quote against the target - exactly as a claim's `location` is recovered ([digest-format.md](digest-format.md), digester `f4dcab2`), never authored directly. A quote survives the target's re-extraction; a raw offset would not.
 
@@ -1015,7 +1015,7 @@ store/          # hash-named record files (source of truth)
   _pipeline_versions.yaml   # {media_type: current_version} manifest
   v1/                       # superseded records, retired here
     3211a96e...md
-records/        # human-readable symlinks
+by-name/        # human-readable symlinks
   2023-07-26-pdf-fravor-written-statement.md -> ../store/7bf2c20d...md
   2020-09-08-video-lex-fridman-122-david-fravor.md -> ../store/e27169e8...md
 media/          # extracted images, per-record subdirectories
@@ -1167,7 +1167,7 @@ present and the original is ingested, corroboration counts the original ONCE.
 
 ### Store
 
-The `store/` directory contains the actual record files, named by `content_hash`. What `content_hash` hashes per source type, and how it links back to `sources/`, is defined once in the canonical hash chain ([`format-specs.yaml`](../reference/format-specs.yaml), `chain:`) and is not restated here.
+The `store/` directory contains the actual record files, named by `content_hash`. What `content_hash` hashes per source type, and how it links back to `records/`, is defined once in the canonical hash chain ([`format-specs.yaml`](../reference/format-specs.yaml), `chain:`) and is not restated here.
 
 **An ingest's own hash does not name its archived original for every type. Resolve
 through `source_hash` wherever it is present.** Measured across all 257 live ingests
@@ -1295,7 +1295,7 @@ LOGICAL source identity (`provenance.identifiers`, then `provenance.source_url` 
 stable across re-downloads; a per-download `content_hash` is not). The new record
 carries `supersedes: <old_content_hash>`; the prior record is stamped
 `superseded_by: <new_content_hash>`, moved from `store/{hash}.md` to
-`store/v1/{hash}.md`, and its `records/` symlink removed. The frontmatter flag is
+`store/v1/{hash}.md`, and its `by-name/` symlink removed. The frontmatter flag is
 the source of truth - a consumer HIDES any record carrying `superseded_by` (one
 visible record per source); the `store/v1/` location is a derived convenience so
 a non-recursive `store/*.md` glob excludes retired records. Supersession is
@@ -1338,9 +1338,9 @@ One check before collapsing: no source may hold a `.md` and a `.v2.md` at the sa
 hash, or the rename collides. See
 [0040](../decisions/0040-pipeline-versioning-and-supersession.md).
 
-### Records
+### By-name
 
-The `records/` directory contains symlinks with human-readable names, pointing into `store/`. The naming convention is:
+The `by-name/` directory contains symlinks with human-readable names, pointing into `store/`. The naming convention is:
 
 ```
 {date}-{source_type}-{slugified-title}.md

@@ -52,9 +52,9 @@ This is also what reconciliation (above) IS for the multi-model case: the model-
 The live contract is one digest at `digests/{friendly-name}.yaml`, recursively globbed by the assimilator (`records.rglob("*.yaml")`) and joined to the ingest by the workbench on the friendly name. To add variants without disturbing that:
 
 - **Canonical: `digests/{friendly-name}.yaml` - UNCHANGED.** Every downstream consumer (the assimilator glob, the workbench join, site references) keeps working byte-for-byte; the canonical IS "the digest" downstream.
-- **Model-variants: `digests/variants/{friendly-name}/{model-id}-{version}.yaml`** - a top-level `variants/` tree, NOT under `records/`. This is deliberate: the assimilator globs `records/` RECURSIVELY (rglob, so a slashed record title can nest), so a variants subdirectory placed under `records/` would be silently imported. Keeping variants outside `records/` means the import never sees them, satisfying "only the canonical is assimilated" with zero change to the importer.
+- **Model-variants: `digests/variants/{friendly-name}/{model-id}-{version}.yaml`** - a `variants/` subtree beside the canonical digests. (Amended 2026-08-13: the canonical digests originally lived under `digests/records/` and the variants were kept outside that folder so the importer's recursive glob never saw them. The naming migration moved the canonical digests to the root of `digests/`, so the assimilator now globs `**/*.yaml` there and drops anything under `variants/` explicitly, in `digest_files.py`. "Only the canonical is assimilated" holds by that exclusion rather than by directory placement.)
 
-This rejects two parts of the first-cut proposal: the `.digest` extension (the workbench join, the round-trip tests, and every consumer expect `.yaml`; a rename is a gratuitous break) and a flat `{name}.{model}.yaml` alongside the canonical (it would pollute the `records/*.yaml` glob). The version-in-the-filename requirement is met by the `{model-id}-{version}.yaml` variant names; the per-record `variants/{friendly-name}/` directory follows the existing `{stem}.compare/{model}.{ext}` lineage of the model-comparison tooling.
+This rejects two parts of the first-cut proposal: the `.digest` extension (the workbench join, the round-trip tests, and every consumer expect `.yaml`; a rename is a gratuitous break) and a flat `{name}.{model}.yaml` alongside the canonical (it would pollute the canonical `*.yaml` glob). The version-in-the-filename requirement is met by the `{model-id}-{version}.yaml` variant names; the per-record `variants/{friendly-name}/` directory follows the existing `{stem}.compare/{model}.{ext}` lineage of the model-comparison tooling.
 
 ## Schema impact
 
@@ -116,7 +116,7 @@ an 8-char digest of the passes' combined prompt sha256s. (model X, prompt v2)
 and (model X, prompt v3) coexist as comparable variants; an identical
 model+prompt run overwrites only its own file (correct redo semantics).
 
-Canonical fill, until reconciliation lands: `records/{friendly-name}.yaml` is
+Canonical fill, until reconciliation lands: `digests/{friendly-name}.yaml` is
 latest-written by a PRODUCTION run. A run with a prompt override in effect (any
 `prompts` entry at `version: override`) writes its variant only and never
 touches the canonical, so tuning-loop experiments cannot leak into the graph.

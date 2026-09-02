@@ -47,11 +47,11 @@ the filesystem at all:
 ```python
 # ingests/by-name/ holds one symlink per live record, none pointing into an
 # archive tier. The live set by construction, not by directory convention.
-records_dir = ingests_dir / "records"
-return sorted(p for p in records_dir.glob("*.md") if p.resolve().is_file())
+by_name_dir = ingests_dir / "by-name"
+return sorted(p for p in by_name_dir.glob("*.md") if p.resolve().is_file())
 ```
 
-`records/` is maintained as the live set. A tier added under `store/` next month
+`by-name/` is maintained as the live set. A tier added under `store/` next month
 cannot break a scan that reads it, and no one has to remember the archive
 directories.
 
@@ -71,7 +71,7 @@ directories.
 
 ## The asserting field: a frontmatter hash that names another record
 
-`records/2007-06-20-web-project-serpo.md` is a legacy record predating the
+`by-name/2007-06-20-web-project-serpo.md` is a legacy record predating the
 store-and-symlink layout. Its frontmatter declares
 `content_hash: a480652e...` - which is a **different record entirely**, an
 unrelated interview. Hashing the two bodies confirms they differ (16,846 bytes

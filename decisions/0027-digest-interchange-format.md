@@ -77,7 +77,10 @@ Key shape choices, with the rationale:
   Future breaking changes bump the integer; consumers refuse what they
   do not understand. Mirrors the record format on the ingester side.
 
-- **Folder named `records/`, file extension `.yaml` only.** Avoids the
+- **File extension `.yaml` only, one file per ingest at the root of `digests/`.**
+  (Amended 2026-08-13: the folder was originally `digests/records/`; the naming
+  migration removed it and moved the digests up one level -
+  [naming-migration.md](../architecture/naming-migration.md).) Avoids the
   repetition of `digests/extracts/...digest.yaml`. The
   parallel structure with `ingests/by-name/{name}.md` makes
   the workbench join obvious: same filename in two repositories,
