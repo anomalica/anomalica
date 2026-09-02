@@ -456,9 +456,9 @@ stages:
       can catch it.'
     output: published_prose
     output_note: The claim text is a sentence the model writes in our words - "David Fravor was a United States Navy pilot
-      for 18 years" is ours, not the source's - and it appears on every page built from that claim. Decision 2026-09-02 (Mark): extraction stays
-      on Claude via the subscription. The watermark bar applies to reader-facing and reproduction stages (assemble,
-      translate, ingest), not to a one-sentence claim whose verbatim quote sits beside it.
+      for 18 years" is ours, not the source's - and it appears on every page built from that claim. Decision 2026-09-02 (Mark)
+      - extraction stays on Claude via the subscription. The watermark bar applies to reader-facing and reproduction stages
+      (assemble, translate, ingest), not to a one-sentence claim whose verbatim quote sits beside it.
   - id: assimilate
     purpose: Match, merge and score entities across digests.
     uses_model: true
