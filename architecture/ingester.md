@@ -56,6 +56,14 @@ Each output record contains:
 
 For audio/video specifically, the frontmatter includes a speaker roster and the content uses speaker turn annotations with timestamps. For documents, page boundary annotations mark where each page begins.
 
+### Re-extraction: refresh in place
+
+A record's extraction generation is `processing.pipeline_version`, a per-media-type integer the ingester bumps when extraction output changes enough to warrant re-processing existing records ([decision 0040](../decisions/0040-pipeline-versioning-and-supersession.md)). A record declaring a lower generation than the current one for its type is stale.
+
+Re-processing an archived source goes through the normal entry point - `./ingest --force --source-url URL records/{hash}.{ext}` - which is what the scheduler's reprocess lane drives. For a web page whose archived bytes already have a live record, the handler refreshes that record **in place** under its existing identity rather than minting a second record: the frontmatter and stored media carry over, a reviewer's `irrelevant` regions are re-placed around the same prose, and a reviewed record gains a `review_carryover` stamp so the workbench asks for a look rather than showing it as reviewed. A refresh that would lose prose refuses and fails the run: no loss at all is tolerated on a reviewed record, and only a footer's worth on an unreviewed one. Nobody runs a tool to bring the corpus up to date; the scheduler schedules stale records, and the run either refreshes or refuses visibly.
+
+Web extraction is generation 3: inline emphasis is unwrapped from the page before extraction, so records carry no bold or italic at all. Generation 2 bodies carried trafilatura's mangled emphasis markers and, around every bold or italic span, split paragraphs, re-ordered fragments and dropped clauses.
+
 ### Image extraction
 
 Images embedded in the source are extracted alongside the record. EPUBs are supported today; PDF figure extraction and video keyframes will follow.
@@ -63,6 +71,8 @@ Images embedded in the source are extracted alongside the record. EPUBs are supp
 Each image is content-hashed and saved to `media/{record_hash}/{img_hash}.{ext}` in the ingests repository. The body annotation references the image by bare filename (`<!-- image: file: abc123.png alt: "..." -->`); the consumer resolves the full path from the record's location. See the [record format specification](ingest-format.md) for the exact annotation form and rationale.
 
 Alt text from the source (`<img alt="">`) is preserved when present. A factual `description` is added later by a vision pass or human review, not at ingestion time.
+
+For web pages the text extractor drops some content images - above all an article's lead picture, which sits before any text and usually has neither alt nor caption. The handler harvests content-region images from the page itself and puts each dropped one back after the text it followed; a lead picture heads the body. An image whose preceding text the extractor rejected (a donate banner's, a related-posts strip's) is rejected with it, and icons, avatars and tracking pixels are filtered by their declared size.
 
 ## Tooling
 
