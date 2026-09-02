@@ -476,8 +476,8 @@ stages:
     uses_model: true
     enforced_by: assimilator
     priority:
-      - claude-sonnet-5
       - claude-haiku-4-5
+      - claude-sonnet-5
     deny: []
     rationale: Comparing two entity records and deciding if they describe one thing. Short judgements, so the cheaper model
       is usually enough.
