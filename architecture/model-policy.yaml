@@ -227,14 +227,6 @@ watermarking:
       the law and is out of scope here anyway), and whether some future Qwen serving path adds one. Also note the flagship
       top-end model (Qwen3.x-Max) is served API-only under a bespoke licence rather than Apache 2.0, so "open weights" holds
       for the downloadable Qwen3 line, not literally every Qwen model.'
-aliases:
-  opus: claude-opus-5
-  sonnet: claude-sonnet-5
-  haiku: claude-haiku-4-5
-watermarking_meanings:
-  watermarks: The provider puts a hidden signal in the text it generates, so it can later be identified as machine-written.
-  clean: We looked and found no text watermarking on the date shown. What we checked is recorded against each provider.
-  unknown: We could not establish it either way. Treated the same as watermarking.
   moritzlaurer:
     state: clean
     confidence: high
@@ -245,6 +237,14 @@ watermarking_meanings:
       and open weights run locally cannot carry a provider-side sampling watermark in any case.'
     sources:
       - https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli
+aliases:
+  opus: claude-opus-5
+  sonnet: claude-sonnet-5
+  haiku: claude-haiku-4-5
+watermarking_meanings:
+  watermarks: The provider puts a hidden signal in the text it generates, so it can later be identified as machine-written.
+  clean: We looked and found no text watermarking on the date shown. What we checked is recorded against each provider.
+  unknown: We could not establish it either way. Treated the same as watermarking.
 deny:
   - pattern: google/*
     reason: Refused everywhere, not only for writing. The watermarking table records the evidence and the date it was checked.
