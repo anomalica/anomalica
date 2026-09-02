@@ -1,0 +1,19 @@
+{
+  "schema": "anomalica/alias-audit/6",
+  "generated_at": "2026-09-02T04:00:00Z",
+  "scope": "one alias, found from a published page whose claims vanished",
+  "method": "The scheduler's rebuild survey flagged /organisations/australian-department-of-defence: node live, brief_total 78, current_total 0. All 78 claim ids in the page's built_from are absent from the claims table (re-imported under new ids after re-digestion), no claim in the graph mentions the Australian department, and the node's only alias was 'Department of Defense' - the United States body, which holds 311 claims on its own node. The alias is how the matcher routed United States material onto an Australian node; the page was built from that routing.",
+  "removal": [
+    {
+      "node_id": "b515119c-8877-4000-bc20-ba005f50d1db",
+      "node": "Australian Department of Defence",
+      "node_type": "organisation",
+      "alias": "Department of Defense",
+      "why": "Names a different organisation (United States Department of Defense (DoD), 99f08514). Left in place it re-attracts that body's claims on the next import."
+    }
+  ],
+  "page": {
+    "path": "content/pages/organisations/australian-department-of-defence.en.md",
+    "recommendation": "unpublish - the material was the United States department's, and that page exists at /organisations/united-states-department-of-defense-dod; the node itself holds no claims and is not proposed"
+  }
+}
