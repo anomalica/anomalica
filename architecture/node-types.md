@@ -260,25 +260,29 @@ Topics carry no truth status. Whether anyone believes a topic is expressed throu
 
 ## Page-worthiness: which node types earn a page
 
-Existing in the graph and earning a published page are different thresholds. Extraction sweeps every node a claim references; a page is a much higher bar. The v2 article-proposals gate - the assimilator decides which nodes earn a page - replaces a pure claim-count floor, which produced ~350 junk proposals (an object cited once, a place mentioned in passing, a person quoted once), because a raw count cannot tell "subject of the corpus" from "mentioned in it". Two things fix it: node **type** and source **independence**.
+Existing in the graph and earning a published page are different thresholds. Extraction sweeps every node a claim references; a page is a much higher bar. The article-proposals gate - the assimilator decides which nodes earn a page - replaces a pure claim-count floor, which produced ~350 junk proposals (an object cited once, a place mentioned in passing, a person quoted once), because a raw count cannot tell "subject of the corpus" from "mentioned in it". Four things decide it: node **type**, source **count**, source **spread**, and whether the corpus says anything **about** the node.
 
-**This is the editorial call (with Mark); the default below is what folds into the v2 proposals spec, pending sign-off on the overall v2 shape.**
+**Calibrated 2026-09-02 against the 816-proposal graph** (Mark: stricter minimums; no page for a name the corpus only drops - "Chad", "Chris", "Fox News", "Blink-182" - nor for one written from a single book). The floors below cut 816 proposals to 256. Live in `assimilator/page_gate.py`, every number env-overridable for recalibration.
 
 **1. Type tier.** Two tiers; no type is permanently barred (any type can be a central subject, and `/projects/`, `/documents/`, `/topics/` sections already exist):
 
 - **Page-worthy at a modest floor:** person, organisation, project, event, topic - usually subjects when they recur.
 - **High-bar (central-subject only):** place, object, document - usually mentioned in passing; only the central one earns a page (the central craft, the central site, the central report), never a passing reference.
 
-**2. The floor is distinct independent sources, not raw claim count.** A node earns a page when *independent* sources substantively cover it - not when one source mentions it many times. This is the same independence rule fusion uses: count by provenance-root, not by claim count ([decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)). Without it, a per-type gate just relocates the broken count. Starting defaults, to calibrate against the 350-junk corpus (re-run the gate, tune until junk dies and real subjects survive):
+**2. The floor is distinct sources, not raw claim count.** A "source" is a distinct *work* (records of one book re-ingested count once). True provenance-root independence ([decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)) is carried on every proposal as `independent_source_count` and reported alongside.
 
-| Tier | Types | Floor (starting default) |
-|------|-------|--------------------------|
-| Page-worthy | person, organisation, project, event, topic | >= 3 claims referencing the node, from >= 2 distinct independent sources (provenance-roots) |
-| High-bar | place, object, document | >= 6 claims referencing the node, from >= 3 distinct independent sources |
+**3. Spread.** The second-best work must contribute at least 3 claims, in both tiers. A source count cannot tell "ten claims from two books" from "one book plus a passing mention", and the second shape - a page that is in substance a summary of one (often copyrighted) work with a fig-leaf second source - was 53% of the proposal set when measured (2026-07-29) and all of it under six claims.
 
-These kill the named junk: a person quoted once fails the two-source floor; an object or place mentioned in passing fails the higher high-bar floor.
+**4. Subject.** For a person, organisation or object, at least 3 claims must be *about* the node - it opens the sentence as grammatical subject (claim text names the actor first; a leading dated clause and a rank are allowed: "At midday on 8 July 1947, Colonel William Blanchard ordered ...") - rather than merely mention it. This is what separates a subject from an attribute: Blink-182 was proposed at 13 claims from 4 sources without one claim about the band, every claim being about its guitarist; the same shape produced Fox News, KLAS-TV, the White House, MUFON. Places, events, topics, projects and documents are measured but not gated - claims about them are phrased around them ("during the encounter", "over Socorro") and the test would reject the central ones. The count is reported on every proposal (`subject_claims`), so the residual editorial calls (which places and topics deserve a page) are made against it.
 
-**Refinement to layer in later:** weight claims where the node is the *subject* over claims that merely *mention* it, so a focused-on node outranks a name-dropped one. This matters most for topics, which exist just by being referenced (general relativity is cited throughout the corpus but is background, not a subject) - subject-weighting keeps background topics off the page list even when widely referenced. It needs claim references to distinguish primary from incidental; a later refinement, not the starting default.
+**5. A person with no family name is never a page.** "Chris", "Ray", "Mrs. M." identify somebody only within the record that uses them (see the record-scoped rule in the matcher, `assimilator/matching.py`); a page about "Chris" is not a subject anyone can look up.
+
+| Tier | Types | Floor |
+|------|-------|-------|
+| Page-worthy | person, organisation, project, event, topic | >= 8 claims referencing the node, from >= 3 distinct works, second work >= 3 claims; person/organisation also >= 3 claims about the node |
+| High-bar | place, object, document | >= 12 claims referencing the node, from >= 4 distinct works, second work >= 3 claims; object also >= 3 claims about the node |
+
+**What the numbers do not decide.** Places: a city that recurs across many works (Paris, Sydney, Washington) clears the high-bar floor beside a genuine site (Roswell, Socorro, Fatima), and no count separates them - that is the veto ledger's job (`curation/page-vetoes.yaml`), and a page nothing proposes is seeded (`curation/seeded-topics.yaml`). Topics: a topic is rarely a grammatical subject, so a background topic with wide reference (general relativity) still clears the floors; same remedy.
 
 ## Structural types
 
