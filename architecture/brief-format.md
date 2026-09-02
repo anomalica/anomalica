@@ -10,6 +10,14 @@ The v1 field set below is live, grounded against the synthesiser's first-cut bri
 
 A YAML document (`.yaml`) - the same serialisation as the digest interchange (0027), not markdown with frontmatter. Top-level keys carry the page identity, the brief hash, the generated stamp, and the related-node candidates; a `claims` list carries the ordered, selected claims with their provenance. Language-neutral throughout - facts, not prose; one brief feeds all N language articles for its page. The fields below are the locked `anomalica/brief/1` contract; YAML is the serialisation.
 
+## Where a brief lives
+
+`<briefs>/<section>/<slug>.yaml`, where `<section>` is `section_for(page.node_type)` from anomalica-common (`people`, `organisations`, `projects`, `places`, `events`, `objects`, `documents`, `topics`, ...) - the same two halves as the page it feeds, `content/pages/<section>/<slug>.<lang>.md`. A page's identity is the pair, not the slug: the slug is disambiguated only within a node type, so an event and a project of one name (`Apollo 14`) share a slug and do not share a URL. A brief keyed on the slug alone gave those two pages one file, and the scheduler re-emitted whichever node did not own it on every pass (2026-09-02).
+
+A brief **reference** - what a scheduler job or `assembler --brief` names - is therefore `<section>/<slug>`, which resolves as a direct path under either briefs directory. A consumer enumerates briefs with `*/*.yaml`; a file directly in the root is the pre-section layout and is pruned by the synthesiser, never read.
+
+The two directories (internal `~/.local/share/assimilator/briefs`, published `content/briefs`) hold the same layout; `data-model.md` records why they are not copies of each other.
+
 ## Top-level fields
 
 The top-level fields - `schema`, `brief_hash`, `page`, `generated`, `related_nodes` - are listed with their descriptions in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief`. This document does not repeat them; the narrative below covers what a field list cannot (slug resolution, the `brief_hash` audit role).
