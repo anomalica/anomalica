@@ -1,0 +1,135 @@
+{
+  "record": "page-retirements",
+  "date": "2026-09-03",
+  "decided_by": "anomalica/master, applying Mark's ruling of 2026-09-02; put to Mark with a 30-minute veto window before deploy",
+  "executed_by": "anomalica/assembler",
+  "rule": "A page is not written for a person who is only mentioned. The page gate's person tier requires the person to be the subject of at least 3 claims (assimilator page_gate, MIN_SUBJECT_CLAIMS=3). Pages built before that rule existed and failing it today are retired if they are mention-stubs, kept if they are substantial articles - the gate decides what gets made, not what gets unmade, and a substantial page is rewritten as subject claims arrive rather than removed.",
+  "method": "Read-only sweep over every live page under content/pages/people, each resolved to its graph node through its brief; subject counts from the assimilator's own page_gate._subject_counts called against knowledge.db; a node absent from that count is the subject of zero claims. Word count is body prose without citation markers; inbound links are exact markdown links from any page in any language.",
+  "sweep": {
+    "live_person_pages": 145,
+    "below_subject_floor": 13,
+    "not_assessable": [
+      "chris (no brief; retired separately as an unidentifiable first-name figure)",
+      "uap-gerb (no brief; moved to its survivor's slug)"
+    ]
+  },
+  "retired": [
+    {
+      "slug": "people/chad",
+      "subject_claims": 0,
+      "claims": 3,
+      "words": 123,
+      "citations": 4,
+      "inbound_links": 0,
+      "note": "bare first name, same footing as chris"
+    },
+    {
+      "slug": "people/william-cohen",
+      "subject_claims": 0,
+      "claims": 5,
+      "words": 101,
+      "citations": 4,
+      "inbound_links": 1
+    },
+    {
+      "slug": "people/elon-musk",
+      "subject_claims": 1,
+      "claims": 6,
+      "words": 282,
+      "citations": 6,
+      "inbound_links": 0
+    },
+    {
+      "slug": "people/dana-white",
+      "subject_claims": 1,
+      "claims": 5,
+      "words": 124,
+      "citations": 5,
+      "inbound_links": 2
+    },
+    {
+      "slug": "people/william-lynn-iii",
+      "subject_claims": 1,
+      "claims": 5,
+      "words": 253,
+      "citations": 5,
+      "inbound_links": 5
+    },
+    {
+      "slug": "people/edward-teller",
+      "subject_claims": 1,
+      "claims": 4,
+      "words": 85,
+      "citations": 3,
+      "inbound_links": 1
+    },
+    {
+      "slug": "people/franklin-d-roosevelt",
+      "subject_claims": 1,
+      "claims": 12,
+      "words": 354,
+      "citations": 11,
+      "inbound_links": 4
+    },
+    {
+      "slug": "people/ralph-blumenthal",
+      "subject_claims": 2,
+      "claims": 12,
+      "words": 327,
+      "citations": 11,
+      "inbound_links": 3
+    },
+    {
+      "slug": "people/patrick-hughes",
+      "subject_claims": 2,
+      "claims": 9,
+      "words": 246,
+      "citations": 8,
+      "inbound_links": 3
+    },
+    {
+      "slug": "people/paul-kaminski",
+      "subject_claims": 2,
+      "claims": 5,
+      "words": 259,
+      "citations": 5,
+      "inbound_links": 0
+    }
+  ],
+  "kept": [
+    {
+      "slug": "people/william-j-clinton",
+      "subject_claims": 0,
+      "claims": 54,
+      "words": 574,
+      "citations": 22,
+      "inbound_links": 5,
+      "why": "substantial, well-cited; the corpus discusses him constantly; rewritten as subject claims arrive"
+    },
+    {
+      "slug": "people/russell-targ",
+      "subject_claims": 1,
+      "claims": 23,
+      "words": 480,
+      "citations": 14,
+      "inbound_links": 5,
+      "why": "as above"
+    },
+    {
+      "slug": "people/robert-weiss",
+      "subject_claims": 1,
+      "claims": 19,
+      "words": 548,
+      "citations": 19,
+      "inbound_links": 4,
+      "why": "as above"
+    }
+  ],
+  "effects": "Nineteen inbound links across the ten render as plain text after the build, by design (the site strips a link whose target does not exist). No redirects: these are people, not duplicates, and a wrong destination is worse than an honest 404. Each URL carries a gone: true entry with a note in site/data/redirects.yaml.",
+  "how_to_reverse_one": "git checkout <retirement commit>^ -- content/pages/people/<slug>.en.md ; remove the URL's entry from site/data/redirects.yaml ; push both ; site deploys. Any reviewer may do this for any single page without touching the others.",
+  "related": [
+    "reference/alias-strip-2026-09-02.json",
+    "guides/editorial-style.md",
+    "architecture/node-types.md (Person, subject rule)"
+  ]
+}
