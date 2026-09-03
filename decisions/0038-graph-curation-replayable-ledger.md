@@ -63,3 +63,14 @@ Independently of the keying choice, the import `glob` should be sorted so import
 ## Scope
 
 A new durable curation layer, a replay step, and the workbench merge tool. It pins the curation instance of the one-directional data-flow principle (previously only in overview.md), follows the data-artefact-repo pattern, and names rebuild-stable node identity as its prerequisite. Schema in [architecture/curation-ledger-format.md](../architecture/curation-ledger-format.md). The first curation op is node merge; the ledger is designed to admit further graph-level curation ops (split, rename, type-correction) on the same replay machinery. The machinery also extends from NODES to CLAIMS: claim dedup / supersede / corroboration-linking (driven by provenance-overlap, see [decision 0039](0039-multi-model-digestion-canonical-reconciliation.md)) are curation ops in the same ledger - the assimilator maintains the graph, it does not merely import it.
+
+## Amendment 2026-09-03: record tags
+
+The ledger gains a `tag` op (with `untag`): a record is about a node, asserted
+by a person, keyed on record content hash plus the node's natural identity.
+It replays as a `record_nodes` row and never as a claim attachment, so it
+connects records without making a node page-worthy. Shape in
+[architecture/curation-ledger-format.md](../architecture/curation-ledger-format.md);
+rationale: the three automatic routes to linking records about the same
+unnamed thing (claim similarity, the relate pass, name matching) were measured
+and none separates a real pair from noise reliably enough to run unattended.

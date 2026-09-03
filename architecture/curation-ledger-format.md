@@ -48,6 +48,20 @@ Same digests + same ledger => identical graph. Chained merges (a victim of one e
 
 Per [0038](../decisions/0038-graph-curation-replayable-ledger.md), the authoritative replay key is the natural identity - `canonical_name` + `node_type` + `prior_names` - because synthetic node ids are not rebuild-stable (a per-extraction `uuid4`, first-importer-wins) and the importer already resolves entities by name. The synthetic ids in `survivor`/`victims` are an at-merge-time audit snapshot, not the replay key. (Content-deterministic ids were considered and parked - see 0038.)
 
+## Tag entry (2026-09-03)
+
+`op: tag` - a record is about a node, asserted by a person. Fields: `tag_id`,
+`at`, `by`, `node: {name, node_type, prior_names}` (natural key; `node_type`
+required), `record: {content_hash, title}` (the hash is the key), `note`.
+Compensating `op: untag` names the `tag_id`. Replay resolves the node by name
+then aliases within type on the deterministic tiers, creates a **topic** that
+has no node (never any other type), resolves the record by hash, and writes one
+`record_nodes` row plus a `record_tags` row carrying the outcome (`pending`,
+`applied`, `lost`) readable by `tag_id`. Runs after renames. Record-level only:
+no `claim_node_refs`, so a tag does not count toward the page gate, scoring or
+corroboration. Span tags (a selection resolving to overlapping claims) are a
+later op on the same machinery. Lives in `tags.yaml` beside the other ledgers.
+
 ## Extensibility
 
 The first operation is `merge`. The same append-only-plus-replay machinery admits further graph-level curation ops (for example `split`, `rename`, `retype`) as new `op` values, each with its own replay rule, run in the same after-import replay pass.
