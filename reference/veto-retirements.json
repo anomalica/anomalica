@@ -1,0 +1,21 @@
+{
+  "record": "veto-retirements",
+  "entries": [
+    {
+      "veto_id": "bc281c67-08a3-4337-8592-c06ff407196b",
+      "node_id": "(Blink-182, organisation, 13 claims)",
+      "node": "Blink-182",
+      "url": "/en/organisations/blink-182/",
+      "moved_to": "/en/people/tom-delonge/",
+      "page": "pages/organisations/blink-182.en.md",
+      "vetoed_at": "2026-09-03T02:14:25Z",
+      "vetoed_by": "workbench",
+      "reason": "The veto itself carries NO reason. Ground supplied by anomalica/master: the page was a Tom DeLonge stub filed under the band's name - none of its nine cited claims is about the band, and his page was the only one linking in, so coverage belongs on his page.",
+      "destination_established_from": "the page's own cited claims and its sole inbound link, not from the veto - checked independently by anomalica/site and by the assembler's claim-edge arithmetic",
+      "retired": "2026-09-03",
+      "words": 202,
+      "citations": 9,
+      "how_to_reverse": "git checkout <this commit>^ -- content/pages/organisations/blink-182.en.md; restore the [Blink-182](/organisations/blink-182) link on tom-delonge.en.md; remove the URL's entry from site/data/redirects.yaml; push all; site deploys."
+    }
+  ]
+}
