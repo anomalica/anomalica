@@ -87,7 +87,8 @@ nodes:
     kind: "Component (Python)"
     zone: "public"
     desc: "AI reads each record and extracts the atomic factual claims and the entities (nodes) they involve, with provenance
-      - who said it, where, attestation level. Defaults to the Claude subscription."
+      - who said it, where, attestation level, then checks every claim against its own quote with a local classifier (the
+      quote check). Defaults to the Claude subscription."
     output: "Digests - one per model (a source is digested by several models, 1..N), each a full set of nodes + claims for
       the record."
     contains: "Structured facts with provenance - no copyrighted text, just claims traceable to a source."
@@ -134,8 +135,9 @@ nodes:
       each run. This is where the project's differentiator lives."
     output: "Reads and writes the knowledge graph - maintains it incrementally."
     contains: "The integration logic - import, entity matching, scoring, corroboration, embeddings and search - now its own
-      component, split out of the digester. Shares the digest format and the Claude transport with the digester via the anomalica-common
-      library."
+      component, split out of the digester. Also shortlists likely duplicate nodes (embedding neighbours, reranked by a local
+      model, then judged by a small model) into the workbench merge queue; nothing merges without a person. Shares the digest
+      format and the Claude transport with the digester via the anomalica-common library."
     copyright: "Its output (the graph) is public."
   kg:
     kind: "Data artefact"

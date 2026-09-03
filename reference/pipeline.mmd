@@ -31,11 +31,11 @@ flowchart TB
   bucket -.->|"public originals open; copyrighted behind possession gate"| site
   ingest -->|"deterministic prep: strip irrelevant, inline footnotes, strip timestamps"| predigest
   predigest -->|"the exact model input"| digester
-  digester -->|"one digest per model (1..N)"| digests
+  digester -->|"one digest per model (1..N), every claim quote-checked"| digests
   digests -->|"candidate digests"| selector
   selector -->|"picks the single best"| selected
   selected ==>|"one per record (1:1)"| assimilator
-  assimilator <-->|"reads + updates"| kg
+  assimilator <-->|"reads + updates; shortlists duplicate nodes for review"| kg
   kg -->|"entity + its claims"| synthesiser
   synthesiser ==>|"a brief per page (one -> many)"| briefs
   briefs -->|"the page's brief (1:1)"| assembler
