@@ -1,14 +1,14 @@
 # Brief format
 
-The brief is the interchange between the synthesiser (producer) and the assembler/writer (consumer), schema `anomalica/brief/1`. It holds exactly the graph slice that feeds ONE page - language-neutral, before any prose - and is the writer's sole input (see [decision 0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md)). Like the digest format (0027), it is a versioned interchange spec: breaking changes bump the integer.
+The brief is the interchange between the synthesiser (producer) and the assembler/writer (consumer), schema `anomalica/brief/2`. It holds exactly the graph slice that feeds ONE page - language-neutral, before any prose - and is the writer's sole input (see [decision 0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md)). Like the digest format (0027), it is a versioned interchange spec: breaking changes bump the integer.
 
 The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.brief`); this document is its narrative companion.
 
-The v1 field set below is live, grounded against the synthesiser's first-cut brief. Two parts of the intended shape are deferred and marked as such ([Intended but deferred](#intended-but-deferred)) - documented now, built when their gate lands.
+The field set below is live, grounded against the synthesiser's first-cut brief. Two parts of the intended shape are deferred and marked as such ([Intended but deferred](#intended-but-deferred)) - documented now, built when their gate lands.
 
 ## Shape
 
-A YAML document (`.yaml`) - the same serialisation as the digest interchange (0027), not markdown with frontmatter. Top-level keys carry the page identity, the brief hash, the generated stamp, and the related-node candidates; a `claims` list carries the ordered, selected claims with their provenance. Language-neutral throughout - facts, not prose; one brief feeds all N language articles for its page. The fields below are the locked `anomalica/brief/1` contract; YAML is the serialisation.
+A YAML document (`.yaml`) - the same serialisation as the digest interchange (0027), not markdown with frontmatter. Top-level keys carry the page identity, the brief hash, the generated stamp, and the related-node candidates; a `claims` list carries the ordered, selected claims with their provenance. Language-neutral throughout - facts, not prose; one brief feeds all N language articles for its page. The fields below are the locked `anomalica/brief/2` contract; YAML is the serialisation.
 
 ## Where a brief lives
 
@@ -18,9 +18,23 @@ A brief **reference** - what a scheduler job or `assembler --brief` names - is t
 
 The two directories (internal `~/.local/share/assimilator/briefs`, published `content/briefs`) hold the same layout; `data-model.md` records why they are not copies of each other.
 
+## `page.nodes` (the covered nodes)
+
+A page covers one or more graph nodes. `page.nodes` is the ordered list of them, each `{node_id, name, node_type}`. It is always present and always a list; for an ordinary page it holds one entry. There is no `page.node_id` - a page-level primary sitting beside a member list would be two answers to one question, free to drift, and the drift is silent in exactly the checks that exist to catch silent failures.
+
+Most pages cover one node. A composed page covers several deliberately. The first is the pair of topics for unidentified objects: they hold 961 and 1,133 claims but share only 26, while 24 of their 72 source records feed both - so the split is by which word a source happened to use, not by subject. Composing the page unions the claims while the nodes stay separate, which is what preserves the word each source chose. (Mark, 2026-09-03.)
+
+**A consumer that acts on a covered node must act on every member, not on the first.** Four passes look a node up from the brief today: the assembler's retirement sweep and its veto sweep, the publication staleness map, and the assimilator's consistency check. Each asks "which node is this page about?" and takes one answer. Given a page over two nodes, a member that is retired by a merge, or vetoed by a reviewer, must take the page down or hold it back the same as a sole node would; a pass that reads only the first member leaves the page standing and keeps publishing the second member's claims, reporting nothing. That is the failure the list shape exists to prevent, so a consumer iterates.
+
+`page.node_type` and `page.slug` stay page-level. They are the page's own identity - its section under `section_for()` and its URL - not a member's, and for a single-node page they match the member's. `page.title` is likewise the page's own name and is never lifted from a member, so adding or removing a member cannot silently rename a page or move its URL.
+
+### The bump from `anomalica/brief/1`
+
+`page.nodes` replaces `page.node_id`; nothing else changed. Briefs are derived data, rebuilt deterministically by the synthesiser (806 of them, in both the internal and the published directory), so `/1` is not migrated and no consumer reads both: the synthesiser emits `/2`, every brief is regenerated in one pass, and the consumers above move to the list in the same change. A compatibility period would be the wrong shape here - it buys nothing that a regeneration does not, and leaves the singular reading alive to be copied into the next consumer.
+
 ## Top-level fields
 
-The top-level fields - `schema`, `brief_hash`, `page`, `generated`, `related_nodes` - are listed with their descriptions in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief`. This document does not repeat them; the narrative below covers what a field list cannot (slug resolution, the `brief_hash` audit role).
+The top-level fields - `schema`, `brief_hash`, `page` (`kind`, `title`, `slug`, `node_type`, `nodes`), `generated`, `related_nodes` - are listed with their descriptions in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief`. This document does not repeat them; the narrative below covers what a field list cannot (slug resolution, the `brief_hash` audit role).
 
 `page.slug` and `related_nodes[].slug` are resolved by the synthesiser at emission via the canonical slugifier (`metadata.explicit_slug` if present, else the shared anomalica-common slugifier - first-last for persons, with deterministic disambiguation; see [node slugs](node-types.md#node-slugs)). They are pre-resolved into the brief because the assembler is writer-only and does not read node metadata; an unresolved slug would silently break pattern-slug URLs and their cross-links.
 
@@ -42,7 +56,7 @@ An ordered list of claims - the selection, and the only facts the writer may use
 
 ## Identity and audit
 
-`brief_hash` = SHA-256 over the ordered `[(claim_id, claim_hash)]` plus the page identity. One fingerprint, three uses:
+`brief_hash` = SHA-256 over the ordered `[(claim_id, claim_hash)]` plus the page identity, the covered node list included. The member list is part of the identity: adding or removing a member changes what the page should say, and a hash blind to it would leave every built page looking fresh. One fingerprint, three uses:
 
 - the scheduler's staleness diff unit (the "Something changed?" step - reassemble a page only when its `brief_hash` changes);
 - the assembler's freeze (`built_from`) - exactly what an article was built from;

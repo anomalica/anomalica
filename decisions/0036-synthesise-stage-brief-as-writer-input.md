@@ -61,3 +61,5 @@ The page-existence threshold ("enough corroborated information across enough ind
 ## Scope
 
 A new stage plus a new interchange. It reinforces 0008 and 0010 (a mechanism, not new policy), follows the 0034 split precedent (one job per stage), and aligns with 0035 (the threshold is the Phase-2 differentiator) and translation-directives (write N languages from one brief). The final threshold is gated on the algorithmic-evidence-scoring draft. The brief field-format is in [architecture/brief-format.md](../architecture/brief-format.md) (`anomalica/brief/1`), scaffolded now and filled from the synthesiser's first real brief.
+
+> **Note 2026-09-03:** the brief schema is now `anomalica/brief/2`. A page covers one or more nodes, so `page.nodes` (the covered set) replaced the single `page.node_id`; nothing else about the brief's role changed. See [architecture/brief-format.md](../architecture/brief-format.md).

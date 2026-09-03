@@ -52,3 +52,5 @@ The scheduler surfaces ALL resource jobs - ingest, digest, fuse, assimilate, gra
 ## Scope
 
 A reshape of the assimilate → synthesise → assemble stages: proposals become a first-class assimilator artefact, page-selection moves there from the synthesiser, a second (source) brief type joins, and the scheduler broadens to all resource jobs. Supersedes the page-selection half of 0036; retains its brief mechanism and writer-only assembler. Builds on 0039 (fused digests → source briefs), node-types.md (the page-worthiness floor), 0031 (inspection pages), and 0010/0008 (briefs, traceability). Numbers and tiers are the editorial calibration, not fixed here.
+
+> **Note 2026-09-03:** the brief schema is now `anomalica/brief/2`. A page covers one or more nodes, so `page.nodes` (the covered set) replaced the single `page.node_id`; nothing else about the brief's role changed. See [architecture/brief-format.md](../architecture/brief-format.md).
