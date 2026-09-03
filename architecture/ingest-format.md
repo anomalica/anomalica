@@ -433,6 +433,7 @@ snapshots:
   - role: single_file
     hash: sha256:e7115739...
     content_type: text/html
+    captured_at: 2026-09-03T09:12:00Z   # only on a re-captured snapshot
 ```
 
 | Role | What it is | Use it for |
@@ -442,6 +443,8 @@ snapshots:
 | `single_file` ("frozen page") | Self-contained HTML produced by `single-file-cli` with every external resource inlined as data URIs | **Canonical review surface.** Renders identically to the original page under `sandbox=""`. |
 
 Consumers preferring fidelity should pick `single_file` first, fall back to `page_render`, and use the raw HTML only as a last resort.
+
+`captured_at` appears on a snapshot that was re-captured after the record was ingested - a capture bug fixed later, for instance. A snapshot can only be rebuilt from the live page, so a re-captured one shows the site as it stood at `captured_at` rather than at `date_accessed`; its absence means the snapshot was taken at ingest. The ingest-time DOM is unaffected either way and stays archived under `source_hash`.
 
 Snapshot roles are an extensible registry. New roles can be added without bumping `schema` provided consumers ignore unknown roles. Known roles as of `anomalica/record/1`: `page_render`, `single_file`.
 
