@@ -237,6 +237,17 @@ watermarking:
       and open weights run locally cannot carry a provider-side sampling watermark in any case.'
     sources:
       - https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli
+  opencode-go:
+    state: clean
+    confidence: high
+    open_weights: true
+    checked: '2026-09-04'
+    evidence: 'Not a model maker but a flat-rate route (the opencode Go plan) to two open-weight models already in this table,
+      Moonshot Kimi K3 and Z.ai GLM 5.2. The route passes the model output through unchanged, so the state is the state of
+      those providers, both clean. The plan is a monthly allowance, not a per-token bill, which is why these ids exist beside
+      the metered OpenRouter ids for the same models.'
+    sources:
+      - https://opencode.ai/docs/zen
 aliases:
   opus: claude-opus-5
   sonnet: claude-sonnet-5
@@ -248,10 +259,44 @@ watermarking_meanings:
 deny:
   - pattern: google/*
     reason: Refused everywhere, not only for writing. The watermarking table records the evidence and the date it was checked.
+routes_note: 'Every model carries a route, the class that says how it is paid for: subscription (the Claude plan, a weekly
+  allowance), flat-rate (the opencode Go plan, a monthly allowance), metered (per-token billing through OpenRouter or a provider
+  key, behind the spend gate), local (runs on our own machine, no provider). A stage''s priority list orders what is best;
+  the scheduler takes the first model in it whose route can pay today.'
 models:
+  - id: opencode-go/kimi-k3
+    tier: flagship
+    provider: opencode-go
+    route: flat-rate
+    context: 262144
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: Moonshot Kimi K3 through the opencode Go plan, a monthly allowance rather than a per-token bill. Added 2026-09-04
+      so that extraction has a second provider and can keep moving when the Claude allowance is paced; the digester's variant
+      runs on it are the quality evidence.
+    used_for:
+      - digest
+      - variant
+    tested: true
+  - id: opencode-go/glm-5.2
+    tier: middle
+    provider: opencode-go
+    route: flat-rate
+    context: 200000
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: Z.ai GLM 5.2 through the opencode Go plan, a monthly allowance rather than a per-token bill. Added 2026-09-04
+      for the same reason as Kimi K3; it has run as a variant model for weeks.
+    used_for:
+      - digest
+      - variant
+    tested: true
   - id: claude-opus-5
     tier: flagship
     provider: anthropic
+    route: subscription
     context: 1000000
     price:
       input: 5.0
@@ -266,6 +311,7 @@ models:
   - id: claude-sonnet-5
     tier: middle
     provider: anthropic
+    route: subscription
     context: 1000000
     price:
       input: 2.0
@@ -284,6 +330,7 @@ models:
   - id: claude-haiku-4-5
     tier: light
     provider: anthropic
+    route: subscription
     context: 200000
     price:
       input: 1.0
@@ -302,6 +349,7 @@ models:
   - id: openai/gpt-5.6-luna
     tier: light
     provider: openai
+    route: metered
     context: 1050000
     price:
       input: 0.2
@@ -318,6 +366,7 @@ models:
   - id: openai/gpt-5.6-sol
     tier: flagship
     provider: openai
+    route: metered
     context: 1050000
     price:
       input: 2.0
@@ -332,6 +381,7 @@ models:
   - id: openai/gpt-5.6-terra
     tier: middle
     provider: openai
+    route: metered
     context: 1050000
     price:
       input: 2.0
@@ -344,6 +394,7 @@ models:
   - id: moonshotai/kimi-k3
     tier: flagship
     provider: moonshot
+    route: metered
     context: 1048576
     price:
       input: 3.0
@@ -355,6 +406,7 @@ models:
   - id: deepseek/deepseek-v4-flash
     tier: light
     provider: deepseek
+    route: metered
     rationale: A cheap fast model with published weights. Not tested here yet.
     price:
       input: 0.0809
@@ -365,6 +417,7 @@ models:
   - id: z-ai/glm-5.3-flash
     tier: light
     provider: z-ai
+    route: metered
     rationale: null
     price:
       input: 0.075
@@ -375,6 +428,7 @@ models:
   - id: qwen/qwen3.8-flash
     tier: light
     provider: qwen
+    route: metered
     rationale: null
     price:
       input: 0.15
@@ -385,6 +439,7 @@ models:
   - id: MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli
     tier: light
     provider: moritzlaurer
+    route: local
     context: 512
     price:
       input: 0.0
@@ -398,6 +453,7 @@ models:
   - id: MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli
     tier: middle
     provider: moritzlaurer
+    route: local
     context: 512
     price:
       input: 0.0
@@ -410,6 +466,7 @@ models:
   - id: Qwen/Qwen3-Reranker-0.6B
     tier: light
     provider: qwen
+    route: local
     context: 32000
     price:
       input: 0.0
@@ -448,6 +505,8 @@ stages:
       - claude-opus-5
       - claude-sonnet-5
       - claude-haiku-4-5
+      - opencode-go/kimi-k3
+      - opencode-go/glm-5.2
     deny: []
     rationale: 'Pulling claims out of a record. Which model depends on the document, not on preference: long many-chunk sources
       (long interviews, dense PDFs, books) go to Opus, which is about 2.5x faster and holds recall across chunks better; short
@@ -537,6 +596,8 @@ stages:
       - claude-sonnet-5
       - claude-haiku-4-5
       - openai/gpt-5.6-luna
+      - opencode-go/kimi-k3
+      - opencode-go/glm-5.2
     deny: []
     rationale: Running the same extraction across several models to compare them. The only stage whose job is to try models
       we have not settled on.
