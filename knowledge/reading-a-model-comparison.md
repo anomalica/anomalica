@@ -1,5 +1,7 @@
 # Reading a model comparison
 
+> **Recall recomputed 2026-09-04**; figures dated before that used a grader that over-counted overlapping claims (`_overlap` summed each claim's overlap with a highlight instead of taking their union, so a character covered by three claims counted three times). Fixed in digester c9ca17e.
+
 Notes on getting a model-choice decision out of an eval table without
 over-reading it. Written 2026-07-25 off the first graded trio
 (opus/sonnet/haiku against a 197-unit human gold), and aimed at the runs
@@ -13,7 +15,14 @@ coverage it bought.
 
 In the first trio, opus produced 201 more claims than sonnet and gained
 3.1 recall points. Sonnet averaged about 9 claims per recall point;
-opus's *marginal* claims cost roughly 65 each. Most of what the larger
+opus's *marginal* claims cost roughly 65 each.
+
+*Recomputed 2026-09-04 from the stored variants: opus 756 claims at 0.649
+recall, sonnet 555 at 0.611, against 193 locatable units of the 197-unit gold.
+The claim gap is unchanged at 201, the recall gap widens from 3.1 to 3.8
+points, sonnet still costs about 9 claims per recall point, and opus's marginal
+claims cost about 53 each rather than 65. The reading is unchanged: the larger
+model's extra output buys little of what the gold was looking for.* Most of what the larger
 model added covered nothing the gold was looking for - and every one of
 those claims is a human review click. The average hides this completely;
 only the margin shows it.
@@ -23,6 +32,13 @@ only the margin shows it.
 The most useful number this eval produced was not about a model. Changing
 the **prompt alone**, same model and same record, moved recall 12 points
 (52.0 to 64.0). Model differences on the same instrument sit around 3.
+
+*Recomputed 2026-09-04: UNVERIFIABLE. The 52.0 arm's variant no longer exists -
+a re-run under a new prompt writes a new variant but the older prompt's file
+was not kept - so the intervention cannot be re-measured. The 64.0 arm
+recomputes to 61.1, and model differences on the fixed grader sit at 3.8, so
+the qualitative point (a prompt change moves recall by several times what a
+model change does) survives, but the 12-point figure should not be quoted.*
 
 That reframes the decision: model choice is a second-order effect next to a
 factor the project controls directly. Effort spent picking between the top
