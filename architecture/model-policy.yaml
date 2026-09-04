@@ -273,8 +273,9 @@ models:
       input: 0.0
       output: 0.0
     rationale: Moonshot Kimi K3 through the opencode Go plan, a monthly allowance rather than a per-token bill. Added 2026-09-04
-      so that extraction has a second provider and can keep moving when the Claude allowance is paced; the digester's variant
-      runs on it are the quality evidence.
+      so extraction has a second provider and keeps moving when the Claude allowance is paced. Measured the same day over
+      8 digests it had the highest grounding of any model here (98.9%) and one unresolved quote, but it has not been tried
+      on a book or a long transcript, so it sits above Haiku and below Sonnet and Opus until it has.
     used_for:
       - digest
       - variant
@@ -287,10 +288,10 @@ models:
     price:
       input: 0.0
       output: 0.0
-    rationale: Z.ai GLM 5.2 through the opencode Go plan, a monthly allowance rather than a per-token bill. Added 2026-09-04
-      for the same reason as Kimi K3; it has run as a variant model for weeks.
+    rationale: Z.ai GLM 5.2 through the opencode Go plan, a monthly allowance rather than a per-token bill. Variant only for
+      now - measured 2026-09-04 over 22 digests it had the lowest quote fidelity of any model here (0.835) and a quarter more
+      claims per digest than Sonnet, and on one verbatim transcript a quarter of its quotes did not resolve.
     used_for:
-      - digest
       - variant
     tested: true
   - id: claude-opus-5
@@ -504,9 +505,8 @@ stages:
     priority:
       - claude-opus-5
       - claude-sonnet-5
-      - claude-haiku-4-5
       - opencode-go/kimi-k3
-      - opencode-go/glm-5.2
+      - claude-haiku-4-5
     deny: []
     rationale: 'Pulling claims out of a record. Which model depends on the document, not on preference: long many-chunk sources
       (long interviews, dense PDFs, books) go to Opus, which is about 2.5x faster and holds recall across chunks better; short
