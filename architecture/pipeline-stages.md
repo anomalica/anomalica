@@ -25,7 +25,7 @@ money or subscription allowance; a step marked free spends neither.
 | 7 | **Pre-digest** | A record with no current pre-digest | Local CPU | free | The exact model input, stored so it can be inspected ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)) |
 | 8 | **Digest** | A record with no digest, or one whose body was re-extracted | Remote AI | plan or metered | Claims and nodes in `digests/` |
 | 9 | **Quote check** | Runs as the **last step of every digest**, and as a backfill for any digest whose claims carry no verdict | Local GPU | free | A label on each claim: does its quote support it, contradict it, or neither |
-| 10 | **Variant digest** | A record the model comparison has not covered with a given model | Remote AI | metered | A second digest under that model, for side-by-side comparison only |
+| 10 | **Variant digest** | A record already in the comparison - one a reviewer highlighted, or one that already carries a variant - and a model that has not covered it | Remote AI | metered | A second digest under that model, for side-by-side comparison only |
 | 11 | **Import** | A digest not yet in the graph | Local CPU | free | Claims and nodes in the knowledge graph |
 | 12 | **Embed** | Claims without vectors | Local CPU | free | Claim vectors, for corroboration and merge shortlisting |
 | 13 | **Merge shortlist** | The graph changed since the last pass | Local GPU | free | Candidate node pairs, scored by a reranker so the likeliest duplicates sort first |
@@ -57,6 +57,13 @@ models on the graphics card. They spend no money and no plan allowance, but
 they are resolved through [`model-policy.yaml`](model-policy.yaml) like every
 other model stage and recorded in the AI-usage ledger with their model id and
 wall time, so the record of what touched an artefact is complete.
+
+**A record earns a comparison; it does not get one by default.** Stage 10 once
+crossed every digestible record with every model that had not covered it, which
+put 197 comparison-only jobs in the queue against 46 records that had never been
+digested at all - evaluation work outranking the artefact it evaluates. A new
+record gets no variants. It earns them by being highlighted by a reviewer, or by
+already being one of the records the comparison is measured on.
 
 **Nothing is triggered by a person remembering.** Every trigger in the table
 is derived from an artefact: a record with no digest, a brief newer than its
