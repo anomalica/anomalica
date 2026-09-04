@@ -522,6 +522,21 @@ Reserved descriptions, common enough to spell the same way everywhere:
 
 The list is not closed. Any description a reviewer needs is written the same way, lower case, in brackets: `[interviewer 1]`, `[audience member]`, `[recovery team member]`, `[ground control]`, `[hollywood makeup artist]`. A reviewer marks a name as a description in the workbench, which writes the brackets; the ingester writes `[speaker N]` for every diarised cluster it cannot name.
 
+**A bracket AFTER a name is the opposite thing: a qualifier, and the person is still named.** `<!-- speaker: Scott Gordon [KXAS] -->` says the speaker is Scott Gordon, appearing for the station KXAS. The test is POSITION, not the presence of a bracket:
+
+| Form | Meaning |
+|------|---------|
+| `[narrator]`, `[speaker 3]`, `[audience member]` | Brackets where a name would be. Nobody is identified; every rule above applies. |
+| `Scott Gordon [KXAS]` | A name, then a qualifier - who the person speaks for, or the role they speak in. The person is `Scott Gordon`. |
+
+A description STARTS with the bracket; a qualifier FOLLOWS a name and never stands alone. Consumers must anchor the description test at the start of the value (`^\s*\[`) rather than asking whether the value contains a bracket - an unanchored test makes a named speaker inert and reintroduces the very anonymity the notation exists to prevent, from the other direction.
+
+**The two halves live in different places, and this is the point of the notation.** The body keeps the label exactly as written, because that is what reads correctly on the line. The record's `speakers:` list holds the PERSON - `Scott Gordon`, never `Scott Gordon [KXAS]` - because that list is what another record reuses and what extraction mints a person node from. A qualified name in the list makes a second Scott Gordon the next time he files for a different newsroom: one man, two nodes, an article built from half his claims. Extraction follows the same rule wherever it reads a speaker: the person is the identity, and the qualifier is a fact about this record, kept as an affiliation if it is worth keeping and never inside a name.
+
+**Body and list therefore differ by design**, and nothing may join them by string equality. A consumer needing the identity for a body label strips a trailing bracketed qualifier; a consumer needing the label for display uses the body value as written.
+
+A qualifier is written by a reviewer, never by the ingester: the ingester names a speaker only from what the source itself states, and emits `[speaker N]` otherwise. A re-ingest must not drop a qualifier a reviewer has added, for the same reason it must not drop their naming.
+
 **Older records say `Speaker 1` unbracketed.** It means the same thing, and consumers must accept both - the bracketed form is simply the version that says so out loud. Anything matching `Speaker <n>` with or without brackets is a diarisation id and never a person.
 
 **The test: does the value contain an actual name - a given name, a surname, or a pseudonym?** If what remains after the roles, ranks, organisations and qualifiers is nothing, it names nobody, however specific it is. `Sally` is a name. `Dr. X` and `A Friend` are pseudonyms and therefore names. `Senior U.S. Intelligence Officer` is a job. `Mrs. Smith`, `Annika`, `UAP Gerb` are what somebody is called, however incomplete - all names, all unbracketed.
