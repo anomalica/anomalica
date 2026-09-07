@@ -7,6 +7,26 @@ over-reading it. Written 2026-07-25 off the first graded trio
 (opus/sonnet/haiku against a 197-unit human gold), and aimed at the runs
 that follow.
 
+
+## The standing rule: one record cannot carry a recall finding
+
+**No recall difference measured on a single record counts as a finding.**
+Measured 2026-09-07: three identical Sonnet 5 runs of one record, cache off,
+scored 0.826, 0.831 and 0.865 - a 3.90-point spread, with claim counts of 224,
+242 and 257 on byte-identical input. A range from three samples understates the
+spread, so treat 3.9 as a LOWER BOUND: anything under roughly four points on one
+record is indistinguishable from the same model run twice.
+
+A recall claim therefore needs either many records or repeated arms, and the
+comparison must say which it had. One record and one arm per model is not a
+comparison of models; it is one sample from each of two distributions.
+
+**The instrument is stable on grounding and noisy on recall.** Across those same
+three arms quote fidelity varied by 0.34 points while recall varied by 3.90. So
+fidelity and grounding comparisons survive at sizes where recall comparisons do
+not - a 7-point grounding gap is a finding where a 4-point recall gap is not.
+Prefer the stable measure when the decision will rest on it.
+
 ## Compare marginal yield, not totals
 
 A model that emits more claims and scores higher recall has not
@@ -21,8 +41,15 @@ opus's *marginal* claims cost roughly 65 each.
 recall, sonnet 555 at 0.611, against 193 locatable units of the 197-unit gold.
 The claim gap is unchanged at 201, the recall gap widens from 3.1 to 3.8
 points, sonnet still costs about 9 claims per recall point, and opus's marginal
-claims cost about 53 each rather than 65. The reading is unchanged: the larger
-model's extra output buys little of what the gold was looking for.* Most of what the larger
+claims cost about 53 each rather than 65.*
+
+**The 3.8-point recall gap is NOT ESTABLISHED (2026-09-07).** It is inside the
+measured noise floor of 3.9 points, on one record with one arm per model, so it
+cannot be read as opus beating sonnet on recall. What survives is the claim
+gap - 201 extra claims is far outside anything run-to-run variation produced
+(33 claims, 13.7%) - and with no demonstrable recall gain to set against them,
+the marginal-yield reading stands on firmer ground than before: the larger
+model's extra output buys nothing the gold was looking for that we can measure.* Most of what the larger
 model added covered nothing the gold was looking for - and every one of
 those claims is a human review click. The average hides this completely;
 only the margin shows it.
@@ -31,7 +58,10 @@ only the margin shows it.
 
 The most useful number this eval produced was not about a model. Changing
 the **prompt alone**, same model and same record, moved recall 12 points
-(52.0 to 64.0). Model differences on the same instrument sit around 3.
+(52.0 to 64.0). ~~Model differences on the same instrument sit around 3.~~
+STRUCK 2026-09-07: three points is INSIDE the measured noise floor of 3.9,
+so that sentence asserted a difference the instrument cannot see on one
+record. It should not be cited.
 
 *Recomputed 2026-09-04: UNVERIFIABLE. The 52.0 arm's variant no longer exists -
 a re-run under a new prompt writes a new variant but the older prompt's file
