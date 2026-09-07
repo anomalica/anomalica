@@ -508,6 +508,20 @@ stages:
       - opencode-go/kimi-k3
       - claude-haiku-4-5
     deny: []
+    reroute: claude-sonnet-5
+    reroute_rationale: 'Where a record goes when the model chosen for it CANNOT take it, as distinct from the priority list,
+      which chooses for a record nothing is yet known about. A reroute happens once something specific has been learnt - the
+      claims pass locks node_references to an enum of every node Pass A found, and the opencode route cannot enforce a schema
+      natively, so a node-dense record defeats the flat-rate lane (measured 2026-09-07: every completed kimi-k3 run had 22
+      nodes or fewer, every failure 101 or more, returning malformed JSON or an empty stream after minutes of work). That
+      is a reason to choose differently for THIS record, not a reason to change what every other record gets; reordering the
+      priority list to fix reroutes would push all normal traffic off the flat-rate lane, which is what the lane is for. Sonnet
+      rather than Haiku because the records that trip the guard are the node-dense ones, which are the richest we hold, and
+      Haiku is last on the only integrity number measured on this corpus - 91.0% of quotes grounded against Sonnet''s 98.3%,
+      with one web article where 22 of 40 checkable quotes did not appear in the source at all. Sonnet rather than Opus because
+      a reroute is by definition a record already paid for once, Opus burns the plan fastest, and Opus''s advantage in the
+      rationale above is speed and cross-chunk recall rather than grounding; move the target to Opus if a measurement shows
+      it better on grounding, and not before. Ruling by Mark via anomalica/master, 2026-09-07.'
     rationale: 'Pulling claims out of a record. Which model depends on the document, not on preference: long many-chunk sources
       (long interviews, dense PDFs, books) go to Opus, which is about 2.5x faster and holds recall across chunks better; short
       single-chunk sources go to Haiku, whose recall holds and which is lighter on shared capacity. Sonnet is the middle.
