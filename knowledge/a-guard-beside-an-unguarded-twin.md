@@ -131,3 +131,30 @@ suffixes were removed from them). File collisions had not, because the file was
 stored or named, does the rule reach there? The fix was to give the file the same
 two halves as the page (`<section>/<slug>.yaml`), and four consumers had each
 composed the old path themselves.
+
+## The same seam, in three lines of one declaration (2026-09-08)
+
+Three sibling constants, declared consecutively:
+
+```python
+VALID_CLAIM_TYPES = {t.value for t in ClaimType}            # a set - unordered
+VALID_ATTESTATION = {t.value for t in AttestationLevel}     # a set - unordered
+VALID_ORIGIN_KINDS = sorted(k.value for k in OriginKind)    # fixed, once
+```
+
+All three feed enums in the JSON schema the extraction model is constrained by.
+Somebody noticed that an unordered collection must not decide the order of a
+model's options, and fixed the one they were looking at. The other two ran for
+months, handing the model its claim-type and attestation choices in a different
+order on every process start - an uncontrolled variable inside every model
+comparison made on this corpus. Detail:
+[the-fingerprint-that-differed-from-itself](the-fingerprint-that-differed-from-itself.md).
+
+The tell here is sharper than usual because the fixed member sits three lines
+below the broken ones. `sorted()` in a declaration block where its siblings have
+none is not tidiness - it is a bug report someone filed and only half-read.
+
+**When you fix a fault in one member of a set, enumerate the set.** Not "search
+for the same expression" - the two broken lines here are not textually similar
+to the fixed one, which is the point. Ask what class the fixed thing belongs to
+(constants feeding a model-facing schema) and check every member of that class.
