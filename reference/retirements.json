@@ -200,6 +200,17 @@
       "words": 607,
       "citations": 23,
       "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
+    },
+    {
+      "url": "/places/california-san-diego-usa/",
+      "page": "pages/places/california-san-diego-usa.en.md",
+      "title": "USA, California, San Diego",
+      "reason": "Not a page about San Diego. Four of its paragraphs retell the 2004 USS Nimitz encounter, which has its own page and which this page's own text places about 100 kilometres off the coast, midway between San Diego and Ensenada - so the page states that its own subject did not happen there, and gives a worse account of an article that already exists. The remainder is not about the city either: David Fravor's earlier night landing is about Fravor, and Bruce Leininger attending a Natoma Bay reunion is a reincarnation case that shares nothing with this page but a place name. A place earns a page when things happen at it repeatedly; one event 100 kilometres offshore, told four times, plus two strays, is not a cluster.",
+      "decided_by": "anomalica/master, verified independently by anomalica/site",
+      "retired": "2026-09-08",
+      "words": 521,
+      "citations": 18,
+      "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
     }
   ]
 }
