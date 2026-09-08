@@ -58,6 +58,26 @@ rate sitting beside a 0.98 quote-fidelity score on the same record.
   whenever a system reports a quantity twice by different routes. It is the only
   detector that works when every instrument agrees.
 
+## The same instrument, missing a member (2026-09-08, same evening)
+
+The replacement `code_fingerprint` - added hours earlier, hashing source rather
+than the git commit - walks a HAND-ENUMERATED set of directories: the digester
+package plus `anomalica_common/llm`, `digest` and `pre_digest*`. Twelve modules
+in that library sit outside it, and one of them decides what the model sees:
+`pre_digest.py` imports `.irrelevant`, whose `strip_irrelevant()` removes
+reviewer-marked regions from every record before extraction. It is what removed
+97% of one book and 84% of another that same evening.
+
+So the file with the largest single effect on what reaches the model can change
+without moving the fingerprint that claims to identify the configuration. The
+fix for un-identifiable artefacts was itself unable to identify them - the third
+version of that sentence in one evening.
+
+The fix is to follow the import graph from the extraction entry point rather
+than to list directories. A hand-maintained list of what counts as "the code"
+fails the same way a hand-maintained list of what counts as stale does: it is
+correct on the day it is written and silently wrong afterwards.
+
 ## Related
 
 - [a-guard-beside-an-unguarded-twin](a-guard-beside-an-unguarded-twin.md) -
