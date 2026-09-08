@@ -522,11 +522,20 @@ stages:
       a reroute is by definition a record already paid for once, Opus burns the plan fastest, and Opus''s advantage in the
       rationale above is speed and cross-chunk recall rather than grounding; move the target to Opus if a measurement shows
       it better on grounding, and not before. Ruling by Mark via anomalica/master, 2026-09-07.'
-    rationale: 'Pulling claims out of a record. Which model depends on the document, not on preference: long many-chunk sources
-      (long interviews, dense PDFs, books) go to Opus, which is about 2.5x faster and holds recall across chunks better; short
-      single-chunk sources go to Haiku, whose recall holds and which is lighter on shared capacity. Sonnet is the middle.
-      Accuracy matters more here than anywhere else: a mistake ends up on every page built from that claim and nothing later
-      can catch it.'
+    rationale: 'Pulling claims out of a record. Accuracy matters more here than anywhere else: a mistake ends up on every
+      page built from that claim and nothing later can catch it. DEFAULT SONNET AT LOW EFFORT, on the first measurement this
+      stage has ever had (digester, 2026-09-08, reports/model-effort-recommendation.md, two records scored on the corrected
+      recall metric against a measured 3.9-point noise floor). What that measurement establishes, and what it does not, matters
+      as much as the default: Luna sits 15.4 and 26.4 points below Sonnet on the two records, four to seven times the floor
+      and in the same direction on both, so it must not extract. Opus over Sonnet is NOT established - +5.3 and +1.8, one
+      inside the floor - so Sonnet is the default on cost plus the absence of a demonstrated better option, never on demonstrated
+      equivalence. DeepSeek flips sign between records. Effort medium is BELOW low on both records and costs more, which retires
+      the standing assumption that the old baseline was wrong because it was too cheap. The previous rationale sent short
+      single-chunk sources to Haiku "whose recall holds". That had no measurement behind it and the only one that now exists
+      points the other way: on Skywatcher, a single-chunk record, Haiku came in 7.1 points below Sonnet and 8.9 below Opus,
+      both outside the floor. One record is not a finding, so this is not a ruling against Haiku - it is the removal of a
+      claim that was never supported. Whether document length should route at all is unresolved and wants the re-run of the
+      grid at a single pinned configuration.'
     output: published_prose
     output_note: The claim text is a sentence the model writes in our words - "David Fravor was a United States Navy pilot
       for 18 years" is ours, not the source's - and it appears on every page built from that claim. Decision 2026-09-02 (Mark)
