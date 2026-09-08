@@ -41,6 +41,50 @@ resolution AND to the retarget pass. Not fixed, not validated, not reported by
 anything - and the count of remaining instances was wrong for the same reason
 the instances were missed.
 
+## The one that a better instrument would not have fixed
+
+A sixth fault the same evening looks like the others and is not. A deploy guard
+refused a removal, and its refusal listed all four affected URLs - both language
+forms of both aliases - completely and correctly, in one message. Two of the four
+were acted on. The next deploy refused again.
+
+The first diagnosis was that the tool should have enumerated what it was
+refusing. It had. The owner went back, read their own refusal, found it complete,
+and said so rather than let a false account of their own component stand in
+someone else's notes.
+
+**No better check fixes this one, because the enumeration already happened.** The
+information was on the screen. Part of it was read as the whole. That makes it
+the same theme from the far side - the other five were an instrument showing a
+fragment, this was a fragment being taken from a complete picture by the reader -
+and it is worth separating, because "build a better check" is the obvious
+response and here it is the wrong one.
+
+The two habits that do work on it: re-read what the instrument actually said
+before concluding it did not say it, and when a refusal hands you a list, count
+the items you addressed against the items named.
+
+What was built instead, once the real gap was found: the refusal named every URL
+but could not say which was which, so an alias of a page just recorded looked
+identical to a page nobody had considered. Each refused URL now carries what the
+live site answers with today, so an alias shows its redirect target and a real
+page does not. The fix was not more enumeration but disambiguation of an
+enumeration that was already complete.
+
+## Keep two measures that can disagree
+
+The same pair went on to keep two independent enumerations of what a page serves
+deliberately: one from the page's front matter, which is what a page CLAIMS to
+serve, and one from what was actually published, which is what the zone IS
+serving. They agree today. The day they disagree is the day one of them is wrong,
+and neither side could detect that from its own position.
+
+This is the constructive form of everything above. Agreement between two
+independently derived answers is evidence; a single answer, however carefully
+derived, is only a claim. It is also the argument against removing a guard
+because the person tripping it is careful - neither party can see the other's
+blind spot from where they stand, which is the whole reason there are two.
+
 ## Why this class is hard to see
 
 The two halves are usually written at different times, often by different
