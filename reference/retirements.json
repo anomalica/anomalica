@@ -150,6 +150,17 @@
       "decided_by": "anomalica/assembler, verified against production by anomalica/site",
       "retired": "2026-09-08",
       "how_to_reverse": "git revert the commit that removed them; the URLs resolve again on the next deploy."
+    },
+    {
+      "url": "/places/california-san-francisco-usa/",
+      "page": "pages/places/california-san-francisco-usa.en.md",
+      "title": "USA, California, San Francisco",
+      "reason": "Not a page about a place. Its content is that Jacques Vallee wrote a preface there and attended a meeting there, which makes it a page about where one researcher went rather than about the city.",
+      "decided_by": "anomalica/master, verified independently by anomalica/site",
+      "retired": "2026-09-08",
+      "words": 486,
+      "citations": 14,
+      "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
     }
   ]
 }
