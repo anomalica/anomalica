@@ -14,26 +14,24 @@
     },
     {
       "kind": "urls",
-      "url_count": 118,
-      "path_forms": 236,
+      "url_count": 112,
+      "path_forms": 224,
       "sample": [
         "/events/1923-jacques-bordas-first-unidentified-flying-object-ufo-encounter/",
-        "/events/1947-07-roswell-unidentified-flying-object-ufo-incident/",
         "/events/1947-08-east-coast-cylinder-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1947-eyre-peninsula-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1947-gogeldrie-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1947-kenneth-arnold-unidentified-aerial-phenomena-uap-sighting/",
-        "/events/1947-roswell-unidentified-flying-object-ufo-incident/",
-        "/events/1948-mantell-unidentified-flying-object-ufo-incident/"
+        "/events/1948-mantell-unidentified-flying-object-ufo-incident/",
+        "/events/1948-roswell-unidentified-flying-object-ufo-incident/",
+        "/events/1950-los-alamos-unidentified-aerial-phenomena-uap-sighting/"
       ],
       "urls": [
         "/events/1923-jacques-bordas-first-unidentified-flying-object-ufo-encounter/",
-        "/events/1947-07-roswell-unidentified-flying-object-ufo-incident/",
         "/events/1947-08-east-coast-cylinder-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1947-eyre-peninsula-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1947-gogeldrie-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1947-kenneth-arnold-unidentified-aerial-phenomena-uap-sighting/",
-        "/events/1947-roswell-unidentified-flying-object-ufo-incident/",
         "/events/1948-mantell-unidentified-flying-object-ufo-incident/",
         "/events/1948-roswell-unidentified-flying-object-ufo-incident/",
         "/events/1950-los-alamos-unidentified-aerial-phenomena-uap-sighting/",
@@ -58,12 +56,10 @@
         "/events/1961-pakistan-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1963-whidbey-island-unidentified-flying-object-ufo-sighting/",
         "/events/1964-lonnie-zamora-socorro-unidentified-flying-object-ufo-sighting/",
-        "/events/1964-socorro-unidentified-aerial-phenomena-uap-encounter/",
         "/events/1964-socorro-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1964-socorro-unidentified-flying-object-ufo-incident/",
         "/events/1964-vandenberg-missile-warhead-unidentified-aerial-phenomena-uap-incident/",
         "/events/1965-kecksburg-pennsylvania-unidentified-aerial-phenomena-uap-incident/",
-        "/events/1965-kecksburg-unidentified-aerial-phenomena-uap-crash/",
         "/events/1966-1967-aveyron-unidentified-flying-object-ufo-sightings/",
         "/events/1966-aluche-unidentified-flying-object-ufo-landing/",
         "/events/1966-darenberger-unidentified-flying-object-ufo-contact/",
@@ -88,9 +84,7 @@
         "/events/1977-petrozavodsk-unidentified-aerial-phenomena-uap-incident/",
         "/events/1978-japan-airlines-flight-1628-alaska-unidentified-flying-object-ufo-sighting/",
         "/events/1978-kaikoura-unidentified-aerial-phenomena-uap-sighting/",
-        "/events/1980-12-texas-diamond-shaped-unidentified-aerial-phenomena-uap-encounter/",
         "/events/1980-cash-landrum-unidentified-aerial-phenomena-uap-encounter/",
-        "/events/1980-rendlesham-forest-unidentified-aerial-phenomena-uap-incident/",
         "/events/1981-lake-huron-twa-unidentified-aerial-phenomena-uap-sighting/",
         "/events/1982-byelo-air-base-unidentified-aerial-phenomena-uap-incident/",
         "/events/1982-byelokoroviche-soviet-missile-base-unidentified-aerial-phenomena-uap-incident/",
@@ -146,10 +140,22 @@
         "/events/varginha-unidentified-flying-object-ufo-incident/",
         "/events/zimbabwe-1988-ariel-school-unidentified-flying-object-ufo-incident/"
       ],
-      "reason": "One bug fix, not 118 retirements. The page for the 2004 USS Nimitz encounter had accumulated 234 alias slugs, 118 of which name entirely different events - the 1947 Kenneth Arnold sighting, the 1948 Mantell incident, the 1950 McMinnville photographs, the 1964 Socorro landing. Every one of those URLs was live and served the Nimitz article, so a reader following a link about Kenneth Arnold arrived at a 2004 carrier encounter. The aliases were emitted correctly from what the graph held against that node at the time; the graph has since been corrected and a build-time assertion now refuses an alias naming a live node the page does not cover. None of the 118 has a correct destination - those events have no pages - so they now 404, which is the honest answer and better than the wrong one they were giving. No page file was removed; these were never files. Assembler fbce99b added the assertion, content da6ac25 removed the aliases.",
+      "reason": "One bug fix, not 112 retirements. The page for the 2004 USS Nimitz encounter had accumulated 234 alias slugs. 112 of them name entirely different events - the 1947 Kenneth Arnold sighting, the 1948 Mantell incident, the 1950 McMinnville photographs, the 1964 Socorro landing - and every one was live and served the Nimitz article, so a reader following a link about Kenneth Arnold arrived at a 2004 carrier encounter. None of the 112 has a correct destination, because those events have no pages, so they now 404: the honest answer, and better than the wrong one they were giving. A further six slugs were REPAIRED rather than removed - see also_repaired - taken off Nimitz and put on the events that own them. The aliases were emitted correctly from what the graph held against that node at the time; the graph has since been corrected and a build-time assertion now refuses an alias naming a live node the page does not cover. No page file was removed; these were never files. Assembler fbce99b added the assertion, content da6ac25 made the change.",
       "decided_by": "anomalica/assembler, verified against production by anomalica/site",
       "retired": "2026-09-08",
-      "how_to_reverse": "git revert the commit that removed them; the URLs resolve again on the next deploy."
+      "how_to_reverse": "git revert the commit that removed them; the URLs resolve again on the next deploy.",
+      "also_repaired": {
+        "note": "Not retired. These six slugs were taken off the Nimitz page and put on the events they actually belong to, so they still resolve - verified 200 and redirecting correctly on production after the deploy.",
+        "moved": {
+          "/events/1964-socorro-unidentified-aerial-phenomena-uap-encounter/": "/events/1964-socorro-uap-encounter",
+          "/events/1980-12-texas-diamond-shaped-unidentified-aerial-phenomena-uap-encounter/": "/events/1980-texas-diamond-shaped-uap-encounter",
+          "/events/1965-kecksburg-unidentified-aerial-phenomena-uap-crash/": "/events/kecksburg-uap-crash-1965",
+          "/events/1980-rendlesham-forest-unidentified-aerial-phenomena-uap-incident/": "/events/1980-rendlesham-forest-incident",
+          "/events/1947-roswell-unidentified-flying-object-ufo-incident/": "/events/roswell-incident-1947",
+          "/events/1947-07-roswell-unidentified-flying-object-ufo-incident/": "/events/roswell-incident-1947"
+        }
+      },
+      "corrected": "2026-09-08: first recorded as 118 URLs. That was a per-page set difference - aliases lost FROM THE NIMITZ PAGE - and six of them had moved to other pages rather than stopping. A URL only dies when NOTHING serves it, so the scope has to be every page. Corrected to 112 after the site workspace compared against production and both of us recomputed corpus-wide. The wrong number claimed six live, correctly-redirecting URLs were retired, which is the one error a record like this must not carry."
     },
     {
       "url": "/places/california-san-francisco-usa/",
