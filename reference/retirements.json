@@ -161,6 +161,17 @@
       "words": 486,
       "citations": 14,
       "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
+    },
+    {
+      "url": "/places/paris-france/",
+      "page": "pages/places/paris-france.en.md",
+      "title": "France, Paris",
+      "reason": "Not a page about a place. It opens with a claim about France rather than Paris, followed by a lunch at a Paris restaurant.",
+      "decided_by": "anomalica/master, verified independently by anomalica/site",
+      "retired": "2026-09-08",
+      "words": 677,
+      "citations": 28,
+      "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
     }
   ]
 }
