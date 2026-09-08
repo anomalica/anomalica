@@ -183,6 +183,17 @@
       "words": 562,
       "citations": 21,
       "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
+    },
+    {
+      "url": "/places/new-south-wales-sydney-australia/",
+      "page": "pages/places/new-south-wales-sydney-australia.en.md",
+      "title": "Australia, New South Wales, Sydney",
+      "reason": "Not a page about a place. It opens by calling itself the setting for the Peter Khoury alien abduction case and then gives Khoury's biography: when his family migrated from Lebanon, that he was twenty-four and living with his parents. That is a page about a person filed under a city.",
+      "decided_by": "anomalica/master, verified independently by anomalica/site",
+      "retired": "2026-09-08",
+      "words": 607,
+      "citations": 23,
+      "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
     }
   ]
 }
