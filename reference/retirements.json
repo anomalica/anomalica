@@ -1,0 +1,16 @@
+{
+  "record": "page-retirements",
+  "entries": [
+    {
+      "url": "/events/world-war-ii/",
+      "page": "pages/events/world-war-ii.en.md",
+      "title": "World War II",
+      "reason": "No subject the corpus can support: 36 claims from exactly two sources, one on Marian prophecy and one on postwar Nazi technology evacuation, and we hold no source about the Second World War. It also asserted, unattributed and in Anomalica's own voice, that Germany annexed the Sudetenland in March 1938 (it was 1-10 October 1938) one sentence before correctly dating the Anschluss to 1938-03-12. A rebuild fixes the false assertion by attributing it; it cannot give the page a subject.",
+      "decided_by": "anomalica/master",
+      "retired": "2026-09-08",
+      "words": 1026,
+      "citations": 36,
+      "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
+    }
+  ]
+}
