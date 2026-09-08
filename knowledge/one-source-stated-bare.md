@@ -70,6 +70,44 @@ required. It would have caught both Fatima sentences.
 It is a large change to how the corpus reads, and that is the point: this is a
 single-source corpus and it currently reads as though it is not.
 
+## The rule reproduced the failure it was written to stop
+
+The first implementation was:
+
+    if mode == "bare_ok" and sources < 2:
+        mode = "unknown"          # attribute it
+
+which permits a claim whose count is **absent**. A brief carrying no measurement
+would sail through the rule written to stop us asserting what we cannot support
+— absence read as a verdict, inside its own antidote, on the same afternoon it
+was written.
+
+It reads as correct because the comparison looks total: a number is either below
+two or it is not. `None` is neither, and the branch quietly falls through to the
+permissive side. The corrected form makes `bare_ok` earn itself rather than
+survive the lack of a measurement:
+
+    if mode == "bare_ok" and not (isinstance(sources, int) and sources >= 2):
+
+**The transferable part is how it was found, not the bug.** It surfaced because
+the missing-count case was written as a test rather than reasoned about. Every
+guard has three inputs — the bad case, the good case, and the case where the
+measurement is missing — and the third is the one that gets skipped, because
+nothing in the code names it.
+
+## A stale comment actively prevents work
+
+The field this rule depends on was described in the assembler as
+"forward-provisioned, neutral until evidence-scoring pins", which reads as *this
+is a placeholder, do not build on it*. It was simply out of date. The
+assimilator's own module says `evidence.score` is the neutral one and
+`independent_sources` is real.
+
+Had the comment been believed, the correct answer would have been "this rule
+cannot be implemented, the data is not there" — confidently wrong, with a source
+citation. A comment that has fallen out of date is not neutral; it is a
+recommendation not to look.
+
 ## How to find the next one
 
 Read the page, then read each sentence's source line beside it. Structural
