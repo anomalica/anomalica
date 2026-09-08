@@ -212,3 +212,62 @@ Articles can be published before verification. The verification status is inform
 ## Languages
 
 The platform targets 30 languages (the governance charter). English-language content uses British English throughout.
+
+## Page quality: what holds and what does not
+
+Assessed 2026-09-08 by reading live pages as a stranger would and tracing each
+sentence back to the source line behind it. Kept here so the same ground is not
+re-walked. Structural gates pass on every failure below; none is visible without
+reading the prose against its sources.
+
+### What holds
+
+**Separating several accounts drawn from one long narrative source.**
+`/organisations/royal-australian-air-force` takes 94% of its 32 claims from one
+book containing many distinct incidents, and keeps six of them whole and in
+chronological order — reordering against the source's own order to do it
+(citations run ch5, ch6, ch9, ch11, ch10, ch12). Nothing in the pipeline records
+which account a claim came from; the writer reconstructs it from the claims,
+because claims carry dates, names and places and are therefore self-describing.
+
+**Synthesising many sources on one topic.**
+`/places/ohio-wright-patterson-air-force-base-usa` draws 45 claims from 13
+sources and changes source between consecutive citations 73% of the time — the
+highest rate in the corpus — and is coherent. High source-switching is the mark
+of topical synthesis, not of jumbling. **A low switch rate is the warning sign**:
+it means one source dominates and the page is a paraphrase of one book.
+
+**Deep attribution chains.** Four-relay claims are rendered with the chain
+intact and with the non-confirmation stated ("Buchanan has never directly
+confirmed Jorjani's account").
+
+### What does not
+
+**A single unreliable source is stated in our own voice.** The largest problem.
+See `knowledge/one-source-stated-bare.md`. 20,605 claims are marked `bare_ok`
+on one source; the whole corpus holds 138 claims with two or more independent
+sources.
+
+**A claim that MENTIONS an entity is treated as a claim ABOUT it.** Across 319
+pages with 12+ references, on average half the claims on a page never name the
+page's subject. The graph cannot distinguish the two cases: `claim_node_refs`
+is `(claim_id, node_id)` with no role column. The symptom is an organisation
+page accreting biography of whoever was named alongside it, and paragraphs that
+begin "Separately, ..." because the writer knows the material does not belong
+and has nowhere to put it.
+
+**A page whose subject we hold no source about.** `/events/world-war-ii` has 36
+claims from exactly two sources — a book on the Fatima apparitions and a podcast
+on postwar technology evacuation — because no source in the corpus is about the
+war. The two stories are each rendered coherently; the title promises an article
+neither of them is.
+
+**A name built for an index reaches the sentence.** See
+`knowledge/an-index-entry-in-a-sentence.md`.
+
+### Method note
+
+Structural measurement did not find any of these and twice pointed the wrong
+way: the source-switch rate means the opposite of what it looks like, and a
+count of remaining bad links made with the same regex that could not see them
+reported zero. Read the page, then read its source lines beside it.
