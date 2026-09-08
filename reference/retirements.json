@@ -172,6 +172,17 @@
       "words": 677,
       "citations": 28,
       "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
+    },
+    {
+      "url": "/places/france/",
+      "page": "pages/places/france.en.md",
+      "title": "France",
+      "reason": "A bare country, which the extraction prompt explicitly forbids as a node. Its claims are a real subject with nowhere to attach: French official UFO research conducted independently of and sceptically towards American conclusions, with Jacques Vallee carrying European sighting data into Project Blue Book. That subject has no node, so the claims found the nearest available place. This page is evidence of a missing node rather than of surplus content; see Kanban card PVTI_lADOEBXr0s4BbLkKzg59GiE.",
+      "decided_by": "anomalica/master, verified independently by anomalica/site",
+      "retired": "2026-09-08",
+      "words": 562,
+      "citations": 21,
+      "how_to_reverse": "git checkout <retirement commit>^ -- <page>; remove the URL's entry from site/data/redirects.yaml; push both; site deploys."
     }
   ]
 }
