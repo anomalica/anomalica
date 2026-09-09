@@ -70,10 +70,10 @@ size, timestamps and notes stripped):
 | over 400,000 chars | 20 | 6% |
 | largest | 2,255,883 chars | *Beelzebub's Tales* |
 
-**Four records in five fit in a single call today** and are being cut up for no
-reason: the 217,109-character Doty interview is 54,000 tokens, roughly a
-twentieth of the window, and its claims come to perhaps 60,000 output tokens,
-inside the 128,000 limit.
+**Four records in five fit in a single call on tokens**: the 217,109-character
+Doty interview is 54,000 tokens, roughly a twentieth of the window, and its
+claims come to perhaps 60,000 output tokens, inside the 128,000 limit. Fitting
+on tokens is not the same as fitting in the time budget - see the next section.
 
 The remaining fifth are books. The largest is about 560,000 tokens - still
 inside the context window, but its claims would run well past the output
