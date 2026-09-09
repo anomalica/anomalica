@@ -26,12 +26,20 @@ halve it. The record is written once and read for each pass after that.
 
 ## Rules
 
-Five rules. The first four are checkable; the fifth is why the others were
+Six rules. The first four are checkable; the last two are why the others were
 wrong for a year.
 
-**1. The source text goes in its own block. Anything that changes between
-requests goes after it.** A cache entry is the whole block up to the
-breakpoint. One changed character anywhere in it and none of it is reused.
+**1. The source text comes FIRST. Instructions come after it. Anything that
+changes between requests comes last.** Not "the source text and the
+instructions, then the varying part" - the instructions go after the text too,
+even though they never change within a pass. A record is read by more than one
+pass (nodes, then claims) and each pass has different instructions; put them
+first and the two passes share no prefix, so the same document is stored twice.
+Put the document first and the second pass reads what the first one stored.
+
+A cache entry is everything up to the breakpoint. One changed character anywhere
+in it and none of it is reused, so the order is simply most-stable to
+least-stable and nothing else.
 
 **2. Never put an accumulating list in front of the source text.** The
 found-so-far list, the exclude list, the node directory - these grow with every
@@ -56,7 +64,18 @@ the prefix is changing and rule 1 or 2 is broken somewhere. On *Surviving
 Death*: 15,841,159 written against 14,847,413 read, over 120 calls. That
 one-to-one ratio is the signature.
 
-**5. Re-measure a model limit before setting a constant from it.** Every chunk
+**5. Record what a provider does in the policy file, not in a comment.**
+`anomalica/architecture/model-policy.yaml` holds a `caching` block: per route,
+whether caching is automatic or needs a marker, where the marker goes, the
+lifetimes offered, what storing and reading cost as multiples of that model's
+own input price, the smallest prefix that caches at all, and the date it was
+checked. Transports read from it (`Policy.caching_ttl`,
+`Policy.caching_minimum_tokens`). An empty entry means NOBODY HAS CHECKED, not
+"no caching here" - unchecked routes are marked `mode: unknown` on purpose, so a
+missing key is a route somebody added without recording its behaviour. The site
+renders the block, which is what stops it going stale unnoticed.
+
+**6. Re-measure a model limit before setting a constant from it.** Every chunk
 size in this project descends from "Sonnet holds 200,000 tokens", which was
 true once. The models now hold 1,000,000. Nothing re-checked it, so the
 constants stayed, the reasons in the comments stayed, and each new constant was

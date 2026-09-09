@@ -750,7 +750,9 @@ caching:
     that caches "automatically" still needs that order to hold.'
   routes:
     anthropic_api:
-      applies_to: Claude models on the metered API (route "api")
+      label: Claude, billed per token
+      order: 1
+      applies_to: claude-opus-5, claude-sonnet-5, claude-haiku-4-5
       mode: explicit
       mode_note: Nothing caches without a marker. There is no implicit fallback.
       marker: '`cache_control` on a system or content block; up to 4 breakpoints per request. Claude reads from the longest
@@ -771,7 +773,9 @@ caching:
       minimum_note: Below the minimum nothing caches and there is NO error - cache_creation reads 0. A whole record clears
         it; a short web page may not.
     anthropic_cli:
-      applies_to: Claude models on the subscription (route "subscription", `claude -p`)
+      label: Claude, on the subscription plan
+      order: 2
+      applies_to: claude-opus-5, claude-sonnet-5, claude-haiku-4-5
       mode: automatic
       mode_note: The CLI places its own breakpoints and we cannot choose where. Measured on a subscription it uses the 1-hour
         cache (ephemeral_1h_input_tokens non-zero, 5m zero). Ordering is the only lever.
@@ -788,6 +792,8 @@ caching:
         are mandatory on this route. --dangerously-skip-permissions cannot be used with --restricted and is not needed when
         --tools is empty.'
     openrouter_openai:
+      label: GPT-5.6 - Luna, Sol and Terra
+      order: 3
       applies_to: openai/gpt-5.6-luna, openai/gpt-5.6-sol, openai/gpt-5.6-terra
       mode: implicit_or_explicit
       mode_note: 'Implicit by default on a stable prefix, no markers needed. GPT-5.6 also accepts prompt_cache_options.mode
@@ -804,6 +810,8 @@ caching:
       minimum_tokens:
         default: 1024
     openrouter_deepseek:
+      label: DeepSeek V4
+      order: 4
       applies_to: deepseek/deepseek-v4-flash
       mode: automatic
       mode_note: DeepSeek watches for a repeated prefix and serves it from cache with no configuration.
@@ -814,6 +822,8 @@ caching:
       read_note: Third-party trackers put cache-hit input at $0.0028/M against $0.14/M cache-miss for V4-Flash, about 98%
         off. Not confirmed against our own bill.
     openrouter_other:
+      label: Kimi, GLM and Qwen
+      order: 5
       applies_to: moonshotai/kimi-k3, z-ai/glm-5.3-flash, qwen/qwen3.8-flash
       mode: unknown
       mode_note: Not checked. Treat as uncached until measured - OpenRouter pins the provider between calls so a hit would
@@ -823,6 +833,8 @@ caching:
       write_multiplier: {}
       read_multiplier: null
     opencode:
+      label: Kimi and GLM through the opencode plan
+      order: 6
       applies_to: opencode-go/kimi-k3, opencode-go/glm-5.2
       mode: unknown
       mode_note: Routed through a local agent to providers whose caching we do not control or observe.
