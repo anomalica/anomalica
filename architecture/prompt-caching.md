@@ -3,7 +3,7 @@
 How to send a record to a model without paying for it several times over.
 Measured 2026-09-09 against Sonnet 5, one 50,000-character document, three tasks.
 
-## The rule
+## The shape
 
 **The document goes in its own cached block. Anything that varies between calls
 goes in a separate block after it.**
@@ -23,6 +23,52 @@ Getting this wrong is worse than not caching at all: the middle row pays the
 
 The saving grows with the number of passes over one document. Three passes
 halve it. The record is written once and read for each pass after that.
+
+## Rules
+
+Five rules. The first four are checkable; the fifth is why the others were
+wrong for a year.
+
+**1. The source text goes in its own block. Anything that changes between
+requests goes after it.** A cache entry is the whole block up to the
+breakpoint. One changed character anywhere in it and none of it is reused.
+
+**2. Never put an accumulating list in front of the source text.** The
+found-so-far list, the exclude list, the node directory - these grow with every
+round, and in front of the text they make the text look new every round. This
+is not a missed optimisation, it is worse than no caching at all: writing costs
+double the normal rate and reading costs a tenth, so a prefix that never
+survives pays the expensive direction on every call and never earns the cheap
+one. Both extraction passes did this until 2026-09-09.
+
+**3. Cut a source only to bound what rides along in each request. Never to make
+it fit.** Cutting does not reduce the number of requests - that is set by how
+many claims the model returns per reply, which is a property of the model. A
+book yielding 3,185 claims takes about 120 requests whole or in forty pieces.
+What cutting changes is the payload on each of those requests. Deciding chunk
+size from a context window is the mistake that produced every constant in
+`extract.py`; decide it from what each request has to carry.
+
+**4. Read `cache_write` against `cache_read` in the ledger after any prompt
+change.** Writes should be a small fraction of reads: the text is written once
+and read back on every round after. If the two are within sight of each other,
+the prefix is changing and rule 1 or 2 is broken somewhere. On *Surviving
+Death*: 15,841,159 written against 14,847,413 read, over 120 calls. That
+one-to-one ratio is the signature.
+
+**5. Re-measure a model limit before setting a constant from it.** Every chunk
+size in this project descends from "Sonnet holds 200,000 tokens", which was
+true once. The models now hold 1,000,000. Nothing re-checked it, so the
+constants stayed, the reasons in the comments stayed, and each new constant was
+derived from the last one. A figure copied from a comment is not a measurement.
+
+## Unexplained, worth chasing
+
+*Surviving Death* wrote 132,000 tokens per call on average (15,841,159 over 120
+calls, digested 2026-07-31). The parts that should be there - prompt template
+about 7,000 tokens, node directory about 14,000, a 50,000-character chunk about
+12,500 - come to roughly 35,000. Something is sending four times what the
+chunking accounts for and it has not been traced.
 
 ## What this project currently does
 
