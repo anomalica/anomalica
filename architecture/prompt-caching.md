@@ -41,9 +41,9 @@ Three causes, in order of size:
 
 **Chunking.** The claims pass cuts a record into 20,000-character pieces, so a
 long record has eleven separate prefixes instead of one, and nothing is shared
-between them. The chunk size is a workaround for Haiku 4.5 timing out on a
-50,000-character chunk inside the 900-second CLI limit; Sonnet 5 completes the
-same chunk in 110 seconds. See the stale-context note below.
+between them. The chunk size began as a workaround for Haiku 4.5 timing out on a
+50,000-character chunk inside the 900-second CLI limit. Sonnet 5 does not fix
+that - see "what actually limits chunk size" below.
 
 **The subscription path has no breakpoint.** `_call_api_doc` in
 `anomalica-common` sets `cache_control` correctly. `_call_cli_doc`, which is
@@ -54,16 +54,55 @@ do not control where the boundary falls.
 **Each pass re-sends the document.** Nodes, claims, and any later pass each send
 it again. They should share one cached prefix.
 
-## The context figures the code assumes are five years stale
+## The context figure the code was set from was wrong by 5x
 
-`extract.py` says "Sonnet's 200K context" and caps a chunk at 150,000
+`extract.py` said "Sonnet's 200K context" and caps a chunk at 150,000
 characters. Sonnet 5 and Opus 5 both have a **1,000,000-token context window and
 128,000-token maximum output**.
 
-A 217,000-character record is about 54,000 tokens. It fits the context roughly
-eighteen times over. Its claims come to perhaps 60,000 output tokens, inside the
-128,000 limit. **A whole record can be one call**, and the chunking that forces
-eleven prefixes is not needed for any current model.
+What that changes, measured across all 332 records in the store (materialised
+size, timestamps and notes stripped):
+
+| materialised size | records | share |
+|---|---|---|
+| median | 53,451 chars | - |
+| over 150,000 chars | 70 | 21% |
+| over 400,000 chars | 20 | 6% |
+| largest | 2,255,883 chars | *Beelzebub's Tales* |
+
+**Four records in five fit in a single call today** and are being cut up for no
+reason: the 217,109-character Doty interview is 54,000 tokens, roughly a
+twentieth of the window, and its claims come to perhaps 60,000 output tokens,
+inside the 128,000 limit.
+
+The remaining fifth are books. The largest is about 560,000 tokens - still
+inside the context window, but its claims would run well past the output
+ceiling. **Splitting is still needed at the top of the range; the output limit
+decides where, not the context window.**
+
+## What actually limits chunk size: wall clock, not tokens
+
+Measured 2026-09-09. A 50,000-character claims chunk from the Doty interview,
+the real claims prompt with a 167-node directory, Sonnet 5 via `claude -p`, run
+twice:
+
+| run | elapsed | claims returned |
+|---|---|---|
+| 1 | 507 s | 112 |
+| 2 | 681 s | 70 |
+
+`ANOMALICA_CLI_TIMEOUT_S` defaults to 900. Those runs used 56% and 76% of it,
+and two identical calls differed by 174 seconds. **A 50,000-character claims
+chunk does not have safe headroom under the current timeout**, and a whole
+217,000-character record in one call is about four times run 2.
+
+This corrects the earlier note here, which said Sonnet completed the same chunk
+in 110 seconds. It does not.
+
+The consequence: the token argument for one call per record is sound and the
+scheduling argument is not. Raising `CLAIMS_CHUNK_MAX_CHARS` requires raising
+`ANOMALICA_CLI_TIMEOUT_S` with it and measuring a worst case, not just observing
+that the context window is large. The cache saving is real but it is not free.
 
 ## What chunking costs beyond tokens
 
