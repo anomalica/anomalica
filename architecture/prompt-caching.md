@@ -62,13 +62,39 @@ true once. The models now hold 1,000,000. Nothing re-checked it, so the
 constants stayed, the reasons in the comments stayed, and each new constant was
 derived from the last one. A figure copied from a comment is not a measurement.
 
-## Unexplained, worth chasing
+## Where the 132,000 tokens per call went
 
-*Surviving Death* wrote 132,000 tokens per call on average (15,841,159 over 120
-calls, digested 2026-07-31). The parts that should be there - prompt template
-about 7,000 tokens, node directory about 14,000, a 50,000-character chunk about
-12,500 - come to roughly 35,000. Something is sending four times what the
-chunking accounts for and it has not been traced.
+*Surviving Death*, 1,133 nodes, digested 2026-07-31, 15,841,159 tokens written
+over 120 calls. Traced 2026-09-09 by measuring each component:
+
+| component | tokens | share |
+|---|---|---|
+| session furniture the CLI loads (see below) | ~64,000 | 48% |
+| node directory, in the prompt | 16,094 | 12% |
+| the chunk of the book itself | ~12,500 | 9% |
+| node-name enum, in the JSON schema | 11,320 | 9% |
+| claims instructions | 7,219 | 5% |
+| exclude list and remainder | ~21,000 | 16% |
+
+**Half of it was never ours.** `claude -p` loads an interactive session's worth
+of context before reading a word of the prompt: connected MCP servers (~31,700),
+the CLAUDE.md files (~11,000), built-in tool descriptions and settings
+(~16,200). `--strict-mcp-config` and `--restricted` cut 63,799 to 6,095,
+measured with a six-word prompt. An earlier note in `transport.py` recorded the
+symptom - "a control call carrying a 30-character prompt still wrote 32,486" -
+without finding the cause.
+
+**The node names go out twice.** 16,094 tokens as a directory in the prompt and
+11,320 as an enum in the JSON schema: 27,414 tokens of the same 1,133 names in
+two formats on every call. Both are stable for the life of a record, so with the
+prefix fixed they are written once and read cheaply - but they are the reason a
+node-dense record costs what it does, and a catalogue-shaped source with 3,017
+nodes reaches the CLI's per-argument ceiling on the enum alone.
+
+**What the book should now cost.** Stable prefix per chunk of about 53,200
+tokens, written once and read on later rounds: roughly 3.2M token-equivalents
+against the 33M it billed. About ten times, at list price about $6 against $66.
+Not yet confirmed by a run - the weekly allowance was at 88%.
 
 ## What this project currently does
 
