@@ -787,10 +787,19 @@ caching:
       cost_note: Not billed per token on the subscription; it draws on the weekly allowance instead, so the multipliers do
         not apply but the token counts still do.
       overhead_tokens: 6095
-      overhead_note: '`claude -p` loads an interactive session before reading the prompt. Measured 2026-09-09 with a six-word
-        prompt: 63,799 tokens as the digester called it, 6,095 with --strict-mcp-config and --restricted. Those two flags
-        are mandatory on this route. --dangerously-skip-permissions cannot be used with --restricted and is not needed when
-        --tools is empty.'
+      overhead_note: '`claude -p` loads an interactive session before reading the prompt: connected MCP servers, the CLAUDE.md
+        files, built-in tool descriptions and settings. --strict-mcp-config and --restricted strip it and are MANDATORY on
+        this route. --dangerously-skip-permissions cannot be used alongside --restricted and is not needed - an empty --tools
+        leaves nothing to permission, and --allowedTools already authorises a tool where one is used. Where a path does use
+        a file tool, --add-dir names the directory restricted mode confines it to. Measured 2026-09-09, each against that
+        component''s own command with a six-word prompt.'
+      overhead_measured:
+        digester_document_call: {before: 63799, after: 6095}
+        digester_tool_call: {before: 132626, after: 13015}
+        assembler_page_call: {before: 69379, after: 5140}
+        ingester_pdf_page_call: {before: 132626, after: 39077}
+      overhead_measured_note: The ingester's stays highest because the file tools remain loaded, which is what that path is
+        for.
     openrouter_openai:
       label: GPT-5.6 - Luna, Sol and Terra
       order: 3

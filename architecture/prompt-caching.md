@@ -98,10 +98,25 @@ over 120 calls. Traced 2026-09-09 by measuring each component:
 **Half of it was never ours.** `claude -p` loads an interactive session's worth
 of context before reading a word of the prompt: connected MCP servers (~31,700),
 the CLAUDE.md files (~11,000), built-in tool descriptions and settings
-(~16,200). `--strict-mcp-config` and `--restricted` cut 63,799 to 6,095,
-measured with a six-word prompt. An earlier note in `transport.py` recorded the
-symptom - "a control call carrying a 30-character prompt still wrote 32,486" -
-without finding the cause.
+(~16,200). `--strict-mcp-config` and `--restricted` strip it. An earlier note in
+`transport.py` recorded the symptom - "a control call carrying a 30-character
+prompt still wrote 32,486" - without finding the cause.
+
+Every component that builds its own `claude` command carried it. Measured
+2026-09-09, each against that component's own command with a six-word prompt:
+
+| call | before | after |
+|---|---|---|
+| digester, document on stdin | 63,799 | 6,095 |
+| digester, document via the Read tool | 132,626 | 13,015 |
+| assembler, writing a page | 69,379 | 5,140 |
+| ingester, extracting a PDF page | 132,626 | 39,077 |
+
+A path that uses a file tool keeps more, because the file tools stay loaded -
+that is what those paths are for. `--restricted` confines them to the working
+directories, so `--add-dir` has to name the directory holding the file.
+`--dangerously-skip-permissions` cannot be combined with `--restricted` and is
+not needed once `--tools` is empty or `--allowedTools` names the one tool used.
 
 **The node names go out twice.** 16,094 tokens as a directory in the prompt and
 11,320 as an enum in the JSON schema: 27,414 tokens of the same 1,133 names in
