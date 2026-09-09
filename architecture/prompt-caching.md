@@ -26,20 +26,25 @@ halve it. The record is written once and read for each pass after that.
 
 ## Rules
 
-Six rules. The first four are checkable; the last two are why the others were
+Seven rules. The first five are checkable; the last two are why the others were
 wrong for a year.
 
-**1. The source text comes FIRST. Instructions come after it. Anything that
-changes between requests comes last.** Not "the source text and the
-instructions, then the varying part" - the instructions go after the text too,
-even though they never change within a pass. A record is read by more than one
-pass (nodes, then claims) and each pass has different instructions; put them
-first and the two passes share no prefix, so the same document is stored twice.
-Put the document first and the second pass reads what the first one stored.
+**1. Most stable first, least stable last. Work out which is which for THAT
+call - do not assume it is the source text.** A cache entry is everything up to
+the breakpoint; one changed character anywhere in it and none of it is reused.
+So the only question is what repeats across the calls this path actually makes,
+and the answer differs by stage:
 
-A cache entry is everything up to the breakpoint. One changed character anywhere
-in it and none of it is reused, so the order is simply most-stable to
-least-stable and nothing else.
+- **Extraction** reads one record over and over, with different instructions per
+  pass. The RECORD is the stable half. Instructions in front of it give the
+  nodes pass and the claims pass no shared prefix, so the same record is stored
+  twice. Document first.
+- **Assembly** writes a different page every call and reuses the same
+  instructions. The INSTRUCTIONS are the stable half. The node's own material in
+  front of them means the instructions never cache at all. Instructions first.
+
+Both are the same rule and they point opposite ways. Getting it backwards on
+either costs the whole prefix.
 
 **2. Never put an accumulating list in front of the source text.** The
 found-so-far list, the exclude list, the node directory - these grow with every
@@ -57,14 +62,22 @@ What cutting changes is the payload on each of those requests. Deciding chunk
 size from a context window is the mistake that produced every constant in
 `extract.py`; decide it from what each request has to carry.
 
-**4. Read `cache_write` against `cache_read` in the ledger after any prompt
+**4. Check how much stable text sits before the FIRST varying field, and that it
+clears the minimum.** Below the minimum cacheable prefix nothing caches and
+there is no error. Measured on the assembly prompt 2026-09-09: 42 tokens of
+stable text before the first varying field, with 2,389 tokens of instructions
+stranded behind it. The minimum is 1,024 on Sonnet 5, so that path caches
+nothing whatever - and the symptom is indistinguishable from a path with no
+caching implemented.
+
+**5. Read `cache_write` against `cache_read` in the ledger after any prompt
 change.** Writes should be a small fraction of reads: the text is written once
 and read back on every round after. If the two are within sight of each other,
 the prefix is changing and rule 1 or 2 is broken somewhere. On *Surviving
 Death*: 15,841,159 written against 14,847,413 read, over 120 calls. That
 one-to-one ratio is the signature.
 
-**5. Record what a provider does in the policy file, not in a comment.**
+**6. Record what a provider does in the policy file, not in a comment.**
 `anomalica/architecture/model-policy.yaml` holds a `caching` block: per route,
 whether caching is automatic or needs a marker, where the marker goes, the
 lifetimes offered, what storing and reading cost as multiples of that model's
@@ -75,7 +88,7 @@ checked. Transports read from it (`Policy.caching_ttl`,
 missing key is a route somebody added without recording its behaviour. The site
 renders the block, which is what stops it going stale unnoticed.
 
-**6. Re-measure a model limit before setting a constant from it.** Every chunk
+**7. Re-measure a model limit before setting a constant from it.** Every chunk
 size in this project descends from "Sonnet holds 200,000 tokens", which was
 true once. The models now hold 1,000,000. Nothing re-checked it, so the
 constants stayed, the reasons in the comments stayed, and each new constant was
