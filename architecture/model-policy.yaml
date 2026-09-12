@@ -1,5 +1,5 @@
 schema: anomalica/model-policy/1
-updated: '2026-09-11'
+updated: '2026-09-12'
 watermarking:
   anthropic:
     state: watermarks
@@ -256,6 +256,18 @@ aliases:
   opus: claude-opus-5
   sonnet: claude-sonnet-5
   haiku: claude-haiku-4-5
+route_equivalents:
+  openai/gpt-5.6-sol:
+    provider: openai
+    model: gpt-5.6-sol
+    stages: [assemble]
+    preference:
+      - openai-subscription/gpt-5.6-sol
+      - openai/gpt-5.6-sol
+    rationale: A request for Sol selects the model, not its payment route. Prefer available subscription allowance; use the
+      metered OpenRouter route only when it is separately enabled, dispatchable and spend-authorised. The route-qualified
+      id selected for execution remains the provenance identity. Existing queued `openai/gpt-5.6-sol` requests are logical
+      model requests under this mapping, not metered-route pins.
 watermarking_meanings:
   watermarks: The provider puts a hidden signal in the text it generates, so it can later be identified as machine-written.
   clean: We looked and found no text watermarking on the date shown. What we checked is recorded against each provider.
@@ -263,13 +275,16 @@ watermarking_meanings:
 deny:
   - pattern: google/*
     reason: Refused everywhere, not only for writing. The watermarking table records the evidence and the date it was checked.
-routes_note: 'Every model carries a route, the class that says how it is paid for: subscription (the Claude plan), openai-subscription
-  (an authenticated OpenAI plan), flat-rate (the opencode Go plan), metered (per-token billing through OpenRouter or a provider
-  key, behind the spend gate), local (runs on our own machine, no provider). Subscription routes have allowances rather than
-  per-token bills and are paced from provider-reported usage where available. A stage''s priority list orders automatic selection;
-  its candidates are permitted only when named explicitly for evaluation and never substitute automatically. The scheduler
-  takes the first permitted priority model whose route has capacity and whose route-specific input limit fits the measured
-  input.'
+routes_note: 'Every execution candidate carries a route, the class that says how it is paid for: subscription (the Claude
+  plan), openai-subscription (an authenticated OpenAI plan), flat-rate (the opencode Go plan), metered (per-token billing
+  through OpenRouter or a provider key, behind the spend gate), local (runs on our own machine, no provider). Subscription
+  routes have allowances rather than per-token bills and are paced from provider-reported usage where available. A stage''s
+  priority list orders logical model selection. Where route_equivalents names that request, the scheduler tries its route-qualified
+  candidates in preference order and records the one actually selected; the model request alone does not pin payment route.
+  Every route still independently passes stage permission, operational state, payload fit and transport qualification, and
+  a metered route additionally requires explicit spend authorisation. If no equivalent route passes, the job stays staged.
+  An explicit route constraint is separate from model identity. Stage candidates outside route_equivalents remain explicit-evaluation-only
+  and never substitute automatically.'
 models:
   - id: opencode-go/kimi-k3
     tier: flagship
@@ -419,11 +434,12 @@ models:
     price:
       input: 0.0
       output: 0.0
-    rationale: Candidate subscription route for manual assembly evaluation. It is outside automatic priority, so adding it
-      does not change the production default. Oversized payloads are refused; a larger-context route requires separate selection
-      and authorisation rather than automatic fallback.
-    used_for: []
-    tested: false
+    rationale: Preferred execution route for a logical Sol assembly request when its allowance, input fit, transport qualification
+      and production activation gates pass. Oversized payloads are refused on this route; the equivalent metered route may
+      run only when separately enabled and spend-authorised.
+    used_for:
+      - assemble
+    tested: true
   - id: openai-subscription/gpt-5.6-terra
     tier: middle
     provider: openai
@@ -725,7 +741,6 @@ stages:
       - openai/gpt-5.6-terra
       - openai/gpt-5.6-luna
     candidates:
-      - openai-subscription/gpt-5.6-sol
       - openai-subscription/gpt-5.6-terra
       - openai-subscription/gpt-5.6-luna
     deny: []

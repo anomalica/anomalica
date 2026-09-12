@@ -205,6 +205,31 @@ refusals required by [0037](0037-ai-operation-ledger.md). Live manual and
 unattended calls share these activation gates. Until every gate exists and
 passes, explicit candidate evaluation means dry-run/no-call only.
 
+## Amendment 2026-09-12: model choice does not pin payment route
+
+The 2026-09-11 amendment made route-qualified execution identities distinct,
+but incorrectly made a queued model id select the payment route too. Model
+choice and route choice are separate. A request for GPT-5.6 Sol may run through
+the authenticated OpenAI subscription or through OpenRouter; the scheduler
+chooses whichever permitted route is currently dispatchable, with subscription
+preferred. The policy's `route_equivalents` block records that ordered set.
+
+The route-qualified ids remain necessary. They carry context limits, transport
+qualification, allowance or billing state, and the exact execution identity
+written to the AI ledger. They are candidates for executing one logical model
+request, not different model-quality choices. A staged job naming
+`openai/gpt-5.6-sol` therefore requests Sol and does not force OpenRouter. Only a
+separate explicit route constraint can do that.
+
+Route equivalence does not weaken admission. Each candidate independently must
+be allowed for the stage, fit the final payload, pass transport qualification
+and have available operational capacity. A metered fallback additionally
+requires that metered dispatch is enabled and the concrete spend is authorised.
+When no equivalent route passes, the job remains staged; the scheduler does not
+substitute another model or spend money merely to clear the queue. Existing
+subscription production-activation and per-attempt ledger requirements above
+continue to apply.
+
 ## Related
 
 - [architecture/model-policy.yaml](../architecture/model-policy.yaml) - the file itself
