@@ -41,6 +41,11 @@ types:
           \         image. Orthogonal to document_type (WHAT it is) - a photographed slide and a scanned pdf of the same memo
           differ\n          in source_type and share a document_type. `image` (jpg/jpeg/png/webp) is a photographed or scanned
           document,\n          handled on the pdf vision path and hashed as source BYTES like any scan; it is not a container."}
+      - {name: file_format, type: string, required: true, description: "FORMAT of the file held: a bare lowercase normalised
+          token such as pdf, epub, html, jpg or opus. Always deterministically derived and never reviewer-editable. For audio
+          and video it names the retained audio file (opus), not the source medium. Normalise ogg/oga to opus, jpeg to jpg
+          and htm to html. This supersedes archived_ext as the format vocabulary; archived_ext remains the storage-locator
+          field while consumers migrate. A file format does not imply document_type: EPUB never by itself means book."}
       - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts
           that carry per-word `{{t:}}` markers."}
       # CURRENT FLAT FIELDS (2026-08-16). These are what records actually carry - 242 of 257 live
@@ -101,13 +106,14 @@ types:
           | foia | subpoena | leaked | unknown - the authenticity axis; a FOIA release is attested by the holding agency,
           a leak by nobody). Keep them separate: folding disclosure into audience lets an unauthenticated document inherit
           a compelled release's credibility. Narrative in ingest-format.md."}
-      - {name: document_type, type: string, required: false, description: "WHAT the artefact is (email, letter, memo, report,
-          statute, affidavit, transcript, interview), orthogonal to source_type which is HOW it was acquired. Open set. EMIT
-          ONLY WHERE DERIVABLE WITHOUT INFERENCE - the artefact STATES its form (RFC822 headers parse; a page headed MEMORANDUM
-          FOR RECORD) - otherwise ABSENT for a reviewer to set. Never model-judged from appearance: a guessed value is indistinguishable
-          from a derived one and a wrong value stops a human looking, where absence invites it. Describes the WHOLE record,
-          so never set on a container: a FOIA pdf holding many emails is not document_type email - its correspondence is marked
-          in the body with message-boundary annotations. See ingest-format.md."}
+      - {name: document_type, type: string, required: false, description: "WHAT the artefact is, orthogonal to source_type
+          which is HOW it was acquired. Closed set: book, paper, report, article, letter, email, statement, form, transcript,
+          slide, interview, documentary, podcast, lecture, broadcast, recording. EMIT ONLY WHERE DERIVABLE WITHOUT INFERENCE
+          - the artefact STATES its form (RFC822 headers parse; a page headed MEMORANDUM FOR RECORD) - otherwise ABSENT for
+          a reviewer to set. Never derive book from an EPUB container and never model-judge from appearance: a guessed value
+          is indistinguishable from a derived one and a wrong value stops a human looking, where absence invites it. Describes
+          the WHOLE record, so a FOIA pdf holding many emails is not document_type email - its correspondence is marked in
+          the body with message-boundary annotations. See ingest-format.md."}
       - {name: email, type: object, required: false, description: "Format-native email structure where document_type is email,
           parsed deterministically from RFC822 headers (stdlib email parser, no model). {from, to, cc, subject, in_reply_to,
           references} with participants as {name, address}. Does NOT repeat published_date or creators - the Date header IS
