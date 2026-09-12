@@ -102,3 +102,52 @@ applied stays recoverable without a stored basis.
 No bulk rewrite. The fields clear as records re-digest and articles
 re-assemble, both of which happen anyway; artefacts produced before this
 date may still carry them.
+
+## Amendment 2026-09-11: subscription routes are distinct provenance
+
+`subscription` no longer identifies every subscription-backed call. The
+Anthropic subscription retains that existing value; the candidate authenticated
+OpenAI route records `openai-subscription`. Metered and subscription access to
+the same OpenAI model use separate policy ids because their context limits,
+allowance accounting and transport behaviour differ. The ledger records the
+route-specific model id and transport on every call. Provider-reported allowance
+percentages pace a route but do not replace per-call token and duration fields.
+
+## Amendment 2026-09-11: qualified attempts include pre-call refusals
+
+For a route with mandatory execution qualification, the auditable event starts
+when a route and final submitted payload have been selected, not only when a
+provider process starts. A failed capacity, authentication, executable-version
+or configuration check is therefore one ledger attempt with an error outcome,
+no usage, and `provider_started: false`. A request that passes qualification and
+then fails remains an error attempt with `provider_started: true`. Dry runs and
+rejections before route and payload selection make no attempt and write no row.
+
+The field contract records exact submitted-payload byte identity, the exact raw
+model-policy snapshot identity, qualification status and a closed non-secret
+refusal code. Transport version and configuration hash are observed values: on
+a refusal caused by an unreadable value they remain null rather than copying the
+expected policy value and falsely claiming observation. The policy snapshot
+contains the expected qualification.
+
+These are conditional additions within `anomalica/ai-ledger/1`: historical and
+unqualified-route rows may omit them, while every `openai-subscription` attempt
+must satisfy the route-specific completeness rules in
+[ai-ledger-format.md](../architecture/ai-ledger-format.md). The current aggregate
+JSONL run log is not this ledger and must not acquire the canonical name by
+adding similarly named fields. OpenAI subscription production remains blocked
+until the shared SQLite writer records one row per attempt, including pre-call
+refusals.
+
+The original physical "append-only" wording is corrected for crash-safe
+implementation. An attempt row is inserted and committed as `pending` before
+provider execution, its invocation boundary is committed before the process or
+request starts, and it is finalised once in place. Final rows are immutable and
+conflicting finalisation fails. Each provider retry is a new row, correlated by
+an optional attempt-group id rather than aggregated into a retry count. A
+database failure before invocation refuses dispatch; a failure afterwards
+leaves a durable pending row and prevents the output being accepted. Startup
+does not close pending rows because another process may still own one; any later
+maintenance closure requires independent evidence that its attempt is no longer
+running and never retries inference automatically. The exact lifecycle is in
+[ai-ledger-format.md](../architecture/ai-ledger-format.md).

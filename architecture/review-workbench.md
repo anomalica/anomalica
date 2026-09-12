@@ -100,8 +100,8 @@ The workbench may serve extracted text from copyrighted source material to users
 
 The workbench uses two distinct SHA-256 hashes. They coincide for `audio`/`video`/`pdf` and differ for `web`/`ebook`:
 
-- **Public identifier** - `public_hash`, the first 56 hex chars of the record's `content_hash`. Per ingest-format.md, `content_hash` is the source-asset hash for `audio`/`video`/`pdf` and the extracted-body hash for `web`/`ebook`. The public identifier is used in the public digests repository, in public-facing URLs, and in per-claim deep-links (decision 0031). It is an identifier, not a secret - it does not unlock an ingest.
-- **Possession key** - the SHA-256 of the raw SOURCE ASSET (the file a reviewer would hold). It is carried in the verification sidecar's `sha256` field and is the `records/{hash}.{ext}` filename (for `web`/`ebook` it is not a frontmatter field). The hash-verification gate matches the reviewer's locally-computed file hash against this. For `audio`/`video`/`pdf` it equals `content_hash`; for `web`/`ebook` it is a different hash from the body-derived `content_hash`.
+- **Public identifier** - `public_hash`, the first 56 hex chars of the record's `content_hash`. Per ingest-format.md, `content_hash` binds the source asset and any normalised selection for every source type; it never hashes extraction output. The public identifier is used in the public digests repository, in public-facing URLs, and in per-claim deep-links (decision 0031). It is an identifier, not a secret - it does not unlock an ingest.
+- **Possession key** - the SHA-256 of the raw SOURCE ASSET (the file a reviewer would hold). It is carried in the verification sidecar's `sha256` field and is the `records/{hash}.{ext}` filename (for `web`/`ebook` it is not a frontmatter field). The hash-verification gate matches the reviewer's locally-computed file hash against this. For a whole-container record it equals `content_hash`; a scoped record's `content_hash` additionally binds the normalised selection. Neither identity hashes the extracted body.
 
 Possession is proven against the source-asset hash, so a reviewer hashing their own copy of the file unlocks the ingest. Harvesting the public identifier does not help:
 
@@ -158,6 +158,73 @@ Video and audio playback uses the browser's built-in HTML5 media elements. Synci
 
 The review interface uses structured forms rather than raw text editing. Reviewers correct speaker names via dropdowns, adjust timestamps with controls, and change claim types and attestation levels through purpose-built inputs. This is more usable than editing YAML directly and reduces the chance of formatting errors.
 
+The intake queue is not a record or review stage. Workbench presents only valid,
+scheduler-owned transient `queue/*.md` stubs as pending intake, using the field
+and lifecycle contract in [ingest-format.md](ingest-format.md#intake-queue-lifecycle).
+It excludes every Git-tracked legacy queue file, every completion-stamped stub
+and every candidate whose canonical source identity already resolves
+unambiguously to a live record. It never derives review state from queue fields.
+Duplicate transient candidates or ambiguous live-source matches are shown as
+blocked data errors, not silently deduplicated or selected. Workbench does not
+edit, stamp, commit or delete queue files; verified-result cleanup belongs to
+the scheduler.
+
+Before entering or saving ingest editing, the UI reads
+`GET /api/ingests/<64-lowercase-hex-content-hash>/housekeeping`. The backend
+resolves one current ingests Git ref and reads the record, sidecar and root
+`housekeeping-algorithm.json` manifest from that same tree. Its
+`anomalica/housekeeping-view/1` envelope is a strict tagged union on `access`.
+A caller allowed to read the record receives `access: full` with exactly
+`schema`, `access`, `viewed_sidecar_sha` (the committed backing blob id, null
+only when absent), `viewed_ref`, `viewed_content_hash`, the computed
+complete-file `viewed_input_sha256`, the manifest's
+`viewed_algorithm_version`, `state: current|due`, `due_reason`,
+`outstanding_count`, sorted `scopes`, `deep_link`, raw committed `sidecar` (null
+when absent or unreadable), and derived `previews` keyed by item id. `deep_link`
+is `/housekeeping?record=<64-lowercase-hex-content-hash>`. Preview data is never
+inserted into or written back with the sidecar.
+
+A possession-gated caller who has not passed the challenge receives only
+`schema`, `access: summary`, `state`, `due_reason`, `outstanding_count`, sorted
+`scopes`, `deep_link` and `sidecar: null`. These are permitted processing
+metadata. The summary exposes no `viewed_*` identity, item, old/new token, byte
+span, evidence or preview. After a successful `POST
+/api/ingests/<64-lowercase-hex-content-hash>/verification/submit`, that response
+includes the full view as `housekeeping`; the unauthorised GET remains a summary
+and no persistent unlock state is created.
+
+Version 1, missing, malformed, non-completed, input-mismatched or
+algorithm-mismatched sidecars are due and have no current outstanding
+proposals. A current completed v2 sidecar's `status: proposed` items are
+outstanding. When due, `outstanding_count` is zero and `scopes` is empty.
+`due_reason` is one of `missing-sidecar`, `invalid-sidecar`,
+`unsupported-schema`, `incomplete`, `input-mismatch` or `algorithm-mismatch`.
+A missing, malformed or non-canonical algorithm manifest is not a record state:
+the endpoint fails closed with service unavailable rather than claiming current or due.
+Scheduler dispatch separately fails closed when the worker's reported version
+differs from that manifest.
+
+The UI shows the outstanding count and affected scopes with that direct link,
+or warns that housekeeping is due. Neither warning locks editing. Changed bytes
+make the prior sidecar stale; the scheduler-owned startup/at-most-five-minute
+reconciliation scan discovers the new tuple. There is no post-edit event to
+promise or depend on. See [decision
+0048](../decisions/0048-post-ingest-housekeeping-is-content-versioned.md).
+
+`POST /api/ingests/<64-lowercase-hex-content-hash>/housekeeping/decide` requires
+an authenticated reviewer and sends only `schema:
+anomalica/housekeeping-decision/1`, `viewed_sidecar_sha`, `viewed_ref`,
+`viewed_content_hash`, `viewed_input_sha256`, `viewed_algorithm_version` and a
+non-empty `decisions` list of `{item_id, status}`. The server requires every
+viewed identity to remain current and reloads the manifest, sidecar, record and
+each named proposed item from that ref; it never accepts operation fields from
+the client. Version 1, unknown, duplicate, missing, changed or already-decided
+items are refused without a partial decision. Every stale, validation, guard or
+ref failure leaves the record, sidecar and selected statuses unchanged.
+Successful approved edits atomically commit record plus sidecar; rejection
+commits only the sidecar, with the same viewed-ref concurrency guard.
+The decision endpoint accepts only identities from an `access: full` view.
+
 ## What to mark irrelevant
 
 The single canonical list of what a reviewer marks irrelevant, for every record type - books, PDFs, web pages, audio, video. The marker syntax is in [ingest-format.md](ingest-format.md#irrelevant-content) (a prose region marker for text records, the `[irrelevant]` speaker token for transcripts). Marking is non-destructive: the text stays in the record and is only excluded from extraction ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)), so err toward marking anything that is not content.
@@ -177,6 +244,13 @@ This is the human counterpart to the digester's model-prep: what a reviewer mark
 
 When a reviewer submits corrections, the workbench backend commits the changes to the appropriate git repository using a service account. The commit records the reviewer's identity using git's author/committer separation:
 
+Every ordinary ingest-edit read returns `base_record_sha`, the Git blob id of
+the displayed record, and `base_ref`, the commit whose tree supplied it. The
+frontend echoes both on `PUT
+/api/ingests/<64-lowercase-hex-content-hash>`. The backend rejects a changed ref
+or blob with conflict before writing; it never applies stale whole-record
+browser content over a newer edit.
+
 - **Author** - the reviewer (name and email from their OAuth profile). This is the person who made the correction.
 - **Committer** - the workbench service account. This is the system that applied the change.
 
@@ -190,7 +264,12 @@ The git history provides the full audit trail: who changed what, when, and why. 
 
 ## Review identity across re-ingestion
 
-The ingester improves continually: capture pipelines get better, parsers find bugs, post-processing rules tighten. When the ingester re-ingests a record, the body may change. For `web`/`ebook` records (whose `content_hash` hashes the extracted body) that rotates `content_hash`; for `audio`/`video`/`pdf` (whose `content_hash` hashes the source asset) `content_hash` is stable across re-extraction (see ingest-format.md).
+The ingester improves continually: capture pipelines get better, parsers find
+bugs, and post-processing rules tighten. Re-extraction may change a record body,
+but `content_hash` remains stable for every source type because it hashes source
+asset plus selection, never extraction output. The exact current record bytes
+are separately identified where needed, including housekeeping's
+`input_sha256` and the digest's pre-digest hash (see ingest-format.md).
 
 Naive binding of reviews to `content_hash` orphans every prior review when the ingester re-runs. A reviewer who approved a record yesterday would find the same record back in the unreviewed queue today, with no signal that they had already approved its previous form. The friction compounds: a single ingester improvement that touches one file format can invalidate the entire review backlog for that format.
 
@@ -204,7 +283,7 @@ A record can carry up to three identities at any given time:
 |------|--------|---------------|----------------|
 | `url` | The record's `provenance.source_url`. The URL the ingester fetched. | Re-ingestion. Publisher byte-level changes. Re-extraction. | Web records, YouTube videos, anything fetched by URL. |
 | `sha256` | The source asset's SHA-256 - the verification sidecar's `sha256` and the `records/` filename (a `source_hash` frontmatter field where present). | Re-extraction. Parser improvements. Post-processing changes. | PDFs, ebooks, audio files, video files, any record sourced from a file. |
-| `content` | The `content_hash` (per ingest-format.md: source-asset hash for `audio`/`video`/`pdf`, extracted-body hash for `web`/`ebook`). | For `web`/`ebook`, any body change rotates it; for `audio`/`video`/`pdf`, stable across re-extraction. | All records (always present). |
+| `content` | The `content_hash`: source asset plus selection for every source type. | Re-extraction and review edits; not re-acquisition with changed source bytes. | All records (always present). |
 
 `url` is preferred over `sha256` is preferred over `content`. A given record may have any subset of the three. Web records have `url` and `content`. File-sourced records have `sha256` and `content`. Web records that the ingester also archives by file (a SingleFile snapshot for offline reading) carry all three.
 

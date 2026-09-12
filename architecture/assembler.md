@@ -136,35 +136,41 @@ Over time, the accumulated directives form an emergent style guide shaped by com
 
 ## Assembly audit trail
 
-Every article assembly is auditable. A reader can verify that the article was produced from the inputs claimed and nothing else (decision 0010).
+Every article assembly is auditable. The machine-owned `built_from` and
+`built_by` frontmatter contracts are defined in
+[content-format.md](content-format.md#auditable-assembly); this section explains
+their purpose rather than defining a second field shape.
 
 ### What is recorded per assembly
 
-- **Article hash** - SHA-256 (a cryptographic hash that uniquely fingerprints content) of the assembled article content
-- **Prompt hash** - SHA-256 of the full prompt sent to the artificial intelligence (knowledge graph data + directives + system template + previous article version)
-- **Directives active** - the specific directives that were collected and applied
-- **Knowledge graph version** - which state of the knowledge graph was used
+- **Input identity** - the brief or record binding and claim hashes in
+  `built_from`.
+- **Output identity** - SHA-256 of the exact article body bytes in
+  `built_by.body_sha256`.
+- **Logical prompt identity** - separate SHA-256 values for the authored user
+  prompt, authored system prompt and resolved directives.
+- **Execution identity** - route-qualified model, transport, exact submitted
+  user/input payload hash, role mapping, runner version and configuration hash,
+  and whether an added execution scaffold is absent or opaque.
 
 ### Prompt reconstruction
 
-The full prompt is not stored directly (it would be large and redundant). Instead, all its components are versioned independently:
-
-- The knowledge graph is versioned (SQLite file)
-- The directives are versioned (in git with the content)
-- The system prompt template is versioned (in the assembler repo)
-- The previous article version is versioned (in git with the content)
-
-A reader can reconstruct the exact prompt by combining these components at their recorded versions. The hash of the reconstructed prompt must match the stored prompt hash. If it does, the article was produced from exactly these inputs. If it doesn't, something was altered.
+The authored logical prompts and resolved directives are independently
+reconstructable and hash-checkable. A route may deliver them in different
+protocol roles. In particular, OpenCode receives the logical system prompt as a
+prefix in its user message and adds a hidden system scaffold that its CLI does
+not expose. The article therefore records the exact submitted user payload and
+marks that scaffold `opaque`; it does not claim that the complete provider
+context or native system-role delivery can be reconstructed. The previous
+article version is not a prompt component: assembly remains a function of the
+current brief and directives rather than its own output history.
 
 ### Prompt inspector
 
-The site provides a prompt inspector page for each article. This is a client-side JavaScript tool that:
-
-1. Fetches the component versions (knowledge graph data, directives, system template, previous article)
-2. Assembles them into the full prompt
-3. Hashes the result
-4. Compares against the stored prompt hash
-5. Displays the reconstructed prompt and the match/mismatch status
+The site prompt inspector reconstructs the logical prompt components, verifies
+their separate hashes, displays the submitted-payload role mapping and transport
+identity, and states when an execution scaffold is opaque. It must not fabricate
+or display hidden scaffold bytes as reconstructed content.
 
 ## Independent verification
 

@@ -67,9 +67,15 @@ built_from:                  # INPUTS - extends the shape already published
 built_by:                    # OUTPUTS and generator
   model: <id>
   model_version: <id>
-  transport: subscription    # subscription | api
-  prompt_sha256: <sha256>    # the USER prompt
-  system_prompt_sha256: <sha256>
+  transport: openrouter      # subscription | openai-subscription | openrouter | api
+  prompt_sha256: <sha256>    # the authored logical user prompt
+  system_prompt_sha256: <sha256>  # the authored logical system prompt
+  submitted_payload_sha256: <sha256>  # exact bytes in the route's user/input message
+  system_prompt_role: system # system | user-prefix
+  transport_implementation: <id>  # for example opencode or direct-api
+  transport_version: <version-or-null>
+  transport_config_sha256: <sha256-or-null>
+  execution_scaffold: none   # none | opaque
   directives_sha256: <sha256>  # the RESOLVED directive list
   body_sha256: <sha256>
   tokens: {input, output}    # this assembly's own usage
@@ -89,25 +95,25 @@ Two keys rather than one because they answer opposite questions: `built_from` is
 |----------|-------------|---------|
 | Is my input stale? | `built_from` | The slice or a claim changed - reassemble. |
 | Has a human edited this? | `built_by.body_sha256` | Do not clobber. Human edits are an *expected* flow: live-site edits return as directives, so this fires routinely. |
-| Would this be built differently today? | `built_by.model`, `model_version`, `prompt_sha256` | The generator moved on. Neither hash above detects it, and the corpus quietly ends up in mixed generations. |
+| Would this be built differently today? | `built_by.model`, `model_version`, prompt hashes, and transport execution fields | The generator or route wrapper moved on. Neither hash above detects it, and the corpus quietly ends up in mixed generations. |
 
 Four things about this are easy to get wrong:
 
 - **The brief needs a slug as well as a hash.** `brief_hash` is an integrity check with no locator - briefs are addressed on disk by page slug, so a hash alone cannot find one. Today the locator is implicit in the article's filename matching the brief's, which breaks silently on any slug change.
 - **`body_sha256` covers the body only, over the exact bytes written, computed last.** The assembler mutates the body after render and re-dumps the frontmatter, so a hash taken at render time never matches the file on re-read. Body-only also sidesteps the frontmatter re-dump entirely.
 - **`model` and `model_version` are reconstructability inputs, not transparency fields.** They currently reach an article only via `ai_usage`, which is being removed (see Open questions). If they leave with it, an article no longer records what produced it and 0010 fails. Cost had to go; the model must not go with it.
-- **`prompt_sha256` is a hash of the exact prompt string sent.** Assembler prompts are in-code rather than versioned files, so the digester's `{id, version, sha256, file}` shape does not apply here.
+- **`prompt_sha256` is a hash of the exact authored logical user-prompt string.** `system_prompt_sha256` does the same for the authored logical system prompt. Assembler prompts are in-code rather than versioned files, so the digester's `{id, version, sha256, file}` shape does not apply here. These hashes identify authored content; they do not claim that every transport assigns it the same protocol role.
 - **`directives_sha256` hashes the RESOLVED directive list, not the files.** Directives are resolved at build time from up to five sources (article frontmatter, a per-article sidecar, then `_directives.{lang}.yaml` and `_directives.yaml` walking up each folder), most-specific-first with dedup. The file set that produced a given article is not recoverable from the article, so only the resolved list is a meaningful audit record.
 
-**The prompt is hashed in components, never as one blob**, and the transport is stamped alongside. A single "full prompt hash" cannot say *which* component differed, which is the whole point of the audit: the digest layer keys on `(model, prompt_sha, prep_version)` as separate components for exactly this reason, and the article equivalent is `(model, prompt_sha, system_prompt_sha, transport)`.
+**The authored prompt is hashed in components, never as one blob**, and route execution is stamped alongside. A single "full prompt hash" cannot say *which* authored component differed, while authored hashes alone cannot show how a route delivered those components. The article generator identity therefore includes the logical user and system hashes, the exact submitted user/input payload hash, its system-prompt role mapping, and the transport implementation evidence.
 
-The transport must be stamped because the two paths do not currently send the same prompt: the subscription path passes a system prompt via `--append-system-prompt`, while the API path sends the user prompt with no system prompt at all.
+`submitted_payload_sha256` hashes the exact bytes supplied through the route's user or primary input channel. `system_prompt_role` records whether the logical system prompt was delivered as a native `system` message or concatenated ahead of the logical user prompt as a `user-prefix`. Together with the two logical hashes, these fields make role remapping visible rather than pretending equivalent authored content means identical execution.
 
-**The invariant: both transports send the byte-identical system prompt.** `<COMPONENT>_USE_API` selects a *billing* path, so nothing about how an article is written may vary across it.
+The transport fields bind route-controlled execution to an implementation. `transport_implementation` names the runner, `transport_version` records its executable version where one exists, and `transport_config_sha256` hashes the exact bytes of the route configuration artefact selected for the invocation where one exists. `execution_scaffold` is `none` when the client adds no wrapper prompt, or `opaque` when a runner adds a scaffold that it does not expose. A null version or config hash means that component does not exist, not that an available value was omitted.
 
-Identical rather than merely equivalent, and the distinction is the point. A clause that is a no-op on one path - tool suppression, which compensates for the agentic wrapper on the subscription path and does nothing where no tools are passed - is sent on both anyway rather than trimmed. Trimming it would make `system_prompt_sha256` differ, splitting the corpus into two generator identities over a clause that changes no output, which is precisely the confound the component hashes exist to eliminate. One string, one hash, one identity.
+OpenCode 1.18.30 cannot accept a caller-supplied system-role message through `opencode run`. On that route the exact submitted user message is `_SYSTEM_PROMPT + "\n\n" + assembly_prompt`, so `system_prompt_role` is `user-prefix`. OpenCode also prepends its own system scaffold; the CLI does not expose those bytes, so `execution_scaffold` is `opaque`. The audit record binds this execution to the OpenCode version and no-tools configuration hash, but must not claim that the hidden scaffold is hashed or reconstructable.
 
-Today's instance is benign, and saying so precisely matters more than making the case sound worse than it is: the subscription system prompt carries no editorial or content guidance, only an output-format corrective the user prompt already duplicates in its own words, plus that tool clause. The reason to close it anyway is that **an unstated difference between transports is a latent defect even when today's instance is harmless** - nothing asserts the equivalence, so a later edit could introduce real content guidance on one path alone and nothing would catch it. `transport` and `system_prompt_sha256` are what make that detectable rather than silent.
+**The invariant is authored content, not message-role delivery.** Every route uses the byte-identical logical user prompt and byte-identical logical system prompt. Route-specific role mapping and scaffolding may differ, but must be recorded in the execution fields. A change to either authored prompt changes its logical hash; a change to concatenation changes the submitted payload hash; and a runner or no-tools configuration change alters its execution identity. This preserves a checkable boundary without claiming visibility into a scaffold the runner withholds.
 
 **Machine ownership needs no new machinery.** The assembler rewrites the whole file on every re-assembly and preserves only an enumerated allow-list (`_PRESERVE_KEYS`, currently just `directives`). Keeping these two keys out of that list makes machine ownership the default: a human edit inside them is discarded on the next assembly. The rule is stated here for humans, not built.
 

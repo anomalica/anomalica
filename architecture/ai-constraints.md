@@ -1,6 +1,6 @@
 # Artificial Intelligence Constraints
 
-Boundaries on artificial intelligence involvement across all components. These apply to the ingester, digester, assembler, and site.
+Boundaries on artificial intelligence involvement across all components. These apply to the ingester, scheduler, digester, assembler, and site.
 
 For full context, see decision 0008 (content traceable to sources), decision 0010 (auditable assembly, including independent verification), and the editorial style guide (open disclosure of AI use).
 
@@ -22,6 +22,7 @@ Artificial intelligence assembles content from existing sources. It does not cre
 | Component | AI role |
 |-----------|---------|
 | **Ingester** | Speech-to-text, speaker diarisation, optical character recognition, text extraction (standard signal processing, not generative) |
+| **Scheduler housekeeping** | Proposes metadata or narrowly guarded source corrections for human approval; deterministic checks use no model, while research-backed checks use the model-policy `housekeep-research` stage. It never applies its own proposals. |
 | **Digester** | Claim extraction, node identification, relationship detection, evidence scoring |
 | **Assembler** | Arranging knowledge graph data into articles, applying directives, per-language assembly |
 | **Assembler** | Extracting directives from human edits, classifying edits as presentational or meaning-altering |

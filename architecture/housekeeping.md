@@ -1,10 +1,10 @@
 # Housekeeping
 
-A recurring pass that improves the **frontmatter** of already-ingested records and
-proposes the changes for human approval. It never edits body prose, and it never
-applies a change itself.
+A proposal-only pass over newly ingested or changed records. It improves
+frontmatter and may propose one narrowly guarded whole-token body correction;
+it never applies a change itself.
 
-Status: specified 2026-08-19. Partly built - see [Implementation state](#implementation-state).
+Status: version 2 specified 2026-09-11 by [decision 0048](../decisions/0048-post-ingest-housekeeping-is-content-versioned.md). Partly built - see [Implementation state](#implementation-state).
 
 ## Why it exists
 
@@ -47,7 +47,10 @@ reduces the per-record cost of review is worth more than anything before it.
 ## Shape
 
 ```
-scheduler ──stages a housekeeping job──▶ worker (local, subscription only)
+ingester ──post-commit fast path──▶ scheduler ──stages housekeeping──▶ worker
+                                       ▲
+                                       │ startup + ≤5-minute full reconciliation
+                                       │ of live ingest records
                                               │
                                               │ reads  ingests/store/{hash}.md
                                               │ writes ingests/store/{hash}.housekeeping.json
@@ -66,13 +69,14 @@ Four properties, in priority order:
 
 1. **The worker proposes; it never applies.** Every change reaches a record through
    a human approving it in the workbench.
-2. **Body prose is untouchable.** The worker reads the body as evidence and writes
-   only frontmatter. Enforced, not promised - see [Safety](#safety).
+2. **Body edits are closed and mechanically guarded.** Version 2 permits only
+   exhaustive whole-token `replace-token` proposals; arbitrary prose changes are
+   unrepresentable. Enforced, not promised - see [Safety](#safety).
 3. **Each proposed change is approved or rejected on its own.** A record with seven
    proposals can have three accepted. A patch is not all-or-nothing.
-4. **Subscription only.** Housekeeping runs on Mark's Claude plan. It must never
-   reach the metered API or OpenRouter, and it must stay well under the plan
-   allowance so it cannot consume what he needs for his own work.
+4. **Deterministic first; subscription only when assisted.** The post-ingest
+   checks spend nothing. A research-backed check runs on Mark's Claude plan and
+   must never reach the metered API or OpenRouter.
 
 ## Why these homes
 
@@ -100,13 +104,18 @@ record-level "has been checked" marker and a list of independently-decidable ite
 The authoritative schema is in [housekeeping-format.md](housekeeping-format.md).
 The properties that matter architecturally:
 
-- **`checker_version`** - the record-level marker that prevents re-checking. A record
-  whose sidecar carries the current version is skipped. Bumping the version is how you
-  force a corpus-wide re-check after improving the checks; there is no separate
-  "re-run" flag to get out of sync.
+- **`input_sha256` + `algorithm_version`** - the record-level applicability
+  marker. The first hashes the complete exact ingest Markdown bytes examined;
+  the second identifies the complete check and guard algorithm. A completed
+  sidecar is current only when both match. `content_hash` remains the stable
+  source/selection locator and is not the input digest.
+- **`housekeeping-algorithm.json`** - the scheduler-owned root manifest in the
+  ingests repository (`anomalica/housekeeping-algorithm/1`) is the canonical deployed algorithm version. Scheduler and
+  Workbench read it at the same Git ref as the record and sidecar; a missing,
+  malformed or worker-mismatched manifest fails closed.
 - **Per-item `status`** - `proposed` | `approved` | `rejected`. Set by the reviewer,
-  not the worker. A rejected item stays in the file: it is the record of a decision,
-  and it stops the next run from proposing the same thing again.
+  not the worker. A rejected item stays in the current tuple's file as the record
+  of that decision. It never carries into changed input or algorithm tuples.
 - **Per-item `evidence`** - what justified the change. For a research-backed item this
   includes the source URL. An item with no evidence is not a proposal, it is a guess,
   and the worker must not emit one.
@@ -115,11 +124,18 @@ The properties that matter architecturally:
 
 ## Safety
 
-**Frontmatter only, enforced mechanically.** Applying an approved item parses the
-record, replaces a frontmatter value, and re-serialises. Before committing, the body
-is compared byte-for-byte with the body before the edit. Any difference aborts the
-apply. The worker therefore cannot alter prose even if a model returns it, and the
-guarantee does not depend on reviewing diffs carefully.
+**Only approved byte scopes may change.** Every apply first verifies the whole
+record against the sidecar's `input_sha256`. Frontmatter operations still require
+the body to remain byte-identical. `replace-token` revalidates every recorded
+whole-token byte span and then proves every byte outside those spans is
+unchanged. Record and sidecar decision commit atomically. The exact guard is in
+[housekeeping-format.md](housekeeping-format.md).
+
+**Concurrency is part of the guard.** Edge applies use one tree/commit/ref CAS.
+Local applies hold the repository writer lock across re-read, validation and
+write, build from the expected HEAD in a dedicated temporary index, stage only
+the record and sidecar pathspec, and update the ref by expected-old CAS. Neither
+path may absorb the user's index or replay against a changed tip.
 
 **Subscription pinned at dispatch.** The scheduler already forces `INGEST_USE_API=0`
 and `DIGESTER_USE_API=0` and strips `INGEST_SPEND_CONFIRMED` and `ANOMALICA_USE_API`
@@ -148,17 +164,24 @@ Ordered by value, not by ease. The first is the reason the component exists.
    redistributor and that the underlying work is a 1987 broadcast is exactly the call
    [ingest-format](ingest-format.md) says cannot be made mechanically.
 2. **Missing `container_title`.** The journal, book or programme a work appeared in.
-3. **Unidentified speakers.** Diarised transcripts carry `<!-- speaker: Speaker 1 -->`
-   markers. Where the transcript names the speakers, propose the mapping. The model
-   returns a mapping only - `{"Speaker 1": "Ross Coulthart"}` - and code performs the
-   substitution, so the model never emits document text. Names must resolve against
-   the known-entity list or be flagged as new rather than written. The mapping must
-   support many-to-one (diarisation splits one person across labels) and must have an
-   explicit "unknown" so a second guest is not invented to fill a label.
-4. **Deterministic field hygiene.** Required-field presence per `source_type`, date
+3. **Deterministic field hygiene.** Required-field presence per `source_type`, date
    precision written per the quoting rule, `creators` that parse as a list. No model.
+4. **Known whole-token extraction errors.** Propose `OSSAP` to `AAWSAP` for
+   every case-sensitive whole-token body occurrence. The item records exhaustive
+   raw-byte spans and remains human-approved; if the source itself says `OSSAP`,
+   reject it rather than normalising the source.
 
-## Structure repair (books)
+**Unidentified-speaker substitution is not a version 2 check.** It would change
+speaker comments throughout the body and reconcile the frontmatter roster.
+`replace-token` cannot represent those coupled semantics, so no worker may emit
+or apply that change until a separately decided closed operation and byte guard
+exist.
+
+## Future structure repair (books)
+
+Heading repair remains a design case, not an operation in
+`anomalica/housekeeping/2`. Version 2 supports only frontmatter operations and
+`replace-token`; adding heading repair requires its own closed byte-scope guard.
 
 Mark's case, 2026-08-19: *The Fourth Mind* (Whitley Strieber) has 27 headings in its
 body and every one is a flat `#` in capitals. The book's own structure is two parts
@@ -191,26 +214,20 @@ untitled ones need judgement.
 
 ### What this costs, stated plainly
 
-Housekeeping's guarantee today is that **body prose is untouchable**, enforced by
-comparing a byte-for-byte digest of the whole body before and after. A heading lives
-in the body, so that guarantee cannot survive unchanged.
-
-The replacement is narrower than "trust the model" and wider than today: **only the
-lines a human approved may change, and every other byte of the record is identical.**
-That is already how `apply_items` works - it splices named lines - so the frontmatter
-case becomes a special case of the general one rather than the only permitted one. A
-heading item names an exact line and previews it the same way a frontmatter item
-does:
+Version 1 guarantees that body prose is untouchable. Decision
+[0048](../decisions/0048-post-ingest-housekeeping-is-content-versioned.md)
+widens that boundary only for exhaustive whole-token `replace-token` proposals,
+not for headings. A future heading operation would need to record exact approved
+byte spans and prove every other byte unchanged. Its review preview would show:
 
 ```
 - # THE SECRECY
 + ## 1. The Secrecy
 ```
 
-The guard changes from "the body is identical" to "every line except the approved
-ones is identical". That is a real loosening and is recorded here as one, not slipped
-in: it must be an explicit decision, because the reason a reviewer can trust a
-housekeeping commit is that the guarantee is mechanical rather than a promise.
+That future guard is not implied by the token operation and remains unimplemented.
+The reason a reviewer can trust a housekeeping commit is that each body operation
+has a closed mechanical guard, not a general permission to edit prose.
 
 ## Decisions from 2026-08-20
 
@@ -227,18 +244,16 @@ it sits at, whether it carries its number. The check corrects the marking and ta
 the title from the book's own contents page. It never rewrites a title into something
 the book does not say.
 
-**Request housekeeping from a record.** A reviewer looking at a record should be able
-to ask for a housekeeping pass on it, rather than waiting for a corpus run.
+**Request housekeeping from a record.** A reviewer looking at a record can ask
+the scheduler to run reconciliation immediately for it rather than waiting up
+to five minutes. This is not a force flag: an already current tuple does not
+rerun.
 
-**A stale proposal must not apply. CONFIRMED GAP, not hypothetical:** `apply_items`
-locates the field and replaces it without ever comparing `item.current` against what
-the record now holds. So a proposal generated before a reviewer edited that field
-silently overwrites the newer value. Mark reached this by asking what happens if the
-record changes between propose and approve; the answer is that today it clobbers.
-The fix is the one he described: an item that no longer matches the record is
-discarded rather than applied, and the record goes back in the queue for a fresh
-pass. Do NOT lock reviewers out while a pass is pending - the failure is cheap to
-detect and re-run, and a lock would make the common case wait for the rare one.
+**A stale proposal must not apply.** The current record's complete raw-byte hash
+must equal `input_sha256`; operation-specific old values and spans must also
+match. Any mismatch refuses the whole apply and makes the new input tuple due.
+Do not lock reviewers out while a pass is pending - editing remains available
+and deliberately invalidates the prior proposal.
 
 **Keep the name.** Mark talked himself out of and back into "housekeeping" in one
 breath. It is right: not a review, just tidying.
@@ -273,9 +288,10 @@ been housekept has had its metadata examined; its body has not been verified aga
 the source. The two states are independent and a housekeeping pass must never mark a
 record as reviewed.
 
-Housekeeping runs on records that have **not** yet been human-reviewed, or its
-proposals are applied as a clearly separate commit. Landing metadata edits on a
-record after sign-off silently changes something already approved.
+Reconciliation checks every live record whose exact tuple is due, regardless of
+review state. The worker still changes nothing. Any proposal approved after
+human sign-off is an explicit later reviewer action and a clearly separate
+commit, never a silent mutation of what was approved.
 
 ## Implementation state
 
@@ -290,9 +306,11 @@ As of 2026-08-19 evening.
   of `date_published` or `posted_date` rather than `date_published` unconditionally
   - that unconditional requirement was what forced the fabrication. 273 tests.
 - **The deterministic pass.** `scheduler/backend/housekeeping.py`: sidecar read and
-  write, the `checker_version` re-check marker, decision carry-over, the two
+  write, the legacy `checker_version` re-check marker and then-built carry mechanism
+  (both forbidden for version 2), the two
   model-free checks, and the guarded apply. Finds 61 proposals across 29 of 288
-  records at no allowance cost.
+  records at no allowance cost. Version 2 replaces both legacy lifecycle rules;
+  decisions do not carry across tuple changes.
 - **The runner.** `scheduler/backend/housekeeping_cli.py`: `scan`, `propose`,
   `show`. Refuses any metered configuration outright. The ceiling (session 70 /
   weekly 80, against the global 90 / 95) gates `--research` only - the model-free
@@ -301,10 +319,11 @@ As of 2026-08-19 evening.
 - **Shared, not duplicated.** The model, the sidecar and `apply_items` live in
   `anomalica_common.housekeeping`, because the scheduler proposes and the workbench
   applies and both must agree on what applying means. Duplicating the one function
-  that guarantees prose is never touched would have let it drift.
-- **The read + decide routes** in `workbench/backend/server.py`, and the
-  **Housekeeping tab**. Approval is a decision-only POST: the client sends
-  `{item_id, status}` pairs and the server, which can read the record, splices it -
+  that enforces permitted byte scopes would let it drift.
+- **The legacy read + decide routes** in `workbench/backend/server.py`, and the
+  **Housekeeping tab**. Version 1 sent `{item_id, status}` pairs only. Version 2
+  additionally requires the five `viewed_*` identities defined above; the
+  server, which can read the record, performs the guarded splice -
   `PUT /api/ingests/{hash}` cannot be reused because it needs the whole record from
   a client that does not have a gated body. Record and sidecar commit together.
 - **A first pass over the corpus**, committed to `ingests`: 61 proposals across 29
@@ -315,7 +334,7 @@ As of 2026-08-19 evening.
   Verified after: the decide route answers 401 rather than 404, the existing
   endpoints still answer 200, and a sweep of all 19 gated records shows 0 leaking. `edge/lib/housekeeping.ts`
   is a hand port of `apply_items`, which is a standing liability - it duplicates the
-  one function guaranteeing prose is never touched, and exists only because
+  function enforcing the permitted byte scopes, and exists only because
   production runs no Python. Two things hold it: the Python cases are ported
   alongside it, and `backend/test_housekeeping_parity.py` runs BOTH over the same 35
   inputs (the 29 real sidecars plus 6 synthetic shapes) and compares output text
@@ -327,7 +346,13 @@ As of 2026-08-19 evening.
   (`anomalica_common.llm.call_with_research`); no check uses it yet.
 - **The scheduler job type.** The CLI runs; it is not yet a lane the scheduler
   stages and dispatches.
-- **`container_title` and the speaker-naming check** from the check list.
+- **The version 2 interchange, reconciliation and post-commit fast path.** This
+  implementation snapshot predates them. Version 1 sidecars use
+  `checker_version` only. Decision 0048 supersedes that skip rule with exact
+  ingest bytes plus algorithm version and adds the guarded `replace-token`
+  operation.
+- **`container_title`.** Speaker naming is excluded from version 2 until it has a
+  separately decided closed body operation.
 
 **Known, deliberately not done.**
 

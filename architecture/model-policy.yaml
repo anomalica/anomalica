@@ -1,5 +1,5 @@
 schema: anomalica/model-policy/1
-updated: '2026-09-09'
+updated: '2026-09-11'
 watermarking:
   anthropic:
     state: watermarks
@@ -74,7 +74,7 @@ watermarking:
     state: clean
     confidence: high
     open_weights: false
-    checked: '2026-08-28'
+    checked: '2026-09-11'
     evidence: 'OpenAI''s own API guide "Content provenance" enumerates exactly which signals it applies and to what: "C2PA
       Content Credentials | Images | Signed metadata with issuer and AI-use details" and "SynthID | Images and audio | A watermark
       embedded directly in supported media". Text is absent from that list; no GPT-5.6 model (Sol, Terra, Luna) is mentioned
@@ -93,13 +93,17 @@ watermarking:
       - https://help.openai.com/en/articles/8912793-provenance-signals-content-credentials-synthid-in-openai-generated-content
       - https://openai.com/index/advancing-content-provenance/
       - https://www.infoq.com/news/2026/08/eu-ai-content-watermark/
-    caveat: No OpenAI page says categorically "we do not watermark text" - the conclusion rests on their provenance docs enumerating
+    caveat: >-
+      No OpenAI page says categorically "we do not watermark text" - the conclusion rests on their provenance docs enumerating
       covered modalities and excluding text, plus a goal statement that only makes sense if text is not yet covered. OpenAI
       has signed the EU Code of Practice on Transparency of AI-Generated Content and has publicly committed to extending provenance
       signals to text, so this is a status that could change with little notice; re-check before relying on it long-term.
       Separately, invisible Unicode characters (narrow no-break spaces and similar) are sometimes observed in ChatGPT web
       output - these are chat-interface rendering artefacts, not a watermark, and do not appear in API output. Note also that
-      if a text watermark ships it would apply at hosted sampling time only.
+      if a text watermark ships it would apply at hosted sampling time only. The authenticated OpenAI subscription route inherits
+      this provider finding: authentication and allowance accounting change the route, not the model maker or its text-provenance
+      behaviour. OpenCode's OpenAI OAuth route completed a no-tools generation on 2026-09-11; that establishes the route,
+      not production quality or production readiness.
   deepseek:
     state: clean
     confidence: high
@@ -259,10 +263,13 @@ watermarking_meanings:
 deny:
   - pattern: google/*
     reason: Refused everywhere, not only for writing. The watermarking table records the evidence and the date it was checked.
-routes_note: 'Every model carries a route, the class that says how it is paid for: subscription (the Claude plan, a weekly
-  allowance), flat-rate (the opencode Go plan, a monthly allowance), metered (per-token billing through OpenRouter or a provider
-  key, behind the spend gate), local (runs on our own machine, no provider). A stage''s priority list orders what is best;
-  the scheduler takes the first model in it whose route can pay today.'
+routes_note: 'Every model carries a route, the class that says how it is paid for: subscription (the Claude plan), openai-subscription
+  (an authenticated OpenAI plan), flat-rate (the opencode Go plan), metered (per-token billing through OpenRouter or a provider
+  key, behind the spend gate), local (runs on our own machine, no provider). Subscription routes have allowances rather than
+  per-token bills and are paced from provider-reported usage where available. A stage''s priority list orders automatic selection;
+  its candidates are permitted only when named explicitly for evaluation and never substitute automatically. The scheduler
+  takes the first permitted priority model whose route has capacity and whose route-specific input limit fits the measured
+  input.'
 models:
   - id: opencode-go/kimi-k3
     tier: flagship
@@ -392,6 +399,81 @@ models:
       - assemble
       - translate
     tested: true
+  - id: openai-subscription/gpt-5.6-sol
+    tier: flagship
+    provider: openai
+    route: openai-subscription
+    context: 272000
+    max_input: 272000
+    max_output: 128000
+    input_reserve: 12000
+    input_reserve_qualification:
+      transport_implementation: opencode
+      transport_version: 1.18.30
+      transport_config_sha256: 5c4867f4ae4b635d34b4f4020f37c02ccbafffab23900a6b687d48ffb14484c7
+    context_note: The authenticated GPT-5.6 route exposes a 400,000-token total context, partitioned into at most 272,000
+      input tokens and 128,000 output tokens. OpenCode 1.18.30 adds an opaque system scaffold measured within a 12,000-token
+      reserve. Dispatch conservatively counts each visible submitted-payload UTF-8 byte as at most one token, so this route
+      accepts at most 260,000 visible payload bytes. The reserve is qualified by the OpenCode implementation, version and
+      selected no-tools configuration SHA-256 above; dispatch must fail closed if any value cannot be verified or differs.
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: Candidate subscription route for manual assembly evaluation. It is outside automatic priority, so adding it
+      does not change the production default. Oversized payloads are refused; a larger-context route requires separate selection
+      and authorisation rather than automatic fallback.
+    used_for: []
+    tested: false
+  - id: openai-subscription/gpt-5.6-terra
+    tier: middle
+    provider: openai
+    route: openai-subscription
+    context: 272000
+    max_input: 272000
+    max_output: 128000
+    input_reserve: 12000
+    input_reserve_qualification:
+      transport_implementation: opencode
+      transport_version: 1.18.30
+      transport_config_sha256: 5c4867f4ae4b635d34b4f4020f37c02ccbafffab23900a6b687d48ffb14484c7
+    context_note: The authenticated GPT-5.6 route exposes a 400,000-token total context, partitioned into at most 272,000
+      input tokens and 128,000 output tokens. OpenCode 1.18.30 adds an opaque system scaffold measured within a 12,000-token
+      reserve. Dispatch conservatively counts each visible submitted-payload UTF-8 byte as at most one token, so this route
+      accepts at most 260,000 visible payload bytes. The reserve is qualified by the OpenCode implementation, version and
+      selected no-tools configuration SHA-256 above; dispatch must fail closed if any value cannot be verified or differs.
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: Candidate subscription route for manual assembly evaluation. It is outside automatic priority, so adding it
+      does not change the production default. Oversized payloads are refused; a larger-context route requires separate selection
+      and authorisation rather than automatic fallback.
+    used_for: []
+    tested: false
+  - id: openai-subscription/gpt-5.6-luna
+    tier: light
+    provider: openai
+    route: openai-subscription
+    context: 272000
+    max_input: 272000
+    max_output: 128000
+    input_reserve: 12000
+    input_reserve_qualification:
+      transport_implementation: opencode
+      transport_version: 1.18.30
+      transport_config_sha256: 5c4867f4ae4b635d34b4f4020f37c02ccbafffab23900a6b687d48ffb14484c7
+    context_note: The authenticated GPT-5.6 route exposes a 400,000-token total context, partitioned into at most 272,000
+      input tokens and 128,000 output tokens. OpenCode 1.18.30 adds an opaque system scaffold measured within a 12,000-token
+      reserve. Dispatch conservatively counts each visible submitted-payload UTF-8 byte as at most one token, so this route
+      accepts at most 260,000 visible payload bytes. The reserve is qualified by the OpenCode implementation, version and
+      selected no-tools configuration SHA-256 above; dispatch must fail closed if any value cannot be verified or differs.
+    price:
+      input: 0.0
+      output: 0.0
+    rationale: Candidate subscription route for manual assembly evaluation. It is outside automatic priority, so adding it
+      does not change the production default. Oversized payloads are refused; a larger-context route requires separate selection
+      and authorisation rather than automatic fallback.
+    used_for: []
+    tested: false
   - id: moonshotai/kimi-k3
     tier: flagship
     provider: moonshot
@@ -642,6 +724,10 @@ stages:
       - openai/gpt-5.6-sol
       - openai/gpt-5.6-terra
       - openai/gpt-5.6-luna
+    candidates:
+      - openai-subscription/gpt-5.6-sol
+      - openai-subscription/gpt-5.6-terra
+      - openai-subscription/gpt-5.6-luna
     deny: []
     rationale: 'The page a reader reads. Which models may write it is decided by the watermarking table, not by a list kept
       here. Pages already written by a model that is now barred are not being rebuilt: they get rewritten anyway as new claims
@@ -670,8 +756,9 @@ stages:
   - id: housekeep
     purpose: Rule-based tidying of an ingested record.
     uses_model: false
-    enforced_by: null
-    rationale: Code, not a model. Fixed rules only, so it costs nothing and runs on every record.
+    enforced_by: scheduler
+    rationale: Code, not a model. Fixed rules only, so it costs nothing. A successful ingest result makes the exact record-byte
+      hash and algorithm-version tuple due; a completed current housekeeping sidecar satisfies it.
     output: internal
     output_note: Code, not a model.
   - id: housekeep-research
@@ -715,13 +802,13 @@ deny_watermarking_note: 'Reader-facing stages refuse a model by its provider wat
   names. The list of banned providers is worked out from the watermarking table above every time, so a provider added there
   is enforced immediately and a state that changes takes effect without anyone editing a stage. A name list would have to
   be updated by hand, and the failure would be silent: a provider nobody added is a provider nobody blocked.'
-watermarking_checked: '2026-08-28'
+watermarking_checked: '2026-09-11'
 prices_checked: '2026-09-01'
-model_fields_note: '`used_for` lists the stages that may pick this model, derived from the stage priority lists rather than
-  asserted separately. A model with an empty list is not used - which is a fact about our pipeline, not a judgement about
-  the model. There is deliberately no global approved/candidate status: a model is right for a job or it is not, and a single
-  word cannot say that. A status field would also be a second answer to a question the stages already answer, free to drift
-  from them.'
+model_fields_note: '`used_for` lists the stages that may pick this model automatically, derived from the stage priority lists
+  rather than asserted separately. A model with an empty list is not used automatically - which is a fact about our pipeline,
+  not a judgement about the model. Evaluation eligibility belongs to a stage''s `candidates` list: explicit checks permit
+  it, but automatic choice and context sizing ignore it. There is deliberately no global approved/candidate status because
+  a model may be active for one stage and evaluation-only for another.'
 tiers_note: 'Each family has the same three tiers and they map across: Sol/Opus for the hardest work, Terra/Sonnet for ordinary
   production, Luna/Haiku for high-volume rule-following work. Choosing a tier is a separate question from choosing a provider,
   and a stage that needs the top tier from a non-watermarking provider wants Sol, not Luna.'
@@ -743,7 +830,7 @@ context_selection_note: 'Every model carries `context`, its input limit in token
   evidence - claims cut from a brief cannot be cited, and nothing downstream can tell they existed. Fit first, then quality,
   then cost.'
 caching:
-  checked: '2026-09-09'
+  checked: '2026-09-11'
   note: 'The single record of how each route caches. Transports read from here rather than hardcoding a shape. Multipliers
     are against that model''s own uncached input price, so they carry across a price change. Every route caches on a PREFIX
     MATCH from the first byte: the order is document, then instructions, then whatever varies between rounds, and a route
@@ -818,9 +905,19 @@ caching:
         Confirm per model against a bill before relying on a figure.
       minimum_tokens:
         default: 1024
+    openai-subscription:
+      label: GPT-5.6 through an authenticated OpenAI subscription
+      order: 4
+      applies_to: openai-subscription/gpt-5.6-luna, openai-subscription/gpt-5.6-sol, openai-subscription/gpt-5.6-terra
+      mode: unknown
+      mode_note: Not checked. Treat as uncached until usage from repeated stable-prefix calls establishes otherwise.
+      marker: unknown
+      ttls: []
+      write_multiplier: {}
+      read_multiplier: null
     openrouter_deepseek:
       label: DeepSeek V4
-      order: 4
+      order: 5
       applies_to: deepseek/deepseek-v4-flash
       mode: automatic
       mode_note: DeepSeek watches for a repeated prefix and serves it from cache with no configuration.
@@ -832,7 +929,7 @@ caching:
         off. Not confirmed against our own bill.
     openrouter_other:
       label: Kimi, GLM and Qwen
-      order: 5
+      order: 6
       applies_to: moonshotai/kimi-k3, z-ai/glm-5.3-flash, qwen/qwen3.8-flash
       mode: unknown
       mode_note: Not checked. Treat as uncached until measured - OpenRouter pins the provider between calls so a hit would
@@ -843,7 +940,7 @@ caching:
       read_multiplier: null
     opencode:
       label: Kimi and GLM through the opencode plan
-      order: 6
+      order: 7
       applies_to: opencode-go/kimi-k3, opencode-go/glm-5.2
       mode: unknown
       mode_note: Routed through a local agent to providers whose caching we do not control or observe.

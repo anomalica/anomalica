@@ -104,3 +104,46 @@ Directives, when versioned, must hash the **resolved** list rather than
 point at files: they are resolved at build time from up to five sources
 walking up the folder tree, so the file set that produced a given article
 is not recoverable from the article.
+
+## Amendment 2026-09-11: a route is not an independent provider
+
+A route-qualified model id identifies how a call ran, not a new model maker.
+`openai/gpt-5.6-sol` and `openai-subscription/gpt-5.6-sol` are both OpenAI for
+this decision's independence rule. Assembly on either route must still be
+verified by a model from a different provider and jurisdiction. Distinct route
+ids strengthen provenance; they do not satisfy provider diversity by
+themselves. Their canonical model entries therefore both carry
+`provider: openai`; the `route` field and route-qualified id carry the execution
+distinction.
+
+## Amendment 2026-09-11: logical prompts and route execution are separate audit layers
+
+The original requirement to reconstruct "the exact prompt that produced an
+article" assumed that every transport exposes the messages submitted to the
+model. That is not true for the OpenAI subscription route. OpenCode 1.18.30 has
+no `opencode run` option for a caller-supplied system-role message. The
+assembler must concatenate its logical system prompt and user prompt into one
+stdin user message, and OpenCode prepends a system scaffold whose bytes the CLI
+does not expose.
+
+The audit record therefore separates authored prompt identity from route
+execution. It records hashes of the logical user prompt and logical system
+prompt; the exact submitted user/input payload hash; whether the logical system
+prompt was delivered as a native `system` message or a `user-prefix`; and the
+transport implementation, executable version, selected configuration artefact
+hash, and whether its added scaffold is `none` or `opaque`. The exact field
+contract is in
+[content-format.md](../architecture/content-format.md#auditable-assembly).
+
+For OpenCode, the submitted payload is reconstructable and hash-checkable, but
+its hidden system scaffold is not. The record binds that opaque part to the
+OpenCode version and no-tools configuration hash and states the limitation
+directly. It does not represent the authored logical system prompt as a native
+system-role message, and the prompt inspector must not present the hidden
+scaffold as reconstructed content.
+
+The cross-route invariant is the byte-identical authored logical prompts, not
+byte-identical role delivery or a byte-identical complete provider context.
+This correction narrows the original reconstructability claim to evidence the
+client can observe while preserving an auditable distinction between authored
+content, submitted payload, role mapping, and route-controlled execution.

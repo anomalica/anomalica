@@ -21,7 +21,7 @@ money or subscription allowance; a step marked free spends neither.
 | 3 | **Ingest: transcribe** | An audio or video stub | Local GPU | free | A record with per-word timestamps (Whisper on the card) |
 | 4 | **Ingest: extract** | A web, ebook or image stub | Local CPU | free | A record, extracted by rule (no model) |
 | 5 | **Ingest: read** | A PDF stub | Remote AI | metered | A record, read by a vision model |
-| 6 | **Cleanup pass** | A record just ingested | Local CPU | free | Proposed frontmatter corrections, for approval in the workbench |
+| 6 | **Housekeeping** | Scheduler reconciliation at startup and at least every five minutes finds a live record without a completed current `(input_sha256, algorithm_version)` sidecar; a valid post-commit ingest result runs the same check immediately | Local CPU | free | `anomalica/housekeeping/2` proposals, possibly empty, for approval in the Workbench |
 | 7 | **Pre-digest** | A record with no current pre-digest | Local CPU | free | The exact model input, stored so it can be inspected ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)) |
 | 8 | **Digest** | A record with no digest, or one whose body was re-extracted | Remote AI | plan or metered | Claims and nodes in `digests/` |
 | 9 | **Quote check** | Runs as the **last step of every digest**, and as a backfill for any digest whose claims carry no verdict | Local GPU | free | A label on each claim: does its quote support it, contradict it, or neither |

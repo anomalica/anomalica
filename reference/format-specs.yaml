@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 1
+spec_version: 2
 types:
   ingest:
     schema: anomalica/record/1
@@ -210,6 +210,134 @@ types:
         is already public for those). The two allow-lists MUST NOT be collapsed: merging withdraws the ruling or leaks the
         audio. Route per object kind, never once per record. Everything else - licensed, restricted, unknown, absent - fails
         closed."
+      "housekeeping-algorithm.json": "Scheduler-owned canonical deployed housekeeping algorithm manifest, schema anomalica/housekeeping-algorithm/1.
+        Scheduler and Workbench read it at the same Git ref as record and sidecar; missing, malformed or worker-mismatched
+        state fails closed."
+      "store/{content_hash}.housekeeping.json": "Proposal-only housekeeping result, schema anomalica/housekeeping/2. Bound
+        to the complete exact ingest Markdown bytes by input_sha256 and reviewed through the Workbench. See the housekeeping
+        type below."
+  ingest_result:
+    schema: anomalica/ingest-result/1
+    status: stable
+    serialisation: compact JSON file + prefixed stdout line
+    spec_doc: architecture/ingest-result-format.md
+    summary: Post-commit ingester result consumed by the scheduler. It names the produced live record explicitly; consumers
+      never derive a record path from the intake hash. Before acceptance, the scheduler independently reads record_path from
+      commit_sha's tree and verifies the blob's parsed content_hash.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/ingest-result/1`."}
+      - {name: run_uuid, type: string, required: true, description: "Canonical lowercase scheduler-supplied UUID."}
+      - {name: outcome, type: enum, required: true, description: "`committed` or `no-op`."}
+      - {name: record_path, type: string, required: true, description: "Normalised POSIX path relative to the ingests repository;
+          no absolute, empty, dot or dot-dot segments. Resolves to the produced live record."}
+      - {name: content_hash, type: string, required: true, description: "Full `sha256:<64 lowercase hex>` parsed from the
+          produced record."}
+      - {name: commit_sha, type: string, required: true, description: "Full lowercase 40- or 64-hex Git object id whose tree
+          contains record_path with the stated content_hash."}
+      - {name: completed_at, type: string, required: true, description: "UTC ISO 8601 timestamp ending in Z, after commit
+          verification."}
+  housekeeping:
+    schema: anomalica/housekeeping/2
+    status: stable
+    serialisation: JSON
+    spec_doc: architecture/housekeeping-format.md
+    summary: Completed proposal-only housekeeping pass for one exact ingest Markdown byte sequence and algorithm version.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping/2`; v1 is always due and cannot
+          be decided, applied or carried into another tuple."}
+      - {name: content_hash, type: string, required: true, description: "Stable source/selection record locator in full `sha256:<64
+          lowercase hex>` form; not the examined Markdown digest."}
+      - {name: input_sha256, type: string, required: true, description: "SHA-256 of the complete exact raw ingest Markdown
+          bytes examined, in full `sha256:<64 lowercase hex>` form."}
+      - {name: checked_at, type: string, required: true, description: "UTC ISO 8601 completion timestamp."}
+      - {name: algorithm_version, type: string, required: true, description: "Non-empty identity of the complete check suite,
+          match rules and apply guards."}
+      - {name: outcome, type: enum, required: true, description: "Literal `completed`; failed/partial passes emit no sidecar."}
+      - {name: usage, type: object, required: false, description: "Subscription model/token provenance when model-assisted
+          checks contributed; omitted for deterministic-only passes."}
+      - {name: items, type: list, required: true, description: "Independently decidable proposals. Frontmatter tagged variants
+          are set/clear/move. Body replace-token carries scope, old/new ASCII tokens, fixed case/boundary literals, exhaustive
+          whole-file UTF-8 byte spans, expected count, evidence, confidence and status. An optional depends_on list names
+          same-sidecar item IDs that must also be approved in the same atomic request; it is immutable proposal identity.
+          Unknown, self-referential or cyclic prerequisites fail closed. May be empty."}
+  housekeeping_algorithm:
+    schema: anomalica/housekeeping-algorithm/1
+    status: stable
+    serialisation: 'Exactly 77 UTF-8 bytes: `{ "algorithm_version": "1", "schema": "anomalica/housekeeping-algorithm/1" }`
+      plus one LF; no additional fields or other whitespace'
+    canonical_example: "{ \"algorithm_version\": \"1\", \"schema\": \"anomalica/housekeeping-algorithm/1\" }\n"
+    spec_doc: architecture/housekeeping-format.md
+    path: housekeeping-algorithm.json
+    owner: scheduler
+    summary: Canonical deployed check-and-guard algorithm version. The worker reports its implemented anomalica_common.housekeeping.ALGORITHM_VERSION
+      before dispatch; missing, malformed or unequal state fails closed.
+    fields:
+      - {name: algorithm_version, type: string, required: true, description: "Non-empty ASCII `[A-Za-z0-9._-]+` exact deployed
+          algorithm identity."}
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-algorithm/1`."}
+  housekeeping_view:
+    schema: anomalica/housekeeping-view/1
+    status: stable
+    serialisation: JSON API response
+    spec_doc: architecture/review-workbench.md
+    endpoint: "GET /api/ingests/{bare_content_hash}/housekeeping"
+    additional_fields: false
+    summary: Strict access-tagged Workbench envelope. A no-possession gated view exposes processing state/count/scopes/deep-link
+      only, with no source-derived or viewed-identity data. A public, trusted-local or possession-granted view binds record,
+      raw sidecar and manifest at one committed ingests ref; previews are separate derived data, never sidecar mutations.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-view/1`."}
+      - {name: access, type: enum, required: true, description: "`summary` without possession or `full` for public/trusted-local/possession-granted
+          access."}
+      - {name: viewed_sidecar_sha, type: string|null, required: full, description: "Full lowercase 40- or 64-hex Git blob
+          id of the committed raw sidecar backing the view; null only when no sidecar exists. Forbidden in summary."}
+      - {name: viewed_ref, type: string, required: full, description: "Full lowercase 40- or 64-hex Git commit SHA whose one
+          tree supplied manifest, record and sidecar."}
+      - {name: viewed_content_hash, type: string, required: full, description: "Full `sha256:<64 lowercase hex>` record identity.
+          Forbidden in summary."}
+      - {name: viewed_input_sha256, type: string, required: full, description: "Computed complete raw Markdown file SHA-256.
+          Forbidden in summary."}
+      - {name: viewed_algorithm_version, type: string, required: full, description: "Version read from the manifest at viewed_ref.
+          Forbidden in summary."}
+      - {name: state, type: enum, required: true, description: "`current` or `due`."}
+      - {name: due_reason, type: enum|null, required: true, description: "One of missing-sidecar, invalid-sidecar, unsupported-schema,
+          incomplete, input-mismatch or algorithm-mismatch when due; null when current. Manifest failure makes the endpoint
+          unavailable rather than returning a record state."}
+      - {name: outstanding_count, type: integer, required: true, description: "Current proposed item count; zero when due."}
+      - {name: scopes, type: list, required: true, description: "Distinct sorted `frontmatter`/`body` scopes of current proposed
+          items."}
+      - {name: deep_link, type: string, required: true, description: "`/housekeeping?record=<bare 64 lowercase hex>`."}
+      - {name: sidecar, type: object|null, required: true, description: "Always null in summary. Raw committed sidecar in
+          full; null there only when absent or invalid/unreadable."}
+      - {name: previews, type: object, required: full, description: "Derived preview map keyed by item id. Forbidden in summary
+          and never inserted into or persisted with the raw sidecar."}
+    access_variants:
+      summary: "Exactly schema, access, state, due_reason, outstanding_count, scopes, deep_link, sidecar. sidecar is null;
+        no viewed identity, item, old/new token, byte span, evidence or preview. Count/scopes/state/due/deep-link are permitted
+        metadata."
+      full: "All fields above. Returned directly for public/trusted-local records and under `housekeeping` in a successful
+        POST /api/ingests/{bare_content_hash}/verification/submit response for a gated record. Decisions require this variant."
+  housekeeping_decision_request:
+    schema: anomalica/housekeeping-decision/1
+    status: stable
+    serialisation: JSON API request
+    spec_doc: architecture/housekeeping-format.md
+    endpoint: "POST /api/ingests/{bare_content_hash}/housekeeping/decide"
+    additional_fields: false
+    summary: Reviewer intent bound to the committed sidecar view. The server reloads operation data and trusts no client operation
+      fields.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-decision/1`."}
+      - {name: viewed_sidecar_sha, type: string, required: true, description: "Exact committed sidecar blob id returned by
+          the view."}
+      - {name: viewed_ref, type: string, required: true, description: "Exact commit SHA returned by the view."}
+      - {name: viewed_content_hash, type: string, required: true, description: "Exact full record content hash returned by
+          the view."}
+      - {name: viewed_input_sha256, type: string, required: true, description: "Exact complete-file hash returned by the view."}
+      - {name: viewed_algorithm_version, type: string, required: true, description: "Exact manifest version returned by the
+          view."}
+      - {name: decisions, type: list, required: true, description: "Non-empty unique `{item_id, status}` entries with no extra
+          fields; status is approved or rejected. Operation data is forbidden, and no extra top-level request field is accepted."}
   per_model_digest:
     schema: anomalica/digest/1
     status: stable
@@ -297,13 +425,13 @@ types:
     status: provisional
     serialisation: markdown + YAML frontmatter
     spec_doc: architecture/content-format.md
-    summary: The assembler's output - one rendered article per language, consumed by the Hugo site. UNSETTLED - see warning.
+    summary: The assembler's output - one rendered article per language, consumed by the Hugo site. Layout remains unsettled;
+      audit fields are settled in content-format.md.
     warning: >-
       Content's layout (flat `<slug>.<lang>.md` vs document-first directories) is an unratified decision (assembler.md flags
-      its own layout section as out of date), and the audit-field shape is not settled. Only the fields both current docs
-      agree on are listed; do not treat content as final until content-format.md is ratified and the assembler workspace confirms
-      what it emits.
-    fields:  # frontmatter is human-controlled; the assembler preserves it and writes only the body
+      its own layout section as out of date). This provisional status concerns layout, not the settled machine-owned `built_from`
+      and `built_by` audit fields.
+    fields:  # human-authored keys are preserved; built_from and built_by are machine-owned
       - {name: title, type: string, required: true, description: "Article/page title."}
       - {name: description, type: string, required: false, description: "Short description."}
       - {name: directives, type: list, required: false, description: "Article-level presentational instructions to the assembler
@@ -311,12 +439,17 @@ types:
           `<slug>.directives.yaml` sidecars."}
       - {name: metadata, type: object, required: false, description: "Optional metadata the assembler reads but does not modify.
           Sub-shape not yet specified."}
+      - {name: built_from, type: object, required: false, description: "Machine-owned input binding. Carries source mode and
+          the applicable brief slug/hash or record hash, plus claim id/hash pairs. Transitional node-mode articles may lack
+          it until rebuilt from briefs; see content-format.md."}
+      - {name: built_by, type: object, required: true, description: "Machine-owned generator and output identity. Carries
+          route-qualified model id and model_version; transport; logical prompt, system-prompt, resolved-directive, submitted-payload
+          and body SHA-256 values; system-prompt role; transport implementation/version/configuration hash; scaffold exposure;
+          and temporary assembly token usage. OpenAI-subscription execution fields follow content-format.md's conditional
+          requirements."}
     open_questions:
       - "Layout: flat `<slug>.<lang>.md` (assembler.md) vs document-first `index.{lang}.md` directories (content-lifecycle.md)
         - unratified."
-      - "Audit/provenance binding (built_from/brief_hash, article/body hash, prompt hash) - where it is carried for content
-        (frontmatter is assembler-preserved; review.yaml/verification.yaml sidecars hold review/verification). Needs the assembler
-        workspace to confirm what is emitted."
     sidecars:
       review.yaml: "Append-only human-review log. Each entry: {date, language, reviewer, body_hash (sha256 of the markdown
         body), comment}. Informational, never a publication gate."

@@ -1255,6 +1255,52 @@ Order the work so it does not arise: **edit before digesting.** An annotation ap
 
 Idempotency: if `{hash}.md` exists, the ingester skips extraction.
 
+#### Post-commit result
+
+Successful ingest and duplicate no-op completion emit
+`anomalica/ingest-result/1` only after verifying the Git commit that contains the
+produced live record. The result names the record's actual repository-relative
+path and `content_hash`; the scheduler must not derive either from an intake
+hash. The fixed stdout prefix, scheduler-owned result path, field
+representations and no-op rules are in
+[ingest-result-format.md](ingest-result-format.md). Failure, partial work and
+uncommitted output emit no result.
+
+#### Intake queue lifecycle
+
+`queue/*.md` is scheduler-owned transient intake state. A stub expresses an
+intention to acquire and ingest a source; it is not an `anomalica/record/N`, a
+review, a sidecar or corpus history. New stubs remain Git-untracked and contain
+frontmatter only. A valid pending stub has a non-empty canonical `source_id`, a
+valid `source_type`, a non-empty display `title`, a UTC ISO 8601 `intake_date`,
+and at least one non-empty acquisition locator such as `source_url`, `reference`
+or `asset_path`. It has no record `content_hash`, body, `ingested` or
+`ingested_at` completion stamp. It also omits `schema`: in particular,
+`schema: anomalica/record/1` would falsely identify an intake intention as a
+record. A future versioned intake interchange would require its own schema.
+
+After receiving an ingest result, the scheduler first verifies the result and
+the named live record as specified above. Only then does it remove the exact
+scheduler-owned transient stub that launched that run. Before removal it
+requires the path to remain untracked, frontmatter-only and byte-identical to
+the launched candidate. It does not edit, stamp, stage or commit the stub. A
+failed, rejected, partial or unverified run leaves the stub in place for retry
+or explicit operator action. Housekeeping dispatch is independent: a later
+housekeeping failure must not restore or retain an intake stub after ingest
+completion was verified.
+
+Candidate discovery canonicalises `source_id` and fails closed rather than
+choosing among duplicate transient stubs or ambiguous live-record matches. It
+must not create or schedule a second candidate for a source already pending. A
+duplicate ingest no-op still produces the verified result needed to retire its
+exact transient stub.
+
+Committed queue files pre-dating this contract are legacy data. Scheduler and
+Workbench leave their bytes and Git history untouched pending a separately
+audited migration; they do not stamp or delete them and do not present them as
+pending intake merely because they occupy `queue/`. Completion fields on those
+files are historical implementation artefacts, not a queue lifecycle.
+
 #### Withdrawal: sources we may not hold
 
 The copyright model governs what may be **served**. A separate class governs what may be **held at all**: a rights holder who prohibits reproduction is not satisfied by a gated copy, because the copy is itself the reproduction. Every component would report compliance - the fetch succeeds, the status tags `restricted`, the access gate correctly refuses - while the breach happened at acquisition.
@@ -1289,6 +1335,16 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
   body (the verbatim text after the closing frontmatter fence); `body_sha256`
   pins the exact body the offsets index. See
   [relevance-tuning-mode](../decisions/drafts/relevance-tuning-mode.md).
+- `{hash}.housekeeping.json` - proposal-only deterministic and model-assisted
+  corrections (`anomalica/housekeeping/2`, written by the scheduler worker and
+  decided through the Workbench). `input_sha256` binds it to the complete exact
+  record bytes; see [housekeeping-format.md](housekeeping-format.md).
+
+The repository root also contains `housekeeping-algorithm.json`, the
+scheduler-owned `anomalica/housekeeping-algorithm/1` manifest. It is not a record
+sidecar. Scheduler and Workbench read its deployed `algorithm_version` from the
+same Git ref as a record and housekeeping sidecar; missing, malformed or
+worker-mismatched state fails closed.
 
 ### Versioning and supersession
 
