@@ -35,6 +35,12 @@ The credible, scored encyclopaedia launch. It requires the evidence-scoring meth
 - Phase 2 keeps the bar high: the distinguishing claim (data-derived credibility) is made only when it is real.
 - The actual publish and deploy of Phase 1 remain the maintainer's decision; this record defines the target, not the go-live.
 
+> **Amendment 2026-09-12:** decision 0031 now exposes a reviewed public Record
+> page rather than a noindex extraction-inspection page. The evidence trail
+> remains walkable; detailed facts/entities inspection and reviewer links moved
+> to the Workbench, while the public page carries the derived explanation,
+> references and copyright-safe source presentation.
+
 ## Scope
 
 Defines the first-public milestone (a gap the launch audit found). Relates to 0031 (per-record inspection pages), 0010 (auditable assembly / inspectable trail), the algorithmic-evidence-scoring draft (the Phase 2 gate), and the node-types taxonomy (the Person/Event choice keeps the migration off the critical path).

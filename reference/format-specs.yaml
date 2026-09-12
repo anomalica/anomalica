@@ -236,6 +236,25 @@ types:
           contains record_path with the stated content_hash."}
       - {name: completed_at, type: string, required: true, description: "UTC ISO 8601 timestamp ending in Z, after commit
           verification."}
+  review_coverage:
+    schema: anomalica/review-coverage/1
+    status: stable
+    serialisation: JSON
+    spec_doc: architecture/ingest-format.md
+    path: "store/{bare_content_hash}.review.json"
+    owner: workbench
+    summary: Current authoritative human observation verdict for one live ingest. Version 0 is legacy approximate span data
+      and cannot authorise public record publication. Reviewer identity, notes and spans remain private.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/review-coverage/1`."}
+      - {name: reviews, type: list, required: true, description: "Append-only private entries `{by, at, spans, notes?, parent_commit?}`;
+          each span is `{from, to, kind}`. Never copied into public content."}
+      - {name: observed_coverage, type: number, required: true, description: "Finite fraction from 0.0 to 1.0 computed over
+          the record's review units. Public record eligibility requires exactly 1.0."}
+      - {name: digestible, type: boolean, required: true, description: "Workbench verdict under the shared review-gate rule;
+          public record eligibility requires true together with observed_coverage 1.0."}
+      - {name: total_units, type: integer, required: true, description: "Positive review-unit denominator; zero cannot authorise
+          publication."}
   housekeeping:
     schema: anomalica/housekeeping/2
     status: stable
@@ -407,11 +426,14 @@ types:
       - {name: schema, type: string, required: true, description: "`anomalica/brief/2`."}
       - {name: brief_hash, type: string, required: true, description: "SHA-256 over the ordered [(claim_id, claim_hash)] plus
           the page identity, the covered node list included. The brief's fingerprint - staleness diff unit, assembler freeze
-          (built_from), and 0010 audit hash."}
+          (built_from), and 0010 audit hash. Display-only page.listing measurements are excluded."}
       - {name: page, type: object, required: true, description: "The page this brief builds: {kind: entity, node_type, title,
           slug, nodes: [{node_id, name, node_type}]}. `nodes` is the covered set - always a list, one entry for an ordinary
           page, several for a composed page; there is no page-level node_id, and a consumer acting on a covered node acts
-          on EVERY member. node_type/slug/title are the page's own identity, not a member's. slug pre-resolved by the synthesiser."}
+          on EVERY member. node_type/slug/title are the page's own identity, not a member's. slug pre-resolved by the synthesiser.
+          Person pages may additionally carry listing {work_count, subject_claim_count, claim_count}: a complete tuple of
+          separate non-negative raw page-gate measurements consumed directly by the site, never copied through content or
+          collapsed into one weighted score. New publishable person briefs emit it; readers tolerate its absence."}
       - {name: generated, type: object, required: true, description: "{graph_version} - the knowledge-graph version the brief
           was generated from (0010's coarse stamp)."}
       - {name: related_nodes, type: list, required: false, description: "Nodes co-occurring with the page entity, ranked by
@@ -439,6 +461,14 @@ types:
           `<slug>.directives.yaml` sidecars."}
       - {name: metadata, type: object, required: false, description: "Optional metadata the assembler reads but does not modify.
           Sub-shape not yet specified."}
+      - {name: record_hash, type: string, required: record-page, description: "First 56 lowercase hexadecimal characters of
+          the reviewed live record's content_hash. Public locator only; never the full possession hash."}
+      - {name: source, type: object, required: record-page, description: "Fail-closed public projection from current ingest
+          authority. Contains safe source metadata and independent source_body, archived_original, media, provider_embed and
+          external_link capabilities. Never full hashes, review/verification data, private or fetched paths, signed URLs,
+          raw frontmatter, processing metadata, word timestamps or disallowed source bytes."}
+      - {name: references, type: list, required: generated-page, description: "Attributed source references and supporting
+          quotations. Record-page reviewer deep-links and facts/entities inspection remain in the Workbench."}
       - {name: built_from, type: object, required: false, description: "Machine-owned input binding. Carries source mode and
           the applicable brief slug/hash or record hash, plus claim id/hash pairs. Transitional node-mode articles may lack
           it until rebuilt from briefs; see content-format.md."}
@@ -455,6 +485,42 @@ types:
         body), comment}. Informational, never a publication gate."
       verification.yaml: "AI verification report (a different model checks every assertion traces to the graph). Informational,
         never a gate."
+  public_record_page:
+    schema: anomalica/public-record/1
+    status: stable
+    serialisation: markdown + YAML frontmatter and permitted public resources
+    spec_doc: architecture/content-format.md
+    section: records
+    summary: Reader-facing page for one current fully reviewed live ingest. Generated explanation is public; source_body,
+      archived_original, media, provider_embed and external_link are independently admitted. Ineligible records produce no
+      public artefact.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/public-record/1`."}
+      - {name: content_kind, type: string, required: true, description: "Literal `record`. The name avoids Hugo's reserved
+          frontmatter `kind` field."}
+      - {name: title, type: string, required: true, description: "Safe bibliographic record title."}
+      - {name: description, type: string, required: true, description: "Generated public summary, never the ingest's source-authored
+          blurb."}
+      - {name: record_hash, type: string, required: true, description: "First 56 lowercase hexadecimal characters of content_hash;
+          never the full possession hash."}
+      - {name: metadata, type: object, required: true, description: "Allow-listed source_type, document_type, publisher, creators,
+          publication date, duration and page count; absent values omitted."}
+      - {name: source, type: object, required: true, description: "Safe projection with capabilities source_body, archived_original,
+          media, provider_embed and external_link. Each is `{mode, reason}` plus only its allowed payload: source_body resource;
+          archived_original URL; media items of exactly {url, media_type}; provider_embed URL; external_link URL. Reasons
+          are allowed, copyright, unavailable or unsupported. Missing, unknown or inconsistent state denies; none carries
+          no payload. External linking is independent of reproduction permission. The legacy scalar source.display is forbidden."}
+      - {name: references, type: list, required: true, description: "Attributed claims and citation-sized supporting quotations."}
+      - {name: built_by, type: object, required: true, description: "Machine-owned generator identity defined by content format."}
+    forbidden:
+      - kind (reserved Hugo frontmatter field; use content_kind)
+      - noindex
+      - full content_hash or source_hash
+      - review entries, reviewer identity, notes or spans
+      - verification challenge data
+      - private/fetched paths or signed object URLs
+      - raw ingest frontmatter, processing metadata or word timestamps
+      - facts/entities inspection and reviewer deep-links
 # The hash / identity chain, source -> published article. Follows one fact end to end.
 chain:
   - stage: source asset
@@ -478,5 +544,6 @@ chain:
       brief_hash fingerprints the whole selection.
   - stage: content (article)
     detail: >-
-      Assembled from exactly one brief. 0010's audit binds the article to brief_hash (built_from) so an article is reconstructable
-      to the precise graph slice it was built from. (Content-side binding location is provisional - see types.content.open_questions.)
+      An entity article is assembled from exactly one brief and bound to its brief_hash. A public record article is assembled
+      from one selected digest, bound by record_hash, and emitted only after current ingest review/copyright validation. Both
+      are reconstructable to their exact factual input. (Content layout remains provisional - see types.content.open_questions.)

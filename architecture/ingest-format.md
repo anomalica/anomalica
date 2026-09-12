@@ -1321,14 +1321,15 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
   `shared/verification.py`; consumed by the workbench access gate). Present only
   for records whose copyright status gates access.
 - `{hash}.review.json` - review-coverage spans and the reviewer verdict
-  (`anomalica/review-coverage/N`, written by the workbench). **There is no
-  review gate.** Nothing in the digester enforces the verdict - extraction
-  never consults it, and `assess_record` is reached only from the
-  `coverage` reporting command. Review is informational, exactly as
-  [0021](../decisions/0021-content-review-lifecycle.md) and
-  [0031](../decisions/0031-per-record-inspection-pages.md) require of every
-  other review signal. Corrected 2026-07-29; this document and the
-  workbench both previously described a gate that was never built.
+  (`anomalica/review-coverage/1`, written by the workbench). Version 1 carries
+  private append-only review entries plus authoritative `observed_coverage`,
+  `digestible` and `total_units`; version 0 is legacy approximate span data.
+  Reviewer identity, notes and spans never enter public content. **There is no
+  digestion gate.** Nothing in the digester enforces the verdict - extraction
+  never consults it, and `assess_record` is reached only from the `coverage`
+  reporting command. Public record-page publication is a separate consumer and
+  requires a current complete version 1 verdict under the
+  [0031 amendment](../decisions/0031-per-record-inspection-pages.md#amendment-2026-09-12-reviewed-records-become-the-public-works-section).
 - `{hash}.highlights.json` - relevance-tuning ground truth
   (`anomalica/highlights/1`, written by the workbench tuning mode; read by the
   digester's grader). Span offsets are Unicode code points into the raw stored
@@ -1442,7 +1443,13 @@ Each record's images live in their own subdirectory. Images shared across record
 
 A record's `media/` directory is omitted entirely when the record has no extracted media. Consumers should not assume every record has one.
 
-Copyright status follows the parent record. If `copyright.status` is `licensed` or `restricted`, the images stay private. The assembler copies images into `content` only for records eligible for public serving (`public_domain`, `open_licence`, `publicly_accessible`).
+Embedded-media copyright is decided independently through `copyright.media`,
+which inherits `copyright.status` only when absent. The assembler may copy an
+image into public `content` only when the effective media status is
+`public_domain` or `open_licence`. `publicly_accessible` permits a supported
+publisher-hosted embed or source link; it does not permit Anomalica to
+self-host the media. `licensed`, `restricted`, absent, unknown and unresolved
+media status fails closed.
 
 ## Examples
 

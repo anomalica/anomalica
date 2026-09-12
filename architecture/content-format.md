@@ -33,6 +33,76 @@ The frontmatter is **human-controlled**; the assembler reads it but never modifi
 | `directives` | list | no | Article-level presentational instructions to the assembler (see [Directives](#directives)). Style/formatting/naming only - never factual. |
 | `metadata` | object | no | Optional metadata the assembler reads but does not modify. Sub-shape not yet specified. |
 
+## Public record pages
+
+A public record page is conditional output, not a public copy of an ingest. Its
+eligibility, metadata allow-list and independent source-object permissions are
+fixed by the [2026-09-12 amendment to decision
+0031](../decisions/0031-per-record-inspection-pages.md#amendment-2026-09-12-reviewed-records-become-the-public-works-section).
+The producer reads current record, review and copyright authority from the
+ingests repository before writing; neither the digest's extraction-time review
+snapshot nor its copyright snapshot can decide publication.
+
+An eligible record article carries:
+
+- `schema: anomalica/public-record/1` and `content_kind: record` (`kind` is
+  reserved by Hugo and must not appear in frontmatter);
+- `title` and `description`, where `description` is generated public summary and
+  never the ingest's source-authored blurb;
+- `record_hash`, exactly the first 56 lowercase hexadecimal characters of the
+  record's `content_hash`;
+- safe `metadata`: source type, optional document type, publisher, creators,
+  publication date, duration or page count;
+- `source`, a public projection containing safe source metadata and the five
+  independent capabilities defined below;
+- attributed `references`, the machine-owned `built_by` block, and the
+  assembler-written explanatory body.
+
+Record pages omit `noindex` and are part of the reader-facing `/records/`
+section. A record that fails eligibility produces no public file; reconciliation
+removes a previously emitted file. `source` never contains full content or
+source hashes, verification or review data, private/fetched paths, signed object
+URLs, raw frontmatter, processing data, word timestamps or source bytes that its
+mode forbids. A restricted value is omitted rather than delivered for the site
+to hide. Facts/entities inspection and reviewer links stay in the Workbench.
+
+`source` contains `source_type` and optional `document_type`, `publisher`,
+`creators`, `published_date`, `duration` and `pages`, with absent values omitted.
+Its `capabilities` object contains exactly `source_body`, `archived_original`,
+`media`, `provider_embed` and `external_link`. Each capability has required
+`mode` and `reason`:
+
+| Capability | Allowed mode | Denied mode | Optional payload |
+|---|---|---|---|
+| `source_body` | `display` | `none` | `resource`, a root-relative public source-body resource. |
+| `archived_original` | `public` | `none` | `url`, only an openly served archived original. |
+| `media` | `display` | `none` | `items`, each exactly `{url, media_type}` for a public media resource. |
+| `provider_embed` | `embed` | `none` | `url`, only the canonical HTTPS supported-provider URL. |
+| `external_link` | `link` | `none` | `url`, only a canonical public HTTP(S) source URL. |
+
+`reason` is `allowed`, `copyright`, `unavailable` or `unsupported`. An allowed
+mode requires `reason: allowed`; `none` requires one of the other reasons. A
+denied capability carries no `url`, resource reference or `items`. Unknown,
+missing or internally inconsistent capability data is denied. The scalar legacy
+`source.display: text|embed|link|none` is not part of
+`anomalica/public-record/1` because one scalar cannot represent independent
+source-body, archived-original, media, provider-embed and external-link rights.
+`external_link` is decided only by whether a safe canonical public URL exists;
+it is never disabled merely because reproduction is forbidden.
+
+## Public list ordering
+
+The People index joins each article's section and slug to the current published
+brief and reads `page.listing` there. It does not copy ranking measurements into
+article frontmatter: the site already mounts briefs as data, and a copied value
+would become stale independently. The default order compares `work_count`,
+`subject_claim_count` and `claim_count` descending in that sequence, then
+displayed title and stable URL ascending. Missing brief/listing data falls back
+after every valid ranked entry and is ordered alphabetically there. This is
+labelled relevance/frequency, not evidence or quality. The alphabetical option
+orders all displayed titles ascending, then stable URL; it does not guess a
+family name from the last token or mutate canonical names.
+
 There is **no cost or billing field** in content frontmatter. Per-artefact AI usage is provenance only (model, version, token counts). As of 2026-06-29 it is NOT surfaced on the public site (the per-artefact usage/cost panels are pulled - Mark's reversal); the provenance data is kept in frontmatter and the AI-operation ledger for possible later surfacing (likely the internal workbench, TBD). Any notional cost is a pure derivation from published list prices, never stored here.
 
 ## Directives

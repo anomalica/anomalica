@@ -58,6 +58,13 @@ The page-existence threshold ("enough corroborated information across enough ind
 - **0010 is unchanged in policy.** The brief realises 0010's "knowledge-graph data" prompt component; its hash is 0010's audit hash. No new staleness scheme.
 - **0031 (per-record inspection pages) is distinct.** Those are per-record QA surfaces (every record, no threshold); the synthesise stage decides ENTITY pages via briefs. The two do not conflict.
 
+> **Amendment 2026-09-12:** [0031](0031-per-record-inspection-pages.md)
+> now makes reviewed records the public works section. Record pages remain
+> distinct from entity-page selection and do not use the page-worthiness floor,
+> but they are no longer every-record QA surfaces: current complete ingest
+> review is their publication gate, and detailed extraction inspection remains
+> in the Workbench.
+
 ## Scope
 
 A new stage plus a new interchange. It reinforces 0008 and 0010 (a mechanism, not new policy), follows the 0034 split precedent (one job per stage), and aligns with 0035 (the threshold is the Phase-2 differentiator) and translation-directives (write N languages from one brief). The final threshold is gated on the algorithmic-evidence-scoring draft. The brief field-format is in [architecture/brief-format.md](../architecture/brief-format.md) (`anomalica/brief/1`), scaffolded now and filled from the synthesiser's first real brief.

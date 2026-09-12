@@ -38,6 +38,27 @@ The top-level fields - `schema`, `brief_hash`, `page` (`kind`, `title`, `slug`, 
 
 `page.slug` and `related_nodes[].slug` are resolved by the synthesiser at emission via the canonical slugifier (`metadata.explicit_slug` if present, else the shared anomalica-common slugifier - first-last for persons, with deterministic disambiguation; see [node slugs](node-types.md#node-slugs)). They are pre-resolved into the brief because the assembler is writer-only and does not read node metadata; an unresolved slug would silently break pattern-slug URLs and their cross-links.
 
+For a person page, optional `page.listing` carries the raw public-list ordering inputs:
+`work_count`, `subject_claim_count` and `claim_count`. `work_count` is the
+page-gate's historical `source_count` renamed at this boundary because it counts
+distinct `COALESCE(records.work_id, record_id)` works, not source URLs or
+provenance roots. `subject_claim_count` is the deterministic count of claims
+whose text is about the person; `claim_count` is the distinct speaker-or-reference
+claim union. The synthesiser copies these measurements from the page proposal.
+The site reads the current published brief directly; the assembler does not copy
+the block into content. They remain separate raw integers and are never
+collapsed into a score. `page.listing` is display-only and excluded from
+`brief_hash`; a frequency change reorders the index without claiming the
+article's prose input changed.
+
+This is an additive transition within brief/2: readers accept its absence, while
+newly generated publishable person briefs include it. All three values are
+non-negative integers; a missing, non-integer or negative value makes the whole
+listing block unavailable rather than partially ranking it. Brief publication
+refreshes this block from the current page-proposal row even when the prose claim
+selection is unchanged; because the block is excluded from `brief_hash`, that
+refresh does not make the article body stale.
+
 ## `size` and `truncated`
 
 `size.tokens_estimated` is how much of the consuming stage's context window the brief's claim material occupies **as a consumer renders it**: each claim's `content` and `original_excerpt` at 2.7 characters per token, plus a flat line of framing per claim (attribution, date, record). It is not the size of the YAML file, which carries roughly four characters of ids, hashes, slugs and provenance for every character of claim text, none of which reaches a model: the largest brief is 3.6 MB on disk and renders to about 286,000 tokens. `size.sized_against` is the smallest context window among the models the consuming stage may use (from `model-policy.yaml`), so the brief fits whichever the scheduler picks. The estimate errs high; the binding check is the consumer's, made on the prompt it actually builds.

@@ -46,7 +46,7 @@ flowchart TB
   synthesiser ==>|"a brief per page (one -> many)"| briefs
   briefs -->|"the page's brief (1:1)"| assembler
   selected -->|"one record (1:1)"| assembler
-  assembler -->|"entity articles + inspection pages"| content
+  assembler -->|"entity articles + reviewed record pages"| content
   content -->|"renders"| site
   brand -.->|"tokens, logo"| site
   ingest <-.->|"review + corrections"| workbench

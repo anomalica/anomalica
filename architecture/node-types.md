@@ -200,6 +200,15 @@ Culturally appropriate titles ("Commander David Fravor", "フレーバー司令�
 
 Examples: David Fravor; Luis Elizondo; Harry Reid; Leslie Kean.
 
+The public People index defaults to a deterministic frequency/relevance order,
+using raw page-gate measurements rather than an invented score: distinct work
+count descending, then claims about the person descending, then all attached
+claims descending, then displayed title and stable URL ascending. The three
+counts remain separate so the reason for an order is inspectable. An
+alphabetical option sorts displayed titles ascending and does not change stored
+node names, aliases or slugs. Pages without a valid current listing tuple follow
+all ranked pages and sort alphabetically among themselves.
+
 ### Organisation
 
 A named entity that acts: government bodies, military units, companies, research groups, publications, podcasts, foundations, news outlets, and any other named entity that is not a human individual. An organisation can be run by a single person - if it has its own name, it is its own entity. Programmes, investigations, and task forces are not organisations; they are projects.
@@ -240,7 +249,11 @@ Examples: the tic tac object, the Gimbal object, metamaterial samples, the Go Fa
 
 A named information artefact: a book, report, Freedom of Information Act release, congressional transcript, news article, podcast episode, video, memo, testimony, patent, or case file. A document node is a pointer, not a copy - it describes how to find the original (URL, ISBN, archive identifier) but does not reproduce the content (some are copyrighted or confidential; the platform refers users to the original). A document links to the person or organisation that produced it - a producer is a source, which is a role, not a type.
 
-The public URL section is `/documents/`. (In code the type is `document`; it is distinct from the structural `record` type below - a referenced information artefact versus the ingested source a claim is extracted from.)
+`document` remains a graph and extraction type but has no public section of its
+own. Public navigation uses reviewed records under `/records/`: material the
+project actually holds and can bind to review and access state. A document node
+and a record are still distinct identities, so no consumer infers a redirect or
+merge from a matching title.
 
 Examples: Lex Fridman Podcast #122 (David Fravor interview), the Nimitz encounter executive summary, Elizondo's resignation letter to Secretary Mattis, Coulthart's "In Plain Sight".
 
@@ -266,7 +279,9 @@ Existing in the graph and earning a published page are different thresholds. Ext
 
 **Calibrated 2026-09-02 against the 816-proposal graph** (Mark: stricter minimums; no page for a name the corpus only drops - "Chad", "Chris", "Fox News", "Blink-182" - nor for one written from a single book). The floors below cut 816 proposals to 256. Live in `assimilator/page_gate.py`, every number env-overridable for recalibration.
 
-**1. Type tier.** Two tiers; no type is permanently barred (any type can be a central subject, and `/projects/`, `/documents/`, `/topics/` sections already exist):
+**1. Type tier.** Two tiers. The gate still measures document nodes for graph
+and editorial use, but the public works section is `/records/`; document nodes
+do not independently produce `/documents/` pages:
 
 - **Page-worthy at a modest floor:** person, organisation, project, event, topic - usually subjects when they recur.
 - **High-bar (central-subject only):** place, object, document - usually mentioned in passing; only the central one earns a page (the central craft, the central site, the central report), never a passing reference.
@@ -293,6 +308,9 @@ Existing in the graph and earning a published page are different thresholds. Ext
 The source artefact a claim is extracted from - a podcast episode, a document, a transcript, a video, or a case file as it exists in the ingest store. Every claim traces to exactly one record (its source) plus a location within it. A record is a pointer to the original material, not a copy.
 
 The record is distinct from the `document` domain type: a record is the ingested source a claim comes from; a document is a domain node for an information artefact referenced or discussed in the graph. The same real-world book can be both - a record (if it has been ingested) and a document (as a referenced entity). The producer of a record - the person or organisation behind it - is its source (a role, not a type).
+
+Reviewed records form the public `/records/` works section under the eligibility
+and source-display contract in [decision 0031](../decisions/0031-per-record-inspection-pages.md).
 
 ### Claim
 

@@ -37,7 +37,9 @@ The platform will ingest the following types of sources:
 
 From the digestion stage onwards, the platform publishes only extracted facts, claims, entity references, and provenance information. These are not copyrightable. Every extracted claim is attributed to its source (title, author, page/chapter, timestamp as applicable) and readers are directed to where they can obtain the original.
 
-The platform does not publish copyrighted source material or ingested reproductions of copyrighted source material.
+The platform does not publish source material outside the explicit body,
+original, media and embed allow-lists fixed by the
+[0031 amendment](../0031-per-record-inspection-pages.md#public-record-content).
 
 ### Quotation policy
 
@@ -45,7 +47,7 @@ Short attributed quotations are published in full - as long as they need to be t
 
 The legal basis is Japan's Copyright Act Article 32, which makes quotation (引用 (いんよう)) of a published work a lawful affirmative right where the use is fair and the quotation subordinate to the quoting work, with mandatory source attribution (出所明示 (しゅっしょめいじ)) under Article 48. This is the distinct right covering the PUBLISHED quotes; Article 30-4 (above) covers the extraction step, not publication. Japanese courts apply a two-part test (Supreme Court, 28 March 1980, the Parody Montage case, モンタージュ写真): a clear distinction between the quoted material and the quoting work (明瞭区別性 (めいりょうくべつせい)) and a main-subordinate relationship (主従関係 (しゅじゅうかんけい)); later practice (Intellectual Property High Court, 2010, the Art Appraisal Document case, 絵画鑑定証書 (かいがかんていしょうしょ)) weighs these as a totality. Short attributed quotes that substantiate a claim pass under either approach - the position is strongly defensible, not certain. Short attributed quotation is also standard practice across journalism, scholarship, and reference works (Wikipedia treats short attributed text quotes as its most permissive category). Anomalica is educational: quotes substantiate claims and link back to the source record.
 
-The line is SUBSTANTIALITY, not length. No jurisdiction sets a bright-line safe word count - the United States Copyright Office and the United Kingdom Intellectual Property Office both say so explicitly - so "no length cap" is consistent with the law, not in tension with it. A supporting quote is evidence and is published; a full body or transcript is redistribution and stays behind the proof-of-possession gate (see below). The control is substitution: quoted material must not be presentable as an independent substitute for the original (Tokyo District Court, 12 February 2020), which bites on images and long passages, not one- or two-sentence text quotes. Quote is not body - this policy does not un-gate full bodies or transcripts.
+The line is SUBSTANTIALITY, not length. No jurisdiction sets a bright-line safe word count - the United States Copyright Office and the United Kingdom Intellectual Property Office both say so explicitly - so "no length cap" is consistent with the law, not in tension with it. A supporting quote is evidence and is published; a full body or transcript is redistribution and follows the separate status allow-list below, with `licensed`, `restricted`, absent and unknown state behind the proof-of-possession gate. The control is substitution: quoted material must not be presentable as an independent substitute for the original (Tokyo District Court, 12 February 2020), which bites on images and long passages, not one- or two-sentence text quotes. Quote is not body - this policy does not itself un-gate full bodies or transcripts.
 
 **Sources.**
 

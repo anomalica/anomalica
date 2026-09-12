@@ -20,11 +20,36 @@ Grounded against the assembler's code. The assembler reads the assimilator's gra
 
 Selection and ordering: claims are selected by speaker-of OR referenced-by, with **no score/confidence threshold and no `claim_role` filter**, ordered chronologically by source then document order. The model then writes free-form encyclopaedic prose from those claims plus the related-node list - the assembler imposes no role-based sectioning and consults no `confidence`, `claim_role`, or `corroborations` in selection or ordering (those columns/tables exist but are not read). After the model returns, a deterministic pass re-attaches per-claim provenance (quote, claim_id, record_hash, workbench_url) to the references from the already-fetched claims - no extra query.
 
-(Record-mode assembly, used for the per-record inspection pages of 0031, reads the digest YAML rather than the database - a separate read-contract, to be documented when that work lands.)
+### Input contract: assembling one public record article (`--record` mode)
+
+Record mode reads one selected digest for the claims and explanatory prose, then
+reads the matching live ingest record, its `anomalica/review-coverage/1` sidecar
+and current copyright fields before writing public content. The digest's
+`review_state` and copyright status are snapshots for filtering and provenance;
+they do not authorise publication.
+
+The producer emits no page unless the live record satisfies decision 0031's
+full-review predicate and the digest is current for it. Current means the
+digest's `record.content_hash` names that live record and its
+`pre_digest.sha256` equals the hash obtained by materialising the current record
+body through the shared pre-digest implementation; missing legacy provenance
+fails closed. `pre_digest.prep_version` is diagnostic rather than an additional
+gate when the current materialised hash is unchanged. The producer removes
+stale output when eligibility is lost. The article's generated description and
+body are public derived writing. The record's raw body, archived original,
+extracted media, publisher embed and original-source link are five independent
+outputs, each admitted only by decision 0031's allow-list. The producer omits
+forbidden bytes and URLs from content entirely rather than asking Hugo to hide
+them.
+
+Record output uses the exact public projection in
+[content-format.md](content-format.md#public-record-pages). The old
+facts/entities breakdown remains Workbench-only, record pages are indexed, and
+`/records/` replaces public document-node pages.
 
 ## Outputs
 
-Updated articles in content.
+Updated entity articles and reviewed public record articles in content.
 
 ## When the assembler runs
 
@@ -117,7 +142,7 @@ content/
       david-fravor.en.md               (this article, English - frontmatter directives)
       david-fravor.ja.md               (this article, Japanese - frontmatter directives)
     records/
-      _directives.yaml                 (all record inspection pages)
+      _directives.yaml                 (all public record pages)
 ```
 
 A `_directives.yaml` (or a per-article `<slug>.directives.yaml` sidecar) is a list of presentational instruction strings (or a mapping carrying a `directives:` list).

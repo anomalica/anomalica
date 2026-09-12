@@ -90,8 +90,12 @@ ranking - resolves the *current* state from the record at import or
 rebuild. So a review upgrades the graph immediately, with no
 re-digestion, and no snapshot goes stale into a decision.
 
-**Nothing downstream refuses a preliminary digest yet.** Pages still
-build. The point of this record is visibility, not enforcement.
+**Nothing downstream refuses a preliminary digest for graph import or entity
+pages yet.** The reviewed-record publication gate added by the 2026-09-12
+amendment to [0031](0031-per-record-inspection-pages.md) is narrower: it decides
+whether that record receives its own public source page, not whether its claims
+may contribute to the graph or another sourced article. The point of this record
+remains visibility, not a general publication gate.
 
 **The graph gains a review-priority signal**: an unreviewed or partially
 reviewed record whose claims feed published pages ranks high for human

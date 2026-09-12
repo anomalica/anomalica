@@ -144,7 +144,8 @@ nodes:
     desc: "The selected digest per source - the single best per-model digest, chosen by the selector. The source of truth
       for the knowledge graph: the graph is rebuildable from the selected digests, and each of these is chosen from the per-model
       digests."
-    output: "The input to the assimilator, and one input to the assembler (per-record inspection pages)."
+    output: "The input to the assimilator, and the claims input to assembler record mode; current ingest review and copyright
+      authority separately decides whether and how that public record page is emitted."
     contains: "Facts and claims with provenance, per record - not source text."
     copyright: "PUBLIC - facts and claims aren't copyrightable, so everything from the digests onward is public."
   assimilator:
@@ -186,28 +187,30 @@ nodes:
     zone: "public"
     desc: "One language-neutral brief per page: the exact slice of the knowledge graph a page is built from, before any prose.
       Its input hash is what tells the system when a page has gone out of date and needs rebuilding."
-    output: "The assembler's only input when it writes an article. A per-record inspection page - a read-only page showing
-      exactly what was pulled from one single source - comes straight from a digest instead, not from a brief."
+    output: "The assembler's only input when it writes an entity article. A public record page comes from one selected digest
+      plus current review and copyright authority in the ingests repository, not from a brief."
     contains: "Selected claims with provenance and relationships. No copyrighted text."
     copyright: "PUBLIC."
   assembler:
     kind: "Component (Python)"
     zone: "public"
     desc: "Two kinds of page. For an entity article it reads one brief from the synthesiser and writes the prose from that
-      alone - it never reads the knowledge graph directly. For a per-record inspection page - a read-only page showing exactly
-      what was pulled from one single source - it reads a single digest. It assembles only from sourced claims, never adds
-      facts from training data, and never generates imagery. Defaults to the Claude subscription."
-    output: "Entity articles (from a brief) + per-record inspection pages (from a single digest), both to Content."
+      alone - it never reads the knowledge graph directly. For a reviewed public record page it reads one selected digest,
+      verifies current ingest review eligibility and projects source content through independent copyright allow-lists. It
+      assembles only from sourced claims, never adds facts from training data, and never generates imagery. Defaults to the
+      Claude subscription."
+    output: "Entity articles from briefs and reviewed record articles from a selected digest plus live ingest authority, both
+      to Content."
     contains: "Assembled prose, every sentence traceable to a claim and its source."
     copyright: "Its output is public."
   content:
     kind: "Data store (public)"
     format: "Markdown (.md) with YAML frontmatter"
     zone: "public"
-    desc: "The rendered articles plus their media. Each entity article and per-record inspection page, with live deep-links
-      back to the exact source."
+    desc: "The rendered entity articles and reviewed public record pages. Gated record bodies, originals and media never enter
+      this public store; eligible source payloads follow separate text, original, media and embed allow-lists."
     output: "Consumed by the site."
-    contains: "Assembled articles + media. No copyrighted source text."
+    contains: "Assembled articles, safe source metadata, and only source text/media explicitly eligible for public serving."
     copyright: "PUBLIC."
   site:
     kind: "Component (Hugo + Tailwind)"

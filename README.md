@@ -36,7 +36,7 @@ Architecture decision records follow the format context / decision / consequence
 | [0020](decisions/0020-canonical-english-embeddings.md) | Canonical English normalisation for embeddings |
 | [0021](decisions/0021-content-review-lifecycle.md) | Content review lifecycle (draft) |
 | [0027](decisions/0027-digest-interchange-format.md) | Digest interchange format |
-| [0031](decisions/0031-per-record-inspection-pages.md) | Per-record extraction inspection pages (draft) |
+| [0031](decisions/0031-per-record-inspection-pages.md) | Reviewed records as the public works section |
 
 Gaps in the numbering are expected: records that moved to another home keep their slot empty rather than being renumbered. Draft decisions in progress are in [decisions/drafts/](decisions/drafts/).
 

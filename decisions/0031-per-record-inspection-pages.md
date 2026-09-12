@@ -127,3 +127,93 @@ record alongside the per-entity articles.
   shape refinements feed back into this record.
 - The exact content-repository mount path and section name are to be settled with the
   site workspace.
+
+## Amendment 2026-09-12: reviewed records become the public works section
+
+This amendment supersedes the inspection-only, every-ingest, `noindex` and
+separate-future-page decisions above. The extraction inspection surface remains
+in the Workbench. The public site uses the existing record article as its one
+reader-facing page for a reviewed source.
+
+`/records/` replaces `/documents/` in public navigation. A document remains a
+domain node for an information artefact discussed by the corpus; it no longer
+earns a separate public listing or article merely by being a document node. A
+record is the source artefact Anomalica actually holds and has reviewed. There
+is no automatic document-node-to-record redirect because the two identities are
+not one-to-one; a redirect is valid only where an explicit mapping names the
+same work.
+
+### Publication eligibility
+
+A record page is emitted and indexed only when all of these are true at build
+time:
+
+- The record is live under `store/`, is not archived or superseded, and its
+  current content hash is the one named by the selected digest.
+- `store/{hash}.review.json` is a valid
+  `anomalica/review-coverage/1` sidecar with finite
+  `observed_coverage: 1.0`, `digestible: true` and `total_units > 0`.
+- No `review_carryover` remains unresolved. A review at or after the carryover
+  timestamp resolves it; otherwise the record requires verification again.
+- The selected digest is current for that record: its `record.content_hash`
+  names the live record and its `pre_digest.sha256` equals the hash produced by
+  materialising the current record body with the shared pre-digest
+  implementation. Missing legacy `pre_digest` fails closed. A differing
+  `pre_digest.prep_version` alone is not stale when current materialisation
+  produces the same hash. The digest's extraction-time `review_state` is
+  provenance only and never decides publication.
+
+Missing, malformed, version 0, partial and stale review state fails closed. A
+build removes an existing public record page when it ceases to satisfy the gate.
+No reviewer identity, review notes or spans cross into public content.
+
+### Public record content
+
+Every eligible page contains safe bibliographic metadata, a short description
+and a neutral explanatory article assembled only from the record's claims. The
+description and article are public derived writing, not the ingest's
+`description`, raw body or source blurb. Citation-sized attributed quotations
+remain public under the quotation policy. The facts-and-entities inspection
+breakdown and reviewer deep-links stay in the Workbench rather than being
+republished on the reader page.
+
+The public metadata allow-list is the 56-character `record_hash`, title,
+`source_type`, optional `document_type`, publisher, creators, publication date,
+duration or page count, canonical public `source_url`, and effective copyright
+display modes. It excludes the full content/source hash, verification data,
+reviewer data, private or fetched paths, raw frontmatter, processing metadata,
+word timestamps and the ingest's source-authored `description`.
+
+The generated description, explanatory article, claim facts and supporting
+quotations are public for every eligible record. Source reproduction is a
+separate allow-list:
+
+| Source object | Public when |
+|---|---|
+| Ingested source body | Effective `copyright.status` is `public_domain`, `open_licence` or `publicly_accessible`. |
+| Self-hosted archived original | Effective `copyright.status` is `public_domain` or `open_licence`. |
+| Self-hosted extracted media | Effective `copyright.media` is `public_domain` or `open_licence`; absent inherits the record status, unknown fails closed. |
+| Publisher-hosted audio/video embed | Record status is `public_domain`, `open_licence` or `publicly_accessible`, and the canonical HTTPS source URL matches a supported provider. |
+| Original-source link | A canonical public HTTP(S) `source_url` exists. Linking does not authorise copying its content. |
+
+`licensed`, `restricted`, absent and unknown status never expose a source body,
+self-hosted original, media or embed on the public site. Licence metadata alone
+does not encode permission scope, so it cannot widen this allow-list. Such a
+page shows only the derived explanation, safe metadata, supporting quotations
+and an original-source link where one exists.
+
+The allow-list is enforced before the content repository or static build receives
+the source payload. Gated bytes, private object URLs and full possession hashes
+must be absent from public Markdown, frontmatter, generated HTML, page resources,
+search indexes and client data; hiding them in markup or JavaScript is a leak,
+not access control.
+
+The content boundary identifies this projection with `schema:
+anomalica/public-record/1` and `content_kind: record`. Hugo reserves the
+frontmatter field `kind`, so this schema must not use it. The projection expresses
+`source_body`, `archived_original`, `media`, `provider_embed` and `external_link`
+as independent `{mode, reason}` capabilities, not the legacy scalar
+`source.display`. A denied capability carries no URL or payload; unknown or
+inconsistent modes fail closed.
+External-link permission is not coupled to permission to reproduce. The exact shape is in
+[content-format.md](../architecture/content-format.md#public-record-pages).
