@@ -131,13 +131,14 @@ One YAML file per record. Filenames mirror the friendly filenames in
 two sides for any given record.
 
 The assimilator's canonical input set is narrower than a recursive YAML scan:
-only visible direct children `digests/*.yaml` whose `run_kind` is `production`,
-or absent on a legacy digest, are importable. Every nested path, including
-`variants/` and hidden working directories, is non-canonical. A digest with
-`run_kind: comparison` is inert regardless of its path; legacy comparison files
-misplaced at the repository root do not become canonical by location. Discovery,
-explicit single-file import and deterministic rebuild all apply the same
-predicate. This is the implemented boundary required by [0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md): comparison output can be inspected and evaluated but never add claims, nodes or evidence to the graph.
+only visible YAML files outside `variants/` whose `run_kind` is `production`, or
+absent on a legacy digest, are importable. Visible nested paths remain supported
+for legacy titles containing `/`; paths below `variants/` and any hidden working
+directory are non-canonical. A digest with `run_kind: comparison` is inert
+regardless of its path; legacy comparison files misplaced at the repository root
+do not become canonical by location. Discovery, explicit single-file import and
+deterministic rebuild all apply the same predicate. This is the implemented
+boundary required by [0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md): comparison output can be inspected and evaluated but never add claims, nodes or evidence to the graph.
 
 ## Document structure
 
@@ -152,8 +153,8 @@ those digests as unknown and not current. `ai_usage`, `prompts`, `pre_digest`,
 `curation`, and `terminology` are optional blocks (see below).
 
 `run_kind` is required on new output and is either `production` or `comparison`.
-Absence is accepted only for legacy root digests and means legacy production for
-import eligibility; it does not make a nested or hidden file canonical.
+Absence is accepted only for legacy digests and means legacy production for
+import eligibility; it does not make a variant or hidden file canonical.
 
 ```yaml
 schema: anomalica/digest/1
