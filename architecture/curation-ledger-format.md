@@ -62,6 +62,36 @@ no `claim_node_refs`, so a tag does not count toward the page gate, scoring or
 corroboration. Span tags (a selection resolving to overlapping claims) are a
 later op on the same machinery. Lives in `tags.yaml` beside the other ledgers.
 
+## Claim-reference status entries
+
+`claim-ref-status.yaml` has schema `anomalica/claim-ref-status-ledger/1` and an
+`entries` sequence. It is the durable source for a person's decision that one
+claim does or does not belong on one node; the SQLite `claim_ref_status` table is
+only its replayed materialisation. Entries are append-only and replay in
+`(set_at, id)` order.
+
+A set entry has `op: set`, a deterministic `id`, `record_content_hash`,
+`claim_fingerprint`, `node: {name, node_type, prior_names}`, `status`
+(`verified` or `suspect`), `reason`, `set_at`, `set_by`, `salience`, and
+`source: {claim_id, node_id}`. The record hash scopes
+`anomalica_common.digest.fingerprint_of_claim`, which is computed from the
+digest-local claim text, type, quote and location. The source identifiers are an
+at-decision audit snapshot, never replay keys. A compensating `op: unset` entry
+has its own deterministic `id`, names the set entry in `reverses`, and records
+`set_at`, `set_by` and an optional `reason`; an old entry is never edited or
+deleted. If more than one active set entry addresses the same record, claim and
+node identity, the latest replay-order entry wins. A contradictory tie fails
+closed.
+
+Replay runs after merges and renames. It resolves the record by content hash,
+requires exactly one claim with the scoped fingerprint, and resolves the node by
+its natural identity. A missing record after an intentional canonical-input
+contraction is an explicit reported drop. A missing or ambiguous claim or node
+for a retained record fails closed. Replay normally requires the imported
+`claim_node_refs` edge to exist. A `verified` decision may restore that edge with
+the recorded salience because the decision itself asserts that the exact claim
+belongs on the exact node; a `suspect` decision never creates an edge.
+
 ## Extensibility
 
 The first operation is `merge`. The same append-only-plus-replay machinery admits further graph-level curation ops (for example `split`, `rename`, `retype`) as new `op` values, each with its own replay rule, run in the same after-import replay pass.
