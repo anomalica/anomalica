@@ -329,6 +329,9 @@ types:
           detail."}
     invariants:
       - "The provider derives all dynamic fields from its referenced evidence; none is manually copied into evaluations.yaml."
+      - "Evidence is the complete direct dependency set for the returned dynamic fields. A result cannot substitute for an
+        unlisted reference or gold artifact whose bytes affect lifecycle, gold status or counts, blockers, decisions or item
+        state."
       - "The aggregator verifies schema, evaluation id, vocabularies, counts, canonical evidence hash and every accessible
         evidence artifact before exposing lifecycle state."
       - "Missing, inaccessible, malformed or stale evidence produces a visible synchronisation error and no current lifecycle."

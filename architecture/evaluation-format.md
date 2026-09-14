@@ -68,6 +68,14 @@ The aggregator resolves and hashes every item before returning state. This makes
 stale state detectable without putting a mutable expected hash in the static
 registry.
 
+The evidence list is the complete direct dependency set for every returned
+dynamic field. It includes each owner artifact whose bytes affect lifecycle,
+gold status or counts, blocker, decision or item state. A derived result does not
+stand in for an unlisted reference or gold artifact: if a result was calculated
+against reviewed reference bytes, both the result and those reference bytes are
+separate evidence items. A missing or mismatched direct dependency therefore
+fails closed rather than retaining its last derived claim.
+
 A collection evaluation may add `items`, each carrying stable `id`, lifecycle,
 gold, optional blocker and decision, and administrator-only `record_id` or
 `review_id`. The top-level lifecycle, gold, blocker and decision are derived from
