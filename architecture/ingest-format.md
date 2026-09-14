@@ -485,7 +485,21 @@ For `ebook` records there is no fixed file pagination, so `file_page` does not a
 <!-- printed_page: 15 -->
 ```
 
-The label is taken verbatim from the pagebreak, so front-matter roman numerals (`iii`, `viii`) and index labels appear as-is. A page break can fall mid-paragraph, so the marker records where print page N begins in the reflowed text. EPUBs without pagebreaks carry no page markers and locate content by [chapter boundary](#chapter-boundary) only.
+The label is taken verbatim from the pagebreak, so front-matter roman numerals (`iii`, `viii`) and index labels appear as-is. A page break can fall mid-paragraph, so the marker records where print page N begins in the reflowed text.
+
+Some EPUB editions interleave more than one printed pagination sequence. For example, added chapters may restart at page 4 before the EPUB spine returns to backmatter continuing at page 303. Where labels repeat across those sequences, the ingester disambiguates them with `printed_page_sequence`, a 1-based integer state. The state defaults to `1`; immediately before the first `printed_page` after every transition, including a transition back to sequence 1, emit the new state:
+
+```markdown
+<!-- printed_page_sequence: 2 -->
+<!-- printed_page: 4 -->
+
+<!-- printed_page_sequence: 1 -->
+<!-- printed_page: 303 -->
+```
+
+The identity of a printed page is the pair `(printed_page_sequence, printed_page)`. Sequence numbers describe distinct pagination runs in EPUB spine reading order; they do not replace or alter the verbatim reader-facing page label. Emit sequence markers only when repeated labels make the distinction necessary. An EPUB whose page labels are unambiguous carries no `printed_page_sequence` markers and remains byte-for-byte unchanged. Once sequence markers are required, emit one immediately before each state transition rather than repeating the sequence on every page.
+
+`printed_page` remains in the materialised pre-digest as source-location context. `printed_page_sequence` is structural disambiguation for deterministic consumers, not source content or a supported claim-location syntax, so `anomalica_common.pre_digest.materialise()` strips the complete sequence-marker line before model input. Adding it changes the stored record binding and preparation version but otherwise leaves the model input unchanged; its numeric payload never reaches extraction. EPUBs without pagebreaks carry no page markers and locate content by [chapter boundary](#chapter-boundary) only.
 
 ### Speaker change
 
