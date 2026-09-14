@@ -497,8 +497,8 @@ models:
     route: metered
     context: 1048576
     price:
-      input: 3.0
-      output: 15.0
+      input: 2.648138063
+      output: 13.28272425
     rationale: Second in independent rankings for English prose, ahead of every OpenAI model. Its weights are published, so
       it can be run without going through a provider at all.
     used_for: []
@@ -509,8 +509,8 @@ models:
     route: metered
     rationale: A cheap fast model with published weights. Not tested here yet.
     price:
-      input: 0.0809
-      output: 0.1618
+      input: 0.06566
+      output: 0.13132
     used_for: []
     tested: false
     context: 1048576
@@ -819,7 +819,7 @@ deny_watermarking_note: 'Reader-facing stages refuse a model by its provider wat
   is enforced immediately and a state that changes takes effect without anyone editing a stage. A name list would have to
   be updated by hand, and the failure would be silent: a provider nobody added is a provider nobody blocked.'
 watermarking_checked: '2026-09-11'
-prices_checked: '2026-09-01'
+prices_checked: '2026-09-13'
 model_fields_note: '`used_for` lists the stages that may pick this model automatically, derived from the stage priority lists
   rather than asserted separately. A model with an empty list is not used automatically - which is a fact about our pipeline,
   not a judgement about the model. Evaluation eligibility belongs to a stage''s `candidates` list: explicit checks permit
