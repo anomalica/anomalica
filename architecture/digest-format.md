@@ -130,9 +130,18 @@ One YAML file per record. Filenames mirror the friendly filenames in
 `.md` swapped for `.yaml`. This pairing is how the workbench joins the
 two sides for any given record.
 
+The assimilator's canonical input set is narrower than a recursive YAML scan:
+only visible direct children `digests/*.yaml` whose `run_kind` is `production`,
+or absent on a legacy digest, are importable. Every nested path, including
+`variants/` and hidden working directories, is non-canonical. A digest with
+`run_kind: comparison` is inert regardless of its path; legacy comparison files
+misplaced at the repository root do not become canonical by location. Discovery,
+explicit single-file import and deterministic rebuild all apply the same
+predicate. This is the implemented boundary required by [0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md): comparison output can be inspected and evaluated but never add claims, nodes or evidence to the graph.
+
 ## Document structure
 
-The order of top-level keys is fixed: `schema`, `extracted_at`, `model`,
+The order of top-level keys is fixed: `run_kind`, `schema`, `extracted_at`, `model`,
 `extraction_generation`, `extraction_config`, `ai_usage`, `prompts`,
 `pre_digest`, `curation`, `record`, `terminology`, `nodes`, `domain_claims`,
 `infrastructure_claims`. Null and empty values are omitted - if a record has no
@@ -141,6 +150,10 @@ infrastructure claims, the key is absent rather than present with `[]`.
 extractions; readers accept their absence on legacy digests only by classifying
 those digests as unknown and not current. `ai_usage`, `prompts`, `pre_digest`,
 `curation`, and `terminology` are optional blocks (see below).
+
+`run_kind` is required on new output and is either `production` or `comparison`.
+Absence is accepted only for legacy root digests and means legacy production for
+import eligibility; it does not make a nested or hidden file canonical.
 
 ```yaml
 schema: anomalica/digest/1
