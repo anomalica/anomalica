@@ -446,6 +446,15 @@ application programming interface, OpenCode and brokered routes are hosted even
 when they have zero data retention, no training, regional processing or no
 incremental charge.
 
+The gate follows the payload, not the job label or entrypoint. It applies to
+canonical extraction, comparison or variant generation, benchmark and evaluation
+runs, retries, backfills, manual commands, direct component invocation and
+standalone harnesses whenever source-derived input would reach hosted
+infrastructure. Calling a run `variant`, `evaluation`, `manual` or `dry-run` does
+not authorise provider invocation. A genuine dry run that starts no inference and
+submits no payload has nothing to admit; any mode that can invoke a provider must
+pass the gate first.
+
 No canonical ordinary-extraction permission mechanism exists beyond the two
 status-based cases. Evaluation-specific private permission evidence is scoped to
 its corpus and use; it is not record authority and cannot widen ordinary
@@ -463,6 +472,14 @@ frontmatter or a hash mismatch denies dispatch. It then applies this gate before
 privacy or zero-data-retention policy, model eligibility, route selection,
 allowance reservation and spend approval. Passing one later gate never
 compensates for failing an earlier one.
+
+Every component capable of starting the hosted provider applies this check at its
+final pre-provider boundary. An upstream scheduler check is defence in depth, not
+authority for a Digester command or standalone evaluation harness to omit its own
+check. Evaluation-specific private permission is valid only through its adopted
+mechanism and only after the owning component verifies the exact record, use,
+provider, route and necessary processors; an evaluation registry entry or route
+label alone remains descriptive and grants nothing.
 
 ### Web record snapshots
 
