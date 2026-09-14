@@ -420,6 +420,50 @@ Two things this encodes, both learned the hard way:
 
 These are DEFAULTS, not licence determinations - a government site can host a contractor report that retains copyright, so a reviewer can always override the status in the workbench. Widening one (gated -> open) is irreversible once served, so it is a human decision, never an automated upgrade.
 
+### Model-input rights and route eligibility
+
+Model-input rights are an independent dispatch gate. They answer whether the
+record body or another source-derived input may leave controlled local storage;
+they do not answer whether a route is private enough, technically available or
+approved for spending.
+
+For the record body, a reviewed `copyright.status` of `public_domain` or
+`open_licence` admits hosted processing in principle. `publicly_accessible`,
+`licensed`, `restricted`, an absent status or an unrecognised status does not.
+Public availability proves access, not permission to submit the work to a model
+provider. A general licence to possess or display a source likewise does not
+establish provider-side processing rights. Existing `copyright` evidence such as
+`detail`, `holder`, `granted_by`, `granted_at`, `licence_url`, `expires` and
+`reference` documents the status but does not encode provider, use and route
+scope. Source URLs, prior `processing.tools`, review state and
+evaluation-registry limits are also supporting or descriptive evidence only. A
+dispatcher must not parse any of them into permission.
+
+A record outside the hosted allow-list may be processed entirely on controlled
+local hardware when the applicable local-use controls admit it. Local means that
+no source-derived input reaches another party's infrastructure. Subscription,
+application programming interface, OpenCode and brokered routes are hosted even
+when they have zero data retention, no training, regional processing or no
+incremental charge.
+
+No canonical ordinary-extraction permission mechanism exists beyond the two
+status-based cases. Evaluation-specific private permission evidence is scoped to
+its corpus and use; it is not record authority and cannot widen ordinary
+extraction. A wider rule would require a separately adopted mechanism identifying
+the record, use, provider and necessary processors. Free text or an operational
+assertion cannot fill that gap. This is fail-closed by design rather than an
+invitation to invent a boolean permission field.
+
+Each submitted input unit is checked independently. The body uses
+`copyright.status`; media bytes use the more specific `copyright.media` or the
+individual image override when one exists. An invocation or batch containing any
+ineligible or unresolved input is denied as a whole. The dispatcher resolves the
+current live record by `content_hash`; failure to resolve it, malformed
+frontmatter or a hash mismatch denies dispatch. It then applies this gate before
+privacy or zero-data-retention policy, model eligibility, route selection,
+allowance reservation and spend approval. Passing one later gate never
+compensates for failing an earlier one.
+
 ### Web record snapshots
 
 For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `records/` directory. The frontmatter exposes them like this:
