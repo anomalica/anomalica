@@ -10,6 +10,10 @@ What remains below is the one thing neither the diagram nor the per-component do
 
 **Every step in order, with what makes it due and what it costs, is in [pipeline-stages.md](pipeline-stages.md)** - the answer to "when does the quote check happen" or "what runs after an import".
 
+**Freshness from record through deployment is defined in
+[freshness.md](freshness.md).** It keeps each stage's native drift measure and
+inherited upstream reasons rather than inventing one end-to-end percentage.
+
 ## knowledge.db is three files (WAL, since 2026-08-25)
 
 The assimilator's graph at `~/.local/share/assimilator/knowledge.db` runs in SQLite

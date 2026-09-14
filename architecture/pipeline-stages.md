@@ -38,17 +38,22 @@ money or subscription allowance; a step marked free spends neither.
 
 ## What decides what runs next
 
-One rule, in `scheduler/backend/priority.py`, orders every job whatever card it
-lands on. Highest first:
+One consequence rule, in `scheduler/backend/priority.py`, orders every job
+whatever card it lands on. Highest first:
 
 1. **Repair** - something published is broken (a page with dead citations).
 2. **Finish** - an item already part-way through the pipeline.
 3. **Verify** - checking what already exists (stages 9 and 13 above).
 4. **New** - taking in material that is not in the pipeline yet.
 
-Within a band: free work first (it cannot be held by a budget), then the
-producing stage's own value for the job, then oldest first. An explicit
-staging by the operator still wins over all of it.
+Within `finish`, a stage never completed precedes regeneration; known stale
+published output precedes known stale unpublished output, then unknown
+currentness. Within an equal consequence and completion state: free work first
+(it cannot be held by a budget), then the producing stage's own value for the
+job, then oldest first. Token estimates constrain dispatch inside an authorised
+allowance; they are not a universal priority score. An explicit staging by the
+operator still wins over all of it. Priority never grants model or batch
+authorisation; the full contract is [end-to-end freshness](freshness.md).
 
 ## Two things worth knowing
 

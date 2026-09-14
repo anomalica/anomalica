@@ -86,7 +86,7 @@ The allowance meter is route state, not inference execution provenance. Its impl
 
 - **Not the knowledge graph.** Distinct from the assimilator's `knowledge.db` / `infrastructure.db` (domain content, regularly dropped and rebuilt - which would wipe a ledger). The assimilator's `infrastructure.db` holds infrastructure *claims*, not operational telemetry; the names are unrelated.
 - **Partially supersedes `processing.json`.** The workbench runner's per-job state file keeps job orchestration (on/failed/margin, outcome, GPU job records); the per-call token/cost stats move to the ledger, and the Schedule view joins the two.
-- **Provenance, complementary to 0010.** 0010's `brief_hash` audits WHAT a page was built from; the ledger's `model_id`/`model_version` per `target` audits WHICH model produced it.
+- **Provenance, complementary to 0010.** 0010's `brief_hash` and `payload_hash` audit WHAT selection and exact payload a page was built from; the ledger's `model_id`/`model_version` per `target` audits WHICH model produced it.
 
 ## Filled as it lands
 

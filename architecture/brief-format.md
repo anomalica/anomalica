@@ -8,7 +8,7 @@ The field set below is live, grounded against the synthesiser's first-cut brief.
 
 ## Shape
 
-A YAML document (`.yaml`) - the same serialisation as the digest interchange (0027), not markdown with frontmatter. Top-level keys carry the page identity, the brief hash, the generated stamp, and the related-node candidates; a `claims` list carries the ordered, selected claims with their provenance. Language-neutral throughout - facts, not prose; one brief feeds all N language articles for its page. The fields below are the locked `anomalica/brief/2` contract; YAML is the serialisation.
+A YAML document (`.yaml`) - the same serialisation as the digest interchange (0027), not markdown with frontmatter. Top-level keys carry the page identity, the selection and payload hashes, the generated stamp, and the related-node candidates; a `claims` list carries the ordered, selected claims with their provenance. Language-neutral throughout - facts, not prose; one brief feeds all N language articles for its page. The fields below are the locked `anomalica/brief/2` contract; YAML is the serialisation.
 
 ## Where a brief lives
 
@@ -34,7 +34,7 @@ Most pages cover one node. A composed page covers several deliberately. The firs
 
 ## Top-level fields
 
-The top-level fields - `schema`, `brief_hash`, `page` (`kind`, `title`, `slug`, `node_type`, `nodes`), `generated`, `related_nodes` - are listed with their descriptions in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief`. This document does not repeat them; the narrative below covers what a field list cannot (slug resolution, the `brief_hash` audit role).
+The top-level fields - `schema`, `brief_hash`, `payload_hash`, `page` (`kind`, `title`, `slug`, `node_type`, `nodes`), `generated`, `related_nodes` - are listed with their descriptions in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief`. This document does not repeat them; the narrative below covers what a field list cannot (slug resolution and the two hashes' distinct audit roles).
 
 `page.slug` and `related_nodes[].slug` are resolved by the synthesiser at emission via the canonical slugifier (`metadata.explicit_slug` if present, else the shared anomalica-common slugifier - first-last for persons, with deterministic disambiguation; see [node slugs](node-types.md#node-slugs)). They are pre-resolved into the brief because the assembler is writer-only and does not read node metadata; an unresolved slug would silently break pattern-slug URLs and their cross-links.
 
@@ -77,13 +77,65 @@ An ordered list of claims - the selection, and the only facts the writer may use
 
 ## Identity and audit
 
-`brief_hash` = SHA-256 over the ordered `[(claim_id, claim_hash)]` plus the page identity, the covered node list included. The member list is part of the identity: adding or removing a member changes what the page should say, and a hash blind to it would leave every built page looking fresh. One fingerprint, three uses:
+`brief_hash` is SHA-256 of the UTF-8 bytes of this exact compact JSON object,
+with keys in the shown order, no insignificant whitespace, JSON strings emitted
+without ASCII escaping, and no trailing newline:
 
-- the scheduler's staleness diff unit (the "Something changed?" step - reassemble a page only when its `brief_hash` changes);
-- the assembler's freeze (`built_from`) - exactly what an article was built from;
-- 0010's "knowledge-graph data" prompt-component audit hash - precise and reconstructable.
+```json
+{"kind":"entity","node_id":"n1,n2","claims":[["c1","h1"],["c2","h2"]]}
+```
 
-This is distinct from `generated.graph_version`, the coarse "knowledge-graph version used" stamp 0010 also records. Both are present in v1 and play distinct roles: `brief_hash` is the precise, per-page, reconstructable hash; `graph_version` is the coarse graph-version stamp. Together they satisfy 0010's audit requirement.
+`kind` is `page.kind`. Despite its singular legacy name, `node_id` is the ordered
+`page.nodes[].node_id` values joined by one comma; node ids cannot contain commas.
+`claims` is the brief's ordered `[[claim_id, claim_hash], ...]` selection and is
+not sorted. For the fixture above the hash is
+`2657da2d00513b0d085f8d3a804078271047fd5e23dbce4c32719569d72c198f`.
+The field names and serialisation are part of the hash contract: changing them
+changes every brief even if its YAML shape does not change.
+
+The member list is part of page identity: adding or removing a member changes
+what the page should say, and a hash blind to it would leave every built page
+looking fresh. This hash deliberately remains the stable identity of the
+semantic claim selection and covered page members. It does not change merely
+because writer context attached to those claims changes.
+
+`payload_hash` binds the complete writer-relevant brief payload. It is SHA-256
+of UTF-8 compact JSON with object keys sorted recursively, no insignificant
+whitespace, non-ASCII unescaped and no trailing newline. The exact object is:
+
+```json
+{"claims":[],"page":{"kind":"entity","node_type":"event","nodes":[],"slug":"example","title":"Example"},"related_nodes":[]}
+```
+
+For that fixture the hash is
+`12958f9bad6cc16d0a49bbf25fe628a2594ac0d0e1d189276ccb43a239f0f559`.
+
+The values are copied from the brief without normalisation. `page` contains
+exactly `kind`, `title`, `slug`, `node_type` and `nodes`; the other two values are
+the complete ordered `claims` and `related_nodes` lists. List order remains
+significant. Generated stamps, sizing, publication data and display-only
+`page.listing` are excluded because they do not enter the writer payload and
+have separate comparisons.
+
+Both hashes are required. A current producer regenerates a legacy brief missing
+`payload_hash`; a writer refuses to assemble from one. Their roles are distinct:
+
+- `brief_hash` identifies and diagnoses the ordered semantic selection and page
+  membership;
+- `payload_hash` changes when any writer-visible page identity, claim context or
+  related-node value changes, including provenance, attribution, entailment,
+  attachment and node salience that intentionally do not alter `claim_hash`;
+- the scheduler compares both, the assembler copies both into `built_from`, and
+  together they provide 0010's precise, reconstructable knowledge-graph input
+  identity.
+
+These are distinct from `generated.graph_version`, the coarse "knowledge-graph version used" stamp 0010 also records. `brief_hash` identifies the stable selection, `payload_hash` identifies the exact writer-visible values, and `graph_version` is the coarse graph-version stamp.
+
+Freshness is proved by rerunning deterministic selection and comparing both
+hashes. `generated.graph_version` may cheaply trigger that reconciliation, but a
+matching timestamp cannot prove the selected slice or payload current and a
+changed timestamp does not prove either changed. See
+[end-to-end freshness](freshness.md#boundary-checks).
 
 ## Intended but deferred
 

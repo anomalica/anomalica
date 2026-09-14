@@ -49,7 +49,9 @@ Living documents that reflect the current state of the system. See [architecture
 - [Digester](architecture/digester.md) - ingests to digests (claims, nodes, provenance)
 - [Data model](architecture/data-model.md) - sources, records, claims, terminology
 - [Node types](architecture/node-types.md) - the knowledge-graph taxonomy
+- [Human-gold evaluation](architecture/evaluation-format.md) - highlight-backed expected facts and bounded-range attestation
 - [Assembler](architecture/assembler.md) - article assembly, directives, languages
+- [End-to-end freshness](architecture/freshness.md) - deterministic stage-local drift, inherited reasons and scheduling consequence
 - [AI constraints](architecture/ai-constraints.md) - boundaries on AI involvement
 
 ## Guides

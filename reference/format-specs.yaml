@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 2
+spec_version: 4
 types:
   ingest:
     schema: anomalica/record/1
@@ -181,7 +181,10 @@ types:
           banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
           a marking."}
       - {name: processing, type: object, required: false, description: "Processing metadata: handler, version (git short-hash),
-          pipeline_version (monotonic per-media-type extraction generation; see 0040), tools used, source characteristics."}
+          pipeline_version (positive monotonic per-source-type extraction generation; see 0040), tools used, source characteristics.
+          Compare only with that source_type's explicit store/_pipeline_versions.yaml entry: equal is current, lower is stale;
+          absent/malformed/ahead or a missing manifest entry is unknown, never version zero. The registry and manifest list
+          every supported source_type; producers must not default an unregistered type to generation 1."}
       - {name: supersedes, type: string, required: false, description: "content_hash of the prior record this one retired,
           when a re-ingest of the same logical source (its `provenance.source_url` / `provenance.identifiers`) superseded
           an earlier extraction. Stamped across schema boundaries. See 0040."}
@@ -222,6 +225,9 @@ types:
       "store/{content_hash}.housekeeping.json": "Proposal-only housekeeping result, schema anomalica/housekeeping/2. Bound
         to the complete exact ingest Markdown bytes by input_sha256 and reviewed through the Workbench. See the housekeeping
         type below."
+      "store/{bare_content_hash}.gold.json": "Compact human-gold evaluation sidecar, schema anomalica/highlight-gold/1. Existing
+        inline highlight ids are the source units; this sidecar stores decisions, accepted facts, progress and bounded-range
+        attestation without duplicating highlight spans or context edges. Bound to the exact raw body by body_sha256."
   ingest_result:
     schema: anomalica/ingest-result/1
     status: stable
@@ -261,6 +267,64 @@ types:
           public record eligibility requires true together with observed_coverage 1.0."}
       - {name: total_units, type: integer, required: true, description: "Positive review-unit denominator; zero cannot authorise
           publication."}
+  evaluation_registry:
+    schema: anomalica/evaluation-registry/1
+    status: stable
+    serialisation: YAML
+    spec_doc: architecture/evaluation-format.md
+    path: reference/evaluations.yaml
+    owner: anomalica
+    summary: Public cross-repository index of reference datasets and experiments, their review state, constraints, artifacts
+      and current decision. Private artifacts are addressable by stable id without exposing their storage location.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/evaluation-registry/1`."}
+      - {name: statuses, type: list, required: true, description: "Exact lifecycle vocabulary: proposed, ready-for-human-review,
+          reviewed, adopted, rejected and blocked."}
+      - {name: gold_statuses, type: list, required: true, description: "Exact gold-readiness vocabulary: unavailable, source-reviewed,
+          provisional, ready-for-human-review, human-reviewed and reviewed-derived."}
+      - {name: evaluations, type: list, required: true, description: "Entries `{id, title, purpose, owner_repo, status, gold,
+          limits, artifacts?, decision}`. Gold is `{status, provenance, artifact_id?}`; limits is `{rights, routes}`; each
+          artifact is `{id, role, visibility, repository?, path?}`."}
+    invariants:
+      - "Evaluation ids and artifact ids are stable, lowercase hyphenated and unique; evaluation ids are never reused."
+      - "A public artifact requires an organisation/repository name and repository-relative path. Absolute paths are forbidden."
+      - "A private artifact forbids repository and path; authorised consumers resolve only recognised stable ids through local
+        configuration."
+      - "No source quote, copyrighted body, reviewer identity, private provider/account detail, approval evidence or host
+        state appears in the registry."
+      - "Rights and route limits are descriptive and never grant dispatch permission; owning-component enforcement remains
+        authoritative."
+  highlight_gold:
+    schema: anomalica/highlight-gold/1
+    status: stable
+    serialisation: JSON
+    spec_doc: architecture/evaluation-format.md
+    path: "store/{bare_content_hash}.gold.json"
+    owner: workbench
+    summary: Compact resumable human-gold decisions keyed to existing inline highlight ids. One highlight is one source unit
+      yielding one or more accepted facts; multipart pairs remain separately locatable, and context links inform dependent
+      units without merging them. Artificial-intelligence candidates remain non-gold until authenticated acceptance.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/highlight-gold/1`."}
+      - {name: record_hash, type: string, required: true, description: "The ingest's full `sha256:<64 lowercase hex>` content_hash."}
+      - {name: body_sha256, type: string, required: true, description: "Full `sha256:<64 lowercase hex>` of the exact raw
+          body after the closing frontmatter fence. Binds range offsets and inline marker semantics; mismatch makes the sidecar
+          stale and non-gold."}
+      - {name: ranges, type: list, required: true, description: "Non-overlapping bounded review passes. Each is `{id, start,
+          end, complete, reviewer, updated_at, attested_at?, units}`. Id is opaque and sidecar-unique; bounds are half-open
+          Unicode code-point offsets into body_sha256. Reviewer is server-authenticated `{issuer, subject, name}` and never
+          accepted from client input. attested_at is required exactly when complete is true. Units are source-ordered unique
+          `{highlight_id, decision, facts?}` entries: accept requires exactly one fact, adjust one or more, split two or more,
+          and reject/defer forbid facts. Deferred units prevent completeness. Only facts persisted by an authenticated accept/adjust/split
+          save are gold."}
+    invariants:
+      - "Inline highlight parts and highlight-context edges remain authoritative in the ingest body and are never copied here."
+      - "The interface saves source-ordered batches of 3-5 unresolved highlights atomically; persisted decisions are the resume
+        cursor, deferred units return after never-reviewed units, and no mutable cursor field is stored."
+      - "Optional digest-claim proposals are derived by quote overlap with the current highlight's separate parts, are not
+        persisted in this sidecar and never become gold merely by being shown."
+      - "Precision, false-positive rate and F1 require a complete range and apply only to model claims whose aligned quote
+        fragments are wholly inside the attested range. Incomplete ranges support progress and accepted-fact recall only."
   housekeeping:
     schema: anomalica/housekeeping/2
     status: stable
@@ -375,6 +439,13 @@ types:
       - {name: extracted_at, type: string, required: true, description: "ISO 8601 timestamp of the extraction run."}
       - {name: model, type: string, required: true, description: "The model that produced this digest (digest/2 carries the
           versioned id)."}
+      - {name: extraction_generation, type: integer, required: new-output, description: "Positive manually maintained digest-fidelity
+          cohort, compared with digest-generation.json. Equal is current; lower is stale; absent, malformed or greater is
+          unknown. Stale and unknown are both ineligible for current-only operations. Never inferred or back-stamped."}
+      - {name: extraction_config, type: string, required: new-output, description: "Full `sha256:<64 lowercase hex>` fingerprint
+          of the complete effective extraction configuration under deterministic canonical JSON: resolved model/version, ordered
+          passes and prompt hashes, preparation version, chunking, decoding, validation and deterministic post-processing.
+          Any exact setup change changes this fingerprint; it does not itself bump extraction_generation."}
       - {name: ai_usage, type: list, required: false, status: provisional, description: "Per-stage AI-processing provenance
           carried forward onto this digest (model, token counts). Data kept, not publicly surfaced."}
       - {name: review_state, type: object, required: false, description: "The source record's review state AT EXTRACTION TIME
@@ -387,7 +458,8 @@ types:
           override is recorded as version 'override' with the file's own hash. Absent on pre-stamping digests."}
       - {name: pre_digest, type: object, required: false, description: "Content hash of the pre-digest - the ingest after
           deterministic model-prep (irrelevant removed, footnotes inlined, timestamps stripped), the exact model input (0042).
-          {sha256, prep_version}. With prompts + model, reproduces the digest exactly. Absent on pre-0042 digests."}
+          {sha256, prep_version}. Together with extraction_config, binds the run to its exact input and effective setup without
+          promising byte-identical sampled model output. Absent on pre-0042 digests."}
       - {name: record, type: object, required: true, description: "The source record: {id (graph UUID, the join key against
           ingests), title, producer, date, reference}. Same value across every per-model digest of one source - the constant
           the source-trace rides on."}
@@ -398,6 +470,26 @@ types:
         attestation (first_hand|second_hand|third_hand), speaker?, location_in_record (where in the SOURCE the claim came
         from - the trace), date? | date_range?, refs?, quote (verbatim SOURCE text), text}."
       infrastructure_claims: "Same shape as domain_claims, routed to the infrastructure graph. Omitted when empty."
+    forbidden_until_evaluated:
+      accounts: "Narrative accounts are report-only until scored against the Doty ground truth for precision, recall and boundary
+        overlap, then reviewed as adequate. Activation requires an extraction-generation bump."
+      claim_to_account: "Canonical claims must not carry account/account_id/account_ids until claim-binding coverage is evaluated
+        and account fields are activated in this contract."
+  digest_generation:
+    schema: anomalica/digest-generation/1
+    status: stable
+    serialisation: JSON
+    spec_doc: architecture/digest-format.md
+    path: digest-generation.json
+    owner: digester
+    summary: Repository-root declaration of the manually maintained current digest extraction generation. Consumers read it
+      from the same committed tree as the digest corpus; missing, malformed or unsupported state fails closed for current-only
+      operations. JSON prevents collision with recursive YAML digest discovery.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/digest-generation/1`."}
+      - {name: current_generation, type: integer, required: true, description: "Positive current extraction generation. A
+          digest equals it to be generation-current; lower is stale; absent/malformed/greater is unknown. Unknown is reported
+          separately but treated as not current."}
   selected_digest:
     schema: anomalica/digest/2
     status: provisional
@@ -411,6 +503,10 @@ types:
       - {name: selected_from, type: list, required: true, description: "The per-model digests the selection chose among -
           each {model, version} (+ its source path/hash), the winner marked. The digest-level audit: which models' extractions
           were candidates and which was picked."}
+      - {name: extraction_generation, type: integer, required: true, description: "Winning per-model digest's manually maintained
+          extraction generation, copied unchanged so selection preserves freshness identity."}
+      - {name: extraction_config, type: string, required: true, description: "Winning per-model digest's exact configuration
+          fingerprint, copied unchanged so selection preserves run identity."}
       - {name: record, type: object, required: true, description: "The source record - same shape and same value as the per-model
           digests' (one source). The source-trace rides on this being constant across the per-model digests and the selected
           one."}
@@ -430,9 +526,14 @@ types:
     # A page covers one or more nodes: `page.nodes` is the covered set (brief/2, 2026-09-03).
     fields:  # top-level; the body is the ordered `claims` selection (see body)
       - {name: schema, type: string, required: true, description: "`anomalica/brief/2`."}
-      - {name: brief_hash, type: string, required: true, description: "SHA-256 over the ordered [(claim_id, claim_hash)] plus
-          the page identity, the covered node list included. The brief's fingerprint - staleness diff unit, assembler freeze
-          (built_from), and 0010 audit hash. Display-only page.listing measurements are excluded."}
+      - {name: brief_hash, type: string, required: true, description: "SHA-256 of UTF-8 compact JSON with keys in order {kind,
+          node_id, claims}, no spaces/newline and non-ASCII unescaped: kind is page.kind; legacy-named node_id is ordered
+          page.nodes[].node_id joined by comma; claims is ordered [[claim_id, claim_hash], ...]. Exact fixture and exclusions
+          are in brief-format.md. Stable identity for semantic selection and covered page members."}
+      - {name: payload_hash, type: string, required: true, description: "SHA-256 of UTF-8 compact canonical JSON with recursively
+          sorted object keys, no spaces/newline and non-ASCII unescaped, over exactly {page: {kind, title, slug, node_type,
+          nodes}, claims, related_nodes}. List order is significant. Exact writer-visible payload identity; copied with brief_hash
+          into article built_from and compared independently for freshness."}
       - {name: page, type: object, required: true, description: "The page this brief builds: {kind: entity, node_type, title,
           slug, nodes: [{node_id, name, node_type}]}. `nodes` is the covered set - always a list, one entry for an ordinary
           page, several for a composed page; there is no page-level node_id, and a consumer acting on a covered node acts
@@ -475,9 +576,11 @@ types:
           raw frontmatter, processing metadata, word timestamps or disallowed source bytes."}
       - {name: references, type: list, required: generated-page, description: "Attributed source references and supporting
           quotations. Record-page reviewer deep-links and facts/entities inspection remain in the Workbench."}
-      - {name: built_from, type: object, required: false, description: "Machine-owned input binding. Carries source mode and
-          the applicable brief slug/hash or record hash, plus claim id/hash pairs. Transitional node-mode articles may lack
-          it until rebuilt from briefs; see content-format.md."}
+      - {name: built_from, type: object, required: entity-brief-page, description: "Machine-owned entity input binding, exactly
+          {brief_hash, payload_hash, claims: [{id, hash}] in brief order, claims_available?, claims_used?}. The two hashes
+          bind stable semantic selection and exact writer-visible payload separately. The two counts are present together
+          only when selection was capped. The article's <section>/<slug> path locates the brief. Public record pages use their
+          separate record_hash contract; transitional node-mode pages lack built_from until rebuilt from briefs."}
       - {name: built_by, type: object, required: true, description: "Machine-owned generator and output identity. Carries
           route-qualified model id and model_version; transport; logical prompt, system-prompt, resolved-directive, submitted-payload
           and body SHA-256 values; system-prompt role; transport implementation/version/configuration hash; scaffold exposure;
@@ -543,13 +646,24 @@ chain:
   - stage: digest
     detail: >-
       One digest per record at digests/{friendly-name}.yaml, paired to the ingest by the shared friendly name ({date}-{source_type}-{slug}).
-      record.id is the graph UUID join key.
+      record.id is the graph UUID join key. Freshness also binds the current materialised pre-digest SHA-256 and the explicit
+      extraction generation; unknown generation is a scheduling signal, not batch authorisation.
+  - stage: graph import
+    detail: >-
+      Derived import receipt keyed by record content hash carries canonical digest path, SHA-256 of the exact digest YAML
+      bytes and deterministic import generation. Presence of a record alone does not prove its current digest was imported.
   - stage: brief
     detail: >-
       Per page. Each selected claim carries provenance.content_hash + friendly_name, linking the claim back to its ingest.
-      brief_hash fingerprints the whole selection.
+      brief_hash fingerprints the ordered selection and covered page members; payload_hash fingerprints the exact writer-visible
+      page, claim and related-node values. Both use the exact compact-JSON algorithms in brief-format.md; generated.graph_version
+      is only a reconciliation trigger.
   - stage: content (article)
     detail: >-
-      An entity article is assembled from exactly one brief and bound to its brief_hash. A public record article is assembled
-      from one selected digest, bound by record_hash, and emitted only after current ingest review/copyright validation. Both
-      are reconstructable to their exact factual input. (Content layout remains provisional - see types.content.open_questions.)
+      An entity article is assembled from exactly one brief and bound by its path, built_from.brief_hash, built_from.payload_hash
+      and ordered claim id/hash pairs. A public record article is assembled from one selected digest, bound by record_hash,
+      and emitted only after current ingest review/copyright validation. (Content layout remains provisional - see types.content.open_questions.)
+  - stage: deployment
+    detail: >-
+      A production build records site and committed content inputs, then compares the complete public path -> exact-byte SHA-256
+      map with remote storage. Changed deployments are current only after cache purge and sampled live-byte equality.

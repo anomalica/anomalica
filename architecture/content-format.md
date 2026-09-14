@@ -124,16 +124,18 @@ Both sit alongside the article files and are written by other processes (not the
 
 ## Auditable assembly
 
-An article is built from exactly one brief, and [0010](../decisions/0010-auditable-assembly.md) requires it be reconstructable to the precise graph slice it came from - the brief's `brief_hash` (`built_from`). See [brief-format.md](brief-format.md) for `brief_hash`.
+An entity article is built from exactly one brief, and [0010](../decisions/0010-auditable-assembly.md) requires it be reconstructable to the precise graph slice it came from. `built_from` therefore carries both the brief's stable selection identity (`brief_hash`) and its exact writer-visible payload identity (`payload_hash`). See [brief-format.md](brief-format.md) for their distinct hash contracts.
 
 The binding is carried in **two machine-owned frontmatter keys**, settled 2026-07-23. Not a sidecar and not a central index: provenance that can be moved, copied, or partially synced away from its article is provenance you cannot trust, and a sidecar's location would depend on the unsettled on-disk layout question below.
 
 ```yaml
-built_from:                  # INPUTS - extends the shape already published
-  source: brief              # brief | graph | record
-  brief: {slug, hash}        # brief mode; slug locates, hash verifies
-  record_hash: <sha256>      # record mode
-  claims: [{id, hash}]       # every mode that has them
+built_from:                       # INPUTS; entity brief mode only
+  brief_hash: <sha256>            # the brief's brief_hash
+  payload_hash: <sha256>          # the brief's exact writer-visible payload_hash
+  claims:                         # exact brief order; copied, not recomputed
+    - {id: <claim-id>, hash: <claim-hash>}
+  claims_available: 2457          # optional; only when selection was capped
+  claims_used: 600                # optional; only when selection was capped
 built_by:                    # OUTPUTS and generator
   model: <id>
   model_version: <id>
@@ -151,25 +153,47 @@ built_by:                    # OUTPUTS and generator
   tokens: {input, output}    # this assembly's own usage
 ```
 
+This is the canonical `built_from` shape. The previously documented
+`{source, brief: {slug, hash}, record_hash, claims}` union was never emitted and
+is superseded. The entity article's own `<section>/<slug>.<language>.md` path
+supplies the full brief reference; `brief_hash` verifies the selected claim set
+and page members, while `payload_hash` verifies the exact writer-visible values. A
+move is therefore removal of one article identity and creation of another, not
+an in-place locator update. Transitional direct-graph `node` mode has no
+`built_from` and is retired by reassembly from a brief rather than given a
+parallel binding.
+
+Both hashes are copied verbatim; the assembler computes neither. When a current
+brief carries `payload_hash`, an article with no `built_from.payload_hash` has an
+unknown old binding and is not current. A differing hash is stale. Both cases
+require reassembly rather than treating a matching legacy `brief_hash` as proof
+that the prose saw current attribution, provenance, entailment, attachments,
+salience or related nodes.
+
+Public record pages do not use this block. Their current live-record gate and
+public `record_hash` contract are specified under
+[Public record pages](#public-record-pages); the full possession hash must not be
+published merely to make this generic shape cover another mode.
+
 `tokens` is here because **the article is the only artefact of the assemble stage**. Every other stage's usage has a second home - a record's or a digest's own `ai_usage` - so removing the carried-forward copy from an article loses nothing. The assemble entry has no such original: the AI-operation ledger is meant to be it, and the ledger is not written (0037 is scaffolded, and its own text names the gap: "assembler discards usage today"). Dropping `ai_usage` without this line would destroy each article's assembly token counts at the moment of writing, which is the opposite of the 2026-06-29 position that usage data is *kept* and merely not surfaced.
 
 This does not reopen what the `ai_usage` removal closed. That removal targets **carry-forward** - upstream entries republished into a public artefact, which is how a forbidden cost field reached 53 articles. The assemble stage's own tokens are first-party data about this artefact, not a copy of someone else's. Cost, price, and currency fields remain forbidden here as everywhere: tokens are a measurement, and any figure is derived by the consumer at display.
 
 **`tokens` has an expiry condition, and it must not be removed before it or kept after it.** It sits in `built_by` because it is currently the *original* - the only copy of assemble-stage usage anywhere. When the AI-operation ledger ([0037](../decisions/0037-ai-operation-ledger.md)) is actually written, the ledger becomes the original and this field becomes a copy; at that point the same copy-versus-original test that put it here says it can go, and `built_by` returns to being purely generator identity. Until then, deleting it destroys data. The two failure modes are symmetrical: remove it early and it is unrecoverable, keep it reflexively afterwards and a usage field lives on in a generator stamp with nothing to justify it.
 
-`model`, `model_version`, and `tokens` are **lifted from the stage's usage entry, never recomputed**. The token figure is cache-aware - input plus cache read plus cache creation - and that arithmetic lives in `anomalica_common.llm.usage_entry`. Recomputing it at the stamp is how the two silently drift apart, the same reason the assembler computes neither `claim_hash` nor `brief_hash` for itself.
+`model`, `model_version`, and `tokens` are **lifted from the stage's usage entry, never recomputed**. The token figure is cache-aware - input plus cache read plus cache creation - and that arithmetic lives in `anomalica_common.llm.usage_entry`. Recomputing it at the stamp is how the two silently drift apart, the same reason the assembler computes neither `claim_hash`, `brief_hash` nor `payload_hash` for itself.
 
 Two keys rather than one because they answer opposite questions: `built_from` is what went in, `built_by` is what came out and what made it. Between them they make three staleness questions independently answerable, and a regeneration pass needs all three:
 
 | Question | Answered by | Meaning |
 |----------|-------------|---------|
-| Is my input stale? | `built_from` | The slice or a claim changed - reassemble. |
+| Is my input stale? | Article path, `built_from.brief_hash`, `built_from.payload_hash` and `built_from.claims` | The bound selection, exact writer payload or one of its claims changed - reassemble. |
 | Has a human edited this? | `built_by.body_sha256` | Do not clobber. Human edits are an *expected* flow: live-site edits return as directives, so this fires routinely. |
 | Would this be built differently today? | `built_by.model`, `model_version`, prompt hashes, and transport execution fields | The generator or route wrapper moved on. Neither hash above detects it, and the corpus quietly ends up in mixed generations. |
 
 Four things about this are easy to get wrong:
 
-- **The brief needs a slug as well as a hash.** `brief_hash` is an integrity check with no locator - briefs are addressed on disk by page slug, so a hash alone cannot find one. Today the locator is implicit in the article's filename matching the brief's, which breaks silently on any slug change.
+- **The locator is the full article path, not a bare slug.** The corresponding brief reference is `<section>/<slug>`, derived from the article's parent section and filename stem. A bare slug is ambiguous across sections. A move changes the article identity and must remove the old path.
 - **`body_sha256` covers the body only, over the exact bytes written, computed last.** The assembler mutates the body after render and re-dumps the frontmatter, so a hash taken at render time never matches the file on re-read. Body-only also sidesteps the frontmatter re-dump entirely.
 - **`model` and `model_version` are reconstructability inputs, not transparency fields.** They currently reach an article only via `ai_usage`, which is being removed (see Open questions). If they leave with it, an article no longer records what produced it and 0010 fails. Cost had to go; the model must not go with it.
 - **`prompt_sha256` is a hash of the exact authored logical user-prompt string.** `system_prompt_sha256` does the same for the authored logical system prompt. Assembler prompts are in-code rather than versioned files, so the digester's `{id, version, sha256, file}` shape does not apply here. These hashes identify authored content; they do not claim that every transport assigns it the same protocol role.
@@ -189,7 +213,7 @@ OpenCode 1.18.30 cannot accept a caller-supplied system-role message through `op
 
 Coverage is partial and the gap is uneven. Brief mode already emits `built_from`; record mode binds by `record_hash`; **node mode, the majority of the corpus, carries no binding at all**.
 
-Node mode needs no binding designed for it, and building one would be a mistake. It is the interim direct-graph-read path that [0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md) supersedes: the assembler is to be "given the brief and nothing else - it does not read the graph", and the brief's input hash *is* 0010's knowledge-graph-data audit hash, "not a parallel scheme". A database-direct binding for node mode would be exactly that parallel scheme, built on a path already scheduled for removal. The unbound articles close by re-assembly from briefs - gaining `brief_hash` like those that already carry it - or by the synthesiser judging the page should not exist. Nothing to design, and nothing for the assimilator to expose.
+Node mode needs no binding designed for it, and building one would be a mistake. It is the interim direct-graph-read path that [0036](../decisions/0036-synthesise-stage-brief-as-writer-input.md) supersedes: the assembler is to be "given the brief and nothing else - it does not read the graph", and the brief's two input hashes are 0010's knowledge-graph-data audit identity, not a parallel scheme. A database-direct binding for node mode would be exactly that parallel scheme, built on a path already scheduled for removal. The unbound articles close by re-assembly from briefs - gaining `brief_hash` and `payload_hash` - or by the synthesiser judging the page should not exist. Nothing to design, and nothing for the assimilator to expose.
 
 **Compare claims on the hash, never on the id.** Claim ids are minted fresh (`uuid.uuid4()`) on every digest emission - two digests of the same unchanged record share no claim ids at all. So an id comparison is broken in both directions: it detects nothing when a claim's text changes, and it reports a change on every re-digest when nothing changed. The `id` in `built_from.claims` is a locator for humans; the `hash` is the identity.
 

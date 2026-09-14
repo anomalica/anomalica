@@ -13,7 +13,13 @@ The companion document on the ingester side is
 [`ingest-format.md`](ingest-format.md). This document covers the digester
 side.
 
-The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.digest`); this document is its narrative companion.
+Digests may supply optional proposed facts to the human-gold workflow, but they
+remain model output. Overlap only selects suggestions for one inline highlight;
+no digest claim becomes gold until an authenticated reviewer accepts it under
+the [evaluation contract](evaluation-format.md), and the interface does not
+present a complete model claim set as the reference answer.
+
+The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.per_model_digest`); this document is its narrative companion.
 
 ## Schema identifier
 
@@ -21,6 +27,93 @@ Every digest carries `schema: anomalica/digest/1` at the top. A future
 breaking change to the format bumps the integer (`anomalica/digest/2`).
 Consumers should check the schema and refuse anything they do not
 understand.
+
+The schema is only the wire shape. It is independent of the extraction
+generation and exact extraction configuration described below: two digests may
+both be `anomalica/digest/1` while one is stale, and two current digests may
+have different exact configuration fingerprints.
+
+## Extraction identity and freshness
+
+Every newly extracted digest carries both of these fields:
+
+```yaml
+extraction_generation: 1
+extraction_config: sha256:85d1c8fca7d0...
+```
+
+`extraction_generation` is a positive integer maintained manually by the
+digester. It identifies a fidelity cohort: maintainers bump it when a change to
+model input, extraction instructions, validation or deterministic post-processing
+materially changes what claims and nodes the pipeline is expected to preserve or
+emit. It is not derived from Git, a timestamp, the schema or the configuration
+fingerprint.
+
+`extraction_config` is the full `sha256:<64 lowercase hex>` fingerprint of the
+complete effective extraction configuration for that run. The producer computes
+it over a deterministic canonical JSON representation covering every
+output-affecting setting and implementation identity, including the resolved
+model and model version, ordered passes and prompt hashes, pre-digest preparation
+version, chunking, decoding, validation and deterministic post-processing. The
+producer retains enough information to resolve the fingerprint to that exact
+configuration. Existing `model`, `prompts` and `pre_digest` fields remain useful
+human-readable provenance and input bindings; the fingerprint prevents an
+unlisted setting from disappearing between them.
+
+The two fields answer different questions. A configuration fingerprint changes
+whenever the exact effective setup changes. A generation changes only when a
+maintainer judges the change material to corpus fidelity. Therefore consumers
+must not compare `extraction_config` with the newest fingerprint to decide
+freshness, and a changed fingerprint does not automatically bump the generation.
+
+### Current-generation manifest
+
+The digests repository root carries `digest-generation.json`:
+
+```json
+{
+  "schema": "anomalica/digest-generation/1",
+  "current_generation": 1
+}
+```
+
+The digester owns this manifest and changes it in the same deployment as its
+manually maintained current generation. JSON is deliberate: canonical digests
+are discovered with a recursive `*.yaml` glob, so a YAML manifest could be
+mistaken for a digest. Consumers read the manifest from the same committed Git
+tree as the digest corpus. Missing, malformed or unsupported manifests provide
+no current generation and fail closed for any current-only operation.
+
+Generation status is:
+
+- equal to `current_generation`: `current`;
+- lower than `current_generation`: `stale` and a re-digestion target;
+- absent, malformed or greater than `current_generation`: `unknown`.
+
+`unknown` is not a softer form of current. Health reporting keeps it separate so
+the reason and denominator remain visible, but freshness gates and backfill
+selection treat both `stale` and `unknown` as not current. A consumer must never
+interpret an absent generation as zero or silently admit it.
+
+Generation freshness is also independent of source-input freshness. The latter
+is current only when `pre_digest.sha256` equals the hash of the current
+materialised pre-digest for that ingest. A digest qualifies as fresh only when
+its schema is supported, its extraction generation equals the manifest, its
+`extraction_config` is present and valid, and its pre-digest input is current.
+An input hash mismatch is stale; an absent or unresolvable input binding is
+unknown and therefore not current. Health output reports generation and input
+reasons separately rather than collapsing them into one unexplained count.
+
+No old digest is back-stamped. In particular, generation must not be inferred
+from `extracted_at`, `model`, prompt dates or hashes, `pre_digest`, a Git commit,
+or similarity to a known configuration. Re-digestion is the only way for a
+digest lacking a trustworthy generation or exact configuration fingerprint to
+become current.
+
+This classification creates scheduler candidates; it does not authorise model
+execution. Neither this contract nor a `current_generation: 1` manifest
+authorises full-corpus generation-1 re-digestion. Any batch requires separate
+explicit approval after its aggregate cost or plan impact is shown.
 
 ## File layout in the repository
 
@@ -40,16 +133,21 @@ two sides for any given record.
 ## Document structure
 
 The order of top-level keys is fixed: `schema`, `extracted_at`, `model`,
-`ai_usage`, `prompts`, `pre_digest`, `curation`, `record`, `terminology`,
-`nodes`, `domain_claims`, `infrastructure_claims`. Null and empty values are
-omitted - if a record has no infrastructure claims, the key is absent rather
-than present with `[]`. `ai_usage`, `prompts`, `pre_digest`, `curation`, and
-`terminology` are optional blocks (see below).
+`extraction_generation`, `extraction_config`, `ai_usage`, `prompts`,
+`pre_digest`, `curation`, `record`, `terminology`, `nodes`, `domain_claims`,
+`infrastructure_claims`. Null and empty values are omitted - if a record has no
+infrastructure claims, the key is absent rather than present with `[]`.
+`extraction_generation` and `extraction_config` are required on new
+extractions; readers accept their absence on legacy digests only by classifying
+those digests as unknown and not current. `ai_usage`, `prompts`, `pre_digest`,
+`curation`, and `terminology` are optional blocks (see below).
 
 ```yaml
 schema: anomalica/digest/1
 extracted_at: '2026-05-19T11:38:07.350885+00:00'
 model: sonnet
+extraction_generation: 1
+extraction_config: sha256:85d1c8fca7d0...
 record:
   id: 15a0aeac-f65e-4408-8356-18eb8fd2b6fe
   title: 'Imminent: Inside the Pentagon''s Hunt for UFOs'
@@ -328,7 +426,8 @@ pins exact content. A per-run `DIGESTER_NODES_PROMPT_FILE` /
 `DIGESTER_CLAIMS_PROMPT_FILE` override is recorded as `version: override` with
 the override file's own hash - never silently. Absent on digests produced before
 prompt-provenance stamping; those can be attributed by `extracted_at` against
-the registry's per-version `added` dates.
+the registry's per-version `added` dates only to a possible era, never to an
+exact version, configuration fingerprint or extraction generation.
 
 **Digests without `prompts` or `pre_digest` have unrecoverable provenance.** The 23 canonical digests written before these blocks landed record neither a prompt sha nor a `prep_version`, and neither is derivable from the artefact - `extracted_at` narrows the prompt to a registry era, not to a version. Such a digest cannot be attributed, reproduced, or compared against another model's output, which makes it unusable as an eval baseline.
 
@@ -387,11 +486,12 @@ pre_digest:
   prep_version: 1
 ```
 
-Together with `prompts` and `model` this makes a digest exactly reproducible:
-`(pre-digest hash + prompt version + model)`. `prep_version` names the version of
-the deterministic prep that produced the pre-digest. The materialised pre-digest
-artefact is stored content-addressed and served for inspection by the workbench's
-pre-digest tab; its store layout is in
+Together with `extraction_config`, this binds a digest to its exact source input
+and effective extraction setup. It makes the run attributable and repeatable;
+model sampling means it does not promise byte-identical model output.
+`prep_version` names the version of the deterministic prep that produced the
+pre-digest. The materialised pre-digest artefact is stored content-addressed and
+served for inspection by the workbench's pre-digest tab; its store layout is in
 [ingest-format.md](ingest-format.md). Absent on digests produced before the
 pre-digest stage.
 
@@ -490,6 +590,21 @@ elided both pass fidelity, only broken fails.
 
 `text` is the only required content field. A claim with neither a
 `quote` nor a `text` is malformed.
+
+### Planned accounts and claim linkage
+
+Narrative accounts and the links binding claims to them are evaluation-only and
+are not part of the canonical digest contract. Producers must not emit a
+top-level `accounts` field or claim-level `account`, `account_id` or `account_ids`
+fields in canonical digests yet, and consumers must not depend on them.
+
+The account extractor is first scored against the existing Doty account ground
+truth for precision, recall, boundary overlap and claim-binding coverage. Its
+output remains report-only until the results are reviewed and judged adequate.
+Only then may `accounts` and claim-to-account links be added to this contract;
+that activation also bumps `extraction_generation` because it materially changes
+canonical extraction output. The digest schema changes only if the eventual wire
+change is breaking.
 
 ### `entailment`
 
@@ -604,7 +719,7 @@ Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-ca
 
 - **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored at `digests/variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml` (a `variants/` subtree beside the canonical digests at the root of `digests/`; the assimilator globs `**/*.yaml` there and drops anything under `variants/`, so they are never imported). The variant key carries the model AND the prompt hash ([0039 amendment 2026-07-04](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)), so a prompt tune on the same model never overwrites the prior output. This layout is built; the variants store now.
 - **One canonical** at the unchanged `digests/{friendly-name}.yaml` - a SELECTED per-model digest, not a merge: the selector picks one whole variant as the canonical (no claim-clustering, no dedup-across-variants, no best-phrasing synthesis). Until the selector lands the canonical is latest-written by a production run. It is the only digest the assimilator imports; the variants are inert.
-- **Schema `anomalica/digest/2`** (lands with the selector): `model` carries the versioned id; the canonical gains `selected_from` (the candidate variants and the winner) - its presence distinguishes a canonical from a variant.
+- **Schema `anomalica/digest/2`** (lands with the selector): `model` carries the versioned id; the canonical gains `selected_from` (the candidate variants and the winner) - its presence distinguishes a canonical from a variant. The selected digest preserves the winning variant's `extraction_generation` and `extraction_config` unchanged so selection cannot erase its freshness identity.
 - **Independence**: multiple models on one source are alternatives, not corroboration - zero added independence. The evidence model counts independence by provenance-root, not claim-count (decision 0039).
 
 ## Legacy markdown format
