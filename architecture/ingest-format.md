@@ -894,7 +894,12 @@ Like every annotation, classification markings are metadata, not prose - consume
 
 ### Highlights
 
-A highlight marks a span a reviewer judged significant - gold to keep, an example for training or evaluation, or simply something to flag. Highlights are authored in the workbench and stored in the record body, so they survive edits without a drifting sidecar, and they work in every record type.
+A highlight marks source material a reviewer judged significant - a source unit
+for human-gold evaluation, an example to keep, or simply something to flag.
+Highlights are authored in the workbench and stored in the record body, so they
+survive edits without a drifting span sidecar, and they work in every record
+type. The accepted facts and review attestation keyed to these ids are specified
+in [Human-gold evaluation format](evaluation-format.md).
 
 A highlight is a pair of inline markers sharing a short opaque id:
 
@@ -914,15 +919,15 @@ Ids are opaque, unique within a record (one id names one highlight - which may h
 Non-reuse is enforced across edits by persisting the id high-water in frontmatter, `overlay_next_id`. Without it the guarantee would be a fiction: a counter held only in memory resets on reload, and deriving the high-water from the ids *currently* in the body lowers it when the highest marker is deleted, reissuing that id. Persisting it means neither a reload nor a deletion of the highest marker can lower it. The only property the field carries is that **it only ever increases** - it is the authoring UI's next-id counter, not a decodable index: records may also hold legacy or hand-written ids that are not counter renderings, and the counter simply refuses to collide with them. It is lazily migratable: when absent, derive the high-water from the largest id *mentioned anywhere* in the body - markers and references alike, since a dangling context edge or a link payload can be the only thing still naming an id - then clamp up to the authoring UI's minimum id (a fresh record starts at that minimum, not zero; the exact value is the UI's, kept out of this contract). Overlay ids share **one id space per record** across every overlay construct (highlights, span notes, links, and the references between them), so a single counter keeps every id unambiguous and every reference - in-record and the external `record-hash + id` link address - safe.
 
 **A highlight may be EXTENDED: one id, more than one pair.** The evidence for a
-single claim is often not contiguous - the part that matters sits at the top and
+source unit is often not contiguous - the part that matters sits at the top and
 the bottom of a long paragraph, with material in between that belongs to neither.
 Drawing one span over the whole paragraph is not merely untidy, it changes what
-the highlight MEANS: a highlight is the unit of expected extraction, one highlight
-standing for one claim, so a span that swallows three other topics tells the
-grader "one claim from all of this" and stops saying which.
+the highlight means: a highlight is one unit of expected extraction and may
+yield one or more atomic expected facts after human adjudication. A span that
+swallows three other topics makes their evidence indistinguishable.
 
 So the same id may open and close more than once. Each occurrence is a PART; the
-parts together are one highlight, one id, one expected claim:
+parts together are one highlight and one source unit:
 
 ```markdown
 {{highlight-start: a1}}the part that matters{{highlight-end: a1}} ... a long
@@ -942,13 +947,11 @@ Extending mints no new id - that is the point of it - so `overlay_next_id` and t
 never-reuse guarantee are unaffected, and the (record-hash + id) address of a
 [cross-record link](#cross-record-links) still resolves to one highlight.
 
-**Parts are joined with an elision marker, never concatenated.** A consumer
-building the expected text for a multi-part highlight joins the parts in body
-order with ` [...] `. Concatenating them directly manufactures a sentence the
-source never uttered - the first part's opening running into the last part's
-ending - which is exactly the false-quotation failure the format works hardest to
-avoid. The marker is the ordinary editorial elision and says plainly that material
-was omitted between them.
+**Parts remain separately locatable.** A consumer keeps the matched pairs as a
+list in body order and performs location and overlap against each part. It may
+join them with ` [...] ` for display, never by concatenating them and never by
+turning the first start through the last end into one enclosing span. Both
+alternatives manufacture evidence the reviewer did not select.
 
 **Span extent and orphan handling.** A matched pair is bounded only by its own start and end markers - a highlight may span any range, including across paragraph breaks and speaker turns (a highlight over a multi-speaker back-and-forth is valid). An edit can delete one half of a pair: a `highlight-start` with no matching end auto-closes at the end of the body; a `highlight-end` with no live open is dropped. Parsers on both sides apply this, so a half-deleted marker never corrupts a record.
 
@@ -971,7 +974,17 @@ Here highlight `h7` depends on `h3` - say, the earlier span that named the perso
 
 **Context links strip from the pre-digest with their highlights.** They carry no content and live entirely on the highlights, which are already stripped - so `highlight-context` joins `highlight-*` in the strip-entirely bucket and the model never sees it. No new pre-digest rule.
 
-The point of chains is evaluation. **A chain of context-linked highlights is one gold unit**, not several independent spans: the expected extraction merges the linked spans and *resolves the coreference* - it must name the person the later span only calls "he", using the earlier span. That makes a reviewer's gold a direct measure of cross-passage coreference and attribution on long transcripts - one of the few things that actually separates models on hard content, and exactly what a claim's `speaker` and `refs` have to get right. An extraction must carry the resolved referent across the chain - the person a later span only calls "he" is named from the earlier span, not left as the bare pronoun. How that is scored is the grader's: span recall plus a chain-level attribution check, not an all-or-nothing verdict on the whole chain (a partly-resolved chain must score above a wholly-missed one, or the gold loses the discrimination it exists for). A useful side-effect worth the reviewer knowing: chains remove the pressure to draw one big highlight with an irrelevant interior just to reach the context it needs - reviewers highlight tightly and link, which also keeps the gold clean.
+The point of links is evaluation, but **a context chain does not merge its
+highlights into one gold unit**. Each highlight id remains one independently
+adjudicated source unit. The dependent highlight may use the transitive linked
+context to resolve coreference and attribution - its expected fact names the
+person the source later calls "he" - while the earlier highlight remains a
+separate unit if it is itself adjudicated. A target outside a bounded review
+range supplies context without expanding the range or implying it was reviewed.
+A dangling or forward link leaves the dependent unit unresolved, so it is
+deferred rather than guessed. This preserves tight spans without double-counting
+linked facts; the full evaluation semantics are in
+[evaluation-format.md](evaluation-format.md#source-units).
 
 Additive within `anomalica/record/1` - a consumer that does not recognise `highlight-context` ignores it - so no `schema` bump.
 
@@ -1344,12 +1357,13 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
   reporting command. Public record-page publication is a separate consumer and
   requires a current complete version 1 verdict under the
   [0031 amendment](../decisions/0031-per-record-inspection-pages.md#amendment-2026-09-12-reviewed-records-become-the-public-works-section).
-- `{hash}.highlights.json` - relevance-tuning ground truth
-  (`anomalica/highlights/1`, written by the workbench tuning mode; read by the
-  digester's grader). Span offsets are Unicode code points into the raw stored
-  body (the verbatim text after the closing frontmatter fence); `body_sha256`
-  pins the exact body the offsets index. See
-  [relevance-tuning-mode](../decisions/drafts/relevance-tuning-mode.md).
+- `{hash}.gold.json` - compact human-gold decisions and bounded-range
+  attestation (`anomalica/highlight-gold/1`). Existing inline highlights remain
+  the source units; the sidecar does not duplicate their spans or context edges.
+  `body_sha256` pins its Unicode-code-point range and marker set. See
+  [evaluation-format.md](evaluation-format.md).
+- `{hash}.highlights.json` - legacy `anomalica/highlights/1` span-copying tuning
+  data. It is superseded by `{hash}.gold.json` and is not canonical human gold.
 - `{hash}.housekeeping.json` - proposal-only deterministic and model-assisted
   corrections (`anomalica/housekeeping/2`, written by the scheduler worker and
   decided through the Workbench). `input_sha256` binds it to the complete exact

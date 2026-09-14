@@ -26,7 +26,7 @@ The prep is deterministic:
 Properties:
 
 - **Read-only + derived.** Corrections never edit the pre-digest; a reviewer fixes the SOURCE (the ingest marker) and the pre-digest is re-derived. One-way data flow is preserved - the pre-digest is a consuming stage's output, never written back into.
-- **Reproducible + auditable.** The digest records the pre-digest's content hash; `(pre-digest hash + prompt version + model)` makes a digest exactly reproducible and auditable. This composes with the prompt-provenance already shipped (the `prompts` block, [0039 amendment 2026-07-04](0039-multi-model-digestion-canonical-reconciliation.md)).
+- **Repeatable + auditable.** The digest records the pre-digest's content hash; together with the exact `extraction_config` fingerprint defined by [0049](0049-digest-extraction-generation-and-freshness.md), this binds a digest to the source input and effective extraction setup. Model sampling means it does not promise byte-identical output. This composes with the prompt-provenance already shipped (the `prompts` block, [0039 amendment 2026-07-04](0039-multi-model-digestion-canonical-reconciliation.md)).
 - **On the source side of the copyright boundary.** The pre-digest holds the prepared source text - still the source's own prose - so its copyright follows the source and it is access-gated exactly like the ingest. Extraction is what crosses into public claims: the digests onward are public, the pre-digest is not.
 
 ### Stored, not regenerated-on-demand
@@ -54,8 +54,31 @@ Highlights are an EVAL signal only - never part of the pre-digest, so the model 
 
 - **Casual, PARTIAL highlighting is first-class.** The "reviewed in full" completeness requirement is dropped. People highlight whatever catches their eye.
 - **Use 1 - corpus-wide COVERAGE check:** did highlighted content survive into the digest output? A recall/coverage signal ONLY. Precision cannot be derived from partial highlights - an unhighlighted extraction is not wrong, it was merely not flagged.
-- **Use 2 - highlight-density-guided SAMPLING:** dense-highlight regions surface bounded SECTIONS (a book page, a 5-minute video segment) as candidates for a human to fully hand-digest into a gold standard, which gives real precision AND recall on that section - not on whole documents. This also rewards more highlighting (a virtuous cycle).
+- **Use 2 - highlight-density-guided SAMPLING:** dense-highlight regions surface bounded SECTIONS (a book page, a 5-minute video segment) as candidates for a human to complete into a gold standard, which gives real precision AND recall on that section - not on whole documents. Existing inline highlight ids are the source units; a compact sidecar stores only accepted facts, decisions, range progress and attestation, never duplicate spans.
 - **Grader consequence.** The digester's grader (`benchmarks/relevance/put_and_grade.py`) computes precision assuming complete highlights. Under casual highlights the corpus-wide check becomes coverage-only and precision moves to the section gold standards; the digester adjusts the grader accordingly.
+
+### Canonical human-gold workflow
+
+The contract is [Human-gold evaluation format](../architecture/evaluation-format.md):
+
+- one highlight id is one source unit and yields one or more expected facts when
+  accepted;
+- repeated pairs with one id are separately locatable parts of that one unit;
+- context links inform the dependent unit but do not merge or double-count
+  linked highlights;
+- the Workbench presents three to five unresolved highlights per batch and
+  persists each batch, making saved decisions the resume cursor;
+- each unit is accepted, adjusted, split, rejected or deferred;
+- optionally displayed digest claims are only overlap-selected proposals, never
+  a complete claim set and never gold until an authenticated reviewer accepts
+  them; and
+- only a body-hash-bound, authenticated completeness attestation permits
+  precision, false-positive rate or F1, and only over its exact bounded range.
+
+The sidecar is `store/{bare_content_hash}.gold.json`, schema
+`anomalica/highlight-gold/1`. The old `anomalica/highlights/1` sidecar duplicated
+source spans and depended on whole-document completeness; it is legacy input,
+not canonical gold.
 
 ### Inspection surface
 
@@ -64,7 +87,7 @@ A read-only **`pre-digest` tab** in the workbench, beside ingest / edit / raw / 
 ## Why
 
 - **Inspectability is the point.** A silent in-digester transform cannot be audited; a materialised pre-digest can - and it is the exact model input, not a reconstruction.
-- **Reproducibility composes.** `(pre-digest hash + prompt version + model)` pins a digest exactly, extending the prompt-provenance work.
+- **Auditability composes.** The pre-digest hash pins the exact source input; the `extraction_config` fingerprint pins the complete effective setup ([0049](0049-digest-extraction-generation-and-freshness.md)).
 - **Eval-only, partial highlights match reality.** They avoid biasing the model, and precision comes from bounded gold-standard sections rather than an unrealistic complete-highlight bar.
 
 ## Consequences
@@ -73,7 +96,8 @@ A read-only **`pre-digest` tab** in the workbench, beside ingest / edit / raw / 
 - [ingest-format.md](../architecture/ingest-format.md) gains the pre-digest artefact and its store layout; [overview.md](../architecture/overview.md) gains the ingest -> pre-digest -> digest step in the data-flow story.
 - The architecture diagram gains a pre-digest node between the ingest and the digester (`reference/pipeline.mmd` + `reference/architecture.yaml`) - deferred until the shape is confirmed, to avoid churning the just-revised diagram.
 - The workbench gains the read-only pre-digest tab.
-- The digester's grader shifts to coverage-only corpus-wide plus section gold standards.
+- The digester's grader shifts to coverage-only corpus-wide plus bounded-range
+  gold standards, with fact-level matching and explicit denominators.
 - Supersedes the relevance-tuning-mode draft's completeness-required highlighting; folds its highlights model into this accepted record.
 
 ## Scope

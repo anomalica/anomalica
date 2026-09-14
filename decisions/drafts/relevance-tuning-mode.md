@@ -1,6 +1,6 @@
 # Relevance tuning mode: highlight-graded extraction
 
-Status: SUPERSEDED by [0042](../0042-pre-digest-stage-and-eval-only-highlights.md) (2026-07-04). The completeness-required ("reviewed in full") highlighting proposed here is replaced by partial-first-class, evaluation-only highlights; the highlights sidecar and density-guided section sampling are folded into 0042. Kept for its reasoning trail. Owners: workbench (annotation UI + storage), digester (grading). Raised by: anomalica/digester, for Mark.
+Status: SUPERSEDED by [0042](../0042-pre-digest-stage-and-eval-only-highlights.md) (2026-07-04). The completeness-required ("reviewed in full") highlighting proposed here is replaced by partial-first-class, evaluation-only highlights. Its span-copying `anomalica/highlights/1` sidecar is historical and is not canonical gold; the current bounded-range contract is [Human-gold evaluation format](../../architecture/evaluation-format.md). Kept for its reasoning trail. Owners: workbench (annotation UI + storage), digester (grading). Raised by: anomalica/digester, for Mark.
 
 ## Problem
 
@@ -63,7 +63,7 @@ on the annotator.
   a regression suite - not the whole corpus. Prompts are tuned against those few.
 - **We do not train models** - we tune extraction prompts to hit the highlights.
 
-## Data contract
+## Historical data contract (not canonical gold)
 
 Highlights sidecar, alongside the record in `ingests/store/`:
 
