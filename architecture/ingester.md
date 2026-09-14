@@ -67,6 +67,32 @@ ahead or lacking a manifest entry is unknown. Unknown is never coerced to zero.
 
 Re-processing an archived source goes through the normal entry point - `./ingest --force --source-url URL records/{hash}.{ext}` - which is what the scheduler's reprocess lane drives. For a web page or an EPUB whose archived bytes already have a live record, the handler refreshes that record **in place** under its existing identity rather than minting a second record; a PDF record's path already is its source hash, so its re-extraction was always in place. In every case the human's work carries over (`shared/refresh.py`): stored media files, a reviewer's `irrelevant` regions and inline highlight, note, link and citation markers are re-placed around the same prose, and a reviewed record gains a `review_carryover` stamp so the workbench asks for a look rather than showing it as reviewed. A refresh that would lose prose refuses, leaves the record untouched, fails the run and writes a `refresh_refused` block (when, why) into the record's frontmatter so the reviewer sees it: no loss at all is tolerated on a reviewed record (a dateline, byline or title heading the frontmatter carries does not count), and only a footer's worth on an unreviewed one. The scheduler discovers stale and unknown records; discovery and priority do not authorise a model run. PDF re-extraction is model-driven and stays behind the spend gate.
 
+A reviewed record is a protected record. Every handler, including a cache-only
+audio or video re-render, must send a replacement through the same refresh
+boundary rather than writing it directly. The existing record remains authority
+for its identity and selection, provenance and source metadata, complete
+`copyright` block, curated speaker names, body annotations and other human edits.
+A sparse acquisition manifest, current extractor defaults or anonymous speaker
+clusters must not replace stronger stored values. Only extraction-owned stamps
+and measurements may be regenerated without explicit carryover.
+
+The producer builds and validates a candidate before replacing or committing the
+live file. If the candidate body differs, the refresh must preserve and re-place
+the reviewer's work, pass the reviewed-record zero-loss checks and emit
+`review_carryover`; otherwise it refuses and leaves the parent bytes intact. A
+review sidecar bound to the stable `content_hash` is not proof that the rewritten
+body was reviewed: until carryover is validated and subsequently resolved, every
+consumer reports the record as requiring verification. A changed body with an
+old sidecar but no valid carryover fails closed as inconsistent state.
+
+A generation-migration canary is committed only after comparing the candidate
+with its exact parent and validating these protected fields, body/carryover state,
+record schema and extraction generation. The canary executor owns that check;
+the scheduler must not infer success merely from process exit or a changed file.
+A failed canary is restored with a normal forward commit to the exact parent
+bytes. No wider migration starts until that restoration and the producer fix are
+verified.
+
 The current generation per type is the registry in
 `shared/pipeline_version.py`, published to the store as
 `store/_pipeline_versions.yaml`; each bump's reason is recorded beside its
