@@ -230,6 +230,54 @@ substitute another model or spend money merely to clear the queue. Existing
 subscription production-activation and per-attempt ledger requirements above
 continue to apply.
 
+## Amendment 2026-09-14: task-specific model classes
+
+A stage priority is the full automatic eligibility boundary, but some tasks need
+a narrower ordering within it. The policy may therefore define named,
+provider-neutral model classes. A class belongs to one canonical stage and lists
+ordered logical model members that are already in that stage's priority. It can
+narrow or reorder existing eligibility; it cannot add a model, promote an
+evaluation-only candidate or refer recursively to another class.
+
+Class membership is task-specific evidence, not an inference from price, model
+tier or provider family. Every member records a passed evaluation and its
+evidence. A class also declares at least one required capability, and each member's
+model entry must carry checked evidence for a matching capability value. The
+policy defines no production class until those records exist.
+
+Selection keeps three request kinds distinct: a logical model request, an exact
+route request and a class request. A structured request is exactly `{kind, id}`:
+`kind` is `model`, `route` or `class`, and `id` is a non-empty string. The
+component that persists the request owns its codec; the shared policy library
+validates policy and does not own scheduler sidecars. Existing persisted model
+strings remain logical model requests and round-trip unchanged. In particular,
+an existing `openai/gpt-5.6-sol` assembly request continues to expand through its
+declared route equivalents. A new exact route pin must be represented explicitly
+and does not expand. A class request is explicit too; it must not be encoded as a
+model-shaped string that a transport could misinterpret.
+
+For a class request, selection walks members in declared order. Each member first
+passes the ordinary global deny, stage deny and watermarking rules. Its route
+equivalents are then expanded in their declared order, or the member itself is the
+sole route when no mapping exists. Every concrete route independently passes final
+input and output fit, class capability requirements, transport qualification and
+explicitly available operational capacity. OpenRouter additionally requires an
+approved exact execution endpoint plus the required privacy controls. A metered
+route additionally requires enabled metered dispatch and explicit authorisation
+for the concrete spend.
+
+Unknown, stale or unreadable remote availability is not availability. A malformed
+class or route declaration is a policy failure, not permission to use the ordinary
+stage ladder. If no route passes every gate, the job remains staged with the
+refusal visible; selection never widens to other priority models, candidates,
+inferred route siblings or another class.
+
+The selection cache is qualified by the canonical stage, request kind and id,
+input/output size buckets and exact policy SHA-256. Execution provenance continues
+to record the route-qualified model id. Scheduler history additionally retains the
+requested class so two runs that resolve to the same route do not lose the reason
+that route was selected.
+
 ## Related
 
 - [architecture/model-policy.yaml](../architecture/model-policy.yaml) - the file itself

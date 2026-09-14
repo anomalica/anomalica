@@ -1,5 +1,5 @@
 schema: anomalica/model-policy/1
-updated: '2026-09-12'
+updated: '2026-09-14'
 watermarking:
   anthropic:
     state: watermarks
@@ -256,6 +256,7 @@ aliases:
   opus: claude-opus-5
   sonnet: claude-sonnet-5
   haiku: claude-haiku-4-5
+model_classes: {}
 route_equivalents:
   openai/gpt-5.6-sol:
     provider: openai
@@ -824,6 +825,19 @@ model_fields_note: '`used_for` lists the stages that may pick this model automat
   not a judgement about the model. Evaluation eligibility belongs to a stage''s `candidates` list: explicit checks permit
   it, but automatic choice and context sizing ignore it. There is deliberately no global approved/candidate status because
   a model may be active for one stage and evaluation-only for another.'
+model_classes_note: 'A model class is a provider-neutral, task-specific ordering of concrete logical models already present
+  in one stage''s automatic priority. It narrows or reorders that existing set; it never grants eligibility. Each class has
+  one canonical stage, non-empty capability requirements, a human rationale and ordered members. Every member names a model
+  entry directly (never an alias, route or another class), records a passed task-specific evaluation with evidence, and has
+  evidenced model capability metadata satisfying every class requirement. Selection applies ordinary deny and watermarking
+  rules, then expands route_equivalents for each member in class order. Every concrete route must independently fit the final
+  input and output, satisfy capability and transport qualification, and have explicitly available operational capacity. OpenRouter
+  additionally requires its exact approved execution endpoint and privacy controls; metered routes require explicit spend
+  authorisation. Unknown or stale availability, malformed policy, or exhaustion leaves the job staged. Selection never widens
+  to stage priority, candidates, inferred route siblings or another class. A class request, logical-model request and exact-route
+  request are distinct request kinds. A structured request is exactly a mapping with `kind` (`model`, `route` or `class`)
+  and a non-empty string `id`; the component that persists the request owns its codec. Legacy model strings remain logical-model
+  requests and round-trip unchanged, including the existing Sol request.'
 tiers_note: 'Each family has the same three tiers and they map across: Sol/Opus for the hardest work, Terra/Sonnet for ordinary
   production, Luna/Haiku for high-volume rule-following work. Choosing a tier is a separate question from choosing a provider,
   and a stage that needs the top tier from a non-watermarking provider wants Sol, not Luna.'
