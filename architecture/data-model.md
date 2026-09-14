@@ -175,6 +175,7 @@ The chain is a **required** field on every claim ([0044](../decisions/0044-claim
 provenance_chain:
   origin_kind: anonymous        # speaker | named | anonymous | document | unattributed
   origin: "a person claiming to work inside the Defense Intelligence Agency"
+  origin_ref: dia-email-source  # optional; stable only within this record
   relay:                        # ordered, origin -> speaker; empty when the speaker IS the origin
     - "an email"
     - "an intermediary known to the speaker"
@@ -189,6 +190,8 @@ provenance_chain:
 | `unattributed` | The source asserts it with no attribution offered - ordinary narration. |
 
 `origin_kind` is what corroboration keys on. An `anonymous` root matters most: because an anonymous actor can never be a node, dropping the chain does not merely lose detail - it silently promotes an anonymous assertion into an institutional one ("an anonymous person claiming to work inside the Defense Intelligence Agency said X" collapses into "the Defense Intelligence Agency said X").
+
+`origin_ref` distinguishes recurring anonymous sources within one record without inventing a global identity. Different refs in one record establish different roots there. Matching refs across records establish nothing: using `(record_id, origin_ref)` as a corpus-wide identity would turn several records relaying one anonymous source into several independent roots. Missing `origin_ref` means not distinguished, never a licence to count each claim or record independently.
 
 This claim-level chain is distinct from the record's `provenance` block ([0043](../decisions/0043-canonical-provenance-block.md)): provenance says where the **document** came from (publisher, dates, URL); the provenance chain says who, **inside** the document, asserted the claim and through whom it reached the speaker. A claim has both.
 
