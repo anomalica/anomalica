@@ -12,21 +12,73 @@ The canonical machine-readable field list is
 ## Evaluation registry
 
 [`reference/evaluations.yaml`](../reference/evaluations.yaml) is the central
-public index of active and decided reference datasets and experiments. Its schema
-is `anomalica/evaluation-registry/1`. The registry is deliberately small: it
-tracks inspectability and decisions, not raw results, source material or an
-experiment backlog. One entry has these fields:
+public index of reference datasets and experiments. Its schema is
+`anomalica/evaluation-registry/2`. The registry is deliberately small and static:
+it declares identity, ownership, discovery and safety constraints once. It does
+not copy lifecycle, gold readiness, counts, blockers or decisions from the
+evidence that establishes them. One descriptor has these fields:
 
 - `id`: stable lowercase hyphenated identity, never reused;
 - `title` and `purpose`: concise human-readable descriptions;
 - `owner_repo`: the `organisation/repository` responsible for the evaluation;
-- `status`: exactly one of `proposed`, `ready-for-human-review`, `reviewed`,
-  `adopted`, `rejected` or `blocked`;
-- `gold`: `status`, a concise `provenance`, and optional stable `artifact_id`;
+- `evidence`: a stable `provider_id` and `detail_capability`;
 - `limits`: public-safe `rights` and `routes` constraints;
 - `artifacts`: stable references to implementations, manifests, fixtures,
   reports, results, review interfaces or gold;
-- `decision`: the current concise outcome or blocker.
+
+The provider id names exactly one artifact in the same descriptor with
+`role: state`. A public state provider has a repository-relative JSON path. A
+private state provider has no locator and can be resolved only by an explicitly
+registered server-side administrator adapter. `detail_capability` is a stable
+backend capability id, not frontend data: the aggregation response says whether
+that capability is available, and the frontend renders only that response.
+
+The provider or adapter returns `anomalica/evaluation-state/1`:
+
+```json
+{
+  "schema": "anomalica/evaluation-state/1",
+  "evaluation_id": "search-reranker-minilm-vs-granite",
+  "evidence": [
+    {"artifact_id": "search-reranker-minilm-vs-granite-result", "sha256": "sha256:0123..."}
+  ],
+  "evidence_sha256": "sha256:4567...",
+  "status": "adopted",
+  "gold": {"status": "reviewed-derived", "reviewed": 16, "total": 16, "unit": "queries"},
+  "decision": {"code": "retain-minilm", "summary": "Retain MiniLM."}
+}
+```
+
+`status` is exactly one of `proposed`, `ready-for-human-review`, `reviewed`,
+`adopted`, `rejected` or `blocked`. Gold status is exactly one of `unavailable`,
+`source-reviewed`, `provisional`, `ready-for-human-review`, `human-reviewed` or
+`reviewed-derived`. Gold counts are non-negative integers, `reviewed` cannot
+exceed `total`, and `unit` names their denominator. `blocked_reason` is required
+exactly when lifecycle status is `blocked`. `decision`, when present, has an
+owner-defined stable lowercase-hyphenated `code` and concise `summary`.
+
+`evidence` is a non-empty ordered list of stable artifact ids and hashes of their
+exact bytes. A public provider may reference only public artifacts declared in
+its registry descriptor. A private provider may additionally use stable
+item-scoped ids resolved from validated owner data by its allowlisted adapter;
+those ids never expose a locator and cannot be supplied by the client.
+`evidence_sha256` is SHA-256 of UTF-8 compact JSON for the list, with object keys
+sorted, no insignificant whitespace, non-ASCII unescaped and no trailing newline.
+The aggregator resolves and hashes every item before returning state. This makes
+stale state detectable without putting a mutable expected hash in the static
+registry.
+
+A collection evaluation may add `items`, each carrying stable `id`, lifecycle,
+gold, optional blocker and decision, and administrator-only `record_id` or
+`review_id`. The top-level lifecycle, gold, blocker and decision are derived from
+those validated items rather than replacing them with a hand-written aggregate.
+Source text, quotes and reviewer identity remain forbidden.
+
+State that depends on private evidence uses a private provider even if an
+aggregate would itself be safe to publish. A public summary cannot establish
+reviewed, adopted or rejected lifecycle merely by reporting that hidden evidence
+exists. The private adapter may return safe record and review ids to an authorised
+administrator detail response, but they do not belong in a public state artifact.
 
 An artifact is `{id, role, visibility, repository?, path?}`. `id` is globally
 unique within the registry. A `public` artifact requires both `repository` and a
@@ -35,6 +87,15 @@ forbids both locator fields and is represented only by its stable id, role and
 visibility. An authorised local consumer may map a recognised private id to its
 own storage, but it must never derive a filesystem path from registry text or
 return that private locator through a public response.
+
+The aggregator fails visibly when a provider, detail capability or evidence
+artifact is missing or inaccessible; when schema, evaluation id, vocabulary,
+counts or hashes are malformed; or when evidence bytes no longer match the
+provider state. It returns a synchronisation error instead of the derived
+lifecycle. In particular, inaccessible private evidence cannot produce
+`reviewed`, `adopted` or `rejected` state unless an allowlisted administrator
+adapter has validated it. Cached last-known state may be diagnostic, but it is
+never presented as current.
 
 The registry contains no source quotes, copyrighted bodies, reviewer identities,
 private provider or account details, approval evidence, host state or absolute

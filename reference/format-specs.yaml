@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 4
+spec_version: 5
 types:
   ingest:
     schema: anomalica/record/1
@@ -268,23 +268,25 @@ types:
       - {name: total_units, type: integer, required: true, description: "Positive review-unit denominator; zero cannot authorise
           publication."}
   evaluation_registry:
-    schema: anomalica/evaluation-registry/1
+    schema: anomalica/evaluation-registry/2
     status: stable
     serialisation: YAML
     spec_doc: architecture/evaluation-format.md
     path: reference/evaluations.yaml
     owner: anomalica
-    summary: Public cross-repository index of reference datasets and experiments, their review state, constraints, artifacts
-      and current decision. Private artifacts are addressable by stable id without exposing their storage location.
+    summary: Static public cross-repository descriptors for reference datasets and experiments. Dynamic lifecycle, gold readiness,
+      blockers and decisions come only from validated owner-produced evidence state.
     fields:
-      - {name: schema, type: string, required: true, description: "`anomalica/evaluation-registry/1`."}
+      - {name: schema, type: string, required: true, description: "`anomalica/evaluation-registry/2`."}
+      - {name: state_schema, type: string, required: true, description: "`anomalica/evaluation-state/1`, the owner-provider
+          output every descriptor resolves."}
       - {name: statuses, type: list, required: true, description: "Exact lifecycle vocabulary: proposed, ready-for-human-review,
           reviewed, adopted, rejected and blocked."}
       - {name: gold_statuses, type: list, required: true, description: "Exact gold-readiness vocabulary: unavailable, source-reviewed,
           provisional, ready-for-human-review, human-reviewed and reviewed-derived."}
-      - {name: evaluations, type: list, required: true, description: "Entries `{id, title, purpose, owner_repo, status, gold,
-          limits, artifacts?, decision}`. Gold is `{status, provenance, artifact_id?}`; limits is `{rights, routes}`; each
-          artifact is `{id, role, visibility, repository?, path?}`."}
+      - {name: evaluations, type: list, required: true, description: "Static descriptors `{id, title, purpose, owner_repo,
+          evidence, limits, artifacts?}`. Evidence is `{provider_id, detail_capability}`; each artifact is `{id, role, visibility,
+          repository?, path?}`. Lifecycle, gold and decision fields are forbidden here."}
     invariants:
       - "Evaluation ids and artifact ids are stable, lowercase hyphenated and unique; evaluation ids are never reused."
       - "A public artifact requires an organisation/repository name and repository-relative path. Absolute paths are forbidden."
@@ -294,6 +296,44 @@ types:
         state appears in the registry."
       - "Rights and route limits are descriptive and never grant dispatch permission; owning-component enforcement remains
         authoritative."
+      - "Every descriptor's provider_id names one same-entry role:state artifact and detail_capability names a registered
+        backend capability. Missing providers or capabilities fail visibly."
+      - "A private state provider can report reviewed, adopted or rejected only through an allowlisted administrator adapter
+        that validates current evidence; inaccessible state is a synchronisation error."
+  evaluation_state:
+    schema: anomalica/evaluation-state/1
+    status: stable
+    serialisation: JSON
+    spec_doc: architecture/evaluation-format.md
+    owner: evaluation-owner
+    summary: Dynamic owner-derived evaluation lifecycle and gold readiness bound to exact current evidence. This state is
+      aggregated for the administrator index but is never copied into the static registry.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/evaluation-state/1`."}
+      - {name: evaluation_id, type: string, required: true, description: "Exact id of the static registry descriptor."}
+      - {name: evidence, type: list, required: true, description: "Non-empty ordered `{artifact_id, sha256}` list. Public-provider
+          ids resolve through the descriptor; a private adapter may also resolve stable item-scoped ids from validated owner
+          data. Each hash is full `sha256:<64 lowercase hex>` of exact evidence bytes."}
+      - {name: evidence_sha256, type: string, required: true, description: "SHA-256 of compact canonical JSON for the evidence
+          list: recursively sorted object keys, order-significant list, no spaces/newline and non-ASCII unescaped."}
+      - {name: status, type: enum, required: true, description: "One of the registry's six lifecycle states, derived from
+          evidence."}
+      - {name: gold, type: object, required: true, description: "Derived `{status, reviewed, total, unit}`. Counts are non-negative
+          integers, reviewed cannot exceed total, and unit is a non-empty denominator name."}
+      - {name: blocked_reason, type: string, required: blocked-only, description: "Non-empty actionable reason, required exactly
+          when status is blocked."}
+      - {name: decision, type: object, required: false, description: "Derived `{code, summary}`; code is stable lowercase-hyphenated
+          owner vocabulary and summary is concise."}
+      - {name: items, type: list, required: false, description: "Per-record or per-slot derived states for collection evaluations.
+          Each has stable id, status, gold and optional blocker/decision; safe record_id/review_id are administrator-only
+          detail."}
+    invariants:
+      - "The provider derives all dynamic fields from its referenced evidence; none is manually copied into evaluations.yaml."
+      - "The aggregator verifies schema, evaluation id, vocabularies, counts, canonical evidence hash and every accessible
+        evidence artifact before exposing lifecycle state."
+      - "Missing, inaccessible, malformed or stale evidence produces a visible synchronisation error and no current lifecycle."
+      - "State dependent on private evidence requires an allowlisted private adapter; a public aggregate cannot establish
+        reviewed, adopted or rejected lifecycle from hidden evidence."
   highlight_gold:
     schema: anomalica/highlight-gold/1
     status: stable

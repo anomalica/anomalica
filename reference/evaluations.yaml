@@ -1,4 +1,5 @@
-schema: anomalica/evaluation-registry/1
+schema: anomalica/evaluation-registry/2
+state_schema: anomalica/evaluation-state/1
 statuses:
   - proposed
   - ready-for-human-review
@@ -18,11 +19,9 @@ evaluations:
     title: Community-1 exclusive diarisation
     purpose: Compare regular and exclusive Community-1 diarisation tracks against reviewed speaker attribution.
     owner_repo: anomalica/ingester
-    status: rejected
-    gold:
-      status: source-reviewed
-      provenance: Human-reviewed, timestamp-bound speaker attribution; not separately authenticated evaluation gold.
-      artifact_id: audio-community1-exclusive-reviewed-attribution
+    evidence:
+      provider_id: audio-community1-exclusive-state
+      detail_capability: audio-community1-exclusive-detail
     limits:
       rights: Source media and reviewed attribution remain controlled; publish aggregate results only.
       routes: Local Community-1 inference only; no hosted source-media route is authorised by this registry.
@@ -43,16 +42,16 @@ evaluations:
       - id: audio-community1-exclusive-result
         role: result
         visibility: private
-    decision: Retain regular Community-1 tracks; the exclusive track did not improve attribution overall.
+      - id: audio-community1-exclusive-state
+        role: state
+        visibility: private
   - id: pdf-native-text-extraction
     title: Native PDF text extraction
     purpose: Measure local native text-layer extraction against page-anchored reviewed ingest text.
     owner_repo: anomalica/ingester
-    status: reviewed
-    gold:
-      status: source-reviewed
-      provenance: Completely reviewed source record used as a rough reference, not character-perfect extraction gold.
-      artifact_id: pdf-native-text-extraction-reviewed-reference
+    evidence:
+      provider_id: pdf-native-text-extraction-state
+      detail_capability: pdf-native-text-extraction-detail
     limits:
       rights: The pilot source is public domain; reviewed source text is not reproduced in this registry.
       routes: Local deterministic extraction only; the pilot provides no evidence for raster optical character recognition.
@@ -68,15 +67,16 @@ evaluations:
       - id: pdf-native-text-extraction-result
         role: result
         visibility: private
-    decision: The text-layer pilot is promising, but one rough reference does not justify production adoption.
+      - id: pdf-native-text-extraction-state
+        role: state
+        visibility: private
   - id: search-reranker-minilm-vs-granite
     title: MiniLM versus Granite search reranking
     purpose: Compare reranking quality and local resource use on identical frozen claim candidate pools.
     owner_repo: anomalica/assimilator
-    status: adopted
-    gold:
-      status: reviewed-derived
-      provenance: CC0 fixture derived from reviewed graph links, with benchmark queries written and reviewed for this comparison.
+    evidence:
+      provider_id: search-reranker-minilm-vs-granite-state
+      detail_capability: search-reranker-human-judgements
     limits:
       rights: The fixture contains project-authored claims rather than source excerpts and is declared CC0-1.0.
       routes: Local pinned-model inference only; results do not measure first-stage retrieval or corpus-wide recall.
@@ -99,17 +99,18 @@ evaluations:
       - id: search-reranker-minilm-vs-granite-human-judgements
         role: gold
         visibility: private
-    decision: Retain MiniLM; Granite failed the recorded quality and resource gates.
+      - id: search-reranker-minilm-vs-granite-state
+        role: state
+        visibility: public
+        repository: anomalica/assimilator
+        path: workspace/reports/search-reranker-benchmark-2026-09-13/evaluation-state.json
   - id: digest-evaluation-corpus
     title: Digest extraction evaluation corpus
     purpose: Maintain a rights-aware reviewed-source corpus for deterministic extraction evaluation and controlled model comparison.
     owner_repo: anomalica/digester
-    status: blocked
-    gold:
-      status: unavailable
-      provenance: Current records lack accepted authenticated human claim gold; provisional or model-drafted material is not
-        gold.
-      artifact_id: digest-evaluation-corpus-human-gold
+    evidence:
+      provider_id: digest-evaluation-corpus-state
+      detail_capability: digest-evaluation-corpus-detail
     limits:
       rights: Current selected records are public domain; source bodies and reviewer identities remain outside this public
         registry.
@@ -129,18 +130,17 @@ evaluations:
       - id: digest-evaluation-corpus-human-gold
         role: gold
         visibility: private
-    decision: Keep evaluation blocked until authenticated human claim gold exists and the required multilingual slot is filled.
+      - id: digest-evaluation-corpus-state
+        role: state
+        visibility: private
   - id: account-chronology
     title: Account chronology extraction
     purpose: Evaluate narrative-account boundaries, exact claim assignment and within-account chronology without canonical
       activation.
     owner_repo: anomalica/digester
-    status: ready-for-human-review
-    gold:
-      status: ready-for-human-review
-      provenance: Legacy approximate evidence is non-scoreable; the reviewer interface writes exact hash-bound authenticated
-        gold.
-      artifact_id: account-chronology-gold
+    evidence:
+      provider_id: account-chronology-state
+      detail_capability: account-chronology-review
     limits:
       rights: The source is controlled publicly accessible material; source text, claim quotes and reviewer identity remain
         private.
@@ -164,4 +164,6 @@ evaluations:
       - id: account-chronology-gold
         role: gold
         visibility: private
-    decision: Keep report-only and non-scoreable until exact authenticated gold and an identically bound prediction exist.
+      - id: account-chronology-state
+        role: state
+        visibility: private
