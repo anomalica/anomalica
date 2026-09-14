@@ -71,6 +71,20 @@ consequence until policy explicitly requests regeneration.
 The graph import receipt is derived graph state, not a new source of truth. Its
 minimal shape is `(record_content_hash, digest_path, digest_sha256,
 import_generation)`. A rebuild recreates it while importing canonical digests.
+Changing deterministic import or canonical-input eligibility increments
+`import_generation`; old receipts then remain inspectable but are not current. A
+contraction of the canonical digest set additionally produces `orphan_record`:
+incremental per-record imports cannot remove that graph state and must not claim
+convergence. The schedule emits one explicit deterministic rebuild job for the
+complete canonical set rather than one deletion-shaped import per orphan.
+
+The rebuild is prepared in an isolated candidate database, replays the complete
+curation ledger, and verifies its canonical-input fingerprint, receipts and
+integrity before any replacement. Replacing the live graph is one atomic,
+explicitly authorised operation; schedule generation and candidate validation do
+not mutate it. Accepted replacement changes graph state once, after which normal
+brief, article and deployment freshness carries the resulting downstream drift.
+
 The graph's exact input fingerprint is SHA-256 of UTF-8 compact JSON, keys in the
 shown order, non-ASCII unescaped and no trailing newline:
 
