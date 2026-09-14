@@ -39,10 +39,29 @@ generation is never derived from the fingerprint, schema, Git or time.
 
 The digests repository root contains `digest-generation.json`, schema
 `anomalica/digest-generation/1`, with one positive integer
-`current_generation`. The digester owns the manifest and updates it with its
-manually maintained generation. Consumers read it from the same committed tree
-as the corpus. JSON avoids collision with the recursive YAML digest discovery
-rule.
+`current_generation`. The digests repository owns the stored manifest and
+extraction-configuration registry alongside the canonical corpus. The digester
+is the sole producer and validator of those authority files and updates the
+manifest from its manually maintained generation. Consumers read them from the
+same committed tree as the corpus. JSON avoids collision with the recursive YAML
+digest discovery rule.
+
+### Scheduled-write durability
+
+One successful scheduled production extraction is one Git transaction in the
+digests repository. It contains the canonical digest, the production variant
+written for that extraction, and any authority-file change needed to resolve the
+digest's `extraction_generation` and `extraction_config`. The scheduler, as the
+scheduled orchestrator, commits those exact paths together before it reports the
+job as successful or starts downstream import. It does not generate or edit the
+authority contents itself.
+
+The scheduler refuses to start when any intended canonical, variant or authority
+path is already dirty. A write or commit failure fails and holds the job; it must
+not be retried automatically while those paths remain dirty. This prevents a
+canonical digest from becoming durable without its authority, prevents authority
+from describing an extraction that was not made durable, and avoids absorbing
+unrelated working-tree changes into an automated commit.
 
 A generation equal to the manifest is current; a lower generation is stale; an
 absent, malformed or unexpectedly greater generation is unknown. Unknown remains
