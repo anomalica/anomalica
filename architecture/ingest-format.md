@@ -1422,10 +1422,11 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
   `shared/verification.py`; consumed by the workbench access gate). Present only
   for records whose copyright status gates access.
 - `{hash}.review.json` - review-coverage spans and the reviewer verdict
-  (`anomalica/review-coverage/1`, written by the workbench). New or updated
-  version 1 sidecars carry private append-only review entries plus authoritative
-  `observed_coverage`, `digestible`, `total_units` and `reviewed_body_sha256`;
-  version 0 is legacy approximate span data. `reviewed_body_sha256` is
+  (`anomalica/review-coverage/1`, written by the workbench). Version 1 carries
+  private append-only review entries plus authoritative `observed_coverage`,
+  `digestible` and `total_units`; version 0 is legacy approximate span data.
+  Every new or updated sidecar in either version also carries
+  `reviewed_body_sha256`; only an existing legacy sidecar may omit it. The field is
   `sha256:<64 lowercase hex>`, calculated over the UTF-8 bytes of the exact body
   string returned by the canonical frontmatter parser (equivalent to
   `parse_frontmatter(record_text)[1]`), with no further newline, whitespace or
@@ -1433,7 +1434,10 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
   `reviews[].parent_commit` is only the optimistic-concurrency base and is not a
   reviewed-body revision.
 
-  Consumers validate `reviewed_body_sha256` before considering legacy fallback.
+  Body binding and verdict authority are separate. A version 0 sidecar with a
+  valid direct hash remains approximate span data; it does not acquire version 1
+  `observed_coverage` or `digestible` authority. Consumers validate
+  `reviewed_body_sha256` before considering legacy fallback.
   A malformed or mismatched present value fails closed and must not fall back. If
   the field is absent, fallback is valid only when the sidecar path is unchanged
   from its latest commit, the latest review entry's `parent_commit` is an actual

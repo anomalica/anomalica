@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 8
+spec_version: 9
 types:
   ingest:
     schema: anomalica/record/1
@@ -273,10 +273,11 @@ types:
       - {name: reviews, type: list, required: true, description: "Append-only private entries `{by, at, spans, notes?, parent_commit?}`;
           each span is `{from, to, kind}`. `parent_commit` is the optimistic-concurrency base, not the reviewed-body revision.
           Never copied into public content."}
-      - {name: reviewed_body_sha256, type: string, required: false, description: "Required on every new or updated version
-          1 sidecar; optional only for legacy compatibility. Full `sha256:<64 lowercase hex>` of the UTF-8 bytes of the exact
-          body returned by the canonical frontmatter parser, with no further newline, whitespace or Unicode normalisation.
-          A present malformed or mismatched value fails closed without legacy fallback."}
+      - {name: reviewed_body_sha256, type: string, required: false, description: "Required on every new or updated review
+          sidecar, including version 0; optional only on existing legacy data. Full `sha256:<64 lowercase hex>` of the UTF-8
+          bytes of the exact body returned by the canonical frontmatter parser, with no further newline, whitespace or Unicode
+          normalisation. A present malformed or mismatched value fails closed without legacy fallback. On version 0 it binds
+          the approximate spans but does not make observed_coverage or digestible authoritative."}
       - {name: observed_coverage, type: number, required: true, description: "Finite fraction from 0.0 to 1.0 computed over
           the record's review units. Public record eligibility requires exactly 1.0."}
       - {name: digestible, type: boolean, required: true, description: "Workbench verdict under the shared review-gate rule;
