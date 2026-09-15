@@ -19,6 +19,7 @@ An append-only sequence, one entry per curation operation. Entries are NEVER edi
 | `canonical_name` | The survivor's canonical name after the merge. |
 | `prior_names` | Every name the merged entities were known by. The rebuild-stable natural key (see Identity keying), and the set recorded as aliases on the survivor at replay. |
 | `node_type` | The shared type of the merged entities. |
+| `proposal_ids` | Optional unique sorted `rename-proposal:<id>` values whose name clash this merge resolves. A new merge created from one or more rename proposals must include them. |
 | `actor` | Who made the decision. |
 | `timestamp` | ISO 8601. |
 | `note` | Optional free-text justification. |
@@ -82,6 +83,13 @@ rename or the exact `rename-proposal:<id>` operation id of the proposal it
 fulfils. A rename created from a proposal must carry the latter; matching old
 and new names is not an authoritative proposal link.
 
+An operator may reject a proposal without renaming or merging by appending a
+version 2 event with `op: reject_proposal`, `operation_id`, `proposal_id`, `at`,
+`by` and non-empty `reason`. Its operation id is verified as SHA-256 of compact
+canonical JSON over `{schema, op, proposal_id, at, by, reason}` in that key
+order, excluding `operation_id`. A name clash alone does not create this event
+or authorise rejection.
+
 Every `operation_id` must be unique. Different payloads producing the same id,
 or an explicit id reused with different content, are fatal collisions. Repeated
 identical payloads are reported as `duplicate_encoding` and block replay until
@@ -137,6 +145,10 @@ derived data, never replay identity. A proposal file is not a reversal merely
 because its requested name undoes an earlier request. A future applied rename
 links it through the version 2 `proposal_id` field above; historical outcomes
 without that link require separately validated replay-disposition evidence.
+A confirmed merge may instead resolve one or more proposals through its
+`proposal_ids`. Adding a proposal id to a merge request never confirms the
+merge: the normal explicit merge-confirmation block remains mandatory before
+the entry is durable or affects proposal status.
 
 Rename events replay by `(at, operation_id)` after merges and rejection
 materialisation. Proposal requests are evaluated by `(proposed_at,

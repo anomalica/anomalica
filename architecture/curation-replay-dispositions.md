@@ -145,11 +145,37 @@ phase. Its canonical operation id is `rename-proposal:<id>` and its timestamp is
 `proposed_at`. The filename, synthetic `node_id`, and SQLite status are not source
 identity. Proposal files are never reversals.
 
-A uniquely actionable pending proposal and a rejection proved by two distinct
-exact live names are normal non-blocking outcomes. A future applied rename proves
-fulfilment through the rename-ledger version 2 `proposal_id` field. Historical
-applied, merge-resolved, compensated, lost or ambiguous proposals require
-disposition evidence. The two Greys proposal ids are
+Legacy proposal JSON has `id`, `node_id`, `node_name_at_proposal`,
+`proposed_name`, `reason`, `proposed_by` and `proposed_at`. Version 2 proposal
+JSON has exactly this shape and key order:
+
+```json
+{"schema":"anomalica/rename-proposal/2","id":"stable-id","node":{"name":"Old name","node_type":"type","prior_names":[]},"proposed_name":"New name","reason":null,"proposed_by":"actor","proposed_at":"2000-01-01T00:00:00Z","source":{"node_id":"audit-id"}}
+```
+
+All keys are required; `reason` and `proposed_by` may be null, while every other
+scalar is non-empty. `prior_names` is unique and lexicographically sorted,
+`proposed_at` is normalised UTC `Z`, and `source.node_id` is an audit snapshot.
+The canonical request operation id remains `rename-proposal:<id>`. Proposal
+files never carry mutable outcome fields.
+
+The materialised outcome vocabulary is exactly `pending`, `applied`, `merged`,
+`rejected`, `compensated`, `contraction_drop`, `unresolved_drift` and `invalid`.
+`applied` means an explicitly linked rename operation; `merged` means an
+explicitly linked confirmed merge; `rejected` means an explicitly linked
+operator rejection event. A name clash by itself remains `pending`, because a
+merge is a separate decision requiring confirmation. `compensated` means an
+applied rename was later reversed. The final three values come from a validated
+replay disposition and are respectively safe, blocking and blocking.
+
+A future rename proves fulfilment through its rename-ledger version 2
+`proposal_id`. A future merge uses its unique sorted `proposal_ids`; it resolves
+a proposal only with a valid explicit confirmation block and only when the
+post-merge survivor carries the requested name as its canonical name or an exact
+alias. One confirmed merge may resolve several proposals. A version 2
+`reject_proposal` rename-ledger event explicitly resolves `rejected`. Historical
+applied, merge-resolved, compensated, lost or ambiguous proposals without those
+links require disposition evidence. The two Greys proposal ids are
 `rename-proposal:df3df0ad-d58b-478a-9660-cb7d7b87501d` and
 `rename-proposal:c5927528-3d73-4ead-91d2-8ed0095bcac9`. The compensated UAP
 proposal is `rename-proposal:78ef39a1-f81b-4d25-81aa-e0074c52243a`; its evidence
@@ -157,6 +183,17 @@ binds applying rename
 `rename-ledger:sha256:a290bdafbf704874131df66e0a242808fb0cb1f77087d13f0ad3855baca85262`
 and inverse rename
 `rename-ledger:sha256:efb904c4cf523c27610051fe7f94bb399b2a3090e39c04683c31ba3d69b3898b`.
+
+Candidate reconstruction starts from proposal files, then consumes only active
+operation links after merge and rename replay. Each proposal may have at most
+one active resolution route. A linked rename must materialise its requested
+name. A linked merge must be confirmed, must include the proposal id, and must
+prove the survivor-name condition above. A compensation must reference the
+applying route and restore its prior exact typed identity. Missing targets,
+multiple active routes, unconfirmed merges, links to unknown proposals and
+postconditions that do not hold are blocking; no status is inferred by matching
+similar old/new names. With no resolution link, a uniquely resolvable and still
+actionable request is `pending` even when its target name currently clashes.
 
 ## Empty ledger
 

@@ -27,6 +27,30 @@ Notes:
 - **Graph maintenance (planned).** The assimilator maintains the graph beyond import. Claim dedup keys on PROVENANCE OVERLAP (`record_id` + `location_in_record`): same source + overlapping location is a duplicate (superseded to one canonical), different sources is corroboration (kept, linked via `corroborations`). The cross-source half exists today (`corroborations` + `scoring.get_independent_source_count`, which counts independent records); the same-source half is net-new - a claim supersede mechanism (a column mirroring `nodes.retired_at`, retiring a deduplicated claim while keeping it linked and inert for audit). Cases provenance cannot settle (same-source different-line; cross-source linking) go through the [0038](../decisions/0038-graph-curation-replayable-ledger.md) curation machinery pointed at claims (propose / confirm / supersede), reversible and replayed on rebuild. Independence is counted by provenance root ([0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)).
 - **Indices:** `nodes(node_type)`, `nodes(name)`, `claims(record_id)`, `claims(speaker_id)`, `claims(claim_role)`, `claim_node_refs(node_id)`, `aliases(node_id)`, `corroborations(claim_a)`, `corroborations(claim_b)`, `records(content_hash)`.
 
+### Rename proposal materialisation
+
+`rename_proposals` is a derived read model reconstructed from proposal files,
+the curation ledgers and any exceptional replay dispositions. It has `id` (the
+raw proposal id), `proposal_operation_id` (unique canonical
+`rename-proposal:<id>`), `node_id` (proposal-time audit id),
+`node_name_at_proposal`, `proposed_name`, `reason`, `proposed_by`, `proposed_at`,
+`status`, `resolved_at`, `resolution_note`, `resolution_phase`,
+`resolution_operation_id`, `compensation_operation_id` and
+`replay_disposition_id`.
+
+`status` is `pending`, `applied`, `merged`, `rejected`, `compensated`,
+`contraction_drop`, `unresolved_drift` or `invalid`. For `pending`, all operation
+and disposition links and `resolved_at` are null. `applied` links one rename
+operation; `merged` links one explicitly confirmed merge; and `rejected` links
+one rename-phase `reject_proposal` event through `resolution_phase` and
+`resolution_operation_id`. `compensated` also carries
+`compensation_operation_id`. The three disposition-derived outcomes carry
+`replay_disposition_id`; they have no inferred operation link unless that
+disposition's closed evidence explicitly supplies one. All operation ids are
+canonical namespaced ids, never synthetic graph ids or unqualified legacy ids.
+The complete source and reconstruction contract is in
+[curation replay dispositions](curation-replay-dispositions.md#rename-proposals).
+
 ## Embeddings (derived index, not part of the relational contract)
 
 Embeddings and hybrid search are a separate derived layer (the assimilator's embeddings module, sqlite-vec vector tables), rebuildable from the relational data. They are an index over the graph, not part of the schema contract above.
