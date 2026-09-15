@@ -1,8 +1,10 @@
 # End-to-end freshness
 
 This is the canonical current-state freshness model from a live ingest record to
-deployment. It defines comparisons and scheduler inputs, not a new interchange
-artefact. Format fields remain in their own specifications.
+deployment. Boundary results are scheduler inputs. The only freshness
+interchange is the guarded `anomalica-freshness/v1` manifest that carries those
+results from scheduling into deployment; its field list is in
+[`reference/format-specs.yaml`](../reference/format-specs.yaml).
 
 ## Result model
 
@@ -17,10 +19,19 @@ inherited: []
 consequence: finish
 ```
 
-`artifact` is the stable locator at that boundary: record content hash, canonical
-digest path, graph record content hash, brief reference, article path and language,
-or deployed path. Consumers group by `(boundary, artifact)`, union reason codes
-within a group, and union inherited groups by their own `(boundary, artifact)`.
+`artifact` is the stable locator at that boundary. Its exact forms are:
+
+| Artefact | `artifact` identity |
+|---|---|
+| Record | Full `sha256:<record-content-hash>` at `record-generation` and `digest-input`. |
+| Digest | Canonical repository-relative digest YAML path at `digest-generation`. |
+| Graph import | Full `sha256:<record-content-hash>` of the record bound by the import receipt. |
+| Brief | `<section>/<slug>` brief reference, with no extension. |
+| Article | `<section>/<slug>.<language>`, with no `.md` extension. |
+| Deployment | Exact built or public path affected by the finding; `production-build` is the synthetic identity for a failed build before a path exists. |
+
+Consumers group by `(boundary, artifact)`, union reason codes within a group, and
+union inherited groups by their own `(boundary, artifact)`.
 They do not copy an inherited reason onto the downstream boundary. This is the
 deduplication rule: one stale digest remains one finding even when it contributes
 many claims to many pages.
@@ -68,6 +79,12 @@ Several codes may coexist in one group. `body_modified` is protected state and
 does not itself request overwrite; `generator_changed` normally has `verify`
 consequence until policy explicitly requests regeneration.
 
+`payload_hash_mismatch` is deliberately boundary-specific. At
+`brief-selection` it means deterministic re-selection produced a different exact
+writer payload from the stored brief. At `article-input` it means the article's
+copied `built_from.payload_hash` differs from, or is absent against, the current
+brief. It is invalid at record, digest, graph-import and deployment boundaries.
+
 The graph import receipt is derived graph state, not a new source of truth. Its
 minimal shape is `(record_content_hash, digest_path, digest_sha256,
 import_generation)`. A rebuild recreates it while importing canonical digests.
@@ -110,6 +127,26 @@ uploads from removals and name the affected public paths. A successful local bui
 is not a deployment, and a successful upload is not current until remote bytes and
 post-purge live samples agree.
 
+## Guarded deployment manifest
+
+The assimilator writes an adjacent `anomalica-freshness/v1` manifest from the
+exact schedule document it has just written. Its fields are `schema`,
+`generated_at`, `source_queue_sha256` and `groups`. `source_queue_sha256` is 64
+lowercase hexadecimal digits over the exact schedule bytes. `groups` is the
+flattened, deduplicated union of local and inherited reason groups, sorted by
+`(boundary, artifact)`; each emitted group has `inherited: []` because ancestry
+has already been flattened.
+
+The writer refuses to emit the manifest if the schedule bytes differ from the
+in-memory schedule used to construct it. Deployment must accept a manifest only
+when the path and expected manifest SHA-256 are supplied together. It must hash
+the exact manifest bytes before parsing, require `anomalica-freshness/v1`,
+validate all required fields and validate every reason against its
+boundary-specific vocabulary above.
+A missing pair, byte mismatch, malformed manifest, unknown boundary or misplaced
+reason fails closed. The deployment result records the accepted manifest path and
+hash as `inherited_source`.
+
 ## Inheritance
 
 Each producer forwards the union of upstream reason groups attached to the inputs
@@ -144,6 +181,19 @@ cheap low-consequence work outrank repair or completion.
 
 Classification and execution permission are separate fields. A job may be fully
 ranked while blocked for authorisation, model availability, review or budget.
+Every remote-model `digest`, `assemble`, `translate` and `corroborate` dispatch,
+including `never_done`, requires a quoted, expiring approval for the exact
+candidate set, model, route, reason groups, token estimates and aggregate cost or
+plan impact. The runner atomically reserves one approved candidate before calling
+the transport. A started or uncertain attempt consumes that candidate; only a
+proved refusal before the call permits reuse under the same approval.
+
+Deterministic `import` and `synthesise` stages do not consume a model approval.
+They may run until their local boundaries are current even when they continue to
+carry inherited stale or unknown groups. The scheduler does not recreate a
+deterministic job merely because its unchanged output inherits such a group, so
+free stages converge rather than loop.
+
 Unknown generation creates a candidate and reason; it grants none of those
 permissions. Full-corpus generation-1 re-digestion is not authorised. Before any
 such batch, the scheduler must show its concrete total token/cost or plan impact
@@ -166,26 +216,34 @@ and receive explicit batch approval.
 
 ## Current implementation gaps
 
-The contract above is accepted; the audit found these producer changes still to
-land:
+The following producer-side paths are implemented: normal ingester producers
+reject unregistered source types; the digester stamps and validates exact
+generation and configuration identities; and the assimilator consumes exact
+canonical digest bytes, records import receipts, compares both brief and article
+payload bindings, propagates reason groups and writes the queue-bound freshness
+manifest. Orphan contraction produces one blocked graph-rebuild control job.
 
-- The ingester currently defaults an unregistered type to generation 1. It must
-  reject it and explicitly register every supported `source_type` before its
-  record can be current.
-- Digest generation and exact-configuration fields and their repository manifest
-  are specified by [decision 0049](../decisions/0049-digest-extraction-generation-and-freshness.md);
-  legacy absent values remain unknown until a separately authorised re-digestion.
-- The assimilator scheduler currently treats graph record presence as proof of
-  import and uses the latest claim timestamp to trigger brief regeneration. The
-  import receipt and deterministic selection comparison replace those proofs;
-  the timestamp may remain only as a cheap trigger.
-- The scheduler currently distinguishes never-done work but not the full
-  published/stale/unknown ordering within `finish`; that sub-order still needs to
-  consume the consequence metadata above.
-- The assembler emits the canonical flat `built_from` claim freeze. Its readers
-  must consume both `built_from.brief_hash` and `built_from.payload_hash` and
-  derive the brief reference from the full article path; a legacy article missing
-  the latter is not current against a current brief.
-- Deployment already compares exact local and remote path hashes and verifies
-  sampled live bytes. Its freshness result still needs to expose the site and
-  committed content revisions used for that build.
+The remaining implementation gaps are:
+
+- Site deployment does not yet consume or validate the guarded freshness
+  manifest, record its `inherited_source`, or record immutable site and content
+  input commits.
+- The assembler does not yet require and copy `payload_hash` into the article's
+  `built_from` block on its pushed branch. The assimilator therefore detects
+  legacy articles as stale, but regeneration cannot yet close that gap from
+  pushed code.
+- The scheduler implements first-completion priority but not the complete
+  published-stale, unpublished-stale and unknown `finish` sub-order. It lists
+  translation and corroboration as approval-bound stages but does not yet execute
+  them, and it does not yet prove that inherited reasons alone cannot recreate an
+  unchanged deterministic job across queue regenerations.
+- The isolated graph-rebuild executor, candidate validator and atomic replacement
+  operation are not yet shipped. The rebuild control job remains blocked and
+  cannot mutate the live graph.
+
+Digests created before extraction generation and exact-configuration stamping
+remain `unknown` until separately approved re-digestion. Legacy briefs without
+`payload_hash` regenerate deterministically. Legacy articles without
+`built_from.payload_hash` remain stale until the assembler gap above closes and an
+exact article candidate is approved and reassembled. None of these
+classifications authorises model work.

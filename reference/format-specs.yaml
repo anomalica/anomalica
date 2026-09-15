@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 5
+spec_version: 6
 types:
   ingest:
     schema: anomalica/record/1
@@ -546,6 +546,37 @@ types:
       - {name: current_generation, type: integer, required: true, description: "Positive current extraction generation. A
           digest equals it to be generation-current; lower is stale; absent/malformed/greater is unknown. Unknown is reported
           separately but treated as not current."}
+  freshness_manifest:
+    schema: anomalica-freshness/v1
+    status: stable
+    serialisation: JSON
+    spec_doc: architecture/freshness.md
+    owner: assimilator
+    summary: Flattened, deduplicated freshness reason groups derived from one exact schedule and consumed by deployment only
+      under an explicit exact-byte SHA-256 guard.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica-freshness/v1`."}
+      - {name: generated_at, type: string, required: true, description: "Non-empty generation time copied from the source
+          schedule."}
+      - {name: source_queue_sha256, type: string, required: true, description: "Exactly 64 lowercase hexadecimal digits: SHA-256
+          of the complete exact schedule JSON bytes used to derive this manifest."}
+      - {name: groups, type: list, required: true, description: "Canonical reason groups sorted by `(boundary, artifact)`.
+          Local and inherited queue groups are flattened and deduplicated; every manifest group therefore carries `inherited:
+          []`. Group shape and boundary-specific reason vocabularies are defined in freshness.md."}
+    identities:
+      record: "Full `sha256:<record-content-hash>` at record-generation and digest-input."
+      digest: "Canonical repository-relative digest YAML path at digest-generation."
+      graph: "Full `sha256:<record-content-hash>` bound by the graph import receipt."
+      brief: "`<section>/<slug>` with no extension."
+      article: "`<section>/<slug>.<language>` with no `.md` extension."
+      deployment: "Exact built or public path; `production-build` identifies a build failure before a path exists."
+    invariants:
+      - "The writer verifies that the exact source schedule bytes equal the in-memory schedule before hashing and emitting
+        the manifest."
+      - "Deployment requires manifest path and expected manifest SHA-256 together, verifies the exact bytes before parsing,
+        and fails closed on hash, schema, required-field, boundary or reason-placement errors."
+      - "`payload_hash_mismatch` is valid only at brief-selection and article-input."
+      - "The manifest reports and carries scheduling state; it grants no model-dispatch authorisation."
   selected_digest:
     schema: anomalica/digest/2
     status: provisional

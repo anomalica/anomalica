@@ -194,6 +194,10 @@ Two keys rather than one because they answer opposite questions: `built_from` is
 Four things about this are easy to get wrong:
 
 - **The locator is the full article path, not a bare slug.** The corresponding brief reference is `<section>/<slug>`, derived from the article's parent section and filename stem. A bare slug is ambiguous across sections. A move changes the article identity and must remove the old path.
+- **The freshness identity omits only the storage extension.** `article-input`
+  uses `<section>/<slug>.<language>`, without `.md`. An absent or differing
+  `built_from.payload_hash` is `payload_hash_mismatch` at this boundary; it is not
+  copied back onto `brief-selection` or any earlier boundary.
 - **`body_sha256` covers the body only, over the exact bytes written, computed last.** The assembler mutates the body after render and re-dumps the frontmatter, so a hash taken at render time never matches the file on re-read. Body-only also sidesteps the frontmatter re-dump entirely.
 - **`model` and `model_version` are reconstructability inputs, not transparency fields.** They currently reach an article only via `ai_usage`, which is being removed (see Open questions). If they leave with it, an article no longer records what produced it and 0010 fails. Cost had to go; the model must not go with it.
 - **`prompt_sha256` is a hash of the exact authored logical user-prompt string.** `system_prompt_sha256` does the same for the authored logical system prompt. Assembler prompts are in-code rather than versioned files, so the digester's `{id, version, sha256, file}` shape does not apply here. These hashes identify authored content; they do not claim that every transport assigns it the same protocol role.

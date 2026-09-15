@@ -12,7 +12,13 @@ What remains below is the one thing neither the diagram nor the per-component do
 
 **Freshness from record through deployment is defined in
 [freshness.md](freshness.md).** It keeps each stage's native drift measure and
-inherited upstream reasons rather than inventing one end-to-end percentage.
+inherited upstream reasons rather than inventing one end-to-end percentage. The
+assimilator emits the canonical reason groups in a queue-bound
+`anomalica-freshness/v1` manifest; the deployment contract requires that input to
+be guarded by its exact expected SHA-256, although the Site consumer is not yet
+shipped. Deterministic import and synthesis must converge around blocked model
+work, while every remote-model dispatch, including first generation, remains
+separately approval-bound.
 
 ## knowledge.db is three files (WAL, since 2026-08-25)
 
@@ -67,9 +73,9 @@ The ingester writes ingests to the access-controlled ingests repository. The dig
 
 Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
 
-The assimilator reads the digests and builds and maintains the unified knowledge graph database (SQLite, a lightweight file-based database) from them. The database is derived data, not the source of truth - if it is deleted, the assimilator rebuilds it from the digests.
+The assimilator reads the digests and builds and maintains the unified knowledge graph database (SQLite, a lightweight file-based database) from them. Each graph record has a derived import receipt binding it to the canonical digest path and exact digest bytes, so presence alone is not mistaken for freshness. The database is derived data, not the source of truth - if it is deleted, the assimilator rebuilds it and the receipts from the digests.
 
-The synthesiser reads the graph, decides which pages should exist, and emits one language-neutral brief per page (the graph slice that feeds that page). The assembler writes each page's prose from its brief alone - it does not read the graph (decision 0036). The brief's input hash is the per-page staleness unit and the audit hash 0010 mandates.
+The synthesiser reads the graph, decides which pages should exist, and emits one language-neutral brief per page (the graph slice that feeds that page). The assembler writes each page's prose from its brief alone - it does not read the graph (decision 0036). `brief_hash` identifies the ordered semantic selection and covered page members; `payload_hash` separately identifies every writer-visible value. The article's `built_from` binding must copy both; that Assembler producer change is not yet shipped.
 
 A principle runs through all of this: **data flows one direction, and human edits are persisted at the consuming stage's input boundary, then replayed forward - never written back into an earlier stage's derived output.** Workbench record-edits become commits in `ingests` (replayed by the digester); site edits become directives in `content` (replayed by assembly); workbench graph-curation becomes the curation ledger (replayed by the assimilator, [decision 0038](../decisions/0038-graph-curation-replayable-ledger.md)).
 

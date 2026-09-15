@@ -48,4 +48,4 @@ Upkeep edits - renamed references, typos, broken links, clarifications - are alw
 - The reasoning behind every choice stays searchable and auditable, but in the home that fits its concern rather than one undifferentiated numbered list.
 - The high-churn data-model and taxonomy decisions live as current-state living docs, so a reader sees what is true now without walking a supersede chain.
 - Operational and brand rationale lives with the teams that own those surfaces.
-- This record is the canonical statement of the routing rule; the inherited root CLAUDE.md carries a concise pointer to it so agents working in any component file decisions correctly.
+- This record is the canonical statement of the routing rule; the inherited workspace `AGENTS.md` carries a concise pointer to it so agents working in any component file decisions correctly.

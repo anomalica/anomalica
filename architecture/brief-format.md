@@ -16,6 +16,10 @@ A YAML document (`.yaml`) - the same serialisation as the digest interchange (00
 
 A brief **reference** - what a scheduler job or `assembler --brief` names - is therefore `<section>/<slug>`, which resolves as a direct path under either briefs directory. A consumer enumerates briefs with `*/*.yaml`; a file directly in the root is the pre-section layout and is pruned by the synthesiser, never read.
 
+That reference, without `.yaml`, is also the brief artefact identity at the
+`brief-selection` freshness boundary. A title, bare slug, node id or
+`generated.graph_version` is not an interchangeable identity.
+
 The two directories (internal `~/.local/share/assimilator/briefs`, published `content/briefs`) hold the same layout; `data-model.md` records why they are not copies of each other.
 
 ## `page.nodes` (the covered nodes)
@@ -128,6 +132,10 @@ Both hashes are required. A current producer regenerates a legacy brief missing
 - the scheduler compares both, the assembler copies both into `built_from`, and
   together they provide 0010's precise, reconstructable knowledge-graph input
   identity.
+
+A mismatch of the rebuilt payload is `payload_hash_mismatch` at
+`brief-selection`. It does not describe digest input or graph import state; those
+boundaries retain their own reason codes.
 
 These are distinct from `generated.graph_version`, the coarse "knowledge-graph version used" stamp 0010 also records. `brief_hash` identifies the stable selection, `payload_hash` identifies the exact writer-visible values, and `graph_version` is the coarse graph-version stamp.
 

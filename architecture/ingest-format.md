@@ -1320,6 +1320,11 @@ count the field before building on it.
 
 **A record's identity is its source plus its selection, never its extraction output.** `content_hash` hashes the archived source asset's bytes, and - for a [scoped excerpt](data-model.md#record-unit-whole-containers-versus-scoped-excerpts) - the normalised scope string with it. It never hashes the extracted body.
 
+At the freshness boundary the record artefact is always the complete prefixed
+value `sha256:<content-hash>`. It is not the 56-character public `record_hash`, a
+friendly symlink, the Markdown file hash or a Git revision. Both
+`record-generation` and `digest-input` use this same stable record identity.
+
 That one rule is what makes re-extraction safe. Improving an extractor, stripping page chrome, fixing chapter numbering, segmenting an email thread: all change the body, none change the source or the selection, so all keep the same `content_hash`. The record is rewritten **in place** at `store/{hash}.md`, and every digest, review sidecar, highlight, and cross-record link bound to that hash survives untouched. Reconciled 2026-07-25; previously web, ebook, and excerpt records hashed their body, so any re-extraction minted a second store entry and silently detached everything keyed to the first.
 
 Two consequences worth stating, because both look wrong at a glance:

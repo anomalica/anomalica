@@ -35,6 +35,12 @@ have different exact configuration fingerprints.
 
 ## Extraction identity and freshness
 
+The digest artefact identity used by the `digest-generation` freshness boundary
+is its canonical repository-relative YAML path. The record input it consumes is
+reported separately at `digest-input` under the record's complete
+`sha256:<content-hash>`. This keeps one changed digest generation grouped as one
+digest while preserving the stable record binding used across re-extraction.
+
 Every newly extracted digest carries both of these fields:
 
 ```yaml
