@@ -48,6 +48,101 @@ Same digests + same ledger => identical graph. Chained merges (a victim of one e
 
 Per [0038](../decisions/0038-graph-curation-replayable-ledger.md), the authoritative replay key is the natural identity - `canonical_name` + `node_type` + `prior_names` - because synthetic node ids are not rebuild-stable (a per-extraction `uuid4`, first-importer-wins) and the importer already resolves entities by name. The synthetic ids in `survivor`/`victims` are an at-merge-time audit snapshot, not the replay key. (Content-deterministic ids were considered and parked - see 0038.)
 
+## Rename ledger version 2
+
+`renames.yaml` is an append-only YAML stream with logical schema
+`anomalica/rename-ledger/2`. Version 2 keeps every existing document unchanged,
+derives an authoritative identity for each legacy rename from its immutable
+content, and requires explicit identities and references on new events. A raw
+legacy `rename_id` remains audit data; it is not an authoritative replay or
+disposition key. Exceptional outcomes use the separate
+[curation replay disposition contract](curation-replay-dispositions.md).
+
+### Operation identity
+
+For a legacy `op: rename`, serialise this exact object as UTF-8 compact JSON,
+with keys in the shown order, non-ASCII unescaped and no trailing newline:
+
+```json
+{"schema":"anomalica/legacy-rename-operation-id/1","op":"rename","rename_id":"legacy-id","at":"2000-01-01T00:00:00Z","by":"actor-or-null","new_name":"New name","node":{"name":"Old name","node_type":"type","prior_names":[]}}
+```
+
+`at` is normalised to UTC `Z`; `by` is a string or JSON null; and
+`node.prior_names` is deduplicated and sorted lexicographically. The canonical
+operation id is `rename-ledger:sha256:<64 lowercase hex>`, where the digest is
+SHA-256 of those exact bytes. File position, document ordinal, Git history and
+consumer state never participate.
+
+A new base event has schema `anomalica/rename-ledger-event/2`, `op: rename`,
+`operation_id`, `at`, `by`, `new_name`, `node`, and `proposal_id`.
+`operation_id` uses the same prefix and is verified as SHA-256 of compact
+canonical JSON over `{schema, op, at, by, new_name, node, proposal_id}` in that
+key order, excluding `operation_id`. `proposal_id` is either null for a direct
+rename or the exact `rename-proposal:<id>` operation id of the proposal it
+fulfils. A rename created from a proposal must carry the latter; matching old
+and new names is not an authoritative proposal link.
+
+Every `operation_id` must be unique. Different payloads producing the same id,
+or an explicit id reused with different content, are fatal collisions. Repeated
+identical payloads are reported as `duplicate_encoding` and block replay until
+an operator resolves the source defect; a consumer must not collapse them by
+dictionary overwrite or invent occurrence ids.
+
+### Compensation
+
+A new reversal is a version 2 compensation event:
+
+```yaml
+schema: anomalica/rename-ledger-event/2
+op: compensate
+id: rename-compensation:sha256:<64 lowercase hex>
+at: 2000-01-01T00:00:00Z
+by: operator
+reason: Why the operations no longer apply
+reverses:
+  - rename-ledger:sha256:<64 lowercase hex>
+```
+
+`reverses` is a non-empty, unique, lexicographically sorted list of prior active
+operation ids. The compensation id is SHA-256 of UTF-8 compact canonical JSON
+over `{schema, op, at, by, reason, reverses}` in that key order, with the same
+string prefix shown above. Unknown, duplicate, already-compensated or later
+references fail closed. One compensation may withdraw several operations
+atomically. Restoring one requires a new operator-reviewed rename; version 2
+does not reverse a compensation.
+
+A legacy `op: unrename` that names only a raw `rename_id` resolves only when
+that value selects exactly one legacy base operation. Zero or multiple matches
+are invalid and block replay; it never means every entry that reused the string.
+
+### Legacy collision migration
+
+The historical stream contains 133 distinct `op: rename` entries carrying raw
+`rename_id: rn-1`. Their complete canonical payloads and timestamps differ, so
+the identity rule above mechanically produces 133 distinct operation ids. The
+old documents remain unchanged. Repository history confirms that all 133 came
+from `test_embedding_invariant.py` leaking production `rename_node` writes across
+curation commits `46debf9` and `99f2dee`; none is authoritative curation. An
+operator-reviewed migration appends one version 2 compensation listing all 133
+derived ids and cites that provenance. The consumer must not infer the decision
+merely from their shared id, repeated old/new names, or `by: test`. Replacement
+remains blocked until the reviewed compensation exists and validates.
+
+### Proposal inventory and ordering
+
+Every well-formed `rename-proposals/*.json` file is a distinct durable base
+request with operation id `rename-proposal:<id>` and timestamp `proposed_at`.
+The filename timestamp, `node_id`, and SQLite proposal status are audit or
+derived data, never replay identity. A proposal file is not a reversal merely
+because its requested name undoes an earlier request. A future applied rename
+links it through the version 2 `proposal_id` field above; historical outcomes
+without that link require separately validated replay-disposition evidence.
+
+Rename events replay by `(at, operation_id)` after merges and rejection
+materialisation. Proposal requests are evaluated by `(proposed_at,
+rename-proposal:<id>)`. These orders operate inside the fixed curation phases;
+timestamps do not interleave dependent phases.
+
 ## Tag entry (2026-09-03)
 
 `op: tag` - a record is about a node, asserted by a person. Fields: `tag_id`,
