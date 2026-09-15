@@ -1422,9 +1422,25 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
   `shared/verification.py`; consumed by the workbench access gate). Present only
   for records whose copyright status gates access.
 - `{hash}.review.json` - review-coverage spans and the reviewer verdict
-  (`anomalica/review-coverage/1`, written by the workbench). Version 1 carries
-  private append-only review entries plus authoritative `observed_coverage`,
-  `digestible` and `total_units`; version 0 is legacy approximate span data.
+  (`anomalica/review-coverage/1`, written by the workbench). New or updated
+  version 1 sidecars carry private append-only review entries plus authoritative
+  `observed_coverage`, `digestible`, `total_units` and `reviewed_body_sha256`;
+  version 0 is legacy approximate span data. `reviewed_body_sha256` is
+  `sha256:<64 lowercase hex>`, calculated over the UTF-8 bytes of the exact body
+  string returned by the canonical frontmatter parser (equivalent to
+  `parse_frontmatter(record_text)[1]`), with no further newline, whitespace or
+  Unicode normalisation. It binds the verdict to the body the reviewer submitted;
+  `reviews[].parent_commit` is only the optimistic-concurrency base and is not a
+  reviewed-body revision.
+
+  Consumers validate `reviewed_body_sha256` before considering legacy fallback.
+  A malformed or mismatched present value fails closed and must not fall back. If
+  the field is absent, fallback is valid only when the sidecar path is unchanged
+  from its latest commit, the latest review entry's `parent_commit` is an actual
+  Git parent of that sidecar commit, and the current parsed body exactly equals
+  the parsed record body in that sidecar commit. Later metadata-only record
+  commits therefore preserve review currentness when the parsed body is unchanged;
+  an unresolved `review_carryover` remains an independent reason to fail closed.
   Reviewer identity, notes and spans never enter public content. **There is no
   digestion gate.** Nothing in the digester enforces the verdict - extraction
   never consults it, and `assess_record` is reached only from the `coverage`

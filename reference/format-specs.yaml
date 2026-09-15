@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 7
+spec_version: 8
 types:
   ingest:
     schema: anomalica/record/1
@@ -265,18 +265,30 @@ types:
     spec_doc: architecture/ingest-format.md
     path: "store/{bare_content_hash}.review.json"
     owner: workbench
-    summary: Current authoritative human observation verdict for one live ingest. Version 0 is legacy approximate span data
-      and cannot authorise public record publication. Reviewer identity, notes and spans remain private.
+    summary: Current authoritative human observation verdict for one live ingest, bound directly to the reviewed parsed body.
+      Version 0 is legacy approximate span data and cannot authorise public record publication. Reviewer identity, notes and
+      spans remain private.
     fields:
       - {name: schema, type: string, required: true, description: "`anomalica/review-coverage/1`."}
       - {name: reviews, type: list, required: true, description: "Append-only private entries `{by, at, spans, notes?, parent_commit?}`;
-          each span is `{from, to, kind}`. Never copied into public content."}
+          each span is `{from, to, kind}`. `parent_commit` is the optimistic-concurrency base, not the reviewed-body revision.
+          Never copied into public content."}
+      - {name: reviewed_body_sha256, type: string, required: false, description: "Required on every new or updated version
+          1 sidecar; optional only for legacy compatibility. Full `sha256:<64 lowercase hex>` of the UTF-8 bytes of the exact
+          body returned by the canonical frontmatter parser, with no further newline, whitespace or Unicode normalisation.
+          A present malformed or mismatched value fails closed without legacy fallback."}
       - {name: observed_coverage, type: number, required: true, description: "Finite fraction from 0.0 to 1.0 computed over
           the record's review units. Public record eligibility requires exactly 1.0."}
       - {name: digestible, type: boolean, required: true, description: "Workbench verdict under the shared review-gate rule;
           public record eligibility requires true together with observed_coverage 1.0."}
       - {name: total_units, type: integer, required: true, description: "Positive review-unit denominator; zero cannot authorise
           publication."}
+    invariants:
+      - "Consumers validate reviewed_body_sha256 before legacy fallback. When it is absent, fallback is valid only if the
+        sidecar is unchanged from its latest commit, reviews[-1].parent_commit is an actual Git parent of that commit, and
+        the current parsed body exactly equals the parsed record body in that commit."
+      - "A later metadata-only record commit preserves currentness when the parsed body is unchanged. An unresolved review_carryover
+        remains independently invalid."
   evaluation_registry:
     schema: anomalica/evaluation-registry/2
     status: stable
