@@ -228,10 +228,11 @@ The remaining implementation gaps are:
 - Site deployment does not yet consume or validate the guarded freshness
   manifest, record its `inherited_source`, or record immutable site and content
   input commits.
-- The assembler does not yet require and copy `payload_hash` into the article's
-  `built_from` block on its pushed branch. The assimilator therefore detects
-  legacy articles as stale, but regeneration cannot yet close that gap from
-  pushed code.
+- The assembler requires and copies `payload_hash` into the article's
+  `built_from` block, but brief-mode assembly still refreshes related links and
+  aliases from the live graph after the brief payload was hashed. The same
+  `brief_hash` and `payload_hash` therefore do not yet guarantee identical writer
+  input or output.
 - The scheduler implements first-completion priority but not the complete
   published-stale, unpublished-stale and unknown `finish` sub-order. It lists
   translation and corroboration as approval-bound stages but does not yet execute
