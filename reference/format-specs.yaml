@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 6
+spec_version: 7
 types:
   ingest:
     schema: anomalica/record/1
@@ -108,12 +108,13 @@ types:
           a compelled release's credibility. Narrative in ingest-format.md."}
       - {name: document_type, type: string, required: false, description: "WHAT the artefact is, orthogonal to source_type
           which is HOW it was acquired. Closed set: book, paper, report, article, letter, email, statement, form, transcript,
-          slide, interview, documentary, podcast, lecture, broadcast, recording. EMIT ONLY WHERE DERIVABLE WITHOUT INFERENCE
-          - the artefact STATES its form (RFC822 headers parse; a page headed MEMORANDUM FOR RECORD) - otherwise ABSENT for
-          a reviewer to set. Never derive book from an EPUB container and never model-judge from appearance: a guessed value
-          is indistinguishable from a derived one and a wrong value stops a human looking, where absence invites it. Describes
-          the WHOLE record, so a FOIA pdf holding many emails is not document_type email - its correspondence is marked in
-          the body with message-boundary annotations. See ingest-format.md."}
+          slide, interview, documentary, podcast, lecture, broadcast, recording, footage. Footage is visual moving-image material
+          presented as captured scenes or events, distinct from an organised programme, generic recording and source_type
+          video. EMIT ONLY WHERE DERIVABLE WITHOUT INFERENCE - the artefact STATES its form (RFC822 headers parse; a page
+          headed MEMORANDUM FOR RECORD) - otherwise ABSENT for a reviewer to set. Never derive book from an EPUB container
+          and never model-judge from appearance: a guessed value is indistinguishable from a derived one and a wrong value
+          stops a human looking, where absence invites it. Describes the WHOLE record, so a FOIA pdf holding many emails is
+          not document_type email - its correspondence is marked in the body with message-boundary annotations. See ingest-format.md."}
       - {name: email, type: object, required: false, description: "Format-native email structure where document_type is email,
           parsed deterministically from RFC822 headers (stdlib email parser, no model). {from, to, cc, subject, in_reply_to,
           references} with participants as {name, address}. Does NOT repeat published_date or creators - the Date header IS

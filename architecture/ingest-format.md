@@ -191,10 +191,18 @@ The two are orthogonal, and they come apart immediately. The same email is `web`
 
 ```
 book  paper  report  article  letter  email  statement  form  transcript  slide
-interview  documentary  podcast  lecture  broadcast  recording
+interview  documentary  podcast  lecture  broadcast  recording  footage
 ```
 
-It was open until 2026-09-01 and is closed now because it is displayed: the workbench shows it as a record's primary type and offers it as a dropdown, and a field rendered to a reviewer and used to weigh evidence cannot be free text - a value nobody else uses is a value nothing can query. The sixteen were derived from what the corpus actually holds rather than proposed and then fitted to. Additions go through a change to this document. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. It exists to drive extraction, not to classify for its own sake.
+It was open until 2026-09-01 and is closed now because it is displayed: the workbench shows it as a record's primary type and offers it as a dropdown, and a field rendered to a reviewer and used to weigh evidence cannot be free text - a value nobody else uses is a value nothing can query. The seventeen were derived from what the corpus actually holds rather than proposed and then fitted to. Additions go through a change to this document. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. It exists to drive extraction, not to classify for its own sake.
+
+`footage` is visual moving-image material presented as captured scenes or events,
+rather than an organised programme such as a `documentary` or `broadcast`.
+`recording` remains generic captured audio or a recording whose form is not more
+specific. `source_type: video` says only how the source was acquired: it does not
+imply `footage`. As with every derived document type, an artefact title that
+explicitly calls itself footage is evidence; a video container or picture track
+alone is not.
 
 **A title that names the form is derivation, not inference.** The test above asks whether the artefact states its own form; a title is the artefact speaking. "Full Documentary", "DEBRIEFED", "Interviewed by Art Bell", "Ep. 47", "Incident Report", "Statement to Congress", "briefing slide 9" each name a form outright, and are derivable exactly as an RFC822 header is. A title that merely suggests one is not.
 
