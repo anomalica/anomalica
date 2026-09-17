@@ -30,8 +30,8 @@ flowchart TB
   ingester -->|"record (1:1)"| ingest
   ingester -.->|"post-commit fast path"| housekeeping
   ingest -->|"startup + ≤5-minute tuple reconciliation"| housekeeping
-  housekeeping -->|"proposal-only result"| housekeeping_proposals
-  housekeeping_proposals <-.->|"warn, review + guarded apply"| workbench
+  housekeeping -->|"deterministic, then priority subscription research"| housekeeping_proposals
+  housekeeping_proposals <-.->|"gate review; decide + atomic apply"| workbench
   ingester -->|"originals + raw transcripts"| archive
   archive -->|"originals uploaded off-machine"| bucket
   bucket -.->|"public originals open; copyrighted behind possession gate"| site

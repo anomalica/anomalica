@@ -42,18 +42,21 @@ nodes:
     zone: "public"
     desc: "Owns startup and at-most-five-minute reconciliation of every live record's exact-byte and deployed-algorithm tuple;
       the ingester's explicit post-commit result is an immediate fast path. The scheduler-owned root algorithm manifest is
-      checked against the worker implementation before dispatch. Deterministic checks are local and free; optional research
-      checks use the model policy. It emits proposals only and never applies one."
-    output: "One anomalica/housekeeping/2 sidecar per completed record/version tuple, including an empty successful result."
+      checked against the worker implementation before dispatch. Deterministic checks are local and free; automatic metadata
+      research is the highest-priority remote work and is subscription-only. Records with content review already started or
+      completed are excluded. It emits proposals only and never applies one."
+    output: "One anomalica/housekeeping/3 sidecar per eligible record/version tuple, combining deterministic and subscription-research
+      proposals, pass or waiver audit, eventual reviewer decisions and exact result-byte currentness."
     contains: "Rule-based checks, guarded proposal generation and scheduler completion logic - no source corpus."
     copyright: "PUBLIC - open-source code."
   housekeeping_proposals:
     kind: "Data store (private sidecars)"
     zone: "source"
-    format: "JSON (anomalica/housekeeping/2)"
-    desc: "Human-reviewable corrections bound to the complete exact ingest Markdown bytes, scheduler-owned algorithm manifest
-      and committed Git ref viewed by the reviewer. Decisions never carry across tuple changes."
-    output: "Outstanding proposals and completed-empty results consumed by the Workbench and scheduler."
+    format: "JSON (anomalica/housekeeping/3)"
+    desc: "Human-reviewable deterministic and metadata-research corrections bound to one complete exact ingest input, scheduler-owned
+      algorithm manifest and committed Git ref. The authenticated complete decision advances result_sha256 so its own approved
+      edits do not retrigger research. Decisions never carry across external tuple changes."
+    output: "Pass state, outstanding proposals and decision audit consumed by the Workbench and scheduler."
     contains: "Proposed metadata changes and narrowly guarded source-token corrections, with evidence that may quote the source."
     copyright: "Follows the source and remains beside the private ingest."
   predigest:
@@ -96,9 +99,10 @@ nodes:
     desc: "The human review app, and the hub that touches almost everything. A reviewer loads a record, checks it against
       the original source and the raw archive, corrects the record text, labels who is speaking, adds visual notes (what's
       on screen but not in the audio), reviews the selector's choice - which per-model digest is best - rather than editing
-      digests directly - marks which records are observed enough to digest, and warns before editing when housekeeping proposals
-      are outstanding or due. Decision requests contain only item ids/statuses bound to the viewed ref/input/version; the
-      backend reloads operations and commits with concurrency guards."
+      digests directly - marks which records are observed enough to digest, and blocks new content review until deterministic
+      housekeeping completes, metadata research completes or is explicitly waived, and every proposal is decided. Decision
+      requests contain only item ids/statuses bound to the viewed ref/input/result/version; the backend reloads operations
+      and commits atomically under the authenticated reviewer identity."
     output: "Corrections committed back to the records (ingests) as git commits; selection preferences for the selector to
       replay; a 'digestible' signal and a visual-notes sidecar for the digester."
     contains: "Reviewer edits + observations; reads the source material to check records against it."

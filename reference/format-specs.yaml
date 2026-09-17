@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 9
+spec_version: 10
 types:
   ingest:
     schema: anomalica/record/1
@@ -232,9 +232,9 @@ types:
       "housekeeping-algorithm.json": "Scheduler-owned canonical deployed housekeeping algorithm manifest, schema anomalica/housekeeping-algorithm/1.
         Scheduler and Workbench read it at the same Git ref as record and sidecar; missing, malformed or worker-mismatched
         state fails closed."
-      "store/{content_hash}.housekeeping.json": "Proposal-only housekeeping result, schema anomalica/housekeeping/2. Bound
-        to the complete exact ingest Markdown bytes by input_sha256 and reviewed through the Workbench. See the housekeeping
-        type below."
+      "store/{content_hash}.housekeeping.json": "Proposal-only housekeeping result, schema anomalica/housekeeping/3. Both
+        passes bind to complete exact ingest Markdown bytes by input_sha256; authenticated decisions record result_sha256
+        and ordered decision audit through the Workbench. See the housekeeping type below."
       "store/{bare_content_hash}.gold.json": "Compact human-gold evaluation sidecar, schema anomalica/highlight-gold/1. Existing
         inline highlight ids are the source units; this sidecar stores decisions, accepted facts, progress and bounded-range
         attestation without duplicating highlight spans or context edges. Bound to the exact raw body by body_sha256."
@@ -392,35 +392,58 @@ types:
       - "Precision, false-positive rate and F1 require a complete range and apply only to model claims whose aligned quote
         fragments are wholly inside the attested range. Incomplete ranges support progress and accepted-fact recall only."
   housekeeping:
-    schema: anomalica/housekeeping/2
+    schema: anomalica/housekeeping/3
     status: stable
     serialisation: JSON
     spec_doc: architecture/housekeeping-format.md
-    summary: Completed proposal-only housekeeping pass for one exact ingest Markdown byte sequence and algorithm version.
+    summary: Proposal-only deterministic and subscription-research passes over one exact ingest Markdown input, followed when
+      proposals exist by one complete authenticated human decision whose result hash remains current after approved edits.
     fields:
-      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping/2`; v1 is always due and cannot
-          be decided, applied or carried into another tuple."}
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping/3`; v1 and v2 are always due and
+          cannot be decided, applied or carried into another tuple under the v3 algorithm manifest."}
       - {name: content_hash, type: string, required: true, description: "Stable source/selection record locator in full `sha256:<64
           lowercase hex>` form; not the examined Markdown digest."}
       - {name: input_sha256, type: string, required: true, description: "SHA-256 of the complete exact raw ingest Markdown
-          bytes examined, in full `sha256:<64 lowercase hex>` form."}
-      - {name: checked_at, type: string, required: true, description: "UTC ISO 8601 completion timestamp."}
+          bytes examined by both passes, in full `sha256:<64 lowercase hex>` form. Immutable for the tuple."}
+      - {name: result_sha256, type: string, required: true, description: "SHA-256 of the exact current record bytes. Initially
+          equals input_sha256 and changes only in the same authenticated atomic commit that applies the complete reviewer
+          decision; live bytes matching it do not retrigger either pass."}
+      - {name: checked_at, type: string, required: true, description: "UTC ISO 8601 sidecar creation time before any pass;
+          exact form `YYYY-MM-DDTHH:MM:SSZ`; afterwards equals the latest recorded PassState's finished_at."}
       - {name: algorithm_version, type: string, required: true, description: "Non-empty identity of the complete check suite,
           match rules and apply guards."}
-      - {name: outcome, type: enum, required: true, description: "Literal `completed`; failed/partial passes emit no sidecar."}
-      - {name: usage, type: object, required: false, description: "Subscription model/token provenance when model-assisted
-          checks contributed; omitted for deterministic-only passes."}
+      - {name: passes, type: object, required: true, description: "Only fixed keys `deterministic` and `metadata-research`,
+          containing recorded terminal attempts over the same input_sha256; a missing key means waiting or queued, never actively
+          running. Each PassState has status `completed|failed|waived` and finished_at. Failed also requires error and is
+          retryable. Deterministic must complete, cannot be waived and has no usage. Completed metadata research requires
+          usage.transport `subscription`; only metadata research may be waived with authenticated `{by, at, reason}` whose
+          at equals finished_at. Failed or waived research has no usage. All times have exact UTC form `YYYY-MM-DDTHH:MM:SSZ`;
+          research requires completed deterministic and cannot predate it."}
       - {name: items, type: list, required: true, description: "Independently decidable proposals. Frontmatter tagged variants
           are set/clear/move. Body replace-token carries scope, old/new ASCII tokens, fixed case/boundary literals, exhaustive
-          whole-file UTF-8 byte spans, expected count, evidence, confidence and status. An optional depends_on list names
-          same-sidecar item IDs that must also be approved in the same atomic request; it is immutable proposal identity.
-          Unknown, self-referential or cyclic prerequisites fail closed. May be empty."}
+          whole-file UTF-8 byte spans, expected count, evidence, confidence and status. replace-token additionally requires
+          deterministic pass, known-term category and exact check/old/new membership in anomalica_common.housekeeping.KNOWN_TERM_RULES.
+          An optional depends_on list names unique same-sidecar item IDs that must also be approved in the same atomic request;
+          it is immutable proposal identity. Every item also has pass `deterministic|metadata-research` and category `person-name|known-term|metadata`.
+          Duplicate, unknown, self-referential or cyclic prerequisites fail closed. An item requires its named producing pass
+          to be completed. May be empty."}
+      - {name: decisions, type: list, required: true, description: "Ordered durable audit entries `{item_id, status, decided_at,
+          decided_by}`. Initially empty; the one complete authenticated decision appends exactly one entry per item and each
+          entry agrees with the item's final status. Superseded tuple and failed-pass history remains in Git."}
+    invariants:
+      - "Neither pass may rewrite a token merely because it begins a sentence or only to change sentence-start capitalisation;
+        person names are excluded from known-term and acronym normalisation. Unregistered replace-token pairs are invalid."
+      - "Content review may start only after deterministic is completed, metadata research is completed or waived and every
+        proposal is decided. A failed pass remains blocked. Records with human review already started or completed are excluded
+        from automatic housekeeping."
+      - "All approved operations, statuses, result_sha256 and decision audit entries are committed atomically under the authenticated
+        reviewer's identity."
   housekeeping_algorithm:
     schema: anomalica/housekeeping-algorithm/1
     status: stable
-    serialisation: 'Exactly 77 UTF-8 bytes: `{ "algorithm_version": "1", "schema": "anomalica/housekeeping-algorithm/1" }`
+    serialisation: 'Exactly 77 UTF-8 bytes: `{ "algorithm_version": "3", "schema": "anomalica/housekeeping-algorithm/1" }`
       plus one LF; no additional fields or other whitespace'
-    canonical_example: "{ \"algorithm_version\": \"1\", \"schema\": \"anomalica/housekeeping-algorithm/1\" }\n"
+    canonical_example: "{ \"algorithm_version\": \"3\", \"schema\": \"anomalica/housekeeping-algorithm/1\" }\n"
     spec_doc: architecture/housekeeping-format.md
     path: housekeeping-algorithm.json
     owner: scheduler
@@ -431,7 +454,7 @@ types:
           algorithm identity."}
       - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-algorithm/1`."}
   housekeeping_view:
-    schema: anomalica/housekeeping-view/1
+    schema: anomalica/housekeeping-view/2
     status: stable
     serialisation: JSON API response
     spec_doc: architecture/review-workbench.md
@@ -441,7 +464,7 @@ types:
       only, with no source-derived or viewed-identity data. A public, trusted-local or possession-granted view binds record,
       raw sidecar and manifest at one committed ingests ref; previews are separate derived data, never sidecar mutations.
     fields:
-      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-view/1`."}
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-view/2`."}
       - {name: access, type: enum, required: true, description: "`summary` without possession or `full` for public/trusted-local/possession-granted
           access."}
       - {name: viewed_sidecar_sha, type: string|null, required: full, description: "Full lowercase 40- or 64-hex Git blob
@@ -450,13 +473,17 @@ types:
           tree supplied manifest, record and sidecar."}
       - {name: viewed_content_hash, type: string, required: full, description: "Full `sha256:<64 lowercase hex>` record identity.
           Forbidden in summary."}
-      - {name: viewed_input_sha256, type: string, required: full, description: "Computed complete raw Markdown file SHA-256.
-          Forbidden in summary."}
+      - {name: viewed_input_sha256, type: string|null, required: full, description: "Exact immutable input_sha256 from a valid
+          sidecar; null when absent or invalid. Forbidden in summary."}
+      - {name: viewed_result_sha256, type: string|null, required: full, description: "Exact result_sha256 from a valid sidecar;
+          null when absent or invalid. Before decisions it equals viewed_input_sha256. Forbidden in summary."}
       - {name: viewed_algorithm_version, type: string, required: full, description: "Version read from the manifest at viewed_ref.
           Forbidden in summary."}
-      - {name: state, type: enum, required: true, description: "`current` or `due`."}
+      - {name: review_state, type: enum, required: true, description: "Exactly `due`, `pending-deterministic`, `failed-deterministic`,
+          `pending-research`, `failed-research`, `needs-decisions` or `ready`. Missing pass keys are pending; failed attempts
+          remain blocked and retryable."}
       - {name: due_reason, type: enum|null, required: true, description: "One of missing-sidecar, invalid-sidecar, unsupported-schema,
-          incomplete, input-mismatch or algorithm-mismatch when due; null when current. Manifest failure makes the endpoint
+          result-mismatch or algorithm-mismatch when due; null for every other review state. Manifest failure makes the endpoint
           unavailable rather than returning a record state."}
       - {name: outstanding_count, type: integer, required: true, description: "Current proposed item count; zero when due."}
       - {name: scopes, type: list, required: true, description: "Distinct sorted `frontmatter`/`body` scopes of current proposed
@@ -467,32 +494,58 @@ types:
       - {name: previews, type: object, required: full, description: "Derived preview map keyed by item id. Forbidden in summary
           and never inserted into or persisted with the raw sidecar."}
     access_variants:
-      summary: "Exactly schema, access, state, due_reason, outstanding_count, scopes, deep_link, sidecar. sidecar is null;
-        no viewed identity, item, old/new token, byte span, evidence or preview. Count/scopes/state/due/deep-link are permitted
-        metadata."
+      summary: "Exactly schema, access, review_state, due_reason, outstanding_count, scopes, deep_link, sidecar. sidecar is
+        null; no viewed identity, item, old/new token, byte span, evidence or preview. Count/scopes/review-state/due/deep-link
+        are permitted metadata."
       full: "All fields above. Returned directly for public/trusted-local records and under `housekeeping` in a successful
         POST /api/ingests/{bare_content_hash}/verification/submit response for a gated record. Decisions require this variant."
   housekeeping_decision_request:
-    schema: anomalica/housekeeping-decision/1
+    schema: anomalica/housekeeping-decision/2
     status: stable
     serialisation: JSON API request
     spec_doc: architecture/housekeeping-format.md
     endpoint: "POST /api/ingests/{bare_content_hash}/housekeeping/decide"
     additional_fields: false
-    summary: Reviewer intent bound to the committed sidecar view. The server reloads operation data and trusts no client operation
-      fields.
+    summary: Complete reviewer decision bound to the committed sidecar view. The server reloads operation data, trusts no
+      client operation fields and commits approved changes plus audit state atomically under the authenticated identity.
     fields:
-      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-decision/1`."}
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-decision/2`."}
       - {name: viewed_sidecar_sha, type: string, required: true, description: "Exact committed sidecar blob id returned by
           the view."}
       - {name: viewed_ref, type: string, required: true, description: "Exact commit SHA returned by the view."}
       - {name: viewed_content_hash, type: string, required: true, description: "Exact full record content hash returned by
           the view."}
       - {name: viewed_input_sha256, type: string, required: true, description: "Exact complete-file hash returned by the view."}
+      - {name: viewed_result_sha256, type: string, required: true, description: "Exact sidecar result hash returned by the
+          view."}
       - {name: viewed_algorithm_version, type: string, required: true, description: "Exact manifest version returned by the
           view."}
-      - {name: decisions, type: list, required: true, description: "Non-empty unique `{item_id, status}` entries with no extra
-          fields; status is approved or rejected. Operation data is forbidden, and no extra top-level request field is accepted."}
+      - {name: decisions, type: list, required: true, description: "Complete non-empty unique `{item_id, status}` set covering
+          every proposed item exactly once, with no extra fields; status is approved or rejected. Operation data is forbidden."}
+  housekeeping_research_waiver:
+    schema: anomalica/housekeeping-research-waiver/1
+    status: stable
+    serialisation: JSON API request
+    spec_doc: architecture/housekeeping-format.md
+    endpoint: "POST /api/ingests/{bare_content_hash}/housekeeping/waive-research"
+    additional_fields: false
+    summary: Explicit authenticated decision to continue without the automatic subscription research pass, bound to the same
+      committed view identities as housekeeping review and retained in the metadata-research PassState and Git history.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/housekeeping-research-waiver/1`."}
+      - {name: viewed_sidecar_sha, type: string, required: true, description: "Exact committed pending- or failed-research
+          sidecar blob id."}
+      - {name: viewed_ref, type: string, required: true, description: "Exact commit SHA supplying record, sidecar and manifest."}
+      - {name: viewed_content_hash, type: string, required: true, description: "Exact full record identity returned by the
+          view."}
+      - {name: viewed_input_sha256, type: string, required: true, description: "Exact immutable input hash returned by the
+          view."}
+      - {name: viewed_result_sha256, type: string, required: true, description: "Exact result hash returned by the pending-
+          or failed-research view."}
+      - {name: viewed_algorithm_version, type: string, required: true, description: "Exact manifest version returned by the
+          view."}
+      - {name: reason, type: string, required: true, description: "Non-empty human reason; reviewer identity and UTC time
+          are server-authenticated and never accepted from the client."}
   per_model_digest:
     schema: anomalica/digest/1
     status: stable

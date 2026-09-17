@@ -1459,9 +1459,10 @@ Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`
 - `{hash}.highlights.json` - legacy `anomalica/highlights/1` span-copying tuning
   data. It is superseded by `{hash}.gold.json` and is not canonical human gold.
 - `{hash}.housekeeping.json` - proposal-only deterministic and model-assisted
-  corrections (`anomalica/housekeeping/2`, written by the scheduler worker and
-  decided through the Workbench). `input_sha256` binds it to the complete exact
-  record bytes; see [housekeeping-format.md](housekeeping-format.md).
+  corrections (`anomalica/housekeeping/3`, written by the scheduler worker and
+  decided through the Workbench). Both passes share exact `input_sha256` bytes;
+  authenticated decisions advance `result_sha256` so approved edits remain
+  current; see [housekeeping-format.md](housekeeping-format.md).
 
 The repository root also contains `housekeeping-algorithm.json`, the
 scheduler-owned `anomalica/housekeeping-algorithm/1` manifest. It is not a record

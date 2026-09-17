@@ -22,7 +22,7 @@ Artificial intelligence assembles content from existing sources. It does not cre
 | Component | AI role |
 |-----------|---------|
 | **Ingester** | Speech-to-text, speaker diarisation, optical character recognition, text extraction (standard signal processing, not generative) |
-| **Scheduler housekeeping** | Proposes metadata or narrowly guarded source corrections for human approval; deterministic checks use no model, while research-backed checks use the model-policy `housekeep-research` stage. It never applies its own proposals. |
+| **Scheduler housekeeping** | Proposes metadata or narrowly guarded source corrections for human approval; deterministic checks use no model, while the automatic highest-priority remote research pass uses only the subscription-bound `housekeep-research` stage over the same exact input. It never applies its own proposals. |
 | **Digester** | Claim extraction, node identification, relationship detection, evidence scoring |
 | **Assembler** | Arranging knowledge graph data into articles, applying directives, per-language assembly |
 | **Assembler** | Extracting directives from human edits, classifying edits as presentational or meaning-altering |

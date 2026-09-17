@@ -173,19 +173,20 @@ Before entering or saving ingest editing, the UI reads
 `GET /api/ingests/<64-lowercase-hex-content-hash>/housekeeping`. The backend
 resolves one current ingests Git ref and reads the record, sidecar and root
 `housekeeping-algorithm.json` manifest from that same tree. Its
-`anomalica/housekeeping-view/1` envelope is a strict tagged union on `access`.
+`anomalica/housekeeping-view/2` envelope is a strict tagged union on `access`.
 A caller allowed to read the record receives `access: full` with exactly
 `schema`, `access`, `viewed_sidecar_sha` (the committed backing blob id, null
-only when absent), `viewed_ref`, `viewed_content_hash`, the computed
-complete-file `viewed_input_sha256`, the manifest's
-`viewed_algorithm_version`, `state: current|due`, `due_reason`,
+only when absent), `viewed_ref`, `viewed_content_hash`, the valid sidecar's
+immutable `viewed_input_sha256` and `viewed_result_sha256` (both null when the
+sidecar is absent or invalid), the
+manifest's `viewed_algorithm_version`, `review_state`, `due_reason`,
 `outstanding_count`, sorted `scopes`, `deep_link`, raw committed `sidecar` (null
 when absent or unreadable), and derived `previews` keyed by item id. `deep_link`
 is `/housekeeping?record=<64-lowercase-hex-content-hash>`. Preview data is never
 inserted into or written back with the sidecar.
 
 A possession-gated caller who has not passed the challenge receives only
-`schema`, `access: summary`, `state`, `due_reason`, `outstanding_count`, sorted
+`schema`, `access: summary`, `review_state`, `due_reason`, `outstanding_count`, sorted
 `scopes`, `deep_link` and `sidecar: null`. These are permitted processing
 metadata. The summary exposes no `viewed_*` identity, item, old/new token, byte
 span, evidence or preview. After a successful `POST
@@ -193,37 +194,54 @@ span, evidence or preview. After a successful `POST
 includes the full view as `housekeeping`; the unauthorised GET remains a summary
 and no persistent unlock state is created.
 
-Version 1, missing, malformed, non-completed, input-mismatched or
+Versions 1 and 2, and missing, malformed, result-mismatched or
 algorithm-mismatched sidecars are due and have no current outstanding
-proposals. A current completed v2 sidecar's `status: proposed` items are
-outstanding. When due, `outstanding_count` is zero and `scopes` is empty.
+proposals. The exact review-state vocabulary is `due`,
+`pending-deterministic`, `failed-deterministic`, `pending-research`,
+`failed-research`, `needs-decisions` and `ready`. A missing pass key is pending,
+not running; a failed pass remains blocked and retryable. A processing-complete sidecar's
+`status: proposed` items are outstanding. When due, `outstanding_count` is zero
+and `scopes` is empty.
 `due_reason` is one of `missing-sidecar`, `invalid-sidecar`,
-`unsupported-schema`, `incomplete`, `input-mismatch` or `algorithm-mismatch`.
+`unsupported-schema`, `result-mismatch` or `algorithm-mismatch`.
 A missing, malformed or non-canonical algorithm manifest is not a record state:
 the endpoint fails closed with service unavailable rather than claiming current or due.
 Scheduler dispatch separately fails closed when the worker's reported version
 differs from that manifest.
 
-The UI shows the outstanding count and affected scopes with that direct link,
-or warns that housekeeping is due. Neither warning locks editing. Changed bytes
-make the prior sidecar stale; the scheduler-owned startup/at-most-five-minute
-reconciliation scan discovers the new tuple. There is no post-edit event to
-promise or depend on. See [decision
+The UI shows the outstanding count and affected scopes with that direct link, or
+shows deterministic/research progress and the authenticated waiver action. For
+an unreviewed record it blocks entry into content review until `review_state` is
+`ready`: deterministic is complete, metadata research is complete or waived and
+every item is decided. Records whose human review already started or completed
+are excluded before housekeeping state is evaluated; their existing review may
+continue and automatic housekeeping does not run. Changed bytes outside the
+final housekeeping decision make the prior sidecar stale; reconciliation
+discovers the new tuple. See [decision
 0048](../decisions/0048-post-ingest-housekeeping-is-content-versioned.md).
 
 `POST /api/ingests/<64-lowercase-hex-content-hash>/housekeeping/decide` requires
 an authenticated reviewer and sends only `schema:
-anomalica/housekeeping-decision/1`, `viewed_sidecar_sha`, `viewed_ref`,
-`viewed_content_hash`, `viewed_input_sha256`, `viewed_algorithm_version` and a
-non-empty `decisions` list of `{item_id, status}`. The server requires every
+anomalica/housekeeping-decision/2`, `viewed_sidecar_sha`, `viewed_ref`,
+`viewed_content_hash`, `viewed_input_sha256`, `viewed_result_sha256`,
+`viewed_algorithm_version` and a complete `decisions` list of `{item_id,
+status}` covering every proposed item exactly once. The server requires every
 viewed identity to remain current and reloads the manifest, sidecar, record and
 each named proposed item from that ref; it never accepts operation fields from
-the client. Version 1, unknown, duplicate, missing, changed or already-decided
+the client. It also requires deterministic completion and metadata-research
+completion or waiver. Versions 1 and 2, unknown, duplicate, omitted, changed or already-decided
 items are refused without a partial decision. Every stale, validation, guard or
-ref failure leaves the record, sidecar and selected statuses unchanged.
-Successful approved edits atomically commit record plus sidecar; rejection
-commits only the sidecar, with the same viewed-ref concurrency guard.
+ref failure leaves the record, sidecar and statuses unchanged. Successful
+decisions atomically commit every approved record edit, final item statuses,
+`result_sha256` and ordered `decisions` audit under the authenticated reviewer
+identity.
 The decision endpoint accepts only identities from an `access: full` view.
+
+`POST /api/ingests/<64-lowercase-hex-content-hash>/housekeeping/waive-research`
+is a separate authenticated action bound to a pending- or failed-research view.
+The client sends only the viewed identities and a non-empty reason. The server supplies
+reviewer identity and time, records `{by, at, reason}` in the metadata-research
+pass, and applies no proposal or record edit.
 
 ## What to mark irrelevant
 

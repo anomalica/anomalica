@@ -1,10 +1,10 @@
 # Housekeeping
 
-A proposal-only pass over newly ingested or changed records. It improves
-frontmatter and may propose one narrowly guarded whole-token body correction;
-it never applies a change itself.
+A proposal-only workflow over newly ingested or changed records. One free
+deterministic pass and one subscription-only metadata-research pass examine the
+same exact input; neither applies a change itself.
 
-Status: version 2 specified 2026-09-11 by [decision 0048](../decisions/0048-post-ingest-housekeeping-is-content-versioned.md). Partly built - see [Implementation state](#implementation-state).
+Status: version 3 specified by the 2026-09-17 amendment to [decision 0048](../decisions/0048-post-ingest-housekeeping-is-content-versioned.md). Earlier implementation history remains below.
 
 ## Why it exists
 
@@ -47,36 +47,46 @@ reduces the per-record cost of review is worth more than anything before it.
 ## Shape
 
 ```
-ingester ──post-commit fast path──▶ scheduler ──stages housekeeping──▶ worker
+ingester ──post-commit fast path──▶ scheduler ──stages deterministic pass──▶ worker
                                        ▲
                                        │ startup + ≤5-minute full reconciliation
                                        │ of live ingest records
                                               │
                                               │ reads  ingests/store/{hash}.md
-                                              │ writes ingests/store/{hash}.housekeeping.json
+                                              │ writes pending-research sidecar
+                                              ▼
+                              scheduler ──highest-priority remote work──▶
+                                  subscription-only research pass
+                                              │ completes the same exact-input sidecar
                                               ▼
                                         proposal sidecar (committed to ingests)
                                               │
                                               ▼
-                              workbench ──Housekeeping tab──▶ human approves
-                                              │                per ITEM, not per record
+                               workbench ──Housekeeping tab──▶ human decides
+                                              │                every ITEM independently
                                               ▼
-                                   approved items applied to the record,
-                                   committed as a SEPARATE commit
+                                   all approved items applied atomically,
+                                   under the authenticated reviewer's identity
 ```
 
 Four properties, in priority order:
 
 1. **The worker proposes; it never applies.** Every change reaches a record through
    a human approving it in the workbench.
-2. **Body edits are closed and mechanically guarded.** Version 2 permits only
-   exhaustive whole-token `replace-token` proposals; arbitrary prose changes are
-   unrepresentable. Enforced, not promised - see [Safety](#safety).
-3. **Each proposed change is approved or rejected on its own.** A record with seven
-   proposals can have three accepted. A patch is not all-or-nothing.
-4. **Deterministic first; subscription only when assisted.** The post-ingest
-   checks spend nothing. A research-backed check runs on Mark's Claude plan and
-   must never reach the metered API or OpenRouter.
+2. **Body edits are closed and mechanically guarded.** Version 3 permits only
+   exhaustive whole-token `replace-token` proposals whose exact check and token
+   pair is registered in `anomalica_common.housekeeping.KNOWN_TERM_RULES`;
+   arbitrary prose changes are unrepresentable. Enforced, not promised - see
+   [Safety](#safety).
+3. **Each proposed change is judged on its own.** A record with seven proposals
+   can have three accepted, but the complete decision and its approved operations
+   apply as one all-or-nothing transaction.
+4. **Deterministic first; research automatic and subscription-only.** The first
+   pass spends nothing. The second runs automatically over the same bytes, is the
+   scheduler's highest-priority remote work, runs on Mark's Claude plan and must
+   never reach the metered API or OpenRouter. An authenticated reviewer may
+   explicitly waive it with a durable reason; absence or allowance pressure is
+   not a waiver.
 
 ## Why these homes
 
@@ -104,11 +114,12 @@ record-level "has been checked" marker and a list of independently-decidable ite
 The authoritative schema is in [housekeeping-format.md](housekeeping-format.md).
 The properties that matter architecturally:
 
-- **`input_sha256` + `algorithm_version`** - the record-level applicability
-  marker. The first hashes the complete exact ingest Markdown bytes examined;
-  the second identifies the complete check and guard algorithm. A completed
-  sidecar is current only when both match. `content_hash` remains the stable
-  source/selection locator and is not the input digest.
+- **`input_sha256` + `result_sha256` + `algorithm_version`** - the applicability
+  and currentness markers. Both passes examine immutable `input_sha256` bytes.
+  `result_sha256` starts equal and advances only with the authenticated atomic
+  decision commit, so approved edits do not trigger the research pass again.
+  Other byte changes create a new tuple. `content_hash` remains the stable
+  source/selection locator and is not either byte digest.
 - **`housekeeping-algorithm.json`** - the scheduler-owned root manifest in the
   ingests repository (`anomalica/housekeeping-algorithm/1`) is the canonical deployed algorithm version. Scheduler and
   Workbench read it at the same Git ref as the record and sidecar; a missing,
@@ -119,13 +130,25 @@ The properties that matter architecturally:
 - **Per-item `evidence`** - what justified the change. For a research-backed item this
   includes the source URL. An item with no evidence is not a proposal, it is a guess,
   and the worker must not emit one.
-- **Per-item `confidence`** and the model/prompt provenance, so a reviewer can weight
-  a proposal and so a bad prompt version can be found later.
+- **Per-item `confidence`** - advisory information so a reviewer can weight a
+  proposal; it never changes the apply guard.
+- **Per-item `pass` and `category`** - every proposal names its producing pass and
+  exactly one closed category: `person-name`, `known-term` or `metadata`. Pass is
+  `deterministic` or `metadata-research`.
+- **Terminal pass states only** - the `passes` map records no running claim. A
+  missing fixed key means waiting or queued; a `failed` attempt remains due and
+  retryable. Deterministic must complete without model usage. Metadata research
+  must complete with subscription usage or carry an explicit waiver.
+- **Durable audit** - each pass retains its terminal timestamp and any explicit
+  waiver; the complete item decision appends one authenticated `decisions` entry
+  per item. A fresh tuple starts fresh proposal state but never rewrites Git
+  history or copies old decisions.
 
 ## Safety
 
 **Only approved byte scopes may change.** Every apply first verifies the whole
-record against the sidecar's `input_sha256`. Frontmatter operations still require
+record against the sidecar's `result_sha256`, which equals `input_sha256` before
+the one decision. Frontmatter operations still require
 the body to remain byte-identical. `replace-token` revalidates every recorded
 whole-token byte span and then proves every byte outside those spans is
 unchanged. Record and sidecar decision commit atomically. The exact guard is in
@@ -153,25 +176,45 @@ at the wrong precision, a `creators` list that failed to parse - these are decid
 from the file. Spending allowance on them is waste, and a model asked an
 already-answered question is an opportunity to be wrong.
 
+**Sentence starts are not evidence.** Neither pass recases or replaces a token
+merely because it begins a sentence. Known-term changes require evidence for the
+term itself, and person names are excluded from acronym and term normalisation.
+The shared `KNOWN_TERM_RULES` registry is authoritative; only a deterministic
+`known-term` proposal with an exact registered check/old/new tuple can use
+`replace-token`.
+
 ## Checks
 
-Ordered by value, not by ease. The first is the reason the component exists.
+The closed proposal categories are:
 
-1. **Redistributor filed as publisher.** Where `publisher` names a channel that
-   reposts other people's work, propose moving it to `posted_by`, and clearing
-   `date_published` where the existing value is the repost date rather than the
-   work's. Needs judgement and often research: deciding that "Eyes On Cinema" is a
-   redistributor and that the underlying work is a 1987 broadcast is exactly the call
-   [ingest-format](ingest-format.md) says cannot be made mechanically.
-2. **Missing `container_title`.** The journal, book or programme a work appeared in.
-3. **Deterministic field hygiene.** Required-field presence per `source_type`, date
-   precision written per the quoting rule, `creators` that parse as a list. No model.
-4. **Known whole-token extraction errors.** Propose `OSSAP` to `AAWSAP` for
-   every case-sensitive whole-token body occurrence. The item records exhaustive
-   raw-byte spans and remains human-approved; if the source itself says `OSSAP`,
-   reject it rather than normalising the source.
+- **`person-name`** - evidenced corrections to person identity fields. Unknown
+  people remain bracketed descriptions; plausible names are never invented.
+- **`known-term`** - an evidenced, case-sensitive known-term correction under a
+  closed byte guard, never sentence-start recasing.
+- **`metadata`** - evidenced frontmatter set, clear or move operations.
 
-**Unidentified-speaker substitution is not a version 2 check.** It would change
+Current checks, ordered by value rather than ease:
+
+1. **Redistributor filed as publisher (`metadata`, metadata-research).** Where
+   `publisher` names a channel that reposts other people's work, propose moving
+   it to `posted_by`, and clearing `date_published` where the existing value is
+   the repost date rather than the work's. Needs judgement and often research:
+   deciding that "Eyes On Cinema" is a redistributor and that the underlying work
+   is a 1987 broadcast is exactly the call [ingest-format](ingest-format.md) says
+   cannot be made mechanically.
+2. **Missing `container_title` (`metadata`, metadata-research).** The journal,
+   book or programme a work appeared in.
+3. **Deterministic field hygiene (`metadata`).** Required-field presence per
+   `source_type`, date precision written per the quoting rule, `creators` that
+   parse as a list. No model.
+4. **Known whole-token extraction errors (`known-term`).** The current
+   `correct-aawsap-acronym` registry entry proposes registered `OSAP` and `OSSAP`
+   case variants as `AAWSAP` for every
+   case-sensitive whole-token body occurrence. The item records exhaustive
+   raw-byte spans and remains human-approved; if the source itself uses the old
+   token, reject it rather than normalising the source.
+
+**Unidentified-speaker substitution is not a version 3 check.** It would change
 speaker comments throughout the body and reconcile the frontmatter roster.
 `replace-token` cannot represent those coupled semantics, so no worker may emit
 or apply that change until a separately decided closed operation and byte guard
@@ -180,7 +223,7 @@ exist.
 ## Future structure repair (books)
 
 Heading repair remains a design case, not an operation in
-`anomalica/housekeeping/2`. Version 2 supports only frontmatter operations and
+`anomalica/housekeeping/3`. Version 3 supports only frontmatter operations and
 `replace-token`; adding heading repair requires its own closed byte-scope guard.
 
 Mark's case, 2026-08-19: *The Fourth Mind* (Whitley Strieber) has 27 headings in its
@@ -250,10 +293,12 @@ to five minutes. This is not a force flag: an already current tuple does not
 rerun.
 
 **A stale proposal must not apply.** The current record's complete raw-byte hash
-must equal `input_sha256`; operation-specific old values and spans must also
-match. Any mismatch refuses the whole apply and makes the new input tuple due.
-Do not lock reviewers out while a pass is pending - editing remains available
-and deliberately invalidates the prior proposal.
+must equal `result_sha256`, which equals `input_sha256` before the one decision;
+operation-specific old values and spans must also match. Any mismatch refuses the
+whole apply and makes a new input tuple due. Version 3 supersedes the original
+editing rule: content review cannot start while a pass is pending or failed, but
+an external record edit still invalidates the prior proposal rather than carrying
+it forward.
 
 **Keep the name.** Mark talked himself out of and back into "housekeeping" in one
 breath. It is right: not a review, just tidying.
@@ -288,14 +333,24 @@ been housekept has had its metadata examined; its body has not been verified aga
 the source. The two states are independent and a housekeeping pass must never mark a
 record as reviewed.
 
-Reconciliation checks every live record whose exact tuple is due, regardless of
-review state. The worker still changes nothing. Any proposal approved after
-human sign-off is an explicit later reviewer action and a clearly separate
-commit, never a silent mutation of what was approved.
+For an unreviewed record, Workbench blocks the start of content review until the
+deterministic pass is complete, the metadata-research pass is complete or
+explicitly waived, and every proposal is approved or rejected. The authenticated
+reviewer submits the complete decision set; all approved changes, final statuses,
+`result_sha256` and decision audit entries are one atomic commit authored under
+that reviewer identity.
+
+Automatic reconciliation excludes records whose current review state shows human
+content review already started or completed. It writes nothing for them. Existing
+reviews are grandfathered and may continue; this prevents automatic metadata work
+from moving bytes under a reviewer. Housekeeping therefore runs before new review,
+not over review in progress.
 
 ## Implementation state
 
-As of 2026-08-19 evening.
+Version 3 is specified but not yet implemented across the Scheduler and Workbench.
+The following is the historical implementation snapshot from 2026-08-19; its
+version 1 and 2 lifecycle is not the current contract.
 
 **Done.**
 
@@ -340,7 +395,7 @@ As of 2026-08-19 evening.
   inputs (the 29 real sidecars plus 6 synthetic shapes) and compares output text
   exactly. Verified that the parity test bites by sabotaging the TypeScript side.
 
-**Not done.**
+**Not done in that snapshot.**
 
 - **The model-backed checks themselves.** Their transport now exists
   (`anomalica_common.llm.call_with_research`); no check uses it yet.

@@ -17,7 +17,7 @@ ingests/housekeeping-algorithm.json
 ```
 
 ```json
-{ "algorithm_version": "1", "schema": "anomalica/housekeeping-algorithm/1" }
+{ "algorithm_version": "3", "schema": "anomalica/housekeeping-algorithm/1" }
 ```
 
 The scheduler owns this manifest as part of deploying its worker. Its canonical
@@ -62,21 +62,33 @@ The sidecar that proposes the correction:
 
 ```json
 {
-  "schema": "anomalica/housekeeping/2",
+  "schema": "anomalica/housekeeping/3",
   "content_hash": "sha256:1d24cbe9e49ad5279cd4975a2b37b3b3ab60a260be30a9264e34ef168d7f9e0e",
   "input_sha256": "sha256:7a9486d9d7e8ac90dbb185b86d24d60920c8cb3c97dba6a68a9f116fdd9e5812",
+  "result_sha256": "sha256:7a9486d9d7e8ac90dbb185b86d24d60920c8cb3c97dba6a68a9f116fdd9e5812",
   "checked_at": "2026-08-19T19:40:11Z",
-  "algorithm_version": "1",
-  "outcome": "completed",
-  "usage": {
-    "transport": "subscription",
-    "model": "claude-sonnet-5",
-    "input_tokens": 4180,
-    "output_tokens": 610
+  "algorithm_version": "3",
+  "passes": {
+    "deterministic": {
+      "status": "completed",
+      "finished_at": "2026-08-19T19:39:02Z"
+    },
+    "metadata-research": {
+      "status": "completed",
+      "finished_at": "2026-08-19T19:40:11Z",
+      "usage": {
+        "transport": "subscription",
+        "model": "claude-sonnet-5",
+        "input_tokens": 4180,
+        "output_tokens": 610
+      }
+    }
   },
   "items": [
     {
       "id": "1d24cbe9-posted-by",
+      "pass": "metadata-research",
+      "category": "metadata",
       "check": "redistributor-filed-as-publisher",
       "field": "publisher",
       "operation": "move",
@@ -93,6 +105,8 @@ The sidecar that proposes the correction:
     },
     {
       "id": "1d24cbe9-posted-date",
+      "pass": "metadata-research",
+      "category": "metadata",
       "check": "redistributor-filed-as-publisher",
       "field": "date_published",
       "operation": "move",
@@ -109,6 +123,8 @@ The sidecar that proposes the correction:
     },
     {
       "id": "1d24cbe9-date-published",
+      "pass": "metadata-research",
+      "category": "metadata",
       "check": "work-date-from-title",
       "field": "date_published",
       "operation": "set",
@@ -120,15 +136,17 @@ The sidecar that proposes the correction:
         "sources": [],
         "record_spans": ["title"]
       },
+      "depends_on": ["1d24cbe9-posted-date"],
       "status": "proposed"
     }
-  ]
+  ],
+  "decisions": []
 }
 ```
 
 Note the third item is `medium` and the first two are `high`. Moving a known
 redistributor out of `publisher` is safe; asserting the work's date from a title is a
-reading. A reviewer can take the first two and leave the third.
+reading. A reviewer can approve the first two and reject the third.
 
 Note also there is no proposal to fill `publisher`. Nothing evidenced it, so nothing
 is proposed - the same not-evidenced convention [ingest-format](ingest-format.md)
@@ -140,26 +158,37 @@ uses for date precision. An unproposed field is a better outcome than a guessed 
 
 | Field | Meaning |
 |---|---|
-| `schema` | `anomalica/housekeeping/2`. Version 1 is always due and cannot be decided or applied. |
+| `schema` | `anomalica/housekeeping/3`. Versions 1 and 2 are always due and cannot be decided or applied under the version 3 manifest. |
 | `content_hash` | The record this describes, in full `sha256:` form. |
-| `input_sha256` | SHA-256, in full `sha256:` form, of the complete exact raw bytes of the ingest Markdown file examined. It is not `content_hash`. |
-| `checked_at` | When the pass ran. |
+| `input_sha256` | Immutable SHA-256, in full `sha256:` form, of the complete exact raw ingest Markdown bytes examined by both passes. It is not `content_hash`. |
+| `result_sha256` | SHA-256 of the exact current record bytes resulting from reviewer decisions. The worker initially sets it equal to `input_sha256`; only an authenticated atomic decision commit may update it. |
+| `checked_at` | Canonical UTC `YYYY-MM-DDTHH:MM:SSZ` sidecar creation time before any pass; afterwards the most recently recorded PassState's `finished_at`. |
 | `algorithm_version` | Non-empty ASCII token matching `[A-Za-z0-9._-]+` and identifying the complete check suite, including matching and apply-guard semantics. It must equal the root manifest. |
-| `outcome` | `completed`. A failed or partial pass writes no sidecar. |
-| `usage` | Optional. Transport, model and token counts for model calls that contributed proposals. `transport` must be `subscription`; deterministic-only passes omit it. |
+| `passes` | Contains only the fixed keys `deterministic` and `metadata-research`. Absence means not yet recorded. A state has `status: completed|failed|waived` and canonical UTC `finished_at`; `failed` also has a non-empty `error`, `waived` has `waiver`, and completed metadata research has subscription `usage`. Failed or waived research has no `usage`. Only metadata research may be waived. Both passes bind the same `input_sha256`; research can be recorded only after completed deterministic and cannot predate it. |
 | `items` | The independently-decidable proposals. May be empty - an empty current completed sidecar means "checked, nothing to propose", which is a result, not a failure. |
+| `decisions` | Durable reviewer audit for this tuple. Initially empty; the one complete decision appends exactly one `{item_id, status, decided_at, decided_by}` entry per item. Git history remains the outer audit trail. |
+
+Research `usage.transport` is the literal `subscription`; metered API and
+OpenRouter routes are invalid. A research waiver is exactly `{by, at, reason}`:
+an authenticated stable reviewer identity, UTC time and non-empty reason. It is
+required exactly when metadata-research status is `waived`. Waiver means
+"continue without research", never "research completed". A missing pass or
+`failed` pass remains incomplete and blocks content review; the scheduler may
+replace a failed state with a later attempt over the same exact input.
 
 ### Item level
 
 | Field | Meaning |
 |---|---|
 | `id` | Stable within the file. The workbench addresses an approval by this. |
+| `pass` | `deterministic` or `metadata-research`; the pass that produced the immutable proposal. |
+| `category` | `person-name`, `known-term` or `metadata`. Categories are closed and do not imply an operation. |
 | `check` | Which check produced it. Lets a whole class be re-run or discounted. |
 | `operation` | Tagged union: frontmatter `set`, `clear` or `move`; body-scoped `replace-token`. Fields from another variant are forbidden. |
 | `confidence` | `high`, `medium`, `low`. Advisory to the reviewer; it does not gate anything. |
 | `evidence` | Why. `reasoning` in a sentence, `sources` as URLs where research was involved, `record_spans` naming what in the record supports it. **An item with no evidence must not be emitted.** |
 | `status` | `proposed` (worker) → `approved` or `rejected` (reviewer). |
-| `depends_on` | Optional list of non-empty item IDs from the same sidecar. Approving this item requires every listed prerequisite also to be approved in the same atomic decision request. Unknown IDs, self-dependencies and cycles therefore fail closed because their prerequisite set cannot be satisfied. Omitted means no prerequisite. It is immutable proposal data and participates in same-tuple decision carry identity. |
+| `depends_on` | Optional list of unique non-empty item IDs from the same sidecar. Approving this item requires every listed prerequisite also to be approved in the same atomic decision request. Duplicate or unknown IDs, self-dependencies and cycles fail closed. Omitted means no prerequisite. It is immutable proposal identity. |
 
 Frontmatter `set`, `clear` and `move` items retain the v1 fields: `field`,
 `current`, `proposed`, and `to_field` for `move`.
@@ -175,6 +204,14 @@ A `replace-token` item has exactly these operation-specific fields:
 | `occurrences` | Required ordered list of `{start_byte, end_byte}`. Offsets are zero-based half-open positions in the complete raw ingest Markdown UTF-8 bytes. They are unique, non-overlapping, body-only, and enumerate every matching occurrence of `old_token`. |
 | `expected_count` | Required positive integer equal to `len(occurrences)`. |
 
+Version 3 additionally requires `category: known-term`, `pass: deterministic`
+and exact membership of `(old_token, new_token)` under the item's `check` in
+`anomalica_common.housekeeping.KNOWN_TERM_RULES`. That constant is the sole
+authoritative closed registry. Metadata research and person-name proposals
+cannot emit `replace-token`. Adding, removing or changing a registered check or
+token pair changes the apply guard and therefore requires another algorithm
+version bump.
+
 The opening and closing frontmatter fence lines accept either LF or CRLF. The
 body starts at the first byte after the actual line ending that terminates the
 record's first closing `---` frontmatter fence. Every occurrence satisfies
@@ -184,29 +221,58 @@ generation. Boundary tests still inspect the immediately adjacent raw byte when
 one exists; start and end of file count as boundaries. Hashes and spans use the
 original bytes without line-ending normalisation.
 
-The first deterministic body proposal replaces whole-token `OSSAP` with
-`AAWSAP`. It is an extraction/transcription correction proposal, not automatic
-normalisation: if the source itself says `OSSAP`, the reviewer rejects it.
+The first deterministic body rule, `correct-aawsap-acronym`, replaces registered
+whole-token `OSAP` and `OSSAP` case variants with `AAWSAP`. It is an extraction/transcription correction
+proposal, not automatic normalisation: if the source itself uses the old token,
+the reviewer rejects it.
+Neither pass may propose rewriting a token merely because it begins a sentence,
+or changing only sentence-start capitalisation. Unregistered case changes are
+structurally invalid, not merely discouraged. `known-term` corrections require
+independent evidence for the term itself. Person names are never passed through a
+term or acronym normaliser.
+
+### Decision audit
+
+Each `decisions` entry has `item_id`, `status: approved|rejected`, canonical UTC
+`decided_at`
+and `decided_by`. All entries from the complete request share one time and
+authenticated reviewer. An entry must agree with its item's status; a decided
+item without an entry is invalid. Audit entries are retained while the tuple is
+current and are never copied to another tuple.
 
 ## Due and complete
 
-A record is complete only when its sidecar has schema
-`anomalica/housekeeping/2`, `outcome: completed`, an `input_sha256` matching the
-complete current record bytes, and an `algorithm_version` matching the manifest
-at the same Git ref. Anything else is due. Version 1 cannot be decided or
-applied because it has no exact input-byte binding.
+A record's processing is complete only when its sidecar has schema
+`anomalica/housekeeping/3`, deterministic status `completed`, metadata-research
+status `completed` or `waived`, and an `algorithm_version`
+matching the manifest at the same Git ref. It is byte-current when the complete
+current record SHA-256 equals `result_sha256`. Its `review_state` is `ready` only
+when it is also processing-complete and every item is `approved` or `rejected`. Versions 1
+and 2 cannot be decided or applied under the version 3 manifest.
+
+The shared `review_state` derivation is exactly `due`,
+`pending-deterministic`, `failed-deterministic`, `pending-research`,
+`failed-research`, `needs-decisions` or `ready`. Invalid schema, algorithm or
+result-byte binding is `due`. Passes are then considered in order: a missing key
+is pending, `failed` names that pass, and an item is valid only when its named
+producing pass is `completed`. Any proposed item needs decisions, and only
+completed deterministic plus completed or waived metadata research and fully
+decided items are ready. A sidecar never claims an
+actively running pass; the Scheduler owns that transient execution state.
 
 The job applicability identity is `(content_hash, input_sha256,
 algorithm_version)`. `content_hash` locates the stable record; it does not hash
-the Markdown. A record reruns if and only if its exact bytes or algorithm version
-changes. Sidecar status changes, review decisions and timestamps do not create a
-new run key. Version 1 sidecars are always due. Decisions are not carried across
-a changed `input_sha256` or `algorithm_version`; the new tuple receives fresh
-proposals and decisions.
+the Markdown. Both automatic passes examine the same immutable `input_sha256`.
+Before decisions, `result_sha256 == input_sha256`. The complete reviewer decision
+may change the record and advances `result_sha256` in the same atomic commit;
+that approved result remains current and does not stage either pass again. Any
+other byte change differs from `result_sha256` and creates a fresh tuple with new
+proposals and decisions. Sidecar-only pass, waiver and decision changes do not
+create a run key.
 
 Every entry point applies this currentness rule. In particular, a single-record
 `housekeeping propose <content-hash>` invocation is a no-op when the sidecar is
-current: it must not rewrite `checked_at`, proposals, research-only items or
+current: it must not rewrite `checked_at`, proposals, metadata-research items or
 decisions. There is no force mode that bypasses currentness.
 
 The scheduler reconciles on startup and at least once every 300 seconds. One
@@ -220,30 +286,54 @@ paths must be byte-identical to their pinned `HEAD` blobs. A dirty, missing or
 untracked collision holds that record without writing; a dirty or missing
 manifest fails the whole housekeeping scan. Unrelated dirty paths do not block.
 
+Automatic reconciliation excludes any record whose current review sidecar shows
+human content review already started or completed. It neither writes a
+housekeeping sidecar nor mutates those records. Conversely, Workbench refuses to
+start content review on an unreviewed record until `review_state` is `ready`;
+an already-started review is grandfathered and may continue.
+
 **Rejected items are kept, not deleted.** A rejection is the durable record that a
 human considered this exact proposal for this exact tuple and declined it. It
 prevents repeat decisions while that sidecar remains current. It does not carry
 into a changed input or algorithm tuple.
 
-## Applying an approved item
+### Explicit research waiver
+
+`POST /api/ingests/{bare-content-hash}/housekeeping/waive-research` accepts only
+`schema: anomalica/housekeeping-research-waiver/1`, `viewed_sidecar_sha`,
+`viewed_ref`, `viewed_content_hash`, `viewed_input_sha256`,
+`viewed_result_sha256`, `viewed_algorithm_version` and a non-empty `reason`.
+The server supplies `by` and canonical UTC `at` from the authenticated reviewer and clock; it
+never accepts either from the client. It reloads the pending- or failed-research
+sidecar, manifest and record from `viewed_ref`, requires every identity and current byte
+hash to match, then atomically records metadata-research `status: waived`, the
+exact `{by, at, reason}` audit and matching `finished_at`. It applies no item or
+record edit. A completed or already-waived pass, stale ref or changed byte fails without
+writing.
+
+## Applying the complete decision
 
 Every decision request is bound to the committed state the reviewer saw. It
-carries `schema: anomalica/housekeeping-decision/1`, `viewed_sidecar_sha`,
+carries `schema: anomalica/housekeeping-decision/2`, `viewed_sidecar_sha`,
 `viewed_ref`, `viewed_content_hash`, `viewed_input_sha256`,
-`viewed_algorithm_version` and a non-empty list of `{item_id, status}` where
+`viewed_result_sha256`, `viewed_algorithm_version` and a complete non-empty list
+of `{item_id, status}` where
 status is `approved` or `rejected`. `viewed_sidecar_sha` is the Git blob id of
 the committed sidecar backing the raw or access-gated view; `viewed_ref` is the
-commit whose one tree supplied manifest, record and sidecar. The two viewed hashes retain their full
-`sha256:` prefixes. These are the only client-supplied decision fields;
+commit whose one tree supplied manifest, record and sidecar. The two viewed
+hashes retain their full `sha256:` prefixes. These are the only client-supplied decision fields;
 operation data is forbidden. The endpoint requires an authenticated reviewer.
 The server requires the current ref and every reloaded identity to match,
-reloads named proposed items from that sidecar, and verifies the tuple again.
-Unknown, duplicate, missing, v1, already-decided or mismatched input is a
-conflict or validation failure, never a partial decision.
+requires deterministic completion and metadata-research completion or waiver,
+reloads every proposed item from that sidecar, and verifies the tuple again. The
+request decides every proposed item
+exactly once; omission, unknown or duplicate IDs, versions 1 or 2,
+already-decided items, or mismatched input/result state fail the whole request.
 
 Every apply then hashes the complete current raw record and requires it to equal
-the sidecar's `input_sha256` and request `viewed_input_sha256`. A mismatch is stale: apply nothing and
-make the new input tuple due. Every selected item remains `proposed` on any
+the sidecar and request `viewed_result_sha256`; before the first decision this is
+also `input_sha256`. A mismatch is stale: apply nothing and make the new input
+tuple due. Every selected item remains `proposed` on any
 stale, guard, validation or ref failure.
 
 For a frontmatter item, splice only the source/destination field byte ranges
@@ -256,8 +346,9 @@ last to first, decode UTF-8 strictly, and prove that no bytes outside the approv
 spans changed. Any hash, slice, boundary, count, overlap, decode or postcondition
 mismatch aborts without changing the record or sidecar.
 
-The changed record and sidecar decision are committed atomically in one Git
-commit, separately from the ingest commit. `approved` is persisted only when the
+All approved operations are applied together. The changed record, new
+`result_sha256`, item statuses and decision audit entries are committed atomically
+in one Git commit, separately from the ingest commit. `approved` is persisted only when the
 guarded record apply succeeds in that same commit; `rejected` changes only the
 sidecar. Edge code uses one Git tree, commit and expected-ref compare-and-swap;
 two independent Contents API commits are not atomic. Local code holds an

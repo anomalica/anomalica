@@ -21,7 +21,8 @@ money or subscription allowance; a step marked free spends neither.
 | 3 | **Ingest: transcribe** | An audio or video stub | Local GPU | free | A record with per-word timestamps (Whisper on the card) |
 | 4 | **Ingest: extract** | A web, ebook or image stub | Local CPU | free | A record, extracted by rule (no model) |
 | 5 | **Ingest: read** | A PDF stub | Remote AI | metered | A record, read by a vision model |
-| 6 | **Housekeeping** | Scheduler reconciliation at startup and at least every five minutes finds a live record without a completed current `(input_sha256, algorithm_version)` sidecar; a valid post-commit ingest result runs the same check immediately | Local CPU | free | `anomalica/housekeeping/2` proposals, possibly empty, for approval in the Workbench |
+| 6a | **Housekeeping: deterministic** | Scheduler reconciliation finds an eligible unreviewed live record without a current version 3 deterministic result; a valid post-commit ingest result runs the same check immediately | Local CPU | free | Deterministic `anomalica/housekeeping/3` proposals and a pending-research sidecar |
+| 6b | **Housekeeping: metadata research** | The same exact-input sidecar has deterministic complete and research pending; an authenticated waiver is the only non-run completion | Remote AI | subscription only | Research proposals merged into the same sidecar, or an explicit durable waiver |
 | 7 | **Pre-digest** | A record with no current pre-digest | Local CPU | free | The exact model input, stored so it can be inspected ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)) |
 | 8 | **Digest** | A record with no digest, or one whose body was re-extracted | Remote AI | plan or metered | Claims and nodes in `digests/` |
 | 9 | **Quote check** | Runs as the **last step of every digest**, and as a backfill for any digest whose claims carry no verdict | Local GPU | free | A label on each claim: does its quote support it, contradict it, or neither |
@@ -54,6 +55,12 @@ job, then oldest first. Token estimates constrain dispatch inside an authorised
 allowance; they are not a universal priority score. An explicit staging by the
 operator still wins over all of it. Priority never grants model or batch
 authorisation; the full contract is [end-to-end freshness](freshness.md).
+
+Housekeeping metadata research is the highest-priority automatic remote work. It
+runs before every other unstaged remote candidate once allowance is available;
+only an explicit operator staging may precede it. This ordering does not grant a
+metered route: `housekeep-research` remains subscription-only and fails closed
+when that route is unavailable.
 
 ## Two things worth knowing
 

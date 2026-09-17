@@ -774,21 +774,23 @@ stages:
     uses_model: false
     enforced_by: scheduler
     rationale: Code, not a model. Fixed rules only, so it costs nothing. A successful ingest result makes the exact record-byte
-      hash and algorithm-version tuple due; a completed current housekeeping sidecar satisfies it.
+      hash and algorithm-version tuple due; version 3 result-byte currentness satisfies it after an authenticated decision.
     output: internal
     output_note: Code, not a model.
   - id: housekeep-research
-    purpose: Model-assisted cleanup - chapter titles, headings, structure.
+    purpose: Post-ingest metadata research for person names, known terms and source metadata.
     uses_model: true
     enforced_by: scheduler
     priority:
       - claude-haiku-4-5
     deny: []
-    rationale: Tidying that needs judgement - chapter titles, headings, structure. Runs across many records on a timer, so
-      it uses the cheapest model that copes. Never runs on a record a person has already reviewed.
-    output: published_label
-    output_note: Chapter titles and headings, which are shown on record pages. Treated as published prose because a page title
-      is quoted and indexed like any other text.
+    rationale: The automatic second housekeeping pass over the deterministic pass's exact input. It is the highest-priority
+      automatic remote work because content review cannot start until it completes or an authenticated reviewer explicitly
+      waives it. It runs only through the subscription route, never metered API or OpenRouter, and never runs on a record
+      whose human content review has already started or completed.
+    output: internal
+    output_note: Proposal evidence and operations only. Nothing is published unless an authenticated reviewer approves the
+      complete housekeeping decision.
   - id: check
     purpose: Test whether each claim is warranted by its quote, or by the record around it.
     uses_model: true

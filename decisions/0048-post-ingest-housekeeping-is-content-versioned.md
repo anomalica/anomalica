@@ -158,6 +158,79 @@ Ordinary ingest editing has the same stale-browser protection independently of
 housekeeping: the edit read supplies `base_record_sha` and `base_ref`, the PUT
 echoes both, and a changed blob or ref is refused before writing.
 
+## Amendment 2026-09-17: deterministic and research passes precede review
+
+The original decision treated one completed pass as both processing completion
+and currentness, and allowed content review to proceed while housekeeping was due.
+That leaves metadata research optional in practice and causes an approved
+housekeeping edit to look like fresh unexamined input. This amendment supersedes
+those lifecycle rules with `anomalica/housekeeping/3`.
+
+### Two automatic passes share one input
+
+Every eligible post-ingest tuple runs a free deterministic pass followed by an
+automatic metadata-research pass over the same complete exact `input_sha256`
+bytes. Research uses only the subscription route, never a metered API or
+OpenRouter, and is the highest-priority automatic work on the scheduler's remote
+lane. Dispatch allowance may delay it but cannot silently convert it to complete.
+
+The sidecar records only terminal attempts under the fixed keys `deterministic`
+and `metadata-research`; a missing key means waiting or queued, never running.
+Each state is `completed`, `failed` or `waived` with `finished_at`. Failure is
+retryable and does not unlock review; its replacement remains visible in Git.
+Deterministic must complete, is never waived and carries no model usage.
+Completed metadata research records `usage.transport: subscription`; failed or
+waived research has no usage. Research can be recorded only after deterministic
+completes and its timestamp cannot precede deterministic completion. All sidecar
+times use canonical UTC `YYYY-MM-DDTHH:MM:SSZ`.
+
+An authenticated reviewer may explicitly waive research. The sidecar records the
+reviewer's stable identity, UTC time and non-empty reason in the
+`metadata-research` pass. Waiver is a terminal audited state, not a completed model
+run. A missing run, exhausted allowance or scheduler failure is not a waiver.
+
+### Proposals and decisions are closed
+
+Every proposal names its pass and one category: `person-name`, `known-term` or
+`metadata`. The operation remains separately tagged and mechanically guarded.
+Neither pass may rewrite a token merely because it begins a sentence or only to
+alter sentence-start capitalisation. Person names never pass through acronym or
+term normalisation.
+
+`replace-token` is restricted to deterministic `known-term` items whose exact
+check and `(old_token, new_token)` pair appears in
+`anomalica_common.housekeeping.KNOWN_TERM_RULES`. The shared constant is the
+authoritative closed registry. Unregistered and research-produced body
+replacements are invalid; changing the registry changes the algorithm.
+
+No housekeeping decision applies until deterministic processing is complete and
+metadata research is completed or waived. The authenticated reviewer decides every
+proposed item in one complete request. Item judgements remain independent, but
+all approved operations apply together; the record, statuses and ordered
+per-item `decisions` audit are one atomic commit authored under that reviewer
+identity. Rejected items and waiver events remain durable rather than being
+deleted after use.
+
+### Result bytes, not approved edits, trigger reruns
+
+`input_sha256` remains the immutable bytes examined by both passes.
+`result_sha256` initially equals it. The final atomic decision updates
+`result_sha256` to the exact post-apply record bytes. A sidecar is byte-current
+when the live record matches `result_sha256`, so its own approved edits do not
+retrigger deterministic work or research. Any external or later content edit
+differs from that result and creates a fresh `(content_hash, input_sha256,
+algorithm_version)` tuple with new proposals and decisions.
+
+### Review ordering and existing reviews
+
+Workbench blocks the start of content review for an unreviewed record until
+deterministic is completed, metadata research is completed or waived, and every
+proposal is approved or rejected. A failed attempt remains blocked. A record whose
+current review state already shows human review started or completed is excluded
+from automatic housekeeping: reconciliation does not stage it and the worker
+writes nothing. Existing in-progress review may continue. Housekeeping remains
+distinct from content review and never marks a record reviewed.
+
 ## Consequences
 
 The scheduler uses an explicit post-commit result rather than guessing an output
@@ -173,6 +246,13 @@ items. Version 1 sidecars are always due, cannot be decided or applied, and are
 replaced by v2 after a successful pass. Decisions never carry across input or
 algorithm tuple changes; each changed tuple receives fresh proposals and human
 decisions.
+
+`anomalica/housekeeping/3` is another breaking lifecycle revision. Versions 1
+and 2 cannot establish two-pass completion, waiver audit, result-byte currentness
+or the review gate and are due under the version 3 algorithm manifest. The
+manifest algorithm version advances to `3` with this contract. Version 3 of the
+algorithm incorporates the closed known-term registry and the stricter ordering,
+timestamp, dependency and byte-preservation guards.
 
 The additional body operation increases implementation work in both Python and
 the edge Workbench. The narrow byte guard, input binding and atomic commit are
