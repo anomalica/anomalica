@@ -48,7 +48,7 @@ title: "Document title"
 source_type: pdf
 provenance:
   publisher: "..."
-  published_date: 2023-07-26
+  published_date: "2023-07-26"
   source_url: "https://..."
 ---
 ```
@@ -108,7 +108,7 @@ A redistributed source has two publication layers, and recording only one files 
 publisher: "WXIA-TV"            # the WORK - who issued it
 date_published: "1988"
 posted_by: "Eyes On Cinema"     # the COPY - the channel this copy came from
-posted_date: 2026-08-13         # when that channel posted it
+posted_date: "2026-08-13"       # when that channel posted it
 ```
 
 `posted_by` and `posted_date` describe **the copy the fetcher actually saw**, which is all it can observe. `publisher` and `date_published` keep their existing meaning - the work - and the handler no longer writes them from channel metadata. On a fresh ingest they are simply **absent** until someone identifies the work, which is the same not-evidenced convention as [date precision](#date-precision-record-only-what-the-source-evidences). Where the channel *is* the originator, all four are filled and the pairs match; there is no special case.
@@ -141,17 +141,19 @@ Stated plainly because the tempting misreading is that the provenance fix handle
 
 #### Date precision: record only what the source evidences
 
-**A date carries the precision the source supports and no more.** `2020`, `2020-08`, and `2020-08-09` are all valid values; the day is *omitted* when the source does not state one, never guessed to fill the field.
+**A date carries the precision the source supports and no more.** `2020`, `2020-08`, and `2020-08-09` are all valid values; the day is *omitted* when the source does not state one, never guessed to fill the field. Publication and posting fields may instead carry an evidenced RFC 3339 instant, such as an email `Date` header or feed publication timestamp. That instant is not truncated to a date, padded from a date with midnight, or normalised to another offset.
 
 This is already the contract elsewhere - a claim's `date` accepts `2017` ([digest-format.md](digest-format.md#claims)), and `provenance.published_date` is specified as "ISO 8601, may be partial". Only the flat `date_published` demanded a full date, and demanding one is what produces fabrication: given a source whose evidence is "August 2020", an extractor obliged to emit a day emits a plausible one. One record carried `2020-08-09` where its 6-page scan states no date at all and its filename says only `...Persian-Gulf-August-2020`. Nothing in the record distinguished that invented day from a CIA report's `26 December 1973`, which is printed on the page.
 
-The principle is the one already applied a level up - a valueless field is omitted, never nulled - applied inside the value itself.
+The principle is the one already applied a level up - a valueless field is omitted, never nulled - applied inside the value itself. A producer does not substitute today's date when publication evidence is absent, and an invalid day fails validation rather than degrading to a month or year.
 
-**Emit a reduced-precision date as a QUOTED string; a full date bare.** `date_published: 1988` parses as the integer 1988, and across the corpus `date_published` has been read as four different Python types - `date`, `datetime`, `str` and `int` - purely from how the value was written. So `2020-08-09` is written bare and reads as a date, while `"2020-08"` and `"1988"` are quoted and read as strings. This applies to every date field carrying reduced precision, `posted_date` included. **Precision is the evidence marker**: a record reading `2020-08` is telling you the day was not evidenced, and needs no separate flag to say so.
+**Every temporal YAML scalar is a quoted string.** Across the corpus these values have been read as four different Python types - `date`, `datetime`, `str` and `int` - purely from how they were written. A reader therefore validates the source scalar before implicit YAML typing can alter it, and a writer emits quotes around reduced dates, full dates and timestamps alike. **Precision is the evidence marker**: a record reading `2020-08` is telling you the day was not evidenced, and needs no separate flag to say so.
+
+The sole normative grammar, per-field allowance map and legacy-read boundary are in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.ingest.temporal`. Producers, validators and editors consume that map rather than maintaining local date lists. Existing unquoted values, space-separated Python timestamps, date-only acquisition values and source-native release stamps are migration input, not alternative output forms; an unrelated edit preserves them exactly, while an edit to the temporal field writes the canonical quoted form.
 
 Two consequences that must be honoured downstream, or the fabrication simply moves:
 
-- **Sort by the earliest instant the value can denote**, with precision as the tiebreak: `2020` sorts at 2020-01-01, `2020-08` at 2020-08-01. Deterministic and total, so a reduced-precision value never needs padding to become sortable.
+- **Use a derived total sort key; never pad storage.** Compare timestamps by instant. For sorting only, a date maps to its earliest represented UTC boundary: `2020` to `2020-01-01T00:00:00Z`, `2020-08` to `2020-08-01T00:00:00Z`, and a full date to its midnight UTC. Break an equal instant by precision (`year`, `month`, `day`, `timestamp`), then by the stored lexical value. This is deterministic across mixed dates and timestamps without changing what the record claims.
 - **Display exactly the stored precision.** `2020-08` renders "August 2020", never "1 August 2020" and never "8 August 2020". Coercing a partial date to a day at the render layer reintroduces the invention one stage later, where it is harder to see and reads to a reader as a fact about the document.
 
 **Existing day-precision values on scanned sources are not trustworthy** and cannot be audited automatically - establishing whether a stored day is evidenced means reading the source. There is no backfill: records carry honest precision as they are re-ingested, and the cohort extracted before this rule is identifiable by `date_extracted`. Until then a day on such a record is not authoritative and should not be rendered as though it were.
@@ -304,7 +306,7 @@ release:
   declassified_by_title: "MG, USCENTCOM Chief of Staff"
   control_number: "USCENTCOM 26-0028"
   released_to: "AARO"
-  release_date: 2026-03-16
+  release_date: "2026-03-16"
   handling: ["FOUO", "PA applies"]
   markings:                                    # verbatim, as stamped
     - "Declassified by MG Richard A. Harrison, USCENTCOM Chief of Staff"
@@ -502,7 +504,7 @@ snapshots:
   - role: single_file
     hash: sha256:e7115739...
     content_type: text/html
-    captured_at: 2026-09-03T09:12:00Z   # only on a re-captured snapshot
+    captured_at: "2026-09-03T09:12:00Z" # only on a re-captured snapshot
 ```
 
 | Role | What it is | Use it for |
@@ -692,7 +694,7 @@ Enumerating is the mistake, because the next notation is missed silently. Test t
 Marks each message in an email thread, and each piece of correspondence inside a container. Structurally this is the correspondence equivalent of [Speaker change](#speaker-change): one body divided into segments authored by different people at different times.
 
 ```markdown
-<!-- message: {n: 2, from: "John Podesta <john.podesta@gmail.com>", date: 2015-03-05T18:38:14-05:00, quoted: true} -->
+<!-- message: {n: 2, from: "John Podesta <john.podesta@gmail.com>", date: "2015-03-05T18:38:14-05:00", quoted: true} -->
 ```
 
 One annotation per message carrying a YAML mapping, rather than several loose keys. Separate `message_n` / `message_from` / `message_date` annotations can desynchronise, and a parser cannot then distinguish a missing key from a misplaced one.
@@ -701,7 +703,7 @@ One annotation per message carrying a YAML mapping, rather than several loose ke
 |-----|---------|
 | `n` | Position in the thread, outermost message first. **This is the ordering key** - a consumer orders a thread by `n`, never by `date` (see below). |
 | `from` | The sender, `Name <address>` where both are known. |
-| `date` | The message's own `Date` header as ISO 8601 with offset **where that header parsed**; otherwise the source's own attribution text verbatim (e.g. `"Mar 5, 2015 6:08 PM"`) - opaque, for display only, and **never parsed as a timestamp**. The verbatim fallback is kept rather than dropped or coerced: an attribution line carries no timezone, so synthesising an ISO value would fabricate an offset, and fabricating a timestamp in an archive is worse than carrying the string the source printed. The two forms also differ in TYPE after YAML parsing - the ISO form resolves to a timezone-aware datetime, the verbatim fallback stays a string - which is where a naive consumer breaks at the point of use, not at parse. A consumer tests the type (or the ISO shape) before treating a value as a timestamp; because the fallback is unsortable, `date` is not an ordering key. |
+| `date` | The message's own `Date` header as a quoted RFC 3339 timestamp with an explicit offset, only where that header parses. Otherwise omit the key: preserve an unparseable or timezone-free attribution line verbatim in the reproduced body rather than fabricating an offset or putting opaque text in a temporal field. `date` is not the ordering key even when present. |
 | `quoted` | `true` where the segment is quoted inside a later message rather than authored at this level. |
 
 **Parse the mapping as YAML; do not pattern-match the annotation text.** The value is well-formed YAML - string values are double-quoted and `\`/`"` escaped, and a `-->` inside a value is emitted as `--\x3e` (a YAML `\x` escape) so an attacker-controlled display name from an email dump cannot close the annotation's HTML comment early. A consumer that scans the raw text instead of parsing it both mis-reads a display name containing `quoted: true` as the flag, and - absent the escape - loses the tail of any annotation whose value contained `-->`. Read `quoted` from the parsed mapping.
@@ -1587,7 +1589,7 @@ provenance:
   publisher: "House Oversight Committee"
   creators:
     - David Fravor
-  published_date: 2023-07-26
+  published_date: "2023-07-26"
   source_url: https://oversight.house.gov/...
 content_hash: sha256:7bf2c20d...
 pages: 3
@@ -1624,7 +1626,7 @@ title: "Lex Fridman Podcast #122 - David Fravor"
 source_type: video
 provenance:
   publisher: "Lex Fridman"
-  published_date: 2020-09-08
+  published_date: "2020-09-08"
   source_url: https://youtube.com/watch?v=aB8zcAttP1E
   identifiers:
     youtube: aB8zcAttP1E
@@ -1653,7 +1655,7 @@ schema: anomalica/record/1
 title: "Incident Report"
 source_type: pdf
 provenance:
-  published_date: 2004-11-14
+  published_date: "2004-11-14"
 pages: 5
 ---
 

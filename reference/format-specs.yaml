@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 10
+spec_version: 11
 types:
   ingest:
     schema: anomalica/record/1
@@ -32,6 +32,71 @@ types:
     source_types: [pdf, audio, video, web, ebook, image]
     # `formats` on a field lists the source_types it applies to, ONLY where the spec states
     # it. A field with no `formats` key applies to all source_types (or is reviewer-optional).
+    temporal:
+      authority: Canonical lexical and serialisation contract for every calendar value in an ingest.
+      yaml_scalar: string
+      yaml_style: quoted
+      lifecycle:
+        current_flat_provenance_paths: [date_published, posted_date, date_accessed]
+        target_provenance_paths: [provenance.published_date, provenance.posted_date, provenance.acquired_date]
+        target_rule: The provenance paths are not writable until decision 0043 ships; they inherit the corresponding flat
+          field's profile during that migration.
+      forms:
+        reduced_date:
+          grammar: YYYY or YYYY-MM
+          pattern: '^(?!0000)[0-9]{4}(?:-(?:0[1-9]|1[0-2]))?$'
+        full_date:
+          grammar: YYYY-MM-DD
+          pattern: '^(?!0000)[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$'
+        rfc3339_timestamp:
+          grammar: RFC 3339 timestamp with mandatory Z or numeric +HH:MM/-HH:MM offset; seconds are 00-59 and leap seconds
+            are unsupported
+          pattern: '^(?!0000)[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\.[0-9]+)?(?:Z|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])$'
+        utc_timestamp:
+          grammar: RFC 3339 timestamp in UTC, ending in Z; seconds are 00-59 and leap seconds are unsupported
+          pattern: '^(?!0000)[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\.[0-9]+)?Z$'
+      fields:
+        - paths: [date_published, posted_date, provenance.published_date, provenance.posted_date]
+          forms: [reduced_date, full_date, rfc3339_timestamp]
+          producer_rule: Emit only the precision and time the source evidences. A date is never padded to midnight and an
+            absent date is never replaced with the current date. The source_offset_rule applies to timestamps.
+        - paths: [date_accessed, provenance.acquired_date]
+          forms: [rfc3339_timestamp]
+          producer_rule: Emit the actual acquisition instant with an explicit offset; do not truncate it to a date.
+        - paths: [date_extracted, 'snapshots[].captured_at', review_carryover.at, refresh_refused.at]
+          forms: [utc_timestamp]
+          producer_rule: Emit the actual machine event instant in UTC.
+        - paths: ['annotations.message.date']
+          forms: [rfc3339_timestamp]
+          producer_rule: Emit only a parsed message instant with an explicit offset; omit the structured value when the source
+            has no valid instant. The source_offset_rule applies.
+        - paths: [release.release_date, copyright.granted_at, copyright.expires]
+          forms: [full_date]
+          producer_rule: Emit only an evidenced, valid calendar day; reduced precision and timestamps are not allowed.
+      source_offset_rule: Preserve source-supplied Z as Z and preserve a numeric offset's value. Canonicalise source syntax
+        only as needed for RFC 3339, such as -0500 to -05:00; never normalise a valid source instant to another offset.
+      validation:
+        - Match the complete scalar against one allowed form for its field, then validate that it denotes a real Gregorian
+          calendar value and, for timestamps, a valid RFC 3339 instant. A regex match alone is insufficient.
+        - Invalid values fail validation. A producer or editor must never make one pass by truncating it, padding it, substituting
+          the current date, fabricating midnight UTC or degrading it to a lower-precision value.
+        - Consumers may compare timestamps by instant but must not rewrite the stored value merely by reading and saving a
+          record.
+        - Validate the scalar token before a YAML library can implicitly construct an integer, date or datetime. Every canonical
+          writer emits a quoted YAML string, including full dates and timestamps.
+      legacy_read:
+        scope: Existing records only; these forms are non-canonical and no producer may emit them.
+        forms:
+          implicit_yaml_scalar: An unquoted token whose characters otherwise match a canonical form, even when the YAML loader
+            constructs an integer, date or datetime instead of a string.
+          space_separated_timestamp: A timestamp otherwise equivalent to rfc3339_timestamp but using one ASCII space instead
+            of T. Existing values may be quoted or unquoted.
+          date_only_acquisition: A full_date in date_accessed.
+          offset_extraction_timestamp: An rfc3339_timestamp ending in a numeric offset rather than Z in date_extracted.
+          source_native_release_date: An existing non-ISO release.release_date retained as source text pending evidence-based
+            correction; it is not a temporal value consumers may parse or compare.
+        consumer_rule: A non-temporal edit must preserve a legacy token byte-for-byte. Editing that temporal field writes
+          a canonical quoted value; automated migration requires evidence and must not infer missing precision or timezone.
     fields:
       - {name: schema, type: string, required: true, description: "Format version. `anomalica/record/1`, or `anomalica/record/2`
           when word-level timestamps are present."}
@@ -51,9 +116,8 @@ types:
       # CURRENT FLAT FIELDS (2026-08-16). These are what records actually carry - 242 of 257 live
       # records have no provenance block at all. They are superseded by `provenance` WHEN 0043 SHIPS;
       # until then they are the live contract and a validator must accept them.
-      - {name: date_published, type: string, required: false, description: "Source publication date, ISO 8601, PARTIAL ALLOWED
-          (QUOTED when reduced: '1988', '2020-08'; bare when full: 2020-08-09 - a bare 1988 parses as an integer) - carries
-          only the precision the source evidences, never a guessed day. -> provenance.published_date."}
+      - {name: date_published, type: string, required: false, description: "Source publication date or evidenced publication
+          instant. Exact forms and serialisation are defined by `temporal`; never guess precision. -> provenance.published_date."}
       - {name: source_url, type: string, required: false, description: "Canonical URL of the original. -> provenance.source_url."}
       - {name: fetched_url, type: string, required: false, description: "URL actually retrieved when different (e.g. Wayback).
           -> provenance.fetched_url."}
@@ -70,13 +134,15 @@ types:
           in (Scientific Reports; Topological Foundations of Electromagnetism; 11Alive News Extra). One field for all three,
           per CSL container-title. Different axis from posted_by: the venue OF THE WORK, not the channel that reposted a copy."}
       - {name: posted_date, type: string, required: false, description: "When that channel posted this copy. Distinct from
-          date_published (when the WORK was issued) and from date_accessed (when we fetched it). -> provenance.posted_date."}
+          date_published (when the WORK was issued) and from date_accessed (when we fetched it). Exact forms are defined by
+          `temporal`. -> provenance.posted_date."}
       - {name: creators, type: list, required: false, description: "Human author(s)/host(s), person names in natural order.
           -> provenance.creators."}
       - {name: authors, type: list, required: false, description: "LEGACY ALIAS of creators. Being unified onto creators;
           do not emit new."}
       - {name: description, type: string, required: false, description: "The source''s OWN blurb, verbatim, never AI. -> provenance.description."}
-      - {name: date_accessed, type: string, required: false, description: "When the source was retrieved. -> provenance.acquired_date."}
+      - {name: date_accessed, type: string, required: false, description: "The source retrieval instant. Exact forms are defined
+          by `temporal`. -> provenance.acquired_date."}
       - {name: also_published_at, type: list, required: false, description: "Other URLs carrying the same source. TOP-LEVEL
           on disk; the provenance block places it nested - reconcile when 0043 ships."}
       - {name: speakers, type: list, required: false, formats: [audio, video], description: "Names associated with a recording
@@ -94,18 +160,18 @@ types:
           block (decision 0043; narrative + example in ingest-format.md). Sub-fields, each OMITTED when absent (never null):
           collection (curated grouping, e.g. 'war.gov UFO reading room'); publisher (issuing body / channel / author-org,
           not the hosting platform); creators (human author(s)/host(s), person names in natural order); published_date (the
-          SOURCE's own publication/upload date, ISO 8601, may be partial - omitted when genuinely undated); acquired_date
-          (when we brought it in, ISO 8601 datetime); source_url (canonical URL of the original); fetched_url (URL actually
-          retrieved when different, e.g. a Wayback archive); source_file (original filename for a source ingested from a local
-          file); identifiers (native ids keyed by scheme: youtube, virin, isbn, doi, ...); description (the source's OWN blurb,
-          verbatim, never AI - omitted or truncated for licensed/restricted sources per copyright.status). SOURCE facts only
-          - a subject's incident place and date are claims, not provenance. Copyright is NOT mirrored here; the authoritative
-          field is the top-level `copyright`. Origin-unknown is simply the absence of source_url/fetched_url/source_file/identifiers.
-          Also carries AUDIENCE (internal | public - who the source was written FOR; the evidential axis, since an internal
-          record made by people expecting secrecy has no performative incentive) and DISCLOSURE (published | declassified
-          | foia | subpoena | leaked | unknown - the authenticity axis; a FOIA release is attested by the holding agency,
-          a leak by nobody). Keep them separate: folding disclosure into audience lets an unauthenticated document inherit
-          a compelled release's credibility. Narrative in ingest-format.md."}
+          SOURCE's own publication date or instant); posted_by and posted_date (who posted this copy and when); acquired_date
+          (when we brought it in). Their exact temporal forms are defined by `temporal`. Also source_url (canonical URL of
+          the original); fetched_url (URL actually retrieved when different, e.g. a Wayback archive); source_file (original
+          filename for a source ingested from a local file); identifiers (native ids keyed by scheme: youtube, virin, isbn,
+          doi, ...); description (the source's OWN blurb, verbatim, never AI - omitted or truncated for licensed/restricted
+          sources per copyright.status). SOURCE facts only - a subject's incident place and date are claims, not provenance.
+          Copyright is NOT mirrored here; the authoritative field is the top-level `copyright`. Origin-unknown is simply the
+          absence of source_url/fetched_url/source_file/identifiers. Also carries AUDIENCE (internal | public - who the source
+          was written FOR; the evidential axis, since an internal record made by people expecting secrecy has no performative
+          incentive) and DISCLOSURE (published | declassified | foia | subpoena | leaked | unknown - the authenticity axis;
+          a FOIA release is attested by the holding agency, a leak by nobody). Keep them separate: folding disclosure into
+          audience lets an unauthenticated document inherit a compelled release's credibility. Narrative in ingest-format.md."}
       - {name: document_type, type: string, required: false, description: "WHAT the artefact is, orthogonal to source_type
           which is HOW it was acquired. Closed set: book, paper, report, article, letter, email, statement, form, transcript,
           slide, interview, documentary, podcast, lecture, broadcast, recording, footage. Footage is visual moving-image material
@@ -143,8 +209,8 @@ types:
       - {name: duration, type: number, required: false, formats: [audio, video], description: "Length of the FILE in seconds,
           measured from the archived original - NOT the transcript's span. A file ending in silence or outro music runs on
           past its last word; writing the last segment's end here understated every record in the corpus by up to 82s."}
-      - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. ISO 8601 with
-          timezone (Zulu)."}
+      - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. Exact UTC form
+          and serialisation are defined by `temporal`."}
       - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright
           draft). status is one of public_domain, open_licence, publicly_accessible, licensed, restricted. Only public_domain
           and open_licence serve the ORIGINAL file openly; the rest gate it behind proof of possession. DEFAULTS BY ACQUISITION
