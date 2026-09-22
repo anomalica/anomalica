@@ -572,6 +572,17 @@ The identity of a printed page is the pair `(printed_page_sequence, printed_page
 
 `printed_page` remains in the materialised pre-digest as source-location context. `printed_page_sequence` is structural disambiguation for deterministic consumers, not source content or a supported claim-location syntax, so `anomalica_common.pre_digest.materialise()` strips the complete sequence-marker line before model input. Adding it changes the stored record binding and preparation version but otherwise leaves the model input unchanged; its numeric payload never reaches extraction. EPUBs without pagebreaks carry no page markers and locate content by [chapter boundary](#chapter-boundary) only.
 
+An EPUB exported by Anomalica Prometheus may also carry an edition-specific Kindle source position on each paragraph. The ingester preserves it immediately before that paragraph:
+
+```markdown
+<!--
+kindle_position: 2147
+element_id: 392
+-->
+```
+
+`kindle_position` is the stable renderer position within the exact Kindle edition identified by its ASIN and content version. `element_id` is the renderer paragraph identifier and is omitted when unavailable. These are not printed pages and must not be presented as such. They provide a reproducible fallback citation anchor when the edition has no EPUB page list. Both values remain as source-location context in the materialised pre-digest.
+
 ### Speaker change
 
 An inline HTML comment marks when the speaker changes. All content until the next speaker annotation belongs to that speaker.
