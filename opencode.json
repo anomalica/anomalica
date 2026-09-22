@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["../../AGENTS.md", "../AGENTS.md"],
+  "references": {
+    "operations": {
+      "path": "../../business/operations",
+      "description": "Private operating boundaries; do not publish its records"
+    }
+  }
+}
