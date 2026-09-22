@@ -25,13 +25,38 @@ Folds digest YAML into the graph. `assimilate <dir>` is the incremental path (fo
 Resolves nodes across records: "David Grusch" in one transcript and "Grusch" in another become the same node, via alias matching. This is the cross-corpus step the per-record digester cannot do - it sees only one record at a time. (Module: `matching`.)
 
 ### Provenance chains
-Every claim carries a provenance chain showing how it reached the graph. When multiple records carry the same claim, the assimilator traces whether they are genuinely independent or derived from a common origin. If CNN, BBC, and Reuters all report the same Pentagon press release, that is one first-hand claim with three second-hand repetitions, not four independent corroborations. Two claims corroborate each other only if their provenance chains do not share a root.
+Every claim carries a provenance chain showing how it reached the graph. When
+multiple Records carry the same proposition, the assimilator traces whether they
+are genuinely independent or derived from a common origin. If CNN, BBC and Reuters
+all report the same Pentagon press release, that is one first-hand claim with
+three second-hand repetitions, not four independent corroborations. Two claims
+add independent support only when distinct roots are positively established and
+no shared lineage is established; merely failing to find a shared root is not
+evidence of independence.
+
+The next paragraph is the accepted 0051 migration target. Current implementation
+has assertion-chain roots and scalar locations but no Asset, Selection, anchor or
+evidence-unit relations; its legacy Record fallbacks do not establish the target's
+positive independence and must be removed or centralised during migration.
+
+Before provenance independence is considered, the assimilator validates every
+schema-2 source anchor against the Record Selection and groups intervals
+overlapping on the same physical Asset page under the same exact page-text hash
+into transitive evidence units. Claims in one evidence unit
+always count once. Disjoint evidence is not automatically independent; independence
+then requires established distinct work or assertion-origin roots. Unknown roots,
+unmappable anchors and contained documents without distinct-root evidence fail
+closed and add no independent count.
 
 ### Scoring
 Evidence scores are algorithmic, not editorial - no human assigns a score. Inputs: the count of independent corroborating sources (provenance chains must not share a root), attestation depth, source track record, contradictions, and evidence type. (Module: `scoring`.) The scoring model itself remains an open design (the algorithmic-evidence-scoring draft). Scoring also derives the source properties - track record, correction behaviour, independence - defined in [data-model.md](data-model.md).
 
 ### Corroborate (AI-assisted)
-`corroborate` is the one AI-assisted graph pass wired today: cross-record same-fact verification (does a claim in record A assert the same fact as a claim in record B?). A related AI-assisted claim de-duplication function, `deduplicate_claims`, exists in the `consolidate` module but is not yet wired to a command.
+`corroborate` is the one AI-assisted graph pass wired today: cross-Record
+same-fact verification. Its output is semantic agreement only. Deterministic
+anchor overlap establishes evidence identity and evidenced provenance establishes
+independence; the model verdict grants neither. A related AI-assisted claim
+de-duplication function exists but is not yet wired to a command.
 
 `relate` (experimental) asks a different question: not "same fact" but "same specific subject" - whether two records refer to the same incident, operation, programme or document, which claim similarity alone does not surface (such pairs sit at embedding similarity 0.65-0.75, below the 0.90 the corroborate pass accepts). It shortlists record pairs by claim-neighbour hits, sends both records' claim lists to a model chosen via the model policy's `relate` stage, and writes proposals - a verdict and a short phrase naming the shared subject - to a `record_relations` table in `knowledge.db` (derived, rebuildable) for human confirmation in the workbench. It does not merge, link claims, or feed scoring. Evidence: the assimilator's `reports/cross-source-linking-2026-09-02/README.md`.
 

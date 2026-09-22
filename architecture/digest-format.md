@@ -19,33 +19,48 @@ no digest claim becomes gold until an authenticated reviewer accepts it under
 the [evaluation contract](evaluation-format.md), and the interface does not
 present a complete model claim set as the reference answer.
 
-The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.per_model_digest`); this document is its narrative companion.
+The canonical machine-readable field lists are
+[`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.digest`,
+`types.digest_v1` and `types.per_model_digest`); this document is their narrative
+companion.
+
+`digest/2`, preparation-version-9 source maps and Asset-page anchors are the
+accepted migration target, not current Digester output. The deployed Digester
+currently emits `digest/1` with scalar `location` for every medium.
 
 ## Schema identifier
 
-Every digest carries `schema: anomalica/digest/1` at the top. A future
-breaking change to the format bumps the integer (`anomalica/digest/2`).
-Consumers should check the schema and refuse anything they do not
-understand.
+After migration, new digests for page-mapped PDF/image `record/3` inputs carrying canonical Asset
+anchors use `schema: anomalica/digest/2`. Audio, video, web and ebook Records remain
+on schema 1 until a later decision defines exact typed coordinates for them.
+Schema 1 remains readable, but its scalar location is display-only and cannot
+drive evidence identity, corroboration, source counts or generated public claim
+sections. Consumers must refuse unsupported schema/input combinations.
 
 The schema is only the wire shape. It is independent of the extraction
 generation and exact extraction configuration described below: two digests may
-both be `anomalica/digest/1` while one is stale, and two current digests may
+both be `anomalica/digest/2` while one is stale, and two current digests may
 have different exact configuration fingerprints.
 
 ## Extraction identity and freshness
 
 The digest artefact identity used by the `digest-generation` freshness boundary
 is its canonical repository-relative YAML path. The record input it consumes is
-reported separately at `digest-input` under the record's complete
+reported separately at `digest-input` under the Record's complete
 `sha256:<content-hash>`. This keeps one changed digest generation grouped as one
 digest while preserving the stable record binding used across re-extraction.
 
-Every newly extracted digest carries both of these fields:
+Every newly extracted digest carries generation, configuration and pre-digest
+identity. This example is specifically schema 2; new schema 1 omits
+`source_map_sha256` and uses its registered preparation version:
 
 ```yaml
 extraction_generation: 1
-extraction_config: sha256:85d1c8fca7d0...
+extraction_config: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+pre_digest:
+  sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  prep_version: 9
+  source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 ```
 
 `extraction_generation` is a positive integer maintained manually by the
@@ -150,12 +165,15 @@ boundary required by [0039](../decisions/0039-multi-model-digestion-canonical-re
 
 The order of top-level keys is fixed: `run_kind`, `schema`, `extracted_at`, `model`,
 `extraction_generation`, `extraction_config`, `ai_usage`, `prompts`,
-`pre_digest`, `curation`, `record`, `terminology`, `nodes`, `domain_claims`,
+`review_state`, `pre_digest`, `record_snapshot_sha256`, `curation`, `record`, `terminology`, `nodes`, `domain_claims`,
 `infrastructure_claims`. Null and empty values are omitted - if a record has no
 infrastructure claims, the key is absent rather than present with `[]`.
 `extraction_generation` and `extraction_config` are required on new
 extractions; readers accept their absence on legacy digests only by classifying
-those digests as unknown and not current. `ai_usage`, `prompts`, `pre_digest`,
+those digests as unknown and not current. `pre_digest` is required on all new
+output: schema 1 carries `{sha256, prep_version}`, while schema 2 additionally
+requires `source_map_sha256` and preparation version 9. Existing pre-stamping
+schema-1 files may omit it and are freshness-unknown. `ai_usage`, `prompts`,
 `curation`, and `terminology` are optional blocks (see below).
 
 `run_kind` is required on new output and is either `production` or `comparison`.
@@ -163,44 +181,36 @@ Absence is accepted only for legacy digests and means legacy production for
 import eligibility; it does not make a variant or hidden file canonical.
 
 ```yaml
-schema: anomalica/digest/1
+run_kind: production
+schema: anomalica/digest/2
 extracted_at: '2026-05-19T11:38:07.350885+00:00'
 model: sonnet
 extraction_generation: 1
-extraction_config: sha256:85d1c8fca7d0...
+extraction_config: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+pre_digest:
+  sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  prep_version: 9
+  source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+record_snapshot_sha256: sha256:375ead75c85f48ad5f19f2c3ab797b3cbb7099651dd23eb752ebc5cdec021b47
 record:
   id: 15a0aeac-f65e-4408-8356-18eb8fd2b6fe
+  content_hash: sha256:ab9d694b359679bbbded0e49117a370b61e59a7d4140f4dc49cbf23446b94525
   title: 'Imminent: Inside the Pentagon''s Hunt for UFOs'
   producer: Elizondo, Luis
   date: '2024'
-  reference: null
-  copyright_status: licensed
-
-### `copyright_status`
-
-Flattened from the ingest record's nested `copyright.status`. The digest carries
-the STATUS ONLY, never the whole copyright block, so nothing else in it is
-republished. Values are those of the ingest record: `public_domain`,
-`open_licence`, `publicly_accessible`, `licensed`, `restricted`.
-
-**Absent means UNKNOWN, and a consumer must treat unknown as NOT DISTRIBUTABLE.**
-Every digest produced before 2026-08-28 lacks the field, so absence is common and
-says nothing about the source's licence. A consumer that reads absent as
-permitted would treat the entire pre-existing corpus as freely publishable.
-
-It is carried because a field that must be JOINED is a field that gets forgotten.
-The status was previously held only in the ingest record, on the reasoning that
-access-control state should have exactly one authoritative home - which is correct
-in principle and produced a near-miss in practice: with the graph unable to see
-copyright, verbatim excerpts from 13 copyrighted books reached 85% of proposed
-pages before anyone noticed.
-
-**It is a snapshot, not an authority.** Copyright status lives in record
-frontmatter, and frontmatter changes are invisible to `pre_digest.sha256`, which
-covers the body. A licence that changes after digestion leaves every digest
-asserting the old status with no staleness check able to detect it. A consumer
-FILTERING or PROPOSING may use the carried value; a consumer making a PUBLISH
-decision should resolve the record by `content_hash` and read the store.
+  assets:
+    - asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      source_type: pdf
+      file_format: pdf
+      pages: 12
+  asset_rights:
+    - asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      status: licensed
+  selection:
+    - asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      selector: {type: pdf_page, page: 4}
+  page_map:
+    - {record_page: 1, asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, asset_file_page: 4}
 
 nodes:
   - id: dea95da2-a779-4012-88d5-d443d7f8f4b3
@@ -222,20 +232,38 @@ domain_claims:
       origin_kind: speaker
       origin: Elizondo, Luis
       relay: []
-    location: 00:04:12.0-00:04:25.5
+    source_anchors:
+      - asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        record_page: 1
+        asset_file_page: 4
+        asset_text_sha256: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        asset_span: {start: 340, end: 372}
+        body_span: {start: 820, end: 852}
+        quote: "Verbatim fragment from this page"
     date: '2017'
     refs:
       - id: dea95da2-a779-4012-88d5-d443d7f8f4b3
         name: Elizondo, Luis
       - id: 5bf24c7d-5a04-4749-a52c-444de447d97c
         name: Department of Defense
-    quote: |-
-      Verbatim text from the source goes here
     text: |-
       The canonical claim text as extracted.
-
-infrastructure_claims: []
 ```
+
+### `asset_rights`
+
+Copied from each selected `assets[].copyright.status` in first-selection-use
+order. The digest carries the Asset hash and status only, never the whole copyright
+block. Values are `public_domain`, `open_licence`, `publicly_accessible`,
+`licensed` and `restricted`.
+
+**Absent means unknown, and a consumer treats unknown as not distributable.**
+Every legacy digest lacks this list, so absence is common and says nothing about
+the source's licence.
+
+It is a snapshot, not authority. A publish decision resolves the Record by
+`content_hash`, reads every current selected Asset authority and denies if any
+required member is absent, inconsistent or disallowed.
 
 ### `provenance_chain`
 
@@ -253,11 +281,16 @@ Distinct from the record's `provenance` block
 ([0043](../decisions/0043-canonical-provenance-block.md)), which is source-origin
 metadata about the document rather than the assertion chain inside it.
 
-### `location`
+### `source_anchors`
 
-The span of the source the claim was drawn from. **Always derived by realigning
-the claim's verbatim `quote` against the record, never taken from the model.**
-This was already the rule for timestamped records; it applies to every type.
+The required non-empty ordered list of exact evidence sites from which a schema-2
+claim was drawn. Anchors are **always derived by deterministic realignment and the
+pre-digest source map, never taken from a model's rough location**.
+
+Schema 2 and preparation version 9 are limited in this contract to page-mapped
+PDF/image Records. A non-paged Record cannot fabricate page coordinates and remains
+schema 1; its claims are ineligible for anchor-based evidence counting and public
+generated claim sections.
 
 The reason is **axis consistency and frame definiteness**, not model imprecision.
 A model left to write `location` itself picks a different axis per chunk -
@@ -283,47 +316,39 @@ rough guess is a useful *input* for disambiguating which occurrence of a short
 quote is meant, and is simply never the stored value. What is constrained is what
 gets written, not what the model may say.
 
-#### A span must declare its frame
+Each element has `asset_hash`, 1-based `record_page`, 1-based physical
+`asset_file_page`, `asset_text_sha256`, `asset_span`, `body_span` and non-empty
+`quote`. Both spans are
+integer Unicode code-point intervals with explicit half-open `[start, end)`
+semantics and `start < end`. `body_span` indexes the exact materialised pre-digest
+named by `pre_digest`; `asset_span` indexes the canonical extracted text of that
+one Asset page whose exact UTF-8 bytes hash to `asset_text_sha256`. The source map binds the two. One anchor cannot cross a page or
+Asset boundary.
 
-**Spans are expressed in the materialised pre-digest**, not the raw record body.
-The two differ - the pre-digest is whitespace-collapsed and annotation-stripped -
-so an offset is uninterpretable without knowing which space it counts in, and a
-consumer resolving it against the wrong one lands slightly and consistently off.
-That mismatch, not model error, produced the residual above and most of the wrong
-numbers found across four components on 2026-07-31.
+Every anchor must be contained by the Record Selection and agree with its
+`page_map` and source-map text frame. Canonical ordering is ascending
+`record_page`, then asset-local start and end.
+A claim may have several anchors across pages or Assets. Elided quote fragments
+remain separate anchors; an enclosing span that includes intervening prose is
+invalid. A fragment that does not map exactly makes the claim invalid for schema
+2 rather than leaving a rough location.
 
-This needs no new field: the digest's [`pre_digest`](#pre_digest) block already
-carries `{sha256, prep_version}`, which names the exact text the offsets index.
-What was missing is the declaration that offsets are relative to it. A digest
-carrying no `pre_digest` block has **no recoverable frame**, and its spans cannot
-be resolved with confidence at all - one more thing re-digestion fixes and
-back-stamping cannot.
+Physical page ordinals are coordinates. `printed_page` and chapter text are
+reader-facing labels only. A renderer may show both, for example “Record page 1,
+PDF page 4, printed page 2”, but never substitutes a label for an ordinal.
 
-The stored form is a resolvable span, in the most **re-extraction-stable** axis
-the record supports:
+Equal proposition and provenance may merge their unique anchors in canonical
+order. Multipart evidence does not require duplicate claims. Chunking and overlap
+must expose claims that cross selected page or Asset boundaries.
 
-| Record | Form | Survives |
-|---|---|---|
-| Timed media | `HH:MM:SS.d-HH:MM:SS.d` | Re-transcription - anchored to the audio |
-| Chaptered work | `ch N:START-END` | Re-pagination and prep changes |
-| Everything else | `char:START-END` | Least stable; regenerate on re-digest |
-
-Prefer the highest row the record supports. Global character offsets are the
-fallback precisely because they die at the next `prep_version` bump, and a
-location is only as durable as the anchor beneath it.
-
-An elided `quote` aligns fragment by fragment - the elision rules already require
-each fragment to be individually locatable, so the span runs from the first
-fragment's start to the last one's end, and a fragment that will not locate is a
-broken quote rather than a location problem.
-
-A claim whose quote cannot be aligned gets **no** `location` rather than a
-guessed one. Absence means unresolvable, and it must not be filled with the
-model's estimate to avoid an empty field.
+For schema 1, including current non-paged output, `location` remains readable as opaque display text. It has no
+canonical frame and must not drive overlap, corroboration, evidence counts or
+public claim links. Eligible PDF/image Records migrate only by re-digestion under
+the registered preparation version; back-stamping is forbidden.
 
 ### `record`
 
-The five fields describing the source record this digest was produced
+The fields describing the source Record this digest was produced
 from. `id` is the universally unique identifier assigned to the record
 node in the knowledge graph and is the join key against
 `ingests`. `producer` is in `Last, First Middle` form for
@@ -331,6 +356,26 @@ persons ([person naming](node-types.md#person)) or a plain
 organisation name. `date` is a string in the form `YYYY` or `YYYY-MM-DD`.
 `reference` is an external identifier where one exists (book ISBN,
 report number, archive identifier) and is often null.
+`asset_rights` is a non-authoritative snapshot of each selected Asset's status in
+first-use order. Publication always rejoins current Asset authority rather than
+trusting this snapshot.
+For new output, `assets` is the complete first-use ordered public structural
+projection of Asset hash, source type, file format, optional page count and optional
+`derived_from: {asset_hash, transform}`. It omits acquisition and private rights
+evidence while making derivative lineage rebuildable. `selection` is the complete canonical expanded Record Selection,
+`page_map` is the complete page mapping when paged, and `work_provenance` is copied
+unchanged when present. The assimilator consumes this structural snapshot, verifies
+`content_hash` and validates anchors without reading the private Record store.
+`record_snapshot_sha256` uses `anomalica/digest-record-snapshot/1` projected
+directly from the live `record/3`: content hash, title, complete optional
+`provenance` and `work_provenance`, public structural Assets, ordered rights-status
+projection, Selection and optional page map. It is not reconstructed from the
+digest's lossy singular `producer`, `date` or `reference` display fields.
+Freshness recomputes that exact RFC 8785 projection from the current live Record;
+a changed title, provenance, structural Asset projection, rights snapshot, page
+map or `work_provenance` makes the digest stale even though stable `content_hash`
+correctly remains unchanged. The machine-readable specification contains the
+fixture corresponding to this example.
 
 ### `ai_usage`
 
@@ -495,25 +540,40 @@ and the budget allows, re-digest instead and leave the block absent.
 
 ### `pre_digest`
 
-Optional. The content hash of the **pre-digest** - the ingest after all
+Required on all new output and optional only on existing pre-stamping schema 1.
+This is the content hash of the **pre-digest** - the ingest after all
 deterministic model-prep (irrelevant regions removed, footnotes inlined,
 word-timestamps stripped), which is exactly the text the model extracted from
 ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)).
 
 ```yaml
 pre_digest:
-  sha256: 1c0d2ba0347d3592...
-  prep_version: 1
+  sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  prep_version: 9
+  source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 ```
 
 Together with `extraction_config`, this binds a digest to its exact source input
 and effective extraction setup. It makes the run attributable and repeatable;
 model sampling means it does not promise byte-identical model output.
-`prep_version` names the version of the deterministic prep that produced the
-pre-digest. The materialised pre-digest artefact is stored content-addressed and
+`prep_version: 9` is the first contract that requires a complete deterministic
+source map from every retained body interval to Asset-page text. It follows the
+deployed transformation namespace through version 8; it does not reuse the older
+architecture document's former version-1 example or renumber live output.
+`source_map_sha256` binds the canonical compact JSON bytes and resolves
+`source-maps/{bare_source_map_sha256}.json` in the ingests repository at the same
+committed ref as the Record/Ingest. Missing, ambiguous or stale mapping
+prevents schema-2 claim emission. The materialised pre-digest artefact is stored content-addressed and
 served for inspection by the workbench's pre-digest tab; its store layout is in
 [ingest-format.md](ingest-format.md). Absent on digests produced before the
 pre-digest stage.
+
+The shared deterministic pre-digest producer owns both immutable
+`pre-digests/{bare_pre_digest_sha256}.md` and
+`source-maps/{bare_source_map_sha256}.json` in the access-controlled ingests
+repository. It only adds content-addressed derived artefacts; it never edits the
+Record/Ingest input. Workbench preview and digester execution use the same producer
+and one committed ingests ref.
 
 ### `nodes`
 
@@ -542,8 +602,8 @@ assimilator routes each category to its own database - `domain_claims`
 to `knowledge.db`, `infrastructure_claims` to `infrastructure.db` (see
 [graph-schema.md](graph-schema.md)).
 
-Field order per claim: `id`, `type`, `attestation`, `speaker?`,
-`location?`, `date?` or `date_range?`, `refs?`, `quote?`, `text`,
+Field order per schema-2 claim: `id`, `type`, `attestation`, `speaker?`,
+`provenance_chain`, `source_anchors`, `date?` or `date_range?`, `refs?`, `quote?`, `text`,
 `entailment?`.
 
 `type` is one of the six claim types defined in `node-types.md`:
@@ -559,21 +619,18 @@ reading the file can verify each reference without looking up
 identifiers. Workbench and other machine consumers join on id and
 ignore the name.
 
-`location` is a free-form string indicating where in the source record
-the claim was extracted from. Today this is human-readable
-(`paragraph 1`, `chapter 23, p. 412`). It may later contain character
-offsets to support exact source-to-claim highlighting in the workbench.
-The schema does not constrain the format; consumers parse it
-opportunistically.
+`source_anchors` is the machine trace defined above. Consumers do not parse the
+legacy scalar `location` opportunistically.
 
 `date` and `date_range` are mutually exclusive. Use `date` for a single
 date (`2017`, `2004-11-14`) and `date_range` as a two-element list
 (`['2007', '2012']`) when the claim refers to a temporal interval.
 Both elements of `date_range` are strings.
 
-`quote` is the verbatim text excerpted from the source record. `text`
-is the canonical claim as extracted - usually a tightened or
-paraphrased version of `quote`. Both use YAML block scalars (`|-`) so
+Each `source_anchors[].quote` is the required exact fragment. Claim-level `quote`
+is an optional derived display join of those fragments and is not a second anchor
+authority. `text` is the canonical claim as extracted - usually a tightened or
+paraphrased version of the evidence. Multiline values use YAML block scalars (`|-`) so
 multi-line content needs no escaping.
 
 A `quote` may be **elided**. An atomic claim distilled from verbose
@@ -585,7 +642,7 @@ anchor. Elision is governed by four rules:
 - **Every fragment is verbatim.** Each stretch between join markers
   appears character-for-character in the source record.
 - **Every fragment independently locates.** The re-aligner (see
-  `location`) must place each fragment against the source. A fragment
+  `source_anchors`) must place each fragment against the source. A fragment
   that does not locate is a *broken* quote - the one fidelity failure -
   and the grader rejects it. Verbatim-but-non-contiguous is *elided*,
   not broken, and passes.
@@ -739,8 +796,12 @@ Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-ca
 
 - **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored at `digests/variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml` (a `variants/` subtree beside the canonical digests at the root of `digests/`; the assimilator globs `**/*.yaml` there and drops anything under `variants/`, so they are never imported). The variant key carries the model AND the prompt hash ([0039 amendment 2026-07-04](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)), so a prompt tune on the same model never overwrites the prior output. This layout is built; the variants store now.
 - **One canonical** at the unchanged `digests/{friendly-name}.yaml` - a SELECTED per-model digest, not a merge: the selector picks one whole variant as the canonical (no claim-clustering, no dedup-across-variants, no best-phrasing synthesis). Until the selector lands the canonical is latest-written by a production run. It is the only digest the assimilator imports; the variants are inert.
-- **Schema `anomalica/digest/2`** (lands with the selector): `model` carries the versioned id; the canonical gains `selected_from` (the candidate variants and the winner) - its presence distinguishes a canonical from a variant. The selected digest preserves the winning variant's `extraction_generation` and `extraction_config` unchanged so selection cannot erase its freshness identity.
-- **Independence**: multiple models on one source are alternatives, not corroboration - zero added independence. The evidence model counts independence by provenance-root, not claim-count (decision 0039).
+- **Schema `anomalica/digest/2`** carries exact Asset source anchors and preparation-version-9 source maps. When the selector lands, its canonical output additionally gains `selected_from` (the candidate variants and winner); the selected digest preserves the winning variant's extraction identity unchanged.
+- **Independence**: multiple models on one Record are alternatives, not
+  corroboration. Anchor overlap on one physical Asset page in the same exact
+  page-text frame establishes one evidence unit; additional independence also
+  requires evidenced distinct provenance roots ([decision
+  0051](../decisions/0051-asset-record-selection-and-evidence-identity.md)).
 
 ## Legacy markdown format
 

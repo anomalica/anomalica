@@ -45,8 +45,10 @@ The top-level fields - `schema`, `brief_hash`, `payload_hash`, `page` (`kind`, `
 For a person page, optional `page.listing` carries the raw public-list ordering inputs:
 `work_count`, `subject_claim_count` and `claim_count`. `work_count` is the
 page-gate's historical `source_count` renamed at this boundary because it counts
-distinct `COALESCE(records.work_id, record_id)` works, not source URLs or
-provenance roots. `subject_claim_count` is the deterministic count of claims
+only distinct positively established `records.work_id` values, not source URLs,
+Record ids or unknown roots. Records with unknown work identity add zero and are
+reported separately by graph health rather than manufactured into distinct works.
+`subject_claim_count` is the deterministic count of claims
 whose text is about the person; `claim_count` is the distinct speaker-or-reference
 claim union. The synthesiser copies these measurements from the page proposal.
 The site reads the current published brief directly; the assembler does not copy
@@ -77,7 +79,7 @@ Both are surfaced, not applied. The entailed fraction is the first component of 
 
 ## `claims` (the selection)
 
-An ordered list of claims - the selection, and the only facts the writer may use. Nothing outside it can enter the prose; this is what makes 0008 enforceable by construction. Order is the synthesiser's. Each claim's fields - `claim_id`, `claim_hash`, `content`, `original_excerpt`, `claim_type`, `attestation`, `speaker`, `node_refs`, `date`/`date_end`, `location_in_record`, `evidence`, `provenance` - are listed in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief` (`body.claims`). Note `provenance.content_hash` and `friendly_name`: they link each claim back to its source ingest.
+An ordered list of claims - the selection, and the only facts the writer may use. Nothing outside it can enter the prose; this is what makes 0008 enforceable by construction. Order is the synthesiser's. Each claim's fields - `claim_id`, `claim_hash`, `content`, `original_excerpt`, `claim_type`, `attestation`, `speaker`, `node_refs`, `date`/`date_end`, optional `source_anchors`, `evidence`, `provenance` - are listed in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.brief` (`body.claims`). Exact `source_anchors` and evidence-unit IDs are required together for eligible `digest/2` claims; `digest/1` claims omit both and carry `independence_status: unknown`. `evidence` carries evidence-unit and established provenance-root derivation; a scalar independence count alone is insufficient. `provenance.content_hash` links the claim to its stable Record.
 
 ## Identity and audit
 
@@ -120,6 +122,13 @@ the complete ordered `claims` and `related_nodes` lists. List order remains
 significant. Generated stamps, sizing, publication data and display-only
 `page.listing` are excluded because they do not enter the writer payload and
 have separate comparisons.
+
+For a `digest/2` claim, `evidence.evidence_unit_ids` contains sorted unique full
+`anomalica/evidence-unit-identity/1` hashes computed by graph import. Missing or
+allocator-derived IDs make that claim invalid. A `digest/1` claim has an empty
+list and `independence_status: unknown`. In either case the evidence object is part
+of `payload_hash`; `brief_hash` remains the semantic claim-selection identity and
+does not duplicate this mutable evidence grouping.
 
 Both hashes are required. A current producer regenerates a legacy brief missing
 `payload_hash`; a writer refuses to assemble from one. Their roles are distinct:

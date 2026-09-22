@@ -4,7 +4,7 @@ The ingester converts raw source material into structured text that the digester
 
 ## Source material and copyright
 
-The ingester processes source material whose copyright status varies - some public domain or openly licensed, some copyrighted. Original text, audio, and video are not stored in the knowledge graph (a structured database of interconnected facts); only extracted claims with source attribution enter it. A reviewed record's public page always contains derived explanation and may additionally receive source body, original or media only through the independent copyright allow-lists in [decision 0031](../decisions/0031-per-record-inspection-pages.md). Copyrighted source bytes outside those allow-lists remain gated to someone who proves possession of the original. Anomalica is not a redistribution channel for copyrighted works.
+The ingester processes source material whose copyright status varies - some public domain or openly licensed, some copyrighted. Original text, audio, and video are not stored in the knowledge graph (a structured database of interconnected facts); only extracted claims with source attribution enter it. Under the accepted Record-page target, every live Record has a safe metadata shell; only a completely reviewed, current page-mapped PDF/image `record/3` with eligible `digest/2` gains derived explanation. Source body, original or media additionally follows the independent copyright allow-lists in [decision 0031](../decisions/0031-per-record-inspection-pages.md). Copyrighted source bytes outside those allow-lists remain gated to someone who proves possession of the original. The current Assembler has not implemented that shell/enrichment split. Anomalica is not a redistribution channel for copyrighted works.
 
 This is analogous to academic referencing. A researcher reads sources, extracts facts, cites them, and writes new work. The facts themselves are not copyrightable - the specific expression an author uses is, but an atomic factual claim ("radar contact was maintained for 12 minutes") is a fact, not expression. The assembled articles are new works that cite their sources, not reproductions or derivatives of the source material.
 
@@ -58,20 +58,37 @@ For audio/video specifically, the frontmatter includes a speaker roster and the 
 
 ### Re-extraction: refresh in place
 
-A record's extraction generation is `processing.pipeline_version`, a
-per-`source_type` integer the ingester bumps when extraction output changes
+A `record/3` Ingest's extraction generations are the complete ordered
+`processing.asset_pipeline_versions` list. Each selected Asset records its
+`asset_hash`, `source_type` and positive `pipeline_version`; the ingester bumps the
+per-source-type generation when extraction output changes
 enough to warrant re-processing existing records ([decision
 0040](../decisions/0040-pipeline-versioning-and-supersession.md)). Equal to the
 type's explicit manifest entry is current; lower is stale; absent, malformed,
-ahead or lacking a manifest entry is unknown. Unknown is never coerced to zero.
+ahead or lacking a manifest entry is unknown. Every member must be current for the
+composite Ingest to be current. Unknown is never coerced to zero. Legacy `/1` and
+`/2` Records retain scalar `processing.pipeline_version`.
 
-Re-processing an archived source goes through the normal entry point - `./ingest --force --source-url URL records/{hash}.{ext}` - which is what the scheduler's reprocess lane drives. For a web page or an EPUB whose archived bytes already have a live record, the handler refreshes that record **in place** under its existing identity rather than minting a second record; a PDF record's path already is its source hash, so its re-extraction was always in place. In every case the human's work carries over (`shared/refresh.py`): stored media files, a reviewer's `irrelevant` regions and inline highlight, note, link and citation markers are re-placed around the same prose, and a reviewed record gains a `review_carryover` stamp so the workbench asks for a look rather than showing it as reviewed. A refresh that would lose prose refuses, leaves the record untouched, fails the run and writes a `refresh_refused` block (when, why) into the record's frontmatter so the reviewer sees it: no loss at all is tolerated on a reviewed record (a dateline, byline or title heading the frontmatter carries does not count), and only a footer's worth on an unreviewed one. The scheduler discovers stale and unknown records; discovery and priority do not authorise a model run. PDF re-extraction is model-driven and stays behind the spend gate.
+Re-processing archived bytes goes through the normal entry point,
+`./ingest --force --source-url URL records/{asset_hash}.{ext}`, which is what the
+scheduler's reprocess lane drives. The handler resolves every live Record Selection
+using that Asset and refreshes each generated Ingest in place under its stable
+Record identity; it never assumes one Asset has one Record. In every case the
+human's work carries over (`shared/refresh.py`): stored media files, a reviewer's
+`irrelevant` regions and inline highlight, note, link and citation markers are
+re-placed around the same prose, and a reviewed Record gains a `review_carryover`
+stamp so the Workbench asks for a look rather than showing it as reviewed. A
+refresh that would lose prose refuses, leaves the Record untouched, fails the run
+and writes a `refresh_refused` block into frontmatter. The scheduler discovers
+stale and unknown Ingests; discovery and priority do not authorise a model run.
+PDF re-extraction is model-driven and stays behind the spend gate.
 
 A reviewed record is a protected record. Every handler, including a cache-only
 audio or video re-render, must send a replacement through the same refresh
 boundary rather than writing it directly. The existing record remains authority
-for its identity and selection, provenance and source metadata, complete
-`copyright` block, curated speaker names, body annotations and other human edits.
+for its identity and selection, provenance and source metadata, every selected
+Asset's complete `copyright` block, curated speaker names, body annotations and
+other human edits.
 A sparse acquisition manifest, current extractor defaults or anonymous speaker
 clusters must not replace stronger stored values. Only extraction-owned stamps
 and measurements may be regenerated without explicit carryover.

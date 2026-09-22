@@ -73,18 +73,19 @@ fuzzy token-LCS, measure agreement.
    fallback. Either way, the two sub-points below hold.
 
    1a. **One canonical `clean_body()`, shared - the digester never reimplements
-   stripping.** The ingester's `verification.py` already draws cloze challenges
-   from a stripped view (`_strip_annotations`), not the raw body. To keep the
-   digester's extraction view byte-identical to the cloze source (or
-   proof-of-possession answers break), that function moves to a shared
-   `clean_body()` in the ingester's `shared/`, imported by both verification.py
-   and the digester. Its exact behaviour is pinned here and in ingest-format.md
+   stripping.** The ingester's legacy `verification.py` drew cloze challenges
+   from a stripped view (`_strip_annotations`), not the raw body. Decision 0051
+   retires those challenges as access authority, but deterministic pre-digest and
+   source-map materialisation still require one byte-identical extraction view.
+   That function moves to a shared `clean_body()` in the ingester's `shared/`,
+   imported by both the ingester and digester. Its exact behaviour is pinned here and in ingest-format.md
    so neither side can drift: strip the YAML frontmatter; replace each
    HTML-comment annotation (`<!-- ... -->`, including `<!-- speaker: X -->`) and
    each inline `{{...}}` annotation (`{{t:}}`, `{{redacted}}`, `{{classification}}`)
    with a SINGLE SPACE; strip the line-leading `HH:MM:SS.D` prefix to nothing; do
    NOT collapse whitespace (so a double space can remain where an annotation sat -
-   this is part of the contract, not a bug). The ingester owns this and will land
+   this is part of this initial clean-body transform, not a ban on a later
+   registered pre-digest transform that updates the source map). The ingester owns this and will land
    it with the v2 render work.
 
    1b. **Sidecar schema `anomalica/words/1`** (converged between the ingester and
@@ -165,9 +166,9 @@ fuzzy token-LCS, measure agreement.
 - Extraction input for record/2 shrinks once stripping lands (the `{{t:}}` markers no longer inflate the body the digester processes).
 - Workbench and site gain jump-to-moment deep-links into audio/video.
 - New per-claim timing feeds evidence scoring.
-- Byte-consistency with the cloze source is handled by the shared `clean_body()`
-  (decision 1a) - the ingester owns it, the digester imports it; no drift by
-  construction.
+- Byte-consistency of the pre-digest and its source map is handled by the shared
+  `clean_body()` (decision 1a) - the ingester owns it, the digester imports it; no
+  drift by construction. It is not an access proof.
 - Consumer field shape is settled: assembler and workbench both confirmed
   `timing: {start, end, coverage, resolution}`, per-claim, additive to
   `location` (decision 6). Both degrade gracefully on low coverage.

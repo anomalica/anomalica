@@ -69,9 +69,33 @@ and has shown no contention.
 
 ## Data flow
 
-The ingester writes ingests to the access-controlled ingests repository. The digester reads from that repository and, before extracting, derives a materialised **pre-digest** from each record - the deterministic model-prep (irrelevant regions removed, footnotes inlined, word-timestamps stripped) applied so that the exact model input is itself an inspectable, stored artefact ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)). It extracts claims and nodes from the pre-digest and writes digests to the public digests repository. Both the ingester and digester need access to the ingests repository; public exposure of any individual ingest is then gated by that record's copyright status. (Planned direction: the digester may run several models per record and a selector stage picks one selected digest from them; only the selected digest is assimilated - [decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md).)
+The following is the accepted 0051 target data flow. It is not yet the deployed
+cross-repository path: Ingester still writes `record/1` or `/2`, Digester writes
+`digest/1` scalar locations, Assimilator lacks Asset-derived relations, Workbench
+lacks structural and per-Asset challenge APIs, and Assembler lacks stable Record
+shells. Those implementation gaps fail closed rather than being inferred from
+legacy fields.
 
-Human review happens through the workbench, which can correct both ingests and digests. Corrections are committed to the appropriate repository with the reviewer's identity as the git author.
+Acquisition stores immutable Assets by byte SHA-256. An ordered Selection over one
+or more Assets defines a stable Record; the ingester generates its current Ingest
+in the access-controlled repository. Initial acquisition creates a whole-Asset
+Record automatically. A PDF/image Record explicitly marked temporary may later be
+split or composed by the private Workbench from validated complete physical PDF
+pages and whole images without reacquiring a source or synthesizing a PDF. Whole
+audio, video, web and ebook Records are outside this first structural surface.
+
+For page-mapped PDF/image Records, before extraction the digester derives a
+materialised **pre-digest** and source map back through Record pages to Asset pages.
+It extracts claims and exact multipart anchors and writes digest 2 to the public
+repository. Other media retain digest 1 and cannot use anchor-based evidence or
+generated public claim sections in this contract. Public exposure is resolved
+per Asset; one member's rights or possession never unlocks another. (Planned
+direction: several model digests feed one selected digest; only that digest is
+assimilated.)
+
+Human review happens through the Workbench. It corrects Ingests, records review
+authority and writes replayable selector or graph-curation input; it does not
+normally edit model digests directly.
 
 The assimilator reads the digests and builds and maintains the unified knowledge graph database (SQLite, a lightweight file-based database) from them. Each graph record has a derived import receipt binding it to the canonical digest path and exact digest bytes, so presence alone is not mistaken for freshness. The database is derived data, not the source of truth - if it is deleted, the assimilator rebuilds it and the receipts from the digests.
 
@@ -81,4 +105,8 @@ A principle runs through all of this: **data flows one direction, and human edit
 
 Digests are publicly readable on the git hosting platform but are not rendered as pages on the site. The site presents assembled articles only. Each article's references link back to both the original source material and the digest, giving readers a path to verify claims or report errors via the repository's issue tracker. Corrections to digests trigger a database rebuild and article reassembly.
 
-The original source files are archived locally (`records/`, one file per original named `{content_hash}.{ext}`) and pushed off-machine to object storage - a cloud storage bucket - so a non-embeddable original can be served to readers and the archive survives loss of the local machine or link-rot at the origin. Access is routed by the source's copyright status, enforced by the storage zone itself: public-domain and openly-licensed originals sit in an open zone served by a direct URL, while copyrighted originals sit in a token-authenticated zone and are only ever handed out as short-lived signed URLs after the workbench's proof-of-possession gate passes. There is no public URL for gated content, so the split cannot leak copyrighted material.
+Original source files are archived locally as
+`records/{asset_hash}.{ext}` and backed up off-machine. Public-domain and
+open-licence Assets may be copied to a public serving zone. Gated Assets remain
+private and are available only through the Workbench after per-Asset authority;
+private or signed URLs never enter static public content.

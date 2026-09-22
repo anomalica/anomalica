@@ -3,6 +3,17 @@
 Date: 2026-06-27
 Status: accepted
 
+> **Amended 2026-09-22 by [0051](0051-asset-record-selection-and-evidence-identity.md).**
+> Extraction generation belongs to the generated Ingest. Several live Records
+> may share a source URL or Assets. Scalar `superseded_by` is retained only for
+> one-to-one replacement; Workbench split/composition uses separate one-to-many
+> structural lineage and an atomic parent-retirement commit. The source-plus-scope
+> hash recipe is replaced by the canonical ordered multi-Asset Selection codec.
+> Its older legacy re-identification procedure is also replaced: `/1` and `/2`
+> migrate through `anomalica/record-identity-map/1`, not `superseded_by`; existing
+> hash-only references resolve through that map, and old review, digest, graph and
+> sidecar state does not authorise the new `/3` identity without exact revalidation.
+
 > Converged between the ingester and workbench workspaces on 2026-06-27. The
 > written form below is pending the workbench's review of the wording; the
 > decision itself is settled.
@@ -122,7 +133,7 @@ one-per-source already holds. The suffix is collapsed to the canonical
 canonical audio/video output; until then a consumer's dedup (hide
 `superseded_by`, newest `date_extracted` tiebreak) covers any stray.
 
-### Consumer rules (orthogonality)
+### Historical consumer rules (superseded where amended above)
 
 - `superseded_by` present -> HIDE the record (a newer extraction exists). One
   visible record per source.
@@ -131,7 +142,7 @@ canonical audio/video output; until then a consumer's dedup (hide
 - `pipeline_version` ABSENT, malformed or not comparable -> unknown-generation
   badge, still shown and eligible for separately authorised backfill.
 
-### What is explicitly NOT changed
+### What the 2026-06-27 decision did not change (historical)
 
 `source_hash` remains web/ebook-only. For audio/video/pdf, `content_hash`
 already IS the source-asset SHA-256 (the archived asset lives at
@@ -200,12 +211,12 @@ re-identification into a re-acquisition, giving the record an identity
 that reflects today's fetch rather than the artefact actually held. The
 asset is already archived under `records/`; hash that.
 
-The one-off migration to source-anchored identity is itself a
-re-identification of every web, ebook, and excerpt record. It is stamped
-through this same mechanism - old hash retired to `store/v1/` carrying
-`superseded_by`, so digest provenance pointers, pre-digest artefacts, and
-review sidecars keyed to the old hash all resolve forward. After it,
-this class of re-identification stops occurring.
+This amendment originally proposed stamping the one-off migration through
+`superseded_by` and resolving digest, pre-digest and review pointers forward. That
+procedure never became the 0051 migration contract and is superseded. Legacy `/1`
+and `/2` identities now resolve only through
+`anomalica/record-identity-map/1`; old artefacts remain history and confer no
+authority on `/3` without exact revalidation.
 
 > **Note 2026-09-11:** Housekeeping's `input_sha256` is deliberately a
 > different identity from `content_hash`. Decision
@@ -213,3 +224,8 @@ this class of re-identification stops occurring.
 > complete exact ingest Markdown bytes to decide whether that derived pass is
 > current; this does not alter the source-plus-selection record identity or
 > supersession rules above.
+
+> **Note 2026-09-22:** The 2026-07-25 “asset plus normalised scope string”
+> identity and one-visible-Record-per-source statements are superseded by 0051.
+> Legacy `/1` and `/2` Records retain an explicit implicit-whole read rule; new
+> `/3` Records persist Assets and atomic ordered selectors.

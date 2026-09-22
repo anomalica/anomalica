@@ -22,30 +22,49 @@ Selection and ordering: claims are selected by speaker-of OR referenced-by, with
 
 ### Input contract: assembling one public record article (`--record` mode)
 
-Record mode reads one selected digest for the claims and explanatory prose, then
-reads the matching live ingest record, its `anomalica/review-coverage/1` sidecar
-and current copyright fields before writing public content. The digest's
+> **Accepted migration target.** The deployed Assembler still uses friendly-name
+> routes and an all-or-nothing `public-record/1` path. It does not yet enumerate
+> every live Record, emit safe shells, validate `record/3` plus `digest/2`, or apply
+> the per-Asset projection below.
+
+Record mode reads the one current canonical digest for the claims and explanatory prose, then
+reads the matching live Record/current Ingest, its `anomalica/review-coverage/1`
+sidecar and every selected Asset's current rights fields before writing public
+content. The digest's
 `review_state` and copyright status are snapshots for filtering and provenance;
 they do not authorise publication.
 
-The producer emits no page unless the live record satisfies decision 0031's
-full-review predicate and the digest is current for it. Current means the
+The producer always reconciles the stable hash route. Before the live Record
+satisfies decision 0031's full-review and anchor predicate it emits only the safe `noindex`
+metadata shell. Current means the
 digest's `record.content_hash` names that live record and its
-`pre_digest.sha256` equals the hash obtained by materialising the current record
+`record_snapshot_sha256` matches the current graph-relevant Record projection, and
+its `pre_digest.sha256` equals the hash obtained by materialising the current record
 body through the shared pre-digest implementation; missing legacy provenance
-fails closed. `pre_digest.prep_version` is diagnostic rather than an additional
-gate when the current materialised hash is unchanged. The producer removes
-stale output when eligibility is lost. The article's generated description and
+fails closed. Generated claims require a page-mapped PDF/image `record/3`,
+`anomalica/digest/2`, preparation version 9 and its current exact source-map hash.
+Audio, video, web and ebook Records remain shells until a later typed-coordinate
+contract. The producer removes the generated body when eligibility
+is lost and retains the shell. The article's generated description and
 body are public derived writing. The record's raw body, archived original,
-extracted media, publisher embed and original-source link are five independent
-outputs, each admitted only by decision 0031's allow-list. The producer omits
+extracted media, publisher embed and original-source link are independent
+per-Asset outputs, each admitted only by decision 0031's allow-list. Permission
+or possession of one Asset never unlocks another. The producer omits
 forbidden bytes and URLs from content entirely rather than asking Hugo to hide
 them.
 
 Record output uses the exact public projection in
 [content-format.md](content-format.md#public-record-pages). The old
-facts/entities breakdown remains Workbench-only, record pages are indexed, and
+facts/entities breakdown remains Workbench-only, eligible Record pages are indexed, and
 `/records/` replaces public document-node pages.
+
+For entity pages, an eligible `digest/2` claim in a brief must carry source anchors,
+evidence-unit ids and established provenance roots behind `independent_sources`.
+A `digest/1` claim instead omits anchors, has no evidence-unit ids and carries
+`independence_status: unknown`; it cannot increase independent support. The
+assembler does not recompute graph independence, rejects a scalar count without
+its applicable derivation, and never presents two claims from one overlapping
+evidence unit as two independent supports.
 
 ## Outputs
 
@@ -70,7 +89,8 @@ Every article includes references at the bottom linking each claim to its source
 
 - The record title and date (e.g. "Lex Fridman Podcast #122, 2020-09-08")
 - A link to the original source material (URL, where available)
-- The location within the record (timestamp, page number)
+- Ordered source anchors, rendering Record page and physical Asset page separately
+  from any printed page label
 - Who made the assertion (the speaker)
 - A link to the digest in the digests repository, where readers can see exactly how the claim was extracted and report errors via the repository's issue tracker
 

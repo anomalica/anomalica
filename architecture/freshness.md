@@ -1,10 +1,15 @@
 # End-to-end freshness
 
-This is the canonical current-state freshness model from a live ingest record to
-deployment. Boundary results are scheduler inputs. The only freshness
+This is the canonical freshness boundary model from a live ingest record to
+deployment. It includes deployed checks and explicitly labelled accepted migration
+extensions. Boundary results are scheduler inputs. The only freshness
 interchange is the guarded `anomalica-freshness/v1` manifest that carries those
 results from scheduling into deployment; its field list is in
 [`reference/format-specs.yaml`](../reference/format-specs.yaml).
+
+The `record/3` Record-snapshot and source-map checks below are accepted migration
+extensions, not deployed scheduler behaviour. Legacy Records and digests lacking
+those bindings are unknown at those checks and cannot gain target-only eligibility.
 
 ## Result model
 
@@ -47,8 +52,8 @@ sum, average or universal freshness percentage across boundaries.
 
 | Boundary | Locally current when | Stage-native drift metrics |
 |---|---|---|
-| Live source -> record | The record is not superseded; its schema is supported; `processing.pipeline_version` is an integer equal to the explicit entry for its `source_type` in `store/_pipeline_versions.yaml`. | Counts by source type and `current`/`stale`/`unknown`/`invalid`; for stale records, the integer generation distance `current - recorded`; superseded and dangling-lineage counts separately. |
-| Record -> digest | One canonical digest exists; its schema is supported; its `record.content_hash` resolves to the live record; `pre_digest.sha256` equals the SHA-256 of the current materialised pre-digest; `extraction_generation` equals `digest-generation.json`; and `extraction_config` is a valid resolvable fingerprint. | Missing digest count; generation status and distance; input binding match/mismatch/unknown; schema/config invalid counts; claim and node counts remain descriptive, not freshness percentages. |
+| Live source -> record | The Record carries neither `superseded_by` nor `retired_into` and its schema is supported. Legacy `/1` and `/2` use the deployed scalar generation. **0051 target:** for `record/3`, `processing.asset_pipeline_versions` completely covers the selected Assets and every positive version equals its Asset `source_type` entry in `store/_pipeline_versions.yaml`. | Counts by source type and `current`/`stale`/`unknown`/`invalid`; for stale Asset members, the integer generation distance `current - recorded`; replacement-retired, structurally retired and dangling-lineage counts separately. |
+| Record -> digest | One canonical digest exists; its schema is supported for the Record media; its `record.content_hash` resolves to the live record; `pre_digest.sha256` equals the SHA-256 of the current materialised pre-digest; `extraction_generation` equals `digest-generation.json`; and `extraction_config` is a valid resolvable fingerprint. **0051 target:** `record_snapshot_sha256` also matches the current anomalica/digest-record-snapshot/1 projection, and schema 2 has prep version 9 plus an exact current source-map hash. | Missing digest count; generation status and distance; stable Record, mutable Record-snapshot, input and source-map binding match/mismatch/unknown; schema/config invalid counts; claim and node counts remain descriptive, not freshness percentages. |
 | Digest -> graph import | The graph has one import receipt for the live record whose `digest_sha256` equals SHA-256 of the exact canonical digest YAML bytes and whose `import_generation` equals the assimilator's current deterministic import generation. | Canonical digests missing from graph, receipt hash mismatches, import-generation distance, graph records with no live canonical digest, and duplicate live record bindings. |
 | Graph -> brief | A deterministic re-selection for the brief reference produces the recorded `brief_hash` and `payload_hash`, page identity and publication decision. `generated.graph_version` may trigger this cheap comparison but does not prove it. | Missing briefs; removed, added, content-changed and order-changed selected claims, each as a count against the recorded and current selection sizes; exact payload, page-member, identity, publication and listing-tuple mismatches separately. |
 | Brief -> article | The article exists at the brief reference and language; its path resolves to that `<section>/<slug>` brief; and machine-owned `built_from.brief_hash` and `built_from.payload_hash` equal the current brief's hashes. Every cited claim hash is still present in the bound brief. Missing `built_from.payload_hash` against a current brief is an unknown old binding, not current. | Missing articles by language; selection- and payload-hash mismatches; missing/changed citation counts over article citation count; generator-identity drift; body-hash mismatch reported separately as a protected human edit, not stale input. |
@@ -58,11 +63,14 @@ Machine boundary names are `record-generation`, `digest-input`,
 `digest-generation`, `graph-import`, `brief-selection`, `article-input` and
 `deployment`. Reason codes are lower-case snake case and stable scheduler input:
 
-- `record-generation`: `record_superseded`, `schema_unsupported`,
+- `record-generation`: `record_superseded`, `record_structurally_retired`, `schema_unsupported`,
   `generation_behind`, `generation_unknown`, `lineage_dangling`;
 - `digest-input`: `digest_missing`, `schema_unsupported`,
   `record_binding_mismatch`, `pre_digest_hash_mismatch`,
-  `pre_digest_binding_unknown`, `extraction_config_invalid`;
+  `record_snapshot_mismatch`, `record_snapshot_binding_unknown`,
+  `pre_digest_binding_unknown`, `prep_version_unsupported`,
+  `source_map_hash_mismatch`, `source_map_binding_unknown`,
+  `extraction_config_invalid`;
 - `digest-generation`: `generation_behind`, `generation_unknown`;
 - `graph-import`: `import_missing`, `digest_hash_mismatch`,
   `import_generation_behind`, `import_generation_unknown`, `orphan_record`,

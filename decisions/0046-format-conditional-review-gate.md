@@ -3,6 +3,11 @@
 Date: 2026-08-22
 Status: proposed - awaiting Mark's confirmation
 
+> **Terminology clarification 2026-09-22:** review verifies or completes the
+> current generated Ingest revision of a stable Record. Coverage and
+> `reviewed_body_sha256` bind that Ingest body; they are not properties of
+> immutable Asset bytes or the Record Selection.
+
 > **Why not `accepted`.** This record was written from requirements relayed
 > on 2026-08-22 through the `anomalica/master` bus identity while **two
 > sessions held that name at once** - one had inherited `WORKSPACE_NAME`

@@ -21,14 +21,70 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 11
+spec_version: 13
 types:
+  asset:
+    schema: anomalica/asset/1
+    status: stable
+    serialisation: embedded YAML object in anomalica/record/3
+    spec_doc: decisions/0051-asset-record-selection-and-evidence-identity.md
+    summary: One immutable acquired byte sequence, or an explicitly linked retained derivative, archived and resolved by its
+      exact SHA-256 independently of every Record that selects it.
+    fields:
+      - {name: asset_hash, type: string, required: true, description: "Full `sha256:<64 lowercase hex>` of the exact acquired
+          bytes. The archived original is `records/{bare_asset_hash}.{archived_ext}`."}
+      - {name: file_format, type: string, required: true, description: "Normalised retained file format."}
+      - {name: archived_ext, type: string, required: true, description: "Bare archive extension; stored rather than inferred
+          from codec or container metadata."}
+      - {name: source_type, type: string, required: true, description: "Acquisition medium: pdf, audio, video, web, ebook
+          or image."}
+      - {name: pages, type: integer, required: paged, description: "Positive physical page count. A standalone image has one
+          page."}
+      - {name: acquisition, type: object, required: true, description: "Copy/acquisition facts. Exactly `{acquired_at, fetched_url?,
+          source_file?, copy_identifiers?}`: acquired_at is the required canonical RFC 3339 acquisition instant; fetched_url
+          is the URL actually retrieved; copy_identifiers is keyed by scheme and identifies this acquired manifestation. Canonical
+          work source_url and work identifiers belong only to Record provenance; missing optional values are omitted."}
+      - {name: copyright, type: object, required: true, description: "Rights and access authority for this Asset. Every member
+          of a multi-Asset operation is checked independently; one permitted or possessed member never unlocks another."}
+      - {name: derived_from, type: object, required: derivative-only, description: "Explicit immutable-Asset lineage `{asset_hash,
+          transform}`. Acquired originals omit it; retained renders, audio extractions and frozen snapshots require it."}
+    invariants:
+      - "Asset identity is exact bytes. A recapture, derivative or re-encoding is another Asset with explicit lineage."
+      - "No synthetic container is created for a composite Record and no original is addressed by Record content_hash."
+  record_identity:
+    schema: anomalica/record-identity/1
+    status: stable
+    serialisation: compact UTF-8 JSON under a fixed domain prefix
+    spec_doc: decisions/0051-asset-record-selection-and-evidence-identity.md
+    summary: Stable Record identity derived only from the canonical ordered Asset Selection.
+    selectors:
+      whole: "Exactly `{type: whole}`. Successful ordinary acquisition uses it for every source type and creates exactly one
+        default Record unless that identical canonical Selection exists. Workbench composition accepts it only for a standalone
+        image; whole Assets of other formats are not structurally edited by this contract."
+      pdf_page: "Exactly `{type: pdf_page, page: N}`, where N is a positive 1-based physical page ordinal in the named PDF
+        Asset."
+    canonicalisation:
+      - "An authoring-only pdf_page_range has positive physical-page bounds start <= end, both inclusive. Expand it to atomic
+        pdf_page values start..end in increasing order before preview, hashing or persistence; persisted output contains no
+        range selector."
+      - "Do not sort. Reject repeated or overlapping pages, repeated whole Assets, whole combined with another selector for
+        the same Asset, unsupported selectors, wrong formats and out-of-bounds pages."
+      - "Encode exactly `{'schema':'anomalica/record-identity/1','selection':[...]}` as compact JSON with no whitespace or
+        newline; actual JSON uses double quotes. Top-level key order is schema, selection. Element key order is asset_hash,
+        selector. Selector key order is type, then page where present."
+      - "Hash the 28 ASCII bytes `anomalica-record-identity-v1`, one zero byte, then the JSON bytes. Prefix the lowercase
+        SHA-256 with `sha256:`."
+    fixture:
+      json: '{"schema":"anomalica/record-identity/1","selection":[{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","selector":{"type":"pdf_page","page":4}},{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","selector":{"type":"pdf_page","page":5}},{"asset_hash":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","selector":{"type":"whole"}}]}'
+      content_hash: sha256:cf74ff9325207f22d92ff805386830db6066ef1ec8a70fa00ce2adc850ff89f3
+    exclusions: [title, URLs, rights, provenance, printed page labels, extraction output, mutable metadata]
   ingest:
-    schema: anomalica/record/1
+    schema: anomalica/record/3
     status: stable
     serialisation: markdown + YAML frontmatter
     spec_doc: architecture/ingest-format.md
-    summary: One file per ingested source - the interchange between the ingester and the digester.
+    summary: Atomic implementation envelope containing one authoritative Record definition and its current generated Ingest
+      body.
     source_types: [pdf, audio, video, web, ebook, image]
     # `formats` on a field lists the source_types it applies to, ONLY where the spec states
     # it. A field with no `formats` key applies to all source_types (or is reviewer-optional).
@@ -38,9 +94,10 @@ types:
       yaml_style: quoted
       lifecycle:
         current_flat_provenance_paths: [date_published, posted_date, date_accessed]
-        target_provenance_paths: [provenance.published_date, provenance.posted_date, provenance.acquired_date]
-        target_rule: The provenance paths are not writable until decision 0043 ships; they inherit the corresponding flat
-          field's profile during that migration.
+        target_provenance_paths: [provenance.published_date, provenance.posted_date, 'assets[].acquisition.acquired_at']
+        target_rule: The target paths are not writable until component migrations implement accepted decisions 0043 and 0051;
+          publication values migrate to Record provenance while acquisition time migrates to each Asset. No value is copied
+          into both layers.
       forms:
         reduced_date:
           grammar: YYYY or YYYY-MM
@@ -60,17 +117,17 @@ types:
           forms: [reduced_date, full_date, rfc3339_timestamp]
           producer_rule: Emit only the precision and time the source evidences. A date is never padded to midnight and an
             absent date is never replaced with the current date. The source_offset_rule applies to timestamps.
-        - paths: [date_accessed, provenance.acquired_date]
+        - paths: [date_accessed, 'assets[].acquisition.acquired_at', 'snapshots[].asset.acquisition.acquired_at']
           forms: [rfc3339_timestamp]
           producer_rule: Emit the actual acquisition instant with an explicit offset; do not truncate it to a date.
-        - paths: [date_extracted, 'snapshots[].captured_at', review_carryover.at, refresh_refused.at]
+        - paths: [date_extracted, review_carryover.at, refresh_refused.at]
           forms: [utc_timestamp]
           producer_rule: Emit the actual machine event instant in UTC.
         - paths: ['annotations.message.date']
           forms: [rfc3339_timestamp]
           producer_rule: Emit only a parsed message instant with an explicit offset; omit the structured value when the source
             has no valid instant. The source_offset_rule applies.
-        - paths: [release.release_date, copyright.granted_at, copyright.expires]
+        - paths: [release.release_date, copyright.granted_at, copyright.expires, 'assets[].copyright.granted_at', 'assets[].copyright.expires']
           forms: [full_date]
           producer_rule: Emit only an evidenced, valid calendar day; reduced precision and timestamps are not allowed.
       source_offset_rule: Preserve source-supplied Z as Z and preserve a numeric offset's value. Canonicalise source syntax
@@ -98,19 +155,35 @@ types:
         consumer_rule: A non-temporal edit must preserve a legacy token byte-for-byte. Editing that temporal field writes
           a canonical quoted value; automated migration requires evidence and must not infer missing precision or timezone.
     fields:
-      - {name: schema, type: string, required: true, description: "Format version. `anomalica/record/1`, or `anomalica/record/2`
-          when word-level timestamps are present."}
+      - {name: schema, type: string, required: true, description: "`anomalica/record/3` for explicit Assets, ordered Selection
+          and page mapping. `/1` and `/2` are legacy-readable under the implicit whole-Asset rule."}
+      - {name: content_hash, type: string, required: true, description: "Stable Record identity in full `sha256:<64 lowercase
+          hex>` form, computed only from the canonical expanded ordered Selection under anomalica/record-identity/1."}
+      - {name: assets, type: list, required: record/3, description: "Non-empty unique Asset descriptors in first-selection-use
+          order. Exact item shape is types.asset. Every selected asset_hash appears exactly once."}
+      - {name: selection, type: list, required: record/3, description: "Non-empty ordered `{asset_hash, selector}` list. Persisted
+          selectors are atomic whole or pdf_page values from types.record_identity. Order is identity-bearing."}
+      - {name: page_map, type: list, required: paged-record/3, description: "Complete server-derived sequential mapping of
+          `{record_page, asset_hash, asset_file_page}`. record_page is exactly 1..N in Selection order; asset_file_page is
+          a physical 1-based PDF page or 1 for a standalone image. Printed labels are not coordinates."}
       - {name: title, type: string, required: true, description: "Document or episode title. Always quoted. Lives only in
           frontmatter, never injected into the body."}
-      - {name: source_type, type: string, required: true, description: "HOW the source arrived: pdf, audio, video, web, ebook,\n
-          \         image. Orthogonal to document_type (WHAT it is) - a photographed slide and a scanned pdf of the same memo
-          differ\n          in source_type and share a document_type. `image` (jpg/jpeg/png/webp) is a photographed or scanned
-          document,\n          handled on the pdf vision path and hashed as source BYTES like any scan; it is not a container."}
-      - {name: file_format, type: string, required: true, description: "FORMAT of the file held: a bare lowercase normalised
-          token such as pdf, epub, html, jpg or opus. Always deterministically derived and never reviewer-editable. For audio
-          and video it names the retained audio file (opus), not the source medium. Normalise ogg/oga to opus, jpeg to jpg
-          and htm to html. This supersedes archived_ext as the format vocabulary; archived_ext remains the storage-locator
-          field while consumers migrate. A file format does not imply document_type: EPUB never by itself means book."}
+      - {name: source_types, type: list, required: record/3, description: "Non-empty ordered unique acquisition media derived
+          from selected Assets in first-use order. Supports mixed PDF/image and later multi-format Records without inventing
+          a fake composite medium."}
+      - {name: source_type, type: string, required: legacy-or-homogeneous, description: "Legacy scalar projection; HOW the
+          source arrived: pdf, audio, video, web, ebook,\n          image. Orthogonal to document_type (WHAT it is) - a photographed
+          slide and a scanned pdf of the same memo differ\n          in source_type and share a document_type. `image` (jpg/jpeg/png/webp)
+          is a photographed or scanned document,\n          handled on the pdf vision path and hashed as source BYTES like
+          any scan; it is not a container. In record/3 it may be emitted only when every selected Asset has one source type;
+          mixed Records omit it and use source_types."}
+      - {name: file_format, type: string, required: legacy-or-single-asset, description: "Legacy Record-level projection.
+          In record/3 each Asset owns file_format. FORMAT of the file held: a bare lowercase normalised token such as pdf,
+          epub, html, jpg or opus. Always deterministically derived and never reviewer-editable. For audio and video it names
+          the selected Asset's actual retained file. An audio extraction from acquired video is a distinct derivative Asset
+          with explicit lineage; the acquired video Asset remains archived. Normalise ogg/oga to opus, jpeg to jpg and htm
+          to html. This supersedes archived_ext as the format vocabulary; archived_ext remains the storage-locator field while
+          consumers migrate. A file format does not imply document_type: EPUB never by itself means book."}
       - {name: word_timestamps, type: boolean, required: false, description: "Present and true on `anomalica/record/2` transcripts
           that carry per-word `{{t:}}` markers."}
       # CURRENT FLAT FIELDS (2026-08-16). These are what records actually carry - 242 of 257 live
@@ -120,9 +193,11 @@ types:
           instant. Exact forms and serialisation are defined by `temporal`; never guess precision. -> provenance.published_date."}
       - {name: source_url, type: string, required: false, description: "Canonical URL of the original. -> provenance.source_url."}
       - {name: fetched_url, type: string, required: false, description: "URL actually retrieved when different (e.g. Wayback).
-          -> provenance.fetched_url."}
-      - {name: source_id, type: string, required: false, description: "Native source identifier. -> provenance.identifiers."}
-      - {name: source_file, type: string, required: false, description: "Original filename of a local-file ingest. -> provenance.source_file."}
+          Legacy /1-/2 field; migrates to the matching Asset acquisition block."}
+      - {name: source_id, type: string, required: false, description: "Legacy native identifier. Migration classifies it as
+          an Asset copy identifier or Record work identifier from evidence; it is never copied to both."}
+      - {name: source_file, type: string, required: false, description: "Legacy original filename of a local-file ingest;
+          migrates to the matching Asset acquisition block."}
       - {name: publisher, type: string, required: false, description: "The WORK's issuing body - who originated it, NOT the
           channel a copy came from (that is posted_by). No longer written from channel metadata; ABSENT until the work is
           identified, which is the not-evidenced convention, not a gap to fill. -> provenance.publisher."}
@@ -142,9 +217,10 @@ types:
           do not emit new."}
       - {name: description, type: string, required: false, description: "The source''s OWN blurb, verbatim, never AI. -> provenance.description."}
       - {name: date_accessed, type: string, required: false, description: "The source retrieval instant. Exact forms are defined
-          by `temporal`. -> provenance.acquired_date."}
-      - {name: also_published_at, type: list, required: false, description: "Other URLs carrying the same source. TOP-LEVEL
-          on disk; the provenance block places it nested - reconcile when 0043 ships."}
+          by `temporal`. Legacy /1-/2 field; migrates to assets[].acquisition.acquired_at."}
+      - {name: also_published_at, type: list, required: false, description: "Evidenced alternate work locators. TOP-LEVEL
+          on legacy data; the provenance block places it nested. URL match finds an acquisition/work candidate but never proves
+          Selection identity, suppresses a requested new Record or collapses Records mechanically."}
       - {name: speakers, type: list, required: false, formats: [audio, video], description: "Names associated with a recording
           (57 records), UNVALIDATED - populated from source metadata, so values include channel names (Lehto Files) and session
           labels (Ross Coulthart Q&A) alongside actual people. NOT an identified-speaker roster and not a clean creators/speakers
@@ -157,21 +233,20 @@ types:
           0043 is accepted and unimplemented; 242 of 257 live records have no provenance block, and the 15 that do carry war.gov
           catalogue vocabulary (agency/virin/dvids_id/incident_date), not this one. Was listed required:true, which meant
           zero live records validated. Consumers read the flat fields above until the migration lands. Canonical source-origin
-          block (decision 0043; narrative + example in ingest-format.md). Sub-fields, each OMITTED when absent (never null):
-          collection (curated grouping, e.g. 'war.gov UFO reading room'); publisher (issuing body / channel / author-org,
-          not the hosting platform); creators (human author(s)/host(s), person names in natural order); published_date (the
-          SOURCE's own publication date or instant); posted_by and posted_date (who posted this copy and when); acquired_date
-          (when we brought it in). Their exact temporal forms are defined by `temporal`. Also source_url (canonical URL of
-          the original); fetched_url (URL actually retrieved when different, e.g. a Wayback archive); source_file (original
-          filename for a source ingested from a local file); identifiers (native ids keyed by scheme: youtube, virin, isbn,
-          doi, ...); description (the source's OWN blurb, verbatim, never AI - omitted or truncated for licensed/restricted
-          sources per copyright.status). SOURCE facts only - a subject's incident place and date are claims, not provenance.
-          Copyright is NOT mirrored here; the authoritative field is the top-level `copyright`. Origin-unknown is simply the
-          absence of source_url/fetched_url/source_file/identifiers. Also carries AUDIENCE (internal | public - who the source
-          was written FOR; the evidential axis, since an internal record made by people expecting secrecy has no performative
-          incentive) and DISCLOSURE (published | declassified | foia | subpoena | leaked | unknown - the authenticity axis;
-          a FOIA release is attested by the holding agency, a leak by nobody). Keep them separate: folding disclosure into
-          audience lets an unauthenticated document inherit a compelled release's credibility. Narrative in ingest-format.md."}
+          block (decision 0043 as layered by 0051; narrative + example in ingest-format.md). Record/3 sub-fields, each OMITTED
+          when absent (never null): collection; publisher; creators; published_date; posted_by and posted_date; source_url
+          (canonical public location of the work); identifiers (work ids such as ISBN, DOI or VIRIN); description; audience;
+          disclosure. Copy acquisition time, fetched URL, local filename and copy identifiers belong only to each Asset's
+          acquisition block. Legacy /1 and /2 provenance may still carry those old fields read-only. The description is the
+          source's OWN blurb, verbatim, never AI - omitted or truncated for licensed/restricted sources per copyright.status).
+          SOURCE facts only - a subject's incident place and date are claims, not provenance. Copyright is NOT mirrored here;
+          assets[].copyright is authoritative in record/3 and the top-level legacy projection remains authoritative only in
+          /1 and /2. Origin-unknown is simply the absence of source_url/fetched_url/source_file/identifiers. Also carries
+          AUDIENCE (internal | public - who the source was written FOR; the evidential axis, since an internal record made
+          by people expecting secrecy has no performative incentive) and DISCLOSURE (published | declassified | foia | subpoena
+          | leaked | unknown - the authenticity axis; a FOIA release is attested by the holding agency, a leak by nobody).
+          Keep them separate: folding disclosure into audience lets an unauthenticated document inherit a compelled release's
+          credibility. Narrative in ingest-format.md."}
       - {name: document_type, type: string, required: false, description: "WHAT the artefact is, orthogonal to source_type
           which is HOW it was acquired. Closed set: book, paper, report, article, letter, email, statement, form, transcript,
           slide, interview, documentary, podcast, lecture, broadcast, recording, footage. Footage is visual moving-image material
@@ -186,24 +261,35 @@ types:
           references} with participants as {name, address}. Does NOT repeat published_date or creators - the Date header IS
           provenance.published_date (authoritative) and From IS provenance.creators; Message-ID goes to provenance.identifiers.
           dkim_verified is optional and absent means NO SIGNATURE IN THIS COPY, never verification-failed."}
-      - {name: content_hash, type: string, required: false, description: "SHA-256 naming the record's file in store/. Hashes
-          the SOURCE ASSET BYTES plus, for a scoped excerpt, the normalised scope string - identity is source + selection,
-          NEVER the extracted body. So re-extraction keeps the hash and rewrites in place; nothing keyed to it detaches. See
-          chain below."}
-      - {name: archived_ext, type: string, required: false, description: "Extension of this record's archived original, bare
-          and without a dot (opus, ogg, pdf, epub, html). The archived object is records/{content_hash}.{archived_ext} - the
-          key consumers build to fetch or play the source. NOT DERIVABLE from any other field, and must never be re-derived
-          from `container`: codec/container describe the STREAM, the extension is a property of the FILE. yt-dlp writes .opus
-          while reporting container: ogg; a download named .ogg reports an identical stream - so 76 of 122 records had container:
-          ogg against a .opus file, and a container-derived URL 404s for the majority. DISTINCT from source_file (the ORIGINAL
-          filename of a local-file ingest): a video archived audio-only legitimately shows source_file: interview.mkv with
-          archived_ext: opus. Do not reconcile the two - they describe different files."}
-      - {name: source_hash, type: string, required: false, formats: [web, ebook], description: "SHA-256 locating the archived
-          asset at records/{source_hash}.{ext} WHERE IT DIFFERS from the object content_hash addresses: the post-render HTML
-          for web, EPUB bytes for ebook, the full container behind a scoped excerpt. Omitted when the two would be identical."}
-      - {name: snapshots, type: list, required: false, formats: [web], description: "Sibling capture artefacts. Each: role
-          (page_render | single_file), hash (sha256 of bytes), content_type (MIME). Exposes PDF renders and frozen-page captures
-          for web records."}
+      - {name: archived_ext, type: string, required: legacy, description: "Legacy single-Asset projection. In record/3 this
+          belongs on each assets[] item. Extension of the archived original, bare and without a dot (opus, ogg, pdf, epub,
+          html). Legacy consumers combine it with source_hash when present and otherwise legacy content_hash. Record/3 always
+          uses assets[].asset_hash. NOT DERIVABLE from any other field, and must never be re-derived from `container`: codec/container
+          describe the STREAM, the extension is a property of the FILE. yt-dlp writes .opus while reporting container: ogg;
+          a download named .ogg reports an identical stream - so 76 of 122 records had container: ogg against a .opus file,
+          and a container-derived URL 404s for the majority. DISTINCT from source_file (the ORIGINAL filename of a local-file
+          ingest): a video archived audio-only legitimately shows source_file: interview.mkv with archived_ext: opus. Do not
+          reconcile the two - they describe different files."}
+      - {name: source_hash, type: string, required: legacy, description: "Legacy Asset locator only. Historically emitted
+          mainly for web and ebook, but migration accepts any /1 or /2 Record carrying it. Existing /1 and /2 records interpret
+          source_hash as their implicit whole Asset hash when present. Record/3 producers put every Asset hash in assets[]
+          and never emit this field."}
+      - {name: structural_parents, type: list, required: false, description: "Record content_hash values from which this Record
+          was structurally split or composed. One-to-many lineage; not replacement supersession."}
+      - {name: work_provenance, type: object, required: false, description: "Human-evidenced work identity, exactly `{root_id,
+          evidence}`. root_id is a stable non-empty opaque id; evidence is a non-empty ordered list of references or concise
+          evidence statements. Absence is unknown. A title, page boundary or Asset difference alone cannot populate it."}
+      - {name: legacy_identities, type: list, required: migrated-record/3, description: "Non-empty migration-only list of
+          exact old `{schema, content_hash}` identities. It is resolvable only through anomalica/record-identity-map/1 and
+          is excluded from new Record identity."}
+      - {name: structure_status, type: enum, required: false, description: "`temporary` only when this live record is explicitly
+          awaiting a structural split/composition operation. Omission means final. Structural outputs are final and omit it."}
+      - {name: retired_into, type: list, required: retired-structural-parent, description: "Non-empty child Record content_hash
+          list created in the same atomic CAS-bound commit that retired this temporary parent. Never represented by scalar
+          superseded_by. The parent remains at its canonical store path for resolution; live discovery excludes it."}
+      - {name: snapshots, type: list, required: false, formats: [web], description: "Sibling capture Assets. Each is exactly
+          `{role, asset}` where role is page_render or single_file and asset has the complete types.asset shape including
+          derived_from lineage. Exposes PDF renders and frozen-page captures without creating an untyped second byte identity."}
       - {name: pages, type: integer, required: false, formats: [pdf, image], description: "Page count for documents.\n          Always
           1 for source_type image - a photographed or scanned page is a single-page document."}
       - {name: duration, type: number, required: false, formats: [audio, video], description: "Length of the FILE in seconds,
@@ -211,29 +297,31 @@ types:
           past its last word; writing the last segment's end here understated every record in the corpus by up to 82s."}
       - {name: date_extracted, type: string, required: false, description: "When the ingestion pipeline ran. Exact UTC form
           and serialisation are defined by `temporal`."}
-      - {name: copyright, type: object, required: false, description: "Copyright status object (see source-types-and-copyright
-          draft). status is one of public_domain, open_licence, publicly_accessible, licensed, restricted. Only public_domain
-          and open_licence serve the ORIGINAL file openly; the rest gate it behind proof of possession. DEFAULTS BY ACQUISITION
-          (most specific wins, narrative in ingest-format.md): an explicit --copyright > a .gov/.mil URL -> public_domain
-          (US government works carry no copyright, 17 USC 105 - gating one hides a public document for no benefit; match the
-          HOSTNAME, never the string, or 'example.com/fake.gov/x.pdf' opens copyrighted material) > any other http(s) URL
-          -> publicly_accessible (retrieving it anonymously PROVES public accessibility; the original still stays gated, the
-          extracted text is surfaced) > a local file -> restricted (unknown provenance, fail closed). These are defaults a
-          reviewer can override, not licence determinations; widening one (gated -> open) is irreversible once served and
-          is a human decision, never an automated upgrade. `copyright.media` carries the status of EMBEDDED MEDIA separately
-          (absent = inherits status): a publisher can only licence what it owns, so a CC BY 4.0 report built around witness-submitted
-          photographs is open_licence text with restricted media. NEVER collapse a record to the most restrictive of its parts
-          - that gates the publisher's own open analysis. Set at acquisition by a human wherever the licence carries a third-party
-          carve-out; the handler cannot infer it. Media with absent/unknown status fails closed. For hosted model input, public_domain
-          and open_licence are the only status-based admissions; publicly_accessible, licensed, restricted, absent and unknown
-          deny. Local processing remains subject to separate local-use controls. Existing copyright evidence fields, source
-          URLs, prior tools, review state, privacy/ZDR properties and spend approval never grant hosted-input rights. Check
-          every submitted body/media unit and deny a mixed invocation or batch when any unit is ineligible or unresolved.
-          This follows the payload across canonical, comparison/variant, benchmark/evaluation, retry, backfill, manual, direct
-          component and standalone-harness entrypoints. Route labels and dry-run labels grant nothing; only a true no-provider,
-          no-payload dry run is outside the gate. Every provider-capable component rechecks at its final pre-provider boundary;
-          an upstream scheduler check is defence in depth. Evaluation-specific private permission must bind and be verified
-          for the exact record, use, provider, route and necessary processors; registry limits alone are descriptive."}
+      - {name: copyright, type: object, required: legacy-only, description: "Legacy /1 and /2 Record-level copyright status
+          object (see source-types-and-copyright draft). status is one of public_domain, open_licence, publicly_accessible,
+          licensed, restricted. Only public_domain and open_licence serve the ORIGINAL file openly; the rest gate it behind
+          proof of possession. DEFAULTS BY ACQUISITION (most specific wins, narrative in ingest-format.md): an explicit --copyright
+          > a .gov/.mil URL -> public_domain (US government works carry no copyright, 17 USC 105 - gating one hides a public
+          document for no benefit; match the HOSTNAME, never the string, or 'example.com/fake.gov/x.pdf' opens copyrighted
+          material) > any other http(s) URL -> publicly_accessible (retrieving it anonymously PROVES public accessibility;
+          the original still stays gated, the extracted text is surfaced) > a local file -> restricted (unknown provenance,
+          fail closed). These are defaults a reviewer can override, not licence determinations; widening one (gated -> open)
+          is irreversible once served and is a human decision, never an automated upgrade. `copyright.media` carries the status
+          of EMBEDDED MEDIA separately (absent = inherits status): a publisher can only licence what it owns, so a CC BY 4.0
+          report built around witness-submitted photographs is open_licence text with restricted media. NEVER collapse a record
+          to the most restrictive of its parts - that gates the publisher's own open analysis. Set at acquisition by a human
+          wherever the licence carries a third-party carve-out; the handler cannot infer it. Media with absent/unknown status
+          fails closed. For hosted model input, public_domain and open_licence are the only status-based admissions; publicly_accessible,
+          licensed, restricted, absent and unknown deny. Local processing remains subject to separate local-use controls.
+          Existing copyright evidence fields, source URLs, prior tools, review state, privacy/ZDR properties and spend approval
+          never grant hosted-input rights. Check every submitted body/media unit and deny a mixed invocation or batch when
+          any unit is ineligible or unresolved. This follows the payload across canonical, comparison/variant, benchmark/evaluation,
+          retry, backfill, manual, direct component and standalone-harness entrypoints. Route labels and dry-run labels grant
+          nothing; only a true no-provider, no-payload dry run is outside the gate. Every provider-capable component rechecks
+          at its final pre-provider boundary; an upstream scheduler check is defence in depth. Record/3 producers never emit
+          this projection: assets[].copyright is authoritative and every operation evaluates each selected member independently.
+          Evaluation-specific private permission must bind and be verified for the exact record, use, provider, route and
+          necessary processors; registry limits alone are descriptive."}
       - {name: quality, type: object, required: false, description: "Condition of the record's TEXT AS DELIVERED - attributes
           no fault (a U+FFFD is unattributable between a damaged source and a bad decode), hence `quality` not `source_quality`.
           A DERIVED CACHE regenerated by the detector, never authoritative over the body; exists so consumers filter without
@@ -257,16 +345,17 @@ types:
           banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
           a marking."}
       - {name: processing, type: object, required: false, description: "Processing metadata: handler, version (git short-hash),
-          pipeline_version (positive monotonic per-source-type extraction generation; see 0040), tools used, source characteristics.
-          Compare only with that source_type's explicit store/_pipeline_versions.yaml entry: equal is current, lower is stale;
-          absent/malformed/ahead or a missing manifest entry is unknown, never version zero. The registry and manifest list
-          every supported source_type; producers must not default an unregistered type to generation 1."}
+          tools, source characteristics and asset_pipeline_versions. The latter is a complete first-selection-use ordered
+          list of `{asset_hash, source_type, pipeline_version}` for record/3; each positive version is compared only with
+          that source_type's explicit store/_pipeline_versions.yaml entry. The legacy scalar pipeline_version is valid only
+          for /1 and /2. Every selected Asset must be equal/current; lower is stale, while absent, malformed, ahead or a missing
+          manifest entry is unknown. Producers never default an unregistered type to generation 1."}
       - {name: supersedes, type: string, required: false, description: "content_hash of the prior record this one retired,
           when a re-ingest of the same logical source (its `provenance.source_url` / `provenance.identifiers`) superseded
           an earlier extraction. Stamped across schema boundaries. See 0040."}
       - {name: superseded_by, type: string, required: false, description: "content_hash of the record that superseded this
-          one. Present only on retired records (moved to store/v1/). Consumers HIDE any record carrying this. The source of
-          truth for supersession; see 0040."}
+          one. Consumers exclude any Record carrying superseded_by or retired_into from the live set. Replacement records
+          follow 0040; structural parents remain resolvable at their canonical path. Never substitute one marker for the other."}
       - {name: media, type: object, required: false, description: "Summary of extracted media stored at media/{record_hash}/.
           Currently {count, total_bytes}. Omitted when the record has no extracted media."}
       - {name: ai_usage, type: object, required: false, status: provisional, description: "PROVENANCE-ONLY record of AI processing
@@ -282,19 +371,18 @@ types:
           since a dangling reference can be the only thing naming an id), clamped up to the authoring UI's minimum id - a
           fresh record starts at that minimum, not zero. See ingest-format.md."}
     sidecars:
-      "records/{content_hash}.peaks.json": "Waveform amplitude envelope of the archived original, audio/video only, schema
-        anomalica/peaks/1. {schema, hex_hash, bins_per_second, duration, peaks}. `peaks` is one unsigned byte per bin, base64;
-        each bin is the MAXIMUM absolute sample in its slice, never the average (an average flattens the onset the waveform
-        exists to show). Reduction is single-sourced in anomalica-common/peaks.py - two components run it and a drift between
-        them is silent. `duration` is DERIVED from the decoded audio and is the authoritative span for mapping the peaks:
-        len(peaks)/duration == bins_per_second holds here and nowhere else. Do NOT map onto a player's duration (YouTube rounds
-        to the whole second), a media element's (measures the container, not the decode), or the record's frontmatter `duration`
-        (the FILE's length - a different quantity). ACCESS: peaks follow the TRANSCRIPT's allow-list, not the archived original's
-        - open for public_domain, open_licence AND publicly_accessible, so a copyrighted source's audio stays gated while
-        its envelope is served openly (Mark's ruling 2026-07-17; an envelope is a weaker derivative than the transcript, which
-        is already public for those). The two allow-lists MUST NOT be collapsed: merging withdraws the ruling or leaks the
-        audio. Route per object kind, never once per record. Everything else - licensed, restricted, unknown, absent - fails
-        closed."
+      "records/{asset_hash}.peaks.json": "Waveform amplitude envelope of one archived Asset, audio/video only, schema anomalica/peaks/1.
+        {schema, hex_hash, bins_per_second, duration, peaks}. `peaks` is one unsigned byte per bin, base64; each bin is the
+        MAXIMUM absolute sample in its slice, never the average (an average flattens the onset the waveform exists to show).
+        Reduction is single-sourced in anomalica-common/peaks.py - two components run it and a drift between them is silent.
+        `duration` is DERIVED from the decoded audio and is the authoritative span for mapping the peaks: len(peaks)/duration
+        == bins_per_second holds here and nowhere else. Do NOT map onto a player's duration (YouTube rounds to the whole second),
+        a media element's (measures the container, not the decode), or the record's frontmatter `duration` (the FILE's length
+        - a different quantity). ACCESS: peaks follow the TRANSCRIPT's allow-list, not the archived original's - open for
+        public_domain, open_licence AND publicly_accessible, so a copyrighted source's audio stays gated while its envelope
+        is served openly (Mark's ruling 2026-07-17; an envelope is a weaker derivative than the transcript, which is already
+        public for those). The two allow-lists MUST NOT be collapsed: merging withdraws the ruling or leaks the audio. Route
+        per object kind, never once per record. Everything else - licensed, restricted, unknown, absent - fails closed."
       "housekeeping-algorithm.json": "Scheduler-owned canonical deployed housekeeping algorithm manifest, schema anomalica/housekeeping-algorithm/1.
         Scheduler and Workbench read it at the same Git ref as record and sidecar; missing, malformed or worker-mismatched
         state fails closed."
@@ -324,6 +412,110 @@ types:
           contains record_path with the stated content_hash."}
       - {name: completed_at, type: string, required: true, description: "UTC ISO 8601 timestamp ending in Z, after commit
           verification."}
+  record_structure_request:
+    schema: anomalica/record-structure/1
+    status: stable
+    serialisation: JSON API request to POST /api/records/structure/preview or POST /api/records/structure/commit
+    spec_doc: architecture/review-workbench.md
+    owner: workbench
+    summary: CAS-bound private request to split a temporary parent into several Records or compose a full ordered multi-Asset
+      Record. The server derives canonical selectors, bodies, page maps, hashes and lineage; clients cannot supply them.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/record-structure/1`."}
+      - {name: viewed_ref, type: string, required: true, description: "Full Git commit SHA whose tree supplied every parent,
+          Asset and source map used by the preview."}
+      - {name: parents, type: list, required: true, description: "Non-empty ordered full Record content_hash list. Every parent
+          must be live, carry structure_status temporary and remain byte-identical at commit."}
+      - {name: outputs, type: list, required: true, description: "Non-empty ordered requested Records. Each is exactly `{metadata,
+          selection}`. metadata permits only title, provenance, work_provenance and document_type; selection is a non-empty
+          ordered list of `{asset_hash, selector}` using whole standalone-image, pdf_page or inclusive authoring-only pdf_page_range
+          selectors. Unknown fields and client-supplied content_hash, assets, page_map, body, archive paths, rights or lineage
+          are forbidden."}
+    invariants:
+      - "Preview and commit run the same server-side canonical expansion and validation. Commit rejects a changed ref, parent,
+        Asset, page count, page text or source map."
+      - "Preview invokes no provider and requires existing exact Asset page text and source maps. Commit accepts the identical
+        request at the previewed viewed_ref and recomputes it; there is no separately trusted client preview token."
+      - "One commit creates every output, writes one-to-many structural lineage and retires every temporary parent. A partial
+        write is forbidden; parent review, housekeeping, gold, verification, digest and graph sidecars do not inherit."
+      - "Every canonical output selector is contained in the union of the named parents' expanded Selections. Outputs may
+        omit or reorder those members, but an unrelated Asset cannot acquire false structural lineage or cause a parent retirement."
+  asset_possession_challenge_request:
+    schema: anomalica/asset-possession-challenge-request/1
+    status: stable
+    serialisation: JSON API request to POST /api/assets/{asset_hash}/possession-challenges
+    spec_doc: architecture/review-workbench.md
+    owner: workbench
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/asset-possession-challenge-request/1`."}
+      - {name: use, type: enum, required: true, description: "Exactly review, source_body, archived_original or media."}
+  asset_possession_challenge:
+    schema: anomalica/asset-possession-challenge/1
+    status: stable
+    serialisation: JSON API response from POST /api/assets/{asset_hash}/possession-challenges
+    spec_doc: architecture/review-workbench.md
+    owner: workbench
+    summary: Short-lived authenticated proof target for one exact gated Asset. Asset hashes are public identifiers and never
+      satisfy the challenge.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/asset-possession-challenge/1`."}
+      - {name: challenge_id, type: string, required: true, description: "Server-generated opaque identifier with at least
+          128 bits of CSPRNG entropy."}
+      - {name: asset_hash, type: string, required: true, description: "Exact full public Asset SHA-256 identifying the target."}
+      - {name: use, type: enum, required: true, description: "Exactly review, source_body, archived_original or media."}
+      - {name: expires_at, type: string, required: true, description: "UTC RFC 3339 timestamp no more than five minutes after
+          issue."}
+      - {name: nonce, type: string, required: true, description: "Exactly 32 random bytes encoded as unpadded base64url."}
+      - {name: ranges, type: list, required: true, description: "Ordered non-overlapping `{offset, length}` byte ranges. For
+          Assets at least 65536 bytes, divide the Asset into 16 contiguous sectors using boundaries `floor(i * asset_size
+          / 16)` and CSPRNG-select one 4096-byte range uniformly within each sector. For smaller Assets use one range `{offset:
+          0, length: asset_size}`. Empty Assets cannot use possession proof."}
+    proof_codec:
+      - "Decode nonce, then concatenate the 29 ASCII bytes `anomalica-asset-possession-v1`, one zero byte, the 32 nonce bytes,
+        and for each range in order: offset as unsigned 64-bit big-endian, length likewise, then the exact local Asset bytes."
+      - "SHA-256 the complete preimage and submit lowercase `sha256:<64 hex>` as anomalica/asset-possession-proof/1. Public
+        Asset hashes, Record hashes, quotations and source maps are not inputs substitutable for the challenged bytes."
+    invariants:
+      - "Challenge state is bound server-side to authenticated session, Asset hash, use and expiry; it is single-use whether
+        proof succeeds or fails. Expected proof and bytes are never returned or persisted in Record sidecars."
+      - "The server recomputes from its hash-verified archive and compares in constant time. Every gated Asset in a composite
+        requires an independent successful challenge or explicit grant."
+    fixture:
+      nonce: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+      ranges: [{offset: 0, length: 3}]
+      local_bytes_hex: '616263'
+      proof_sha256: sha256:0da69eaa5d8c7d398ec337ee84c7bfe0ffb4620d18e45824ba8ff128785bec74
+  asset_possession_proof:
+    schema: anomalica/asset-possession-proof/1
+    status: stable
+    serialisation: JSON API request to POST /api/assets/{asset_hash}/possession-challenges/{challenge_id}/verify
+    spec_doc: architecture/review-workbench.md
+    owner: workbench
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/asset-possession-proof/1`."}
+      - {name: challenge_id, type: string, required: true, description: "Exact outstanding challenge identifier."}
+      - {name: proof_sha256, type: string, required: true, description: "Proof from the challenge codec in full `sha256:<64
+          lowercase hex>` form."}
+  record_identity_map:
+    schema: anomalica/record-identity-map/1
+    status: stable
+    serialisation: YAML at store/_record_identity_map.yaml
+    spec_doc: decisions/0051-asset-record-selection-and-evidence-identity.md
+    owner: ingester-migration
+    summary: Canonical resolver from an exact legacy Record identity to its migrated record/3 identity; written atomically
+      with migration and never inferred from titles, URLs or hash resemblance.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/record-identity-map/1`."}
+      - {name: entries, type: list, required: true, description: "List sorted lexicographically by old_content_hash. Each
+          item is exactly `{old_schema, old_content_hash, new_content_hash}`; old values are preserved byte-for-byte and the
+          new value is a full record-identity/1 hash."}
+    invariants:
+      - "old_content_hash is globally unique and maps to exactly one new content hash; old_schema is audit context. Consumers
+        resolve existing hash-only references by exact old_content_hash. Duplicate or conflicting keys are invalid."
+      - "Migration writes the new live envelope, old envelope/sidecars under store/legacy-identities/record-{1|2}/ and map
+        entry in one CAS-bound commit. Missing bytes or metadata, byte-hash mismatch, or many-old-to-one-new collapse fails
+        before writing."
+      - "The map resolves references only. It grants no review, digest, graph, rights or sidecar authority."
   review_coverage:
     schema: anomalica/review-coverage/1
     status: stable
@@ -563,8 +755,9 @@ types:
       summary: "Exactly schema, access, review_state, due_reason, outstanding_count, scopes, deep_link, sidecar. sidecar is
         null; no viewed identity, item, old/new token, byte span, evidence or preview. Count/scopes/review-state/due/deep-link
         are permitted metadata."
-      full: "All fields above. Returned directly for public/trusted-local records and under `housekeeping` in a successful
-        POST /api/ingests/{bare_content_hash}/verification/submit response for a gated record. Decisions require this variant."
+      full: "All fields above. Returned directly for public/trusted-local records and after every required Asset has an unexpired
+        session-bound `review` authorisation from anomalica/asset-possession-proof/1 or an explicit grant. Decisions require
+        this variant."
   housekeeping_decision_request:
     schema: anomalica/housekeeping-decision/2
     status: stable
@@ -612,19 +805,181 @@ types:
           view."}
       - {name: reason, type: string, required: true, description: "Non-empty human reason; reviewer identity and UTC time
           are server-authenticated and never accepted from the client."}
-  per_model_digest:
+  pre_digest_source_map:
+    schema: anomalica/pre-digest-source-map/1
+    status: stable
+    serialisation: compact content-addressed UTF-8 JSON in the ingests repository at source-maps/{bare_source_map_sha256}.json
+    spec_doc: architecture/digest-format.md
+    owner: shared-pre-digest-producer
+    summary: Deterministic mapping from claim-eligible prep-version-9 body intervals to one selected Asset page's canonical
+      extracted text; carried through every pre-digest transform.
+    fields:
+      - {name: schema, type: string, required: true, description: "`anomalica/pre-digest-source-map/1`."}
+      - {name: record_hash, type: string, required: true, description: "Full stable Record content_hash."}
+      - {name: body_sha256, type: string, required: true, description: "Exact materialised pre-digest SHA-256 also carried
+          as digest.pre_digest.sha256."}
+      - {name: entries, type: list, required: true, description: "Source-ordered non-overlapping entries `{body_span, asset_hash,
+          record_page, asset_file_page, asset_text_sha256, asset_span}`. Both spans are integer half-open Unicode code-point
+          intervals. asset_text_sha256 is the full SHA-256 of the exact UTF-8 canonical extracted text for that Asset page.
+          One entry cannot cross an Asset or page boundary."}
+    invariants:
+      - "Every claim-eligible retained body code point has deterministic source coverage. Synthetic context may be explicitly
+        non-claimable; a claim touching it or any unmapped/ambiguous interval is invalid."
+      - "Whitespace collapse, annotation removal, irrelevant-region removal and timestamp stripping preserve or update this
+        map deterministically. Entries are maximal: coalesce adjacent entries whenever Asset/page/text-frame identity matches
+        and both body and Asset spans meet exactly at their boundaries. Serialise top-level keys in order schema, record_hash,
+        body_sha256, entries; entry keys in the order stated above; each span uses start, end. Use compact JSON with no whitespace/newline
+        and UTF-8 with non-ASCII unescaped. Escape quotation mark and reverse solidus with a reverse solidus, use `\\b`, `\\f`,
+        `\\n`, `\\r`, `\\t` for those controls and lowercase `\\u00xx` for every other U+0000-U+001F control; never escape
+        solidus. pre_digest.source_map_sha256 is SHA-256 of exactly those bytes and resolves the content-addressed path."
+    fixture:
+      json: '{"schema":"anomalica/pre-digest-source-map/1","record_hash":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","body_sha256":"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","entries":[{"body_span":{"start":0,"end":3},"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","record_page":1,"asset_file_page":4,"asset_text_sha256":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","asset_span":{"start":10,"end":13}}]}'
+      sha256: sha256:ad34f3ff5e814321cc0c48a733fd96e260bf04a9a2a572ecf263f0da33d282d9
+  claim_source_anchor:
+    schema: anomalica/claim-source-anchor/1
+    status: stable
+    serialisation: embedded YAML object in anomalica/digest/2
+    spec_doc: architecture/digest-format.md
+    summary: One exact quote fragment mapped from the materialised pre-digest to one selected Asset page.
+    fields:
+      - {name: asset_hash, type: string, required: true, description: "Selected Asset's full SHA-256."}
+      - {name: record_page, type: integer, required: true, description: "Positive 1-based Record-local page ordinal."}
+      - {name: asset_file_page, type: integer, required: true, description: "Positive 1-based physical PDF page ordinal, or
+          1 for a standalone image. Never a printed page label."}
+      - {name: asset_text_sha256, type: string, required: true, description: "Full SHA-256 of the exact UTF-8 canonical extracted
+          text for this Asset page. Different frames are not comparable without deterministic remapping."}
+      - {name: asset_span, type: object, required: true, description: "`{start, end}` half-open Unicode code-point interval
+          in the canonical extracted text of exactly this Asset page; integer 0 <= start < end."}
+      - {name: body_span, type: object, required: true, description: "`{start, end}` half-open Unicode code-point interval
+          in the exact materialised pre-digest bound by pre_digest.sha256; integer 0 <= start < end."}
+      - {name: quote, type: string, required: true, description: "Exact non-empty pre-digest substring at body_span for this
+          fragment."}
+    invariants:
+      - "One anchor cannot cross a page or Asset boundary. Every anchor is contained by the Record Selection and agrees with
+        page_map, asset_text_sha256 and the prep-version-9 source map."
+      - "A claim's anchors are non-empty and ordered by ascending record_page, then asset-local start and end. Elided fragments
+        remain separate; an enclosing interval is forbidden."
+  source_anchor_identity:
+    schema: anomalica/source-anchor-identity/1
+    status: stable
+    serialisation: compact UTF-8 JSON under a fixed domain prefix
+    spec_doc: decisions/0051-asset-record-selection-and-evidence-identity.md
+    summary: Stable public evidence-site identity derived only from canonical ordered Asset-page coordinates, not claim wording
+      or Record-local ordering.
+    canonicalisation:
+      - "Encode exactly `{'schema':'anomalica/source-anchor-identity/1','anchors':[...]}` as compact JSON with no whitespace
+        or newline and UTF-8 with non-ASCII unescaped; actual JSON uses double quotes. Top-level key order is schema, anchors."
+      - "Each anchor has keys in order asset_hash, asset_file_page, asset_text_sha256, asset_span; asset_span has keys start,
+        end. Sort the copied list lexicographically by asset_hash, numerically by asset_file_page, lexicographically by asset_text_sha256,
+        then numerically by span start and end. Exclude record_page, body_span, quote and claim wording."
+      - "Hash the 26 ASCII bytes `anomalica-source-anchor-v1`, one zero byte, then the JSON bytes. The public source_anchor_id
+        is the first 32 lowercase hex characters; a page build fails on a truncated-id collision."
+    fixture:
+      json: '{"schema":"anomalica/source-anchor-identity/1","anchors":[{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","asset_file_page":4,"asset_text_sha256":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","asset_span":{"start":340,"end":517}}]}'
+      sha256: 84a75f3e0a9e6de863f2f8953f27a527d5a68585288ef34a0f590880d1dd73ba
+      source_anchor_id: 84a75f3e0a9e6de863f2f8953f27a527
+  evidence_unit_identity:
+    schema: anomalica/evidence-unit-identity/1
+    status: stable
+    serialisation: compact UTF-8 JSON under a fixed domain prefix
+    spec_doc: architecture/graph-schema.md
+    summary: Deterministic identity of one transitive overlap component represented by the exact union span in one Asset-page
+      text frame.
+    canonicalisation:
+      - "For one connected component, all anchors share asset_hash, asset_file_page and asset_text_sha256. The component's
+        union is one half-open span from the minimum start to maximum end because every adjacent member overlaps transitively."
+      - "Encode exactly `{'schema':'anomalica/evidence-unit-identity/1','asset_hash':...,'asset_file_page':N,'asset_text_sha256':...,'span':{'start':S,'end':E}}`
+        as compact JSON with keys in that order, no whitespace/newline and UTF-8 with non-ASCII unescaped; actual JSON uses
+        double quotes and span key order is start, end."
+      - "Hash the 26 ASCII bytes `anomalica-evidence-unit-v1`, one zero byte, then the JSON bytes. Store the full lowercase
+        result as `sha256:<64 hex>`; never allocate or sequence evidence-unit ids."
+    fixture:
+      json: '{"schema":"anomalica/evidence-unit-identity/1","asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","asset_file_page":4,"asset_text_sha256":"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","span":{"start":340,"end":600}}'
+      id: sha256:1231cb20ca71c866623a2fc4ede53cef5b74fc59548e57b7d845dd09c0d0ab60
+  digest_record_snapshot_identity:
+    schema: anomalica/digest-record-snapshot/1
+    status: stable
+    serialisation: compact canonical UTF-8 JSON under a fixed domain prefix
+    spec_doc: architecture/digest-format.md
+    summary: Revision identity for the exact live record/3 fields from which graph and public digest Record metadata is derived,
+      independent of stable Selection identity.
+    canonicalisation:
+      - "Project the live record/3 directly as exactly `{schema, content_hash, title, provenance?, work_provenance?, assets,
+        asset_rights, selection, page_map?}`. schema is `anomalica/digest-record-snapshot/1`; provenance and work_provenance
+        are complete unchanged Record values; assets is the digest public structural projection; asset_rights is the ordered
+        `{asset_hash, status}` projection. Omitted optional values stay omitted. Never derive this input from singular digest
+        producer/date/reference fields."
+      - "Canonicalise under RFC 8785 JSON Canonicalization Scheme (I-JSON input, recursively sorted keys, significant array
+        order, deterministic string escaping, UTF-8 and no whitespace/newline). Hash the 35 ASCII bytes `anomalica-digest-record-snapshot-v1`,
+        one zero byte, then those bytes; prefix the lowercase SHA-256 with `sha256:`."
+    fixture:
+      json: '{"asset_rights":[{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"licensed"}],"assets":[{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","file_format":"pdf","pages":12,"source_type":"pdf"}],"content_hash":"sha256:ab9d694b359679bbbded0e49117a370b61e59a7d4140f4dc49cbf23446b94525","page_map":[{"asset_file_page":4,"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","record_page":1}],"provenance":{"creators":["Luis
+        Elizondo"],"published_date":"2024"},"schema":"anomalica/digest-record-snapshot/1","selection":[{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","selector":{"page":4,"type":"pdf_page"}}],"title":"Imminent:
+        Inside the Pentagon''s Hunt for UFOs"}'
+      id: sha256:375ead75c85f48ad5f19f2c3ab797b3cbb7099651dd23eb752ebc5cdec021b47
+  digest:
+    schema: union of anomalica/digest/1 and anomalica/digest/2
+    status: stable
+    serialisation: YAML
+    spec_doc: architecture/digest-format.md
+    variants: [digest_v1, per_model_digest]
+    summary: Canonical digest union. Non-paged audio/video/web/ebook Records use digest/1; eligible page-mapped PDF/image
+      Records use digest/2. Consumers dispatch by exact schema and reject unsupported schema/media combinations.
+  digest_v1:
     schema: anomalica/digest/1
     status: stable
     serialisation: YAML
     spec_doc: architecture/digest-format.md
-    summary: One model's extraction of a source - a full set of nodes + claims. One per model, several per source (1..N models);
-      these are the candidates the digest selector chooses from.
+    summary: Current digest wire format for audio, video, web and ebook Records pending typed Asset coordinates; also the
+      legacy-readable format for older PDF/image digests. It cannot drive evidence identity, independence counts or generated
+      public Record claims.
+    fields:
+      - {name: run_kind, type: string, required: new-output, description: "production or comparison, under the same canonical-path
+          rules as digest/2."}
+      - {name: schema, type: string, required: true, description: "`anomalica/digest/1`."}
+      - {name: extracted_at, type: string, required: true, description: "ISO 8601 extraction timestamp."}
+      - {name: model, type: string, required: true, description: "Resolved model id."}
+      - {name: extraction_generation, type: integer, required: new-output, description: "Positive digest-fidelity generation."}
+      - {name: extraction_config, type: string, required: new-output, description: "Full exact extraction-configuration SHA-256."}
+      - {name: ai_usage, type: list, required: false, description: "Same closed provenance-only usage shape as digest/2."}
+      - {name: review_state, type: object, required: false, description: "Extraction-time provenance only; never current review
+          authority."}
+      - {name: prompts, type: list, required: false, description: "Same prompt-provenance shape as digest/2."}
+      - {name: pre_digest, type: object, required: new-output, description: "Exactly `{sha256, prep_version}` for current
+          non-paged output. Existing pre-stamping digest/1 files may omit it and are freshness-unknown. source_map_sha256
+          is forbidden because this schema has no typed Asset coordinate contract."}
+      - {name: record_snapshot_sha256, type: string, required: new-output, description: "Full anomalica/digest-record-snapshot/1
+          identity projected directly from the live record/3. A mismatch is stale even when stable content_hash is unchanged."}
+      - {name: curation, type: list, required: false, description: "Same ordered explicit digest-curation provenance entries
+          as digest/2."}
+      - {name: record, type: object, required: true, description: "For new record/3 output: the complete structural snapshot
+          `{id, content_hash, title, producer?, date?, reference?, assets, asset_rights, selection, work_provenance?}`. assets
+          is the first-use ordered public structural projection `{asset_hash, source_type, file_format, pages?, derived_from?}`;
+          derived_from is `{asset_hash, transform}`. Existing digest/1 files retain their legacy Record shape and are structural/freshness-unknown
+          until regenerated."}
+      - {name: terminology, type: object, required: false, description: "Same optional terminology shape as digest/2."}
+    body:
+      nodes: "Same node shape as digest/2."
+      domain_claims: "Same semantic claim fields as digest/2 except source_anchors is forbidden, quote is required and non-empty,
+        and scalar location is optional display text only. Claims cannot contribute anchor-based evidence independence or
+        generated public Record sections."
+      infrastructure_claims: "Same shape as domain_claims, routed to the infrastructure graph; omitted when empty."
+  per_model_digest:
+    schema: anomalica/digest/2
+    status: stable
+    serialisation: YAML
+    spec_doc: architecture/digest-format.md
+    summary: >-
+      One model's extraction of a page-mapped PDF/image Record: a full set of nodes and exactly anchored claims. The current
+      pipeline produces one canonical digest; the provisional selector may later compare several candidates.
     fields:  # top-level metadata ("header"); the body is nodes + claims (see body)
       - {name: run_kind, type: string, required: new-output, description: "`production` or `comparison`. Only production and
           legacy digests with this field absent can be canonical graph inputs. Comparison is inert regardless of path; paths
           below variants/ and hidden paths are non-canonical regardless of this value. Visible nested paths remain supported
           for legacy titles containing `/`. Discovery, explicit import and rebuild use the same predicate."}
-      - {name: schema, type: string, required: true, description: "`anomalica/digest/1`."}
+      - {name: schema, type: string, required: true, description: "`anomalica/digest/2`, currently valid only for page-mapped
+          PDF/image record/3 input. Digest/1 remains the output for other media and is legacy-readable, but its scalar location
+          is non-authoritative and cannot drive evidence operations or generated public claims."}
       - {name: extracted_at, type: string, required: true, description: "ISO 8601 timestamp of the extraction run."}
       - {name: model, type: string, required: true, description: "The model that produced this digest (digest/2 carries the
           versioned id)."}
@@ -645,19 +1000,29 @@ types:
       - {name: prompts, type: list, required: false, description: "Which prompt produced each pass, so the digest is attributable
           to an exact prompt (mirrors 0010-auditable-assembly). One entry per pass: {pass, id, version, sha256, file}. An
           override is recorded as version 'override' with the file's own hash. Absent on pre-stamping digests."}
-      - {name: pre_digest, type: object, required: false, description: "Content hash of the pre-digest - the ingest after
-          deterministic model-prep (irrelevant removed, footnotes inlined, timestamps stripped), the exact model input (0042).
-          {sha256, prep_version}. Together with extraction_config, binds the run to its exact input and effective setup without
-          promising byte-identical sampled model output. Absent on pre-0042 digests."}
-      - {name: record, type: object, required: true, description: "The source record: {id (graph UUID, the join key against
-          ingests), title, producer, date, reference}. Same value across every per-model digest of one source - the constant
-          the source-trace rides on."}
+      - {name: pre_digest, type: object, required: true, description: "Content hash of the pre-digest - the ingest after deterministic
+          model-prep (irrelevant removed, footnotes inlined, timestamps stripped), the exact model input (0042). Exactly {sha256,
+          prep_version, source_map_sha256}; prep_version 9 is the first source-map contract. Together with extraction_config,
+          binds exact input, source mapping and setup."}
+      - {name: record_snapshot_sha256, type: string, required: true, description: "Full anomalica/digest-record-snapshot/1
+          identity projected directly from the live record/3. A mismatch is stale even when stable content_hash is unchanged."}
+      - {name: curation, type: list, required: false, description: "Ordered explicit digest-curation provenance entries defined
+          by digest-format.md; absent means unmodified model output."}
+      - {name: record, type: object, required: true, description: "Complete source Record snapshot: `{id, content_hash, title,
+          producer?, date?, reference?, assets, asset_rights, selection, page_map, work_provenance?}`. assets is the first-use
+          ordered public structural projection `{asset_hash, source_type, file_format, pages?, derived_from?}`; derived_from
+          is `{asset_hash, transform}`. asset_rights is the complete ordered `{asset_hash, status}` list; selection and page_map
+          are complete; work_provenance is copied unchanged. The assimilator recomputes Record identity, Asset lineage and
+          anchors from this snapshot. Rights remain non-authoritative."}
+      - {name: terminology, type: object, required: false, description: "Optional terminology block defined by digest-format.md."}
     body:
       nodes: "List of every node mentioned by any claim. Each: {id (UUID, fresh per digest), type (one of person, organisation,
         project, place, event, object, document, topic), name, metadata?}."
       domain_claims: "Claims routed to the knowledge graph. Each: {id, type (observation|testimony|hearsay|opinion|measurement|administrative),
-        attestation (first_hand|second_hand|third_hand), speaker?, location_in_record (where in the SOURCE the claim came
-        from - the trace), date? | date_range?, refs?, quote (verbatim SOURCE text), text}."
+        attestation (first_hand|second_hand|third_hand), speaker?, provenance_chain, source_anchors (non-empty ordered claim-source-anchor/1
+        list), date? | date_range?, refs?, quote? (derived display join of anchor fragments), text}. Deterministic realignment
+        failure rejects the claim; no rough model location is retained. Equal proposition/provenance may union unique anchors
+        in canonical order rather than emit duplicates."
       infrastructure_claims: "Same shape as domain_claims, routed to the infrastructure graph. Omitted when empty."
     forbidden_until_evaluated:
       accounts: "Narrative accounts are report-only until scored against the Doty ground truth for precision, recall and boundary
@@ -711,14 +1076,15 @@ types:
       - "`payload_hash_mismatch` is valid only at brief-selection and article-input."
       - "The manifest reports and carries scheduling state; it grants no model-dispatch authorisation."
   selected_digest:
-    schema: anomalica/digest/2
+    schema: anomalica/digest/1 or anomalica/digest/2, matching the selected candidate
     status: provisional
     serialisation: YAML
     spec_doc: decisions/0039-multi-model-digestion-canonical-reconciliation.md
-    summary: The selected digest per source - the digest selector picks the single best per-model digest whole; it does not
-      merge them. The only digest assimilated; always rebuildable by re-running the selection over the per-model digests.
+    summary: Planned selector output, not the current canonical path. The digest selector would pick the single best per-model
+      digest whole; it would not merge them. Today the digester writes the one canonical digest directly.
     fields:
-      - {name: schema, type: string, required: true, description: "`anomalica/digest/2`."}
+      - {name: schema, type: string, required: true, description: "Unchanged winning candidate schema: anomalica/digest/1
+          for non-paged media or anomalica/digest/2 for eligible page-mapped PDF/image input."}
       - {name: selected_at, type: string, required: true, description: "ISO 8601 timestamp of the selection run."}
       - {name: selected_from, type: list, required: true, description: "The per-model digests the selection chose among -
           each {model, version} (+ its source path/hash), the winner marked. The digest-level audit: which models' extractions
@@ -733,9 +1099,9 @@ types:
     body:
       nodes: "The winning per-model digest's nodes, unchanged - selection picks a whole digest, so nodes are never merged
         across models."
-      domain_claims: "The winning per-model digest's claims, unchanged (quote + location_in_record into `record`). No cross-model
-        merge: models on one source are alternatives, not corroboration, and the selector picks one whole digest rather than
-        collapsing claims (0039 independence rule)."
+      domain_claims: "The winning per-model digest's claims, unchanged. Digest 2 preserves source_anchors; digest 1 preserves
+        its legacy scalar display location. No cross-model merge: models on one Record are alternatives, not corroboration,
+        and the selector picks one whole digest rather than collapsing claims (0039 independence rule)."
       infrastructure_claims: "Same shape, routed to the infrastructure graph."
   brief:
     schema: anomalica/brief/2
@@ -767,8 +1133,11 @@ types:
           shared-claim count; each carries its resolved slug for cross-links."}
     body:
       claims: "Ordered selection - the only facts the writer may use. Each: {claim_id, claim_hash, content, original_excerpt,
-        claim_type, attestation?, speaker {node_id,title}, node_refs, date, date_end, location_in_record, evidence {score,
-        independent_sources}, provenance {record_id, record_title, record_date, record_reference, content_hash, friendly_name}}."
+        claim_type, attestation?, speaker {node_id,title}, node_refs, date, date_end, source_anchors, evidence {score, evidence_unit_ids,
+        provenance_root_ids, independence_status, independent_sources}, provenance {record_id, record_title, record_date,
+        record_reference, content_hash, friendly_name}}. For eligible digest/2 claims source_anchors is non-empty and evidence_unit_ids
+        contains the sorted full derived ids. Digest/1 claims omit source_anchors, use an empty evidence_unit_ids list and
+        set independence_status unknown. Missing derivation fails closed; a scalar count alone is insufficient."
   content:
     schema: null  # no schema identifier defined yet
     status: provisional
@@ -789,10 +1158,11 @@ types:
       - {name: metadata, type: object, required: false, description: "Optional metadata the assembler reads but does not modify.
           Sub-shape not yet specified."}
       - {name: record_hash, type: string, required: record-page, description: "First 56 lowercase hexadecimal characters of
-          the reviewed live record's content_hash. Public locator only; never the full possession hash."}
-      - {name: source, type: object, required: record-page, description: "Fail-closed public projection from current ingest
-          authority. Contains safe source metadata and independent source_body, archived_original, media, provider_embed and
-          external_link capabilities. Never full hashes, review/verification data, private or fetched paths, signed URLs,
+          the live Record's content_hash. Stable public locator for both shell and reviewed page; never an Asset possession
+          hash."}
+      - {name: source, type: object, required: eligible-record-page, description: "Fail-closed public projection from current
+          ingest authority. Contains safe source metadata and independent source_body, archived_original, media, provider_embed
+          and external_link capabilities. Never full hashes, review/verification data, private or fetched paths, signed URLs,
           raw frontmatter, processing metadata, word timestamps or disallowed source bytes."}
       - {name: references, type: list, required: generated-page, description: "Attributed source references and supporting
           quotations. Record-page reviewer deep-links and facts/entities inspection remain in the Workbench."}
@@ -801,11 +1171,11 @@ types:
           bind stable semantic selection and exact writer-visible payload separately. The two counts are present together
           only when selection was capped. The article's <section>/<slug> path locates the brief. Public record pages use their
           separate record_hash contract; transitional node-mode pages lack built_from until rebuilt from briefs."}
-      - {name: built_by, type: object, required: true, description: "Machine-owned generator and output identity. Carries
-          route-qualified model id and model_version; transport; logical prompt, system-prompt, resolved-directive, submitted-payload
-          and body SHA-256 values; system-prompt role; transport implementation/version/configuration hash; scaffold exposure;
-          and temporary assembly token usage. OpenAI-subscription execution fields follow content-format.md's conditional
-          requirements."}
+      - {name: built_by, type: object, required: generated-page, description: "Machine-owned generator and output identity.
+          Carries route-qualified model id and model_version; transport; logical prompt, system-prompt, resolved-directive,
+          submitted-payload and body SHA-256 values; system-prompt role; transport implementation/version/configuration hash;
+          scaffold exposure; and temporary assembly token usage. OpenAI-subscription execution fields follow content-format.md's
+          conditional requirements."}
     open_questions:
       - "Layout: flat `<slug>.<lang>.md` (assembler.md) vs document-first `index.{lang}.md` directories (content-lifecycle.md)
         - unratified."
@@ -815,35 +1185,42 @@ types:
       verification.yaml: "AI verification report (a different model checks every assertion traces to the graph). Informational,
         never a gate."
   public_record_page:
-    schema: anomalica/public-record/1
+    schema: anomalica/public-record/2
     status: stable
     serialisation: markdown + YAML frontmatter and permitted public resources
     spec_doc: architecture/content-format.md
     section: records
-    summary: Reader-facing page for one current fully reviewed live ingest. Generated explanation is public; source_body,
-      archived_original, media, provider_embed and external_link are independently admitted. Ineligible records produce no
-      public artefact.
+    summary: Stable reader-facing hash route for every live Record. Before complete current review and page-mapped digest-2
+      eligibility it is a safe metadata-only noindex shell; eligible PDF/image Records become indexed generated explanation
+      and claims pages at the same route. Other media remain shells in this contract. Source bodies, originals, media, embeds
+      and links are admitted independently per Asset.
     fields:
-      - {name: schema, type: string, required: true, description: "`anomalica/public-record/1`."}
+      - {name: schema, type: string, required: true, description: "`anomalica/public-record/2`."}
       - {name: content_kind, type: string, required: true, description: "Literal `record`. The name avoids Hugo's reserved
           frontmatter `kind` field."}
       - {name: title, type: string, required: true, description: "Safe bibliographic record title."}
-      - {name: description, type: string, required: true, description: "Generated public summary, never the ingest's source-authored
-          blurb."}
-      - {name: record_hash, type: string, required: true, description: "First 56 lowercase hexadecimal characters of content_hash;
-          never the full possession hash."}
-      - {name: metadata, type: object, required: true, description: "Allow-listed source_type, document_type, publisher, creators,
-          publication date, duration and page count; absent values omitted."}
-      - {name: source, type: object, required: true, description: "Safe projection with capabilities source_body, archived_original,
-          media, provider_embed and external_link. Each is `{mode, reason}` plus only its allowed payload: source_body resource;
-          archived_original URL; media items of exactly {url, media_type}; provider_embed URL; external_link URL. Reasons
-          are allowed, copyright, unavailable or unsupported. Missing, unknown or inconsistent state denies; none carries
-          no payload. External linking is independent of reproduction permission. The legacy scalar source.display is forbidden."}
-      - {name: references, type: list, required: true, description: "Attributed claims and citation-sized supporting quotations."}
-      - {name: built_by, type: object, required: true, description: "Machine-owned generator identity defined by content format."}
+      - {name: description, type: string, required: eligible-generated-only, description: "Generated public summary, never
+          the ingest's source-authored blurb. Omitted whenever the complete review/digest/anchor eligibility predicate fails."}
+      - {name: record_hash, type: string, required: true, description: "First 56 lowercase hexadecimal characters of the Record
+          content_hash. This is a direct stable Record locator, never an Asset hash."}
+      - {name: noindex, type: boolean, required: ineligible-shell-only, description: "Literal true whenever the complete review/digest/anchor
+          eligibility predicate fails; forbidden only on an eligible generated page."}
+      - {name: metadata, type: object, required: true, description: "Allow-listed source_types, document_type, publisher,
+          creators, publication date, duration and page count; absent values omitted."}
+      - {name: source, type: object, required: eligible-generated-only, description: "Exactly `{assets: [...]}` in first-selection-use
+          order. Each member is exactly `{ordinal, source_type, file_format, pages?, selected_record_pages, capabilities}`;
+          ordinal is 1-based, selected_record_pages is an ordered positive-integer list, and capabilities has exactly source_body,
+          archived_original, media, provider_embed and external_link. Every capability is `{mode, reason}` plus only its permitted
+          payload from content-format.md. Full Asset hashes are forbidden. Permission or possession of one member never unlocks
+          another; composite body access requires authority for every contributing member. Missing, unknown or inconsistent
+          state denies."}
+      - {name: references, type: list, required: eligible-generated-only, description: "Attributed claims with stable Record
+          route plus `#source-{source_anchor_id}` evidence-site anchors and citation-sized supporting quotations. The id follows
+          decision 0051's exact domain-separated codec; a truncated-id collision fails the page build."}
+      - {name: built_by, type: object, required: eligible-generated-only, description: "Machine-owned generator identity defined
+          by content format."}
     forbidden:
       - kind (reserved Hugo frontmatter field; use content_kind)
-      - noindex
       - full content_hash or source_hash
       - review entries, reviewer identity, notes or spans
       - verification challenge data
@@ -853,36 +1230,41 @@ types:
 # The hash / identity chain, source -> published article. Follows one fact end to end.
 chain:
   - stage: source asset
-    detail: "Raw bytes (pdf/audio/video) or rendered page/EPUB (web/ebook), archived under records/."
+    detail: "Immutable acquired bytes or explicitly linked retained derivatives, identified by full byte SHA-256 and archived
+      as records/{asset_hash}.{ext}."
+  - stage: ordered selection and Record
+    detail: >-
+      A non-empty ordered list of whole-Asset or atomic physical-PDF-page selectors defines the Record. content_hash is the
+      anomalica/record-identity/1 domain-separated hash of only the expanded ordered Asset hashes and selectors. No title,
+      URL, rights or generated text enters identity; a composite has no synthetic original.
   - stage: ingest
     detail: >-
-      content_hash names store/{content_hash}.md and hashes the SOURCE ASSET BYTES plus, for a scoped excerpt, the normalised
-      scope string. It NEVER hashes the extracted body - identity is source + selection, so re-extraction (better extractor,
-      chrome-strip, segmentation) keeps the hash and rewrites the record IN PLACE, and nothing keyed to it detaches. Asset
-      at records/{content_hash}.{ext}; where the archived asset differs from the addressed object (web page render, EPUB,
-      full container behind an excerpt) source_hash names it at records/{source_hash}.{ext}. Reconciled 2026-07-25: web/ebook/excerpt
-      previously hashed the body, which minted a second store entry on every re-extraction. Re-ACQUISITION returning different
-      bytes is a new identity and is handled by supersession (0040).
+      store/{content_hash}.md is the current implementation envelope: authoritative Record frontmatter plus current generated
+      Ingest body. Exact body/Git/pre-digest hashes bind revisions. Re-extraction preserves Record identity but invalidates
+      derived exact-input bindings as applicable.
   - stage: digest
     detail: >-
-      One digest per record at digests/{friendly-name}.yaml, paired to the ingest by the shared friendly name ({date}-{source_type}-{slug}).
-      record.id is the graph UUID join key. Freshness also binds the current materialised pre-digest SHA-256 and the explicit
-      extraction generation; unknown generation is a scheduling signal, not batch authorisation.
+      One canonical digest per Record at digests/{friendly-name}.yaml. record.content_hash is the stable Record binding. Page-mapped
+      PDF/image Records use schema 2, whose claims carry exact ordered Asset/page anchors through a prep-version-9 source
+      map; other media remain schema 1 and ineligible for anchor operations. Freshness also binds the current materialised
+      pre-digest SHA-256 and extraction generation.
   - stage: graph import
     detail: >-
       Derived import receipt keyed by record content hash carries canonical digest path, SHA-256 of the exact digest YAML
       bytes and deterministic import generation. Presence of a record alone does not prove its current digest was imported.
   - stage: brief
     detail: >-
-      Per page. Each selected claim carries provenance.content_hash + friendly_name, linking the claim back to its ingest.
-      brief_hash fingerprints the ordered selection and covered page members; payload_hash fingerprints the exact writer-visible
-      page, claim and related-node values. Both use the exact compact-JSON algorithms in brief-format.md; generated.graph_version
-      is only a reconciliation trigger.
+      Per page. Each selected claim carries stable Record provenance and evidenced provenance roots. Eligible digest/2 claims
+      also carry source anchors and evidence-unit ids; digest/1 claims remain overlap-unknown. A scalar independent-source
+      count without its derivation is insufficient. brief_hash fingerprints the ordered selection and covered page members;
+      payload_hash fingerprints the exact writer-visible page, claim and related-node values. Both use the exact compact-JSON
+      algorithms in brief-format.md; generated.graph_version is only a reconciliation trigger.
   - stage: content (article)
     detail: >-
-      An entity article is assembled from exactly one brief and bound by its path, built_from.brief_hash, built_from.payload_hash
-      and ordered claim id/hash pairs. A public record article is assembled from one selected digest, bound by record_hash,
-      and emitted only after current ingest review/copyright validation. (Content layout remains provisional - see types.content.open_questions.)
+      An entity article is assembled from exactly one brief and bound by its path, hashes and ordered claims. Every live Record
+      has one canonical /records/{record_hash}/ route. Until complete review plus current schema-2 PDF/image digest and exact
+      source-anchor validation, it is a metadata-only noindex shell; when the complete predicate passes it gains indexed generated
+      explanation and claim anchors at the same route.
   - stage: deployment
     detail: >-
       A production build records site and committed content inputs, then compares the complete public path -> exact-byte SHA-256

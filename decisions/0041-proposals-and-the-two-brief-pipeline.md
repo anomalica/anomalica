@@ -61,3 +61,11 @@ A reshape of the assimilate → synthesise → assemble stages: proposals become
 > input to record-mode writing. Current complete ingest review separately decides
 > whether the page exists, and source copyright separately decides which body,
 > original, media, embed or link payload may accompany the derived article.
+
+> **Amendment 2026-09-22:** [0051](0051-asset-record-selection-and-evidence-identity.md)
+> supersedes the source-brief branch. Every live Record has one stable metadata
+> shell; eligible page-mapped PDF/image `record/3` is enriched directly from the
+> one canonical current `digest/2` plus live review and per-Asset authority. Record
+> pages do not use source briefs or fused digests. Entity pages continue to use
+> `anomalica/brief/2`. This is an accepted migration target; current Assembler
+> remains on its legacy slug-based all-or-nothing Record-page path.

@@ -3,6 +3,14 @@
 Date: 2026-07-11
 Status: accepted
 
+> **Layer clarification 2026-09-22:** [0051](0051-asset-record-selection-and-evidence-identity.md)
+> separates immutable Asset acquisition/copy facts from Record work provenance.
+> `acquired_date`, `fetched_url`, `source_file`, retained file format and Asset
+> rights belong to each Asset descriptor. Publisher, creators, work publication
+> date, canonical work identifiers and title belong to the Record. During the
+> existing unshipped migration the current flat fields remain legacy input; they
+> must not be copied into both layers as competing authorities.
+
 ## Context
 
 Records carry source-origin metadata scattered across many top-level frontmatter fields - `publisher`, `creators`, `source_url`, `source_id`, `fetched_url`, `source_file`, `date_published`, `date_accessed`, plus `copyright`, `classification`, `processing` - with no consistent provenance grouping, and [ingest-format.md](../architecture/ingest-format.md) defines no canonical block. A knowledge graph about contested documents needs every claim traceable to its origin - "Department of Energy, Los Alamos, 1949, VIRIN X" - which means provenance must be first-class and flow source -> record -> claim.
@@ -39,9 +47,16 @@ Migrated in (dropped from top-level): `publisher`, `creators`, `source_url`, `fe
 
 Provenance carries source-origin facts only: who issued or created the source, when it was published or uploaded, when we acquired it, where to find it, its native identifiers, and its own blurb. SUBJECT facts - where an incident happened, when an incident occurred - are NOT provenance; they are claims about place and event nodes in the graph. So the draft's `location` is dropped, and `published_date` is strictly the source's publication date: an incident's place and date are extracted as claims, never stamped into provenance. Mixing subject metadata into provenance would put un-scored, un-corroborated "facts" outside the claim/evidence model.
 
-### Copyright stays authoritative; provenance does not mirror it
+### Asset copyright stays authoritative; provenance does not mirror it
 
-`copyright` (carrying `copyright.status`: `public_domain` | `open_licence` | `publicly_accessible` | `licensed` | `restricted`) stays the single authoritative copyright field, top-level. Provenance carries NO `license` mirror - a second copy would drift with no clear winner. `classification` (security markings) likewise stays its own top-level field. Provenance references neither; a consumer needing copyright or classification reads those fields directly.
+Under the layer clarification above, `assets[].copyright` (carrying status
+`public_domain` | `open_licence` | `publicly_accessible` | `licensed` |
+`restricted`) is authoritative in `record/3`; every selected Asset is evaluated
+independently. Top-level `copyright` remains authoritative only for legacy `/1`
+and `/2` Records and is not emitted by a `/3` producer. Provenance carries no
+`license` mirror. `classification` remains at Record level. This paragraph
+supersedes the original top-level-authority wording rather than creating a second
+authority.
 
 ### `description` is verbatim and non-AI, with a copyright caveat
 
@@ -55,19 +70,32 @@ A claim's authoritative provenance is a reference to its source RECORD - the `re
 
 - **Standardise means one home.** Scattered fields cannot be reasoned about uniformly; a duplicated parallel block is worse (drift). Subsuming is the actual standardisation.
 - **Source-versus-subject keeps the graph honest.** Incident place and date must be claims - scored, corroborated, retractable - not provenance metadata that bypasses the evidence model.
-- **One authoritative copyright field.** Mirroring `copyright.status` into `provenance.license` invites the two to disagree with no rule for which wins.
+- **One authoritative copyright home per Asset.** Mirroring rights into
+  `provenance.license` or Record-level `/3` fields invites disagreement with no
+  rule for which wins.
 - **A reference is the source of truth; the cache is for rendering.** Claims stay thin and correct; display stays join-free.
 
 ## Consequences
 
-- [`format-specs.yaml`](../reference/format-specs.yaml) `types.ingest` restructures: a `provenance` object replaces the subsumed top-level fields; `title`, `schema`, `source_type`, `copyright`, `classification`, the hash and `processing` fields stay.
+- [`format-specs.yaml`](../reference/format-specs.yaml) `types.ingest` restructures:
+  a `provenance` object replaces the subsumed top-level work fields. Under 0051,
+  acquisition fields and copyright move to Asset descriptors in `record/3`;
+  `title`, `schema`, `classification`, the Record hash and processing fields stay.
 - [ingest-format.md](../architecture/ingest-format.md) gains a Provenance section; [data-model.md](../architecture/data-model.md) "Record provenance" updates to the block and the claim carry-through.
 - This is a BREAKING frontmatter change (pre-launch, preferred over a compatibility shim): consumers reading top-level `source_url`/`publisher`/`date_published`/etc. switch to `provenance.*`.
 - Rollout, routed separately and paced: the ingester writes `provenance` on source records; the digester carries it to claims (authoritative reference + render cache); a backfill migration retro-stamps existing records and moves the old top-level fields into the block. The scheduler's war.gov and channel stubs align to the ratified names.
 
 ## Scope
 
-A canonical `provenance` block on records that consolidates scattered source-origin frontmatter into one home, kept strictly to source facts (not subject facts), with `copyright` and `classification` staying authoritative and separate; carried to claims as an authoritative record reference plus a derived render cache. Generalises the scheduler's war.gov draft and drops its `location`, `license`, and incident sense of `original_date` per the source-versus-subject and single-source-of-truth rules. Builds on the provenance-overlap corroboration model ([0039](0039-multi-model-digestion-canonical-reconciliation.md), [data-model.md](../architecture/data-model.md)).
+A canonical `provenance` block on Records that consolidates scattered work-origin
+frontmatter into one home, kept strictly to source facts rather than subject facts.
+Asset rights and Record classification stay authoritative and separate; claims
+carry an authoritative Record reference plus a derived render cache. This
+generalises the scheduler's war.gov draft and drops its `location`, `license`, and
+incident sense of `original_date` under the source-versus-subject and
+single-source-of-truth rules. It builds on the provenance-overlap model in
+[0039](0039-multi-model-digestion-canonical-reconciliation.md) and
+[data-model.md](../architecture/data-model.md).
 
 ## Amendment 2026-07-24: unimplemented, and the key is occupied
 

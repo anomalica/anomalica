@@ -4,7 +4,9 @@ The content format is the assembler's output: one rendered article per language,
 
 The canonical machine-readable field list is [`reference/format-specs.yaml`](../reference/format-specs.yaml) (`types.content`); this document is its narrative companion. Both are marked **provisional** - see [Open questions](#open-questions).
 
-> **Status: provisional.** Unlike the record, digest, and brief formats, content has no ratified schema. Its on-disk layout is an open decision and its audit-field binding is unsettled. The fields below are the ones the current docs agree on; treat nothing here as final until the layout decision lands and the assembler workspace confirms what it emits.
+> **Status: mixed.** Generic article layout remains provisional. Machine-owned
+> audit binding and the `anomalica/public-record/2` projection are settled; do not
+> treat their contracts as reopened by the generic layout question.
 
 ## Shape
 
@@ -22,7 +24,9 @@ directives:
 [body - assembler-written for generated articles, hand-written for static pages]
 ```
 
-The frontmatter is **human-controlled**; the assembler reads it but never modifies it, overwriting only the markdown body. The body is assembler-controlled for generated articles and human-controlled for static pages (legal/policy).
+Human-owned frontmatter is preserved. The assembler owns and rewrites the machine
+keys specified below, including `record_hash`, `source`, `built_from` and
+`built_by`, plus the generated body.
 
 ## Frontmatter fields
 
@@ -35,7 +39,7 @@ The frontmatter is **human-controlled**; the assembler reads it but never modifi
 
 ## Public record pages
 
-A public record page is conditional output, not a public copy of an ingest. Its
+A public Record page is a stable route, not a public copy of an Ingest. Its
 eligibility, metadata allow-list and independent source-object permissions are
 fixed by the [2026-09-12 amendment to decision
 0031](../decisions/0031-per-record-inspection-pages.md#amendment-2026-09-12-reviewed-records-become-the-public-works-section).
@@ -43,34 +47,64 @@ The producer reads current record, review and copyright authority from the
 ingests repository before writing; neither the digest's extraction-time review
 snapshot nor its copyright snapshot can decide publication.
 
-An eligible record article carries:
+The hash route, shell/enrichment transition and `public-record/2` projection below
+are accepted migration targets. The deployed Assembler remains on slug-addressed,
+all-or-nothing `public-record/1` output and must not be treated as satisfying them.
 
-- `schema: anomalica/public-record/1` and `content_kind: record` (`kind` is
+Every live Record has the canonical hash route
+`/records/{record_hash}/`, where `record_hash` is the first 56 hexadecimal
+characters of the domain-separated Record `content_hash`. The route survives title
+changes and is the target for claim anchors. A title slug is optional presentation
+only and may redirect to the hash route; it is never canonical identity.
+
+Before complete current review and exact anchor eligibility, the route is a safe metadata shell carrying
+`noindex: true`. It contains title and allow-listed bibliographic metadata only:
+no body, source reproduction, generated summary, claims, claim quotations, Asset
+hashes or private locators. When the Record becomes eligible, the same route loses
+`noindex` and gains the indexed generated explanation, references and independently
+authorised source capabilities. In this contract only page-mapped PDF/image
+`record/3` input with a current `anomalica/digest/2`, preparation version 9 and
+matching source-map hash can gain generated content. Other media remain shells
+until their typed coordinates are defined. Losing eligibility returns it to the shell rather
+than deleting the stable route.
+
+An eligible Record article carries:
+
+- `schema: anomalica/public-record/2` and `content_kind: record` (`kind` is
   reserved by Hugo and must not appear in frontmatter);
 - `title` and `description`, where `description` is generated public summary and
   never the ingest's source-authored blurb;
 - `record_hash`, exactly the first 56 lowercase hexadecimal characters of the
-  record's `content_hash`;
-- safe `metadata`: source type, optional document type, publisher, creators,
+  Record's `content_hash`;
+- safe `metadata`: source types, optional document type, publisher, creators,
   publication date, duration or page count;
 - `source`, a public projection containing safe source metadata and the five
   independent capabilities defined below;
 - attributed `references`, the machine-owned `built_by` block, and the
   assembler-written explanatory body.
 
-Record pages omit `noindex` and are part of the reader-facing `/records/`
-section. A record that fails eligibility produces no public file; reconciliation
-removes a previously emitted file. `source` never contains full content or
-source hashes, verification or review data, private/fetched paths, signed object
+Each reference links to `#source-{source_anchor_id}`. The id is derived from the
+ordered canonical Asset-page evidence coordinates by decision 0051's exact codec,
+not from claim wording, a graph UUID or Record page order. A truncated-id collision
+fails the build; several claims may intentionally share one evidence-site target.
+
+Only Records satisfying the complete review, current digest-2, preparation-version
+and exact-source-map predicate omit `noindex` and gain generated content in the
+reader-facing `/records/` section. `source` never contains full Record or Asset hashes, verification or
+review data, private/fetched paths, signed object
 URLs, raw frontmatter, processing data, word timestamps or source bytes that its
 mode forbids. A restricted value is omitted rather than delivered for the site
 to hide. Facts/entities inspection and reviewer links stay in the Workbench.
 
-`source` contains `source_type` and optional `document_type`, `publisher`,
-`creators`, `published_date`, `duration` and `pages`, with absent values omitted.
-Its `capabilities` object contains exactly `source_body`, `archived_original`,
-`media`, `provider_embed` and `external_link`. Each capability has required
-`mode` and `reason`:
+`source.assets` contains one safe projection per selected Asset in first-use order.
+Each member is exactly `{ordinal, source_type, file_format, pages?,
+selected_record_pages, capabilities}`; `ordinal` is 1-based, pages is omitted for
+non-paged media, selected Record pages stay ordered, and no Asset hash is exposed.
+Each member's `capabilities` object contains exactly `source_body`,
+`archived_original`, `media`, `provider_embed` and `external_link`. Permission or
+possession of one Asset never widens another member. A composite source body is
+emitted only when every contributing member independently allows it. Each
+capability has required `mode` and `reason`:
 
 | Capability | Allowed mode | Denied mode | Optional payload |
 |---|---|---|---|
@@ -85,7 +119,7 @@ mode requires `reason: allowed`; `none` requires one of the other reasons. A
 denied capability carries no `url`, resource reference or `items`. Unknown,
 missing or internally inconsistent capability data is denied. The scalar legacy
 `source.display: text|embed|link|none` is not part of
-`anomalica/public-record/1` because one scalar cannot represent independent
+`anomalica/public-record/2` because one scalar cannot represent independent
 source-body, archived-original, media, provider-embed and external-link rights.
 `external_link` is decided only by whether a safe canonical public URL exists;
 it is never disabled merely because reproduction is forbidden.
@@ -172,8 +206,9 @@ salience or related nodes.
 
 Public record pages do not use this block. Their current live-record gate and
 public `record_hash` contract are specified under
-[Public record pages](#public-record-pages); the full possession hash must not be
-published merely to make this generic shape cover another mode.
+[Public record pages](#public-record-pages). Public Record-page projections omit
+full Asset hashes as data minimisation, although canonical public digest/graph
+anchors carry them as evidence identities; they are never access credentials.
 
 `tokens` is here because **the article is the only artefact of the assemble stage**. Every other stage's usage has a second home - a record's or a digest's own `ai_usage` - so removing the carried-forward copy from an article loses nothing. The assemble entry has no such original: the AI-operation ledger is meant to be it, and the ledger is not written (0037 is scaffolded, and its own text names the gap: "assembler discards usage today"). Dropping `ai_usage` without this line would destroy each article's assembly token counts at the moment of writing, which is the opposite of the 2026-06-29 position that usage data is *kept* and merely not surfaced.
 
@@ -221,7 +256,11 @@ Node mode needs no binding designed for it, and building one would be a mistake.
 
 **Compare claims on the hash, never on the id.** Claim ids are minted fresh (`uuid.uuid4()`) on every digest emission - two digests of the same unchanged record share no claim ids at all. So an id comparison is broken in both directions: it detects nothing when a claim's text changes, and it reports a change on every re-digest when nothing changed. The `id` in `built_from.claims` is a locator for humans; the `hash` is the identity.
 
-Record mode's per-claim hash is **computed, not stored**. Digest claims carry no hash field, and none should be added: `anomalica_common.digest.fingerprint_of_claim(claim)` derives one from fields the emitted claim already has, taking the claim dict exactly as the digest YAML serves it. That shared function single-sources the field *mapping* as well as the hash - a digest names these fields `text`/`type`/`quote`/`location` while the graph names them `content`/`claim_type`/`original_excerpt`/`location_in_record` - so assembler, workbench, and digester hold one definition of "the same claim" rather than three hand-rolled ones.
+Record mode's per-claim hash is **computed, not stored**. Digest claims carry no
+hash field: `anomalica_common.digest.fingerprint_of_claim(claim)` derives one from
+the emitted claim, including its canonical `source_anchors`. The shared function
+single-sources the Digest-to-graph field mapping so assembler, Workbench and
+digester hold one definition of "the same claim" rather than hand-rolled variants.
 
 Storing it instead would recreate the failure this format spent 2026-07-23 removing. A fingerprint is a *derived* value exactly as a notional cost is: if the definition ever changes, every stored copy is silently wrong. A stale hash is worse than a stale price, because it surfaces as a mismatch nobody can explain rather than a number that looks odd. If a non-Python consumer ever needs the fingerprint, revisit it then with the staleness question answered, rather than pre-emptively.
 

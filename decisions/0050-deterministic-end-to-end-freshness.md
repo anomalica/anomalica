@@ -3,6 +3,12 @@
 Date: 2026-09-14
 Status: accepted
 
+> **Identity clarification 2026-09-22:** [0051](0051-asset-record-selection-and-evidence-identity.md)
+> separates Asset byte identity, stable Record Selection identity and generated
+> Ingest revision identity. Existing `sha256:<content-hash>` Record locators remain
+> Record freshness keys; extraction currentness additionally binds the exact
+> Ingest/pre-digest revision. Archived originals resolve only by Asset hash.
+
 ## Context
 
 Freshness was implemented as several unrelated checks: record pipeline versions,

@@ -1,4 +1,4 @@
-# 0019. Markdown with YAML annotations as record interchange format
+# 0019. Markdown with YAML annotations as Ingest interchange format
 
 Date: 2026-03-24
 Status: accepted
@@ -18,7 +18,10 @@ We evaluated DoclingDocument (IBM), Unstructured.io's element model, TEI (Text E
 
 ## Decision
 
-Use markdown files with YAML frontmatter and inline YAML annotation blocks. The format is:
+Use markdown files with YAML frontmatter and inline YAML annotation blocks. Under
+[0051](0051-asset-record-selection-and-evidence-identity.md), the frontmatter is
+the authoritative Record definition and the body is the current generated Ingest;
+the acquired bytes are immutable Assets, not the Record or Ingest. The format is:
 
 - **YAML frontmatter** for document-level metadata (title, date, creators, source, content hash)
 - **Markdown body** for content as it naturally reads

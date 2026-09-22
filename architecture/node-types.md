@@ -286,7 +286,13 @@ do not independently produce `/documents/` pages:
 - **Page-worthy at a modest floor:** person, organisation, project, event, topic - usually subjects when they recur.
 - **High-bar (central-subject only):** place, object, document - usually mentioned in passing; only the central one earns a page (the central craft, the central site, the central report), never a passing reference.
 
-**2. The floor is distinct sources, not raw claim count.** A "source" is a distinct *work* (records of one book re-ingested count once). True provenance-root independence ([decision 0039](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)) is carried on every proposal as `independent_source_count` and reported alongside.
+**2. The floor is established distinct works, not raw claim or Record count.**
+Anchors overlapping on the same physical Asset page in the same exact page-text
+frame are one evidence unit. Disjoint selections,
+different Records and unknown work roots do not automatically add a source;
+unknowns fail closed and are reported separately. True provenance-root
+independence is carried on every proposal with its derivation, not as an opaque
+count ([decision 0051](../decisions/0051-asset-record-selection-and-evidence-identity.md)).
 
 **3. Spread.** The second-best work must contribute at least 3 claims, in both tiers. A source count cannot tell "ten claims from two books" from "one book plus a passing mention", and the second shape - a page that is in substance a summary of one (often copyrighted) work with a fig-leaf second source - was 53% of the proposal set when measured (2026-07-29) and all of it under six claims.
 
@@ -305,7 +311,12 @@ do not independently produce `/documents/` pages:
 
 ### Record
 
-The source artefact a claim is extracted from - a podcast episode, a document, a transcript, a video, or a case file as it exists in the ingest store. Every claim traces to exactly one record (its source) plus a location within it. A record is a pointer to the original material, not a copy.
+A stable named logical work defined by an ordered Selection over one or more
+immutable Assets. Every claim traces to exactly one Record and one or more exact
+Asset/page anchors contained by its Selection when its page-mapped PDF/image input
+is eligible for `digest/2`. Other media retain untyped `digest/1` location and
+cannot participate in anchor-derived evidence identity. The current generated
+readable representation is the Ingest, not the Record.
 
 The record is distinct from the `document` domain type: a record is the ingested source a claim comes from; a document is a domain node for an information artefact referenced or discussed in the graph. The same real-world book can be both - a record (if it has been ingested) and a document (as a referenced entity). The producer of a record - the person or organisation behind it - is its source (a role, not a type).
 
@@ -319,7 +330,11 @@ An atomic assertion extracted from a record. The smallest unit of information in
 A claim always has:
 
 - **Source record** - which record it was extracted from.
-- **Location in record** - where the assertion appears. For audio and video this is an `HH:MM:SS.D-HH:MM:SS.D` timestamp range (an assertion spans seconds, and a question-and-answer claim spans both turns); for documents, a page, section, paragraph, or chapter.
+- **Source location** - for eligible page-mapped PDF/image `digest/2`, a non-empty
+  ordered list of typed half-open Asset-local and pre-digest spans. Physical page
+  ordinals are coordinates; printed labels are display metadata. `digest/1`
+  instead permits only optional opaque scalar display location, with no overlap,
+  evidence-unit or public generated-claim authority.
 - **Speaker** - the person who made the assertion (a Person node, which may differ from the record's producer - e.g. a guest on a podcast). Absent for claims that have no speaker (for example a reviewer's visual observation, which is attributed to the reviewer, not a speaker).
 - **Claim type** - the nature of the assertion (below).
 - **Node references** - zero or more links to domain nodes. A claim can reference any number, or none ("The universe is a simulation" is a valid claim with no domain-node references; it still has provenance).

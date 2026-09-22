@@ -1,12 +1,18 @@
 # Review Workbench
 
-A separate web application that serves two purposes: reviewing and correcting ingests and digests, and providing public transparency into the full extraction pipeline. Not part of the main site.
+A private web application for reviewing and structuring Records and Ingests and
+applying replayable graph curation. Digest-selection review remains planned with
+the unimplemented selector. The Workbench is not a public provenance service or
+part of the main site.
 
 ## Purpose
 
 **Review and correction.** The pipeline produces ingests (structured text from source material) and digests (extracted claims and nodes). Both need human review to catch errors - misidentified speakers, wrong timestamps, irrelevant content, misclassified claims. The workbench provides a purpose-built interface for this work, rather than asking reviewers to edit raw markdown files.
 
-**Public transparency.** Anyone reading the main site can follow any claim back through the workbench to see exactly how it was extracted: which source it came from, what the ingestion produced, and how the digester interpreted it. This auditability is fundamental to the platform's credibility. The workbench is not an internal tool - it is part of how Anomalica earns public trust.
+**Public transparency is a site concern.** Stable public Record pages expose safe
+provenance and claim anchors. The Workbench may inspect private source material and
+review data, so it runs locally or behind reviewer authentication and is never the
+anonymous reader surface.
 
 ## Technology
 
@@ -20,16 +26,23 @@ A separate web application that serves two purposes: reviewing and correcting in
 
 **Storage:** Two git repositories hold the pipeline output:
 
-- **ingests** (access-gated) - the structured text output from the ingester. Access is gated per record by the source's copyright status, not blanket-secret: public-domain and openly-licensed records are freely accessible, while copyrighted records are released only to someone who proves possession of the original. The repository itself is access-controlled (only the workbench backend service account has direct read access); the workbench serves individual ingests one at a time, gated by the hash verification described below for records that need it.
-- **digests** (public) - contains the extracted claims and nodes. No copyrighted content. The backend commits digest corrections here on behalf of reviewers.
+- **ingests** (access-gated) - the structured text output from the ingester. Access
+  is resolved independently for every selected Asset, not by one Record-level
+  status: public-domain and openly-licensed members are freely accessible to an
+  authenticated reviewer, while gated members require exact possession or an
+  explicit grant. The repository itself is access-controlled; the Workbench
+  backend serves one authorised view at a time.
+- **digests** (public) - contains extracted claims and nodes. Reviewers influence
+  the replayable selector or graph-curation inputs; ordinary review does not edit
+  model digests directly.
 
 The backend has no database of its own. The git repositories are the storage.
 
-**Access model:** The workbench has three tiers:
-
-- **Anonymous (no login)** - anyone can browse digests, see extracted claims and nodes, view the correction history, and follow the provenance chain of any claim. For copyrighted sources, anonymous viewers can also unlock the ingested markdown by providing their own copy of the source file (hash verification, described in the copyright handling section below). This data is already public (it comes from the digests repository) or gated by proof of possession, not by identity.
-- **Authenticated (login required)** - same as anonymous, plus the ability to submit corrections to either ingests or digests. Any edit requires a logged-in identity so it can be attributed in the git history. Authenticated users can also request manual access grants for copyrighted sources where hash verification is impractical.
-- **Granted access (per record)** - authenticated users who have been manually granted access to specific copyrighted records by an Anomalica member. Grants are stored separately from the records (see the [source types and copyright decision](../decisions/drafts/source-types-and-copyright.md) for the grants storage model).
+**Access model:** Every Workbench user is an authenticated reviewer. Source access
+is then checked per Asset through public rights, trusted-local access, exact-Asset
+possession proof or an explicit grant. For a multi-Asset Record, access to one
+member never unlocks another; showing the complete Ingest or composite original
+requires authority for every contributing member.
 
 **Authentication:** OAuth implemented directly in FastAPI using Authlib (a lightweight BSD-3 licensed Python library). No external identity service or self-hosted identity platform. The workbench supports multiple OAuth providers - initially just the git hosting platform (such as GitHub), with others (Google, etc.) addable in about 20 lines of Python each.
 
@@ -44,7 +57,10 @@ The OAuth flow:
 
 No authentication library is needed on the frontend. It is just a redirect and a cookie.
 
-For the initial phase with a small number of reviewers, edit access is controlled by an allowlist of email addresses on the backend. Adding a reviewer means adding their email to the list. Browse access to digests requires no allowlist - it is open to everyone.
+For the initial phase with a small number of reviewers, Workbench access is
+controlled by an email allow-list on the backend. The digest repository remains
+public independently, but browsing it does not create an anonymous Workbench
+session or grant source access.
 
 **Supply chain discipline:** The workbench handles sensitive source material, so dependency management matters. Every third-party library added is a trust decision. The framework choice (plain Svelte over heavier alternatives) and the preference for platform APIs over libraries reflect this priority. Key dependencies are limited to:
 
@@ -88,47 +104,93 @@ Two things the view is careful about:
 
 ## Copyright handling
 
-The workbench may serve extracted text from copyrighted source material to users who demonstrate they have a legitimate copy. It is not a distribution channel. What is shown depends on the copyright status of each record (see the [source types and copyright decision](../decisions/drafts/source-types-and-copyright.md) for the full display rules and metadata schema). Protection is layered:
+The Workbench may serve extracted text from copyrighted source material to
+authenticated reviewers who demonstrate access to every required Asset. It is not
+a distribution channel. What is shown depends on each Asset's authority (see the
+[source types and copyright decision](../decisions/drafts/source-types-and-copyright.md)).
+The accepted target protection is layered. The deployed legacy endpoints do not
+yet satisfy it; the launch blockers below are normative, not an assertion that the
+current server is safe for public exposure:
 
-1. **Access-controlled ingests repository** - only the workbench backend service account has direct read access; record-level access is then gated by copyright status
-2. **Hash-gated API** - ingest retrieval requires the full 64-character SHA-256 hash of the original source file, which can only be obtained by hashing the file itself (no login required - possession of the file is the proof)
-3. **Manual access grants** - for cases where hash verification is impractical (physical book owners, different editions), an Anomalica member can grant per-user per-record access to authenticated users
-4. **Rate limiting (pre-public requirement, not yet implemented)** - the verification-submit endpoint must throttle and cap attempts so the missing hash bits cannot be brute-forced; not live today (see [Pre-public hardening](#pre-public-hardening))
-5. **Public references expose only the identifier** - the public digests repository references ingests by `public_hash` (the content-derived identifier), which does not unlock an ingest; the possession key required to fetch is the source-asset SHA-256, obtained only by hashing the source file
+1. **Authenticated, allow-listed session** - only the Workbench backend service account has direct repository access; every human request has an authenticated reviewer identity.
+2. **Per-Asset gate** - public rights, trusted-local access, a successful nonce-bound byte-range proof or an explicit grant is checked independently for every member required by the requested output.
+3. **Manual access grants** - where exact-byte verification is impractical, a grant binds one authenticated user to an explicit set of Asset hashes and uses; a per-Record grant is insufficient unless it enumerates every member.
+4. **Rate limiting (pre-public requirement, not yet implemented)** - challenge issue and submission endpoints throttle attempts and use short-lived, single-use challenges; not live today (see [Pre-public hardening](#pre-public-hardening)).
+5. **Public hashes are identifiers, not credentials** - digests and graph anchors carry full Asset hashes so evidence sites are verifiable. Knowing a hash identifies the challenge target but never satisfies it or grants source access.
 
-### Two hashes: the public identifier and the possession key
+### Record and Asset identifiers
 
-The workbench uses two distinct SHA-256 hashes. They coincide for `audio`/`video`/`pdf` and differ for `web`/`ebook`:
+The public identifier is the first 56 hex characters of the domain-separated
+Record `content_hash`. It is safe to publish and cannot equal a raw Asset hash
+under the specified codec. Full Asset hashes are also public evidence identities,
+not possession keys. Possession is established by a short-lived
+`anomalica/asset-possession-challenge/1` byte-range challenge. The authenticated
+server selects unpredictable ranges from the archived Asset; the browser hashes
+the nonce, encoded ranges and exact local bytes. Neither public hashes nor quoted
+text reveal that proof.
 
-- **Public identifier** - `public_hash`, the first 56 hex chars of the record's `content_hash`. Per ingest-format.md, `content_hash` binds the source asset and any normalised selection for every source type; it never hashes extraction output. The public identifier is used in the public digests repository, in public-facing URLs, and in per-claim deep-links (decision 0031). It is an identifier, not a secret - it does not unlock an ingest.
-- **Possession key** - the SHA-256 of the raw SOURCE ASSET (the file a reviewer would hold). It is carried in the verification sidecar's `sha256` field and is the `records/{hash}.{ext}` filename (for `web`/`ebook` it is not a frontmatter field). The hash-verification gate matches the reviewer's locally-computed file hash against this. For a whole-container record it equals `content_hash`; a scoped record's `content_hash` additionally binds the normalised selection. Neither identity hashes the extracted body.
-
-Possession is proven against the source-asset hash, so a reviewer hashing their own copy of the file unlocks the ingest. Harvesting the public identifier does not help:
-
-- For `audio`/`video`/`pdf`, the public identifier IS the first 56 of the 64 hex chars of the source-asset possession key - so it leaks 224 of its 256 bits. The gate string-compares a submitted hash (no file is involved server-side), so an attacker holding the public identifier need only guess the remaining 32 bits and submit each guess - 2^32 cheap attempts. The only barrier is rate-limiting the submit endpoint, which is not yet implemented. Until it lands, the possession proof for these types is materially weak.
-- For `web`/`ebook`, the public identifier is a different hash entirely (the body hash), independent of the source-asset possession key, so it leaks nothing - an attacker would have to possess the file or brute-force a full 256-bit hash. These types are materially stronger here than `audio`/`video`/`pdf`.
-
-The protection is designed to be technical rather than a social convention - but two pieces of that enforcement are not yet built.
+A Record may require several possession checks. The backend evaluates every Asset
+member needed for the requested body or original and returns nothing unless all
+are authorised. One successful challenge cannot unlock another member, another
+Record's private derivative, or an entire bundle. Public rights are evaluated by
+the same per-Asset rule, independently of possession.
 
 ### Pre-public hardening
 
-Two server-side protections this design assumes are NOT implemented today (the gate is computed but not enforced), and are pre-public launch requirements:
+Three server-side protections this design assumes are NOT implemented today and
+are pre-public launch requirements:
 
-- **Rate-limiting** on the verification-submit endpoint. Without it, the 32-bit guess space for `audio`/`video`/`pdf` possession (above) is brute-forceable by repeated string submission.
+- **Replace hash and cloze submission.** Implement `POST
+  /api/assets/{asset_hash}/possession-challenges` and `POST
+  /api/assets/{asset_hash}/possession-challenges/{challenge_id}/verify` with the
+  exact schemas and codec below. A submitted Asset hash or legacy cloze answer
+  never creates authorisation.
+
+- **Rate-limiting** on challenge issue and challenge-verification endpoints as
+  ordinary defence in depth. Public Asset identity does not weaken this control:
+  byte-range proofs, not hashes, grant access.
 - **Gate-enforced fetch.** `GET /api/ingests/{hash}` and `GET /api/sources/{hash}` are not gate-enforced server-side today (dev-mode ungated); until they are, the hash gate and copyright gating are advisory, not enforced.
 
-Both must land before any public exposure.
+All three must land before any public exposure.
 
 ### Flow
 
-The viewer provides their own copy of the original file via the browser's File System Access API (no upload to the server). No login is required for this step - possession of the source file is sufficient proof. The browser reads the file locally and computes a SHA-256 hash using hash-wasm in a Web Worker (streaming, so multi-gigabyte video files are handled without loading them fully into memory). The full hash is sent to the workbench API. If an ingest exists for that hash, the server returns the ingest. The original file is never uploaded.
+An authenticated reviewer identifies each required Asset and selects their local
+copy; source bytes are never uploaded. The server creates a single-use challenge
+bound to session, Asset hash, requested use and an expiry no more than five minutes
+away. It returns a 256-bit nonce and 16 cryptographically random, non-overlapping
+byte ranges totalling 64 KiB, or all bytes in one range for a smaller Asset. The
+browser computes the exact proof defined in
+`anomalica/asset-possession-challenge/1`; the server independently computes and
+constant-time compares the expected proof from its archive. Success creates only
+the challenge-bound session authorisation until its expiry; the client then retries
+the intended endpoint. A composite fetch requires every member's independent gate
+to pass before returning the Ingest.
 
 ### Operational requirements
 
-Because the partial-hash protection relies on the API never accepting prefix lookups, two rules are non-negotiable:
+Because public hashes identify evidence rather than authorise access, two rules are
+non-negotiable:
 
-- The ingest-fetch endpoint rejects any hash that is not exactly 64 hex characters. Prefix search is never exposed.
-- The endpoint returns identical responses for "hash not found" and "hash malformed" (both 404 with no distinguishing body). Otherwise an attacker could use the error distinction to verify partial guesses.
+- Asset challenge lookup accepts only a complete canonical hash; prefix search is
+  never exposed.
+- A challenge is bound to authenticated session, Asset, use and expiry, is
+  single-use, and reveals only nonce, offsets and lengths, never expected proof or
+  gated source bytes.
+
+The existing edge and backend implementations that accept a submitted SHA-256 as
+immediate proof do not satisfy this contract. Legacy cloze sidecars also do not
+satisfy it because public evidence quotations may disclose answers. Both paths are
+pre-launch-only and must be replaced before any public digest or graph containing
+Asset hashes is published or any Workbench endpoint is exposed.
+
+The deployed whole-Markdown update routes are also not `record/3` writers: they
+protect only legacy top-level rights and do not recompute Selection identity. A
+conforming writer parses the current envelope server-side, rejects reviewer edits
+to `content_hash`, `assets`, `selection`, `page_map` and authoritative
+`assets[].copyright`, and uses separate administrator or structural operations for
+those fields. No public deployment may accept client-supplied full Markdown that
+can alter identity-bearing or rights-authoritative fields.
 
 Rate limiting is a load-bearing security control, not just an anti-abuse measure, and should be tested as such.
 
@@ -149,6 +211,27 @@ Video and audio records are the most labour-intensive to review because automati
 Video and audio playback uses the browser's built-in HTML5 media elements. Syncing playback position with the transcript uses Svelte's reactive bindings on the media element's `currentTime` property. Clicking a transcript line seeks the media to that timestamp; as media plays, the active transcript line is highlighted and scrolled into view.
 
 ## Review tasks for all record types
+
+### Split and compose Records
+
+The accepted structural target can split one temporary parent into several child
+Records or compose one Record from several Assets; the deployed Workbench does not
+yet implement these routes. The first implementation will accept only complete
+physical PDF pages and whole standalone images. The client submits ordered
+selections and editable metadata, never generated body text, hashes, page maps or
+archive paths. The server derives preview and commit from one compare-and-swap
+bound Git ref, validates every Asset/page/source map, expands ranges to atomic
+selectors and derives the sequential Record `page_map`.
+
+Each parent must be live and explicitly carry `structure_status: temporary`.
+Commit creates every child or composite as final and retires all parents atomically. A
+failed validation or stale ref writes nothing. Structural one-to-many lineage is
+separate from scalar `superseded_by`. Parent review, housekeeping, gold,
+verification, digest and graph sidecars do not inherit mechanically. A missing
+exact source map blocks the operation. Any separately authorised re-extraction
+must complete first; preview and commit invoke no provider and never fall back to
+a rough model location. Composition uses
+already extracted Asset/page blocks and never synthesizes a PDF.
 
 - **Claim review** - verifying that extracted claims accurately represent what the source says. Correcting misinterpretations, wrong speakers, incorrect claim types or attestation levels.
 - **Node review** - verifying that people, organisations, projects, places, events, objects, documents, and topics were correctly identified and linked. Correcting misidentifications or creating new nodes.
@@ -185,14 +268,13 @@ when absent or unreadable), and derived `previews` keyed by item id. `deep_link`
 is `/housekeeping?record=<64-lowercase-hex-content-hash>`. Preview data is never
 inserted into or written back with the sidecar.
 
-A possession-gated caller who has not passed the challenge receives only
+A possession-gated caller who has not passed every required Asset challenge receives only
 `schema`, `access: summary`, `review_state`, `due_reason`, `outstanding_count`, sorted
 `scopes`, `deep_link` and `sidecar: null`. These are permitted processing
 metadata. The summary exposes no `viewed_*` identity, item, old/new token, byte
-span, evidence or preview. After a successful `POST
-/api/ingests/<64-lowercase-hex-content-hash>/verification/submit`, that response
-includes the full view as `housekeeping`; the unauthorised GET remains a summary
-and no persistent unlock state is created.
+span, evidence or preview. After successful Asset proof submissions for the
+`review` use, retrying the GET returns the full view while those session-bound
+authorisations remain unexpired. No durable unlock state is created.
 
 Versions 1 and 2, and missing, malformed, result-mismatched or
 algorithm-mismatched sidecars are due and have no current outstanding
@@ -274,70 +356,34 @@ browser content over a newer edit.
 
 This is the same convention used by git hosting platforms when merging pull requests - the author did the work, the committer applied it. Any git client displays both fields.
 
-**Ingest corrections** (speaker merges, timestamp adjustments, marking irrelevant sections) are committed to the access-controlled ingests repository. Reviewers cannot access this repository directly - they interact with ingests only through the workbench, which serves one file at a time, applying hash verification for records gated by copyright status. The project maintainer has full access to the repository and can review, revert, or approve changes.
+**Ingest corrections** (speaker merges, timestamp adjustments, marking irrelevant
+sections) are committed to the access-controlled ingests repository. Reviewers
+interact only through the Workbench, which applies authentication and independent
+Asset rights, challenge or grant checks before serving a view.
 
-**Digest corrections** (claim type changes, speaker reattribution, node corrections) are committed to the public digests repository. These corrections are visible to anyone and tracked in the public commit history.
+**Digest findings** cause re-digestion or a graph-curation operation. When the
+planned selector lands they may also create a replayable selector preference.
+Ordinary review does not edit model digest output in place.
 
 The git history provides the full audit trail: who changed what, when, and why. The workbench shows reviewers the diff of their changes before they submit, and displays the history of corrections to each record.
 
 ## Review identity across re-ingestion
 
-The ingester improves continually: capture pipelines get better, parsers find
-bugs, and post-processing rules tighten. Re-extraction may change a record body,
-but `content_hash` remains stable for every source type because it hashes source
-asset plus selection, never extraction output. The exact current record bytes
-are separately identified where needed, including housekeeping's
-`input_sha256` and the digest's pre-digest hash (see ingest-format.md).
+The authoritative review is `store/{content_hash}.review.json`. Stable Record
+identity locates the sidecar; `reviewed_body_sha256` binds the verdict to the exact
+parsed Ingest body. A metadata-only commit preserves currentness when that body is
+unchanged. A changed body makes the verdict stale, and unresolved
+`review_carryover` independently requires verification.
 
-Naive binding of reviews to `content_hash` orphans every prior review when the ingester re-runs. A reviewer who approved a record yesterday would find the same record back in the unreviewed queue today, with no signal that they had already approved its previous form. The friction compounds: a single ingester improvement that touches one file format can invalidate the entire review backlog for that format.
+URL, Asset hash and historical `Reviewed-Record:` trailers are migration evidence,
+not current review authority. They never transfer a verdict to a different
+Selection. Structural children and composites begin without review state even when
+all their parent pages were reviewed, because ordering and body boundaries changed.
 
-This is the expected operational shape - ingester improvements should not gate on review preservation - so the spec binds reviews to a hierarchy of identities, accepting the strongest available match.
-
-### Identity hierarchy
-
-A record can carry up to three identities at any given time:
-
-| Kind | Source | Stable across | Available for |
-|------|--------|---------------|----------------|
-| `url` | The record's `provenance.source_url`. The URL the ingester fetched. | Re-ingestion. Publisher byte-level changes. Re-extraction. | Web records, YouTube videos, anything fetched by URL. |
-| `sha256` | The source asset's SHA-256 - the verification sidecar's `sha256` and the `records/` filename (a `source_hash` frontmatter field where present). | Re-extraction. Parser improvements. Post-processing changes. | PDFs, ebooks, audio files, video files, any record sourced from a file. |
-| `content` | The `content_hash`: source asset plus selection for every source type. | Re-extraction and review edits; not re-acquisition with changed source bytes. | All records (always present). |
-
-`url` is preferred over `sha256` is preferred over `content`. A given record may have any subset of the three. Web records have `url` and `content`. File-sourced records have `sha256` and `content`. Web records that the ingester also archives by file (a SingleFile snapshot for offline reading) carry all three.
-
-### Trailer form
-
-A review commit records the identities of the record it reviewed using one or more `Reviewed-Record:` trailers:
-
-```
-Reviewed-Record: url:https://thedebrief.org/some-article-slug
-Reviewed-Record: sha256:abc123def456...
-Reviewed-Record: content:9f2a8c5e...
-```
-
-Each trailer is `Reviewed-Record: <kind>:<value>` where kind is one of `url`, `sha256`, `content`. The workbench backend emits whichever identities the record carried at the time of review. Multiple trailers in one commit are alternative identities for the same review - all of them are equivalent claims of identity, the strongest available one will match.
-
-### Match scan
-
-To find prior reviews for a given record, the workbench scans review commits in the appropriate repository and matches their trailers against the record's identities. A match is established when any kind in the trailer matches the same kind on the record:
-
-- The record has `source_url = U` and a prior review's commit carries `Reviewed-Record: url:U` - match.
-- The record has `source_hash = H` and a prior review's commit carries `Reviewed-Record: sha256:H` - match.
-- No url or sha256 match, but the record's `content_hash = C` matches a prior `Reviewed-Record: content:C` - match (weakest).
-
-When multiple prior reviews match (the same `source_url` appears in two old commits because the same article was ingested twice and reviewed each time), the workbench surfaces all of them rather than picking one. The reviewer disambiguates.
-
-When the new record matches no prior reviews on any kind, it enters the queue as unreviewed.
-
-### Back-compatibility with historical trailers
-
-Review commits emitted before this spec carried a single trailer of the form `Reviewed-Record: sha256:<hash>`, where the value was the record's content_hash (the only identity the workbench was emitting at the time). The match scan retries any `sha256:<hash>` trailer as a `content:<hash>` match when the kind-matched scan finds nothing. The collision space between an arbitrary content_hash and an unrelated source_hash is astronomical (2^256), so this retry is safe in practice. New review commits emit fully labelled trailers; the retry exists only to preserve continuity of pre-spec reviews.
-
-### Future use: URL rotation and aliasing
-
-A record's `source_url` is not guaranteed stable over time. Wayback Machine URLs rotate, publishers issue 301 redirects, articles move between sites. The multiple-trailer form already supports this case: when the workbench (or any other tool) discovers that a record's prior `source_url` is now reachable only via a new URL, it can emit a new review commit (or a maintenance commit) that lists both URLs as `Reviewed-Record:` trailers. Future scans will match either.
-
-The spec does not prescribe how aliasing gets detected or who emits the maintenance commit. The trailer format simply admits the case; implementation is deferred until the problem actually bites.
+Public-page eligibility requires a valid version-1 sidecar with coverage exactly
+1.0, `digestible: true`, positive `total_units`, a current body binding and no
+unresolved carryover. Partial current review remains visible in the private
+Workbench but does not expose generated claims publicly.
 
 ## Relationship to the main site
 

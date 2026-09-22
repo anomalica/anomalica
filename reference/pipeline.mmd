@@ -5,6 +5,8 @@ flowchart TB
   classDef store fill:#ffffff,stroke:#5E5A50,stroke-width:1.3px,color:#2c2a24;
 
   raw@{ shape: doc, label: "Raw source" }
+  asset@{ shape: docs, label: "Immutable Asset(s) (0051 target)" }
+  record@{ shape: doc, label: "Ordered Selection / Record (0051 target)" }
   ingester@{ shape: rounded, label: "Ingester" }
   ingest@{ shape: doc, label: "Ingest" }
   housekeeping@{ shape: rounded, label: "Scheduler housekeeping" }
@@ -14,9 +16,9 @@ flowchart TB
   bucket@{ shape: lin-cyl, label: "Object storage" }
   workbench@{ shape: rounded, label: "Workbench" }
   digester@{ shape: rounded, label: "Digester" }
-  digests@{ shape: docs, label: "Per-model digests" }
-  selector@{ shape: rounded, label: "Digest selector" }
-  selected@{ shape: doc, label: "Selected digest" }
+  digests@{ shape: docs, label: "Per-model digests (planned)" }
+  selector@{ shape: rounded, label: "Digest selector (planned)" }
+  selected@{ shape: doc, label: "Canonical digest" }
   assimilator@{ shape: rounded, label: "Assimilator" }
   kg@{ shape: cyl, label: "Knowledge graph" }
   synthesiser@{ shape: rounded, label: "Synthesiser" }
@@ -26,40 +28,51 @@ flowchart TB
   site@{ shape: rounded, label: "Site" }
   brand@{ shape: docs, label: "Brand" }
 
-  raw -->|"original file (1:1)"| ingester
-  ingester -->|"record (1:1)"| ingest
+  raw -->|"acquire exact bytes"| ingester
+  ingester -->|"archive by byte SHA-256"| asset
+  asset -->|"ordered whole/page selectors"| record
+  record -->|"generate current representation"| ingest
   ingester -.->|"post-commit fast path"| housekeeping
   ingest -->|"startup + ≤5-minute tuple reconciliation"| housekeeping
   housekeeping -->|"deterministic, then priority subscription research"| housekeeping_proposals
   housekeeping_proposals <-.->|"gate review; decide + atomic apply"| workbench
-  ingester -->|"originals + raw transcripts"| archive
+  asset -->|"originals"| archive
+  ingester -->|"raw transcripts"| archive
   archive -->|"originals uploaded off-machine"| bucket
-  bucket -.->|"public originals open; copyrighted behind possession gate"| site
-  ingest -->|"deterministic prep: strip irrelevant, inline footnotes, strip timestamps"| predigest
-  predigest -->|"the exact model input"| digester
-  digester -->|"one digest per model (1..N), every claim quote-checked"| digests
-  digests -->|"candidate digests"| selector
-  selector -->|"picks the single best"| selected
+  bucket -.->|"public Assets only"| site
+  bucket -.->|"gated Assets, per-member authority"| workbench
+  ingest -->|"deterministic prep: exact input + PDF/image source map"| predigest
+  predigest -->|"exact model input + bound source map"| digester
+  digester ==>|"current: one canonical, every claim quote-checked"| selected
+  digester -.->|"planned: 1..N candidates"| digests
+  digests -.->|"planned candidates"| selector
+  selector -.->|"planned: picks one"| selected
   selected ==>|"one per record (1:1)"| assimilator
   assimilator <-->|"reads + updates; shortlists duplicate nodes for review"| kg
   kg -->|"entity + its claims"| synthesiser
   synthesiser ==>|"a brief per page (one -> many)"| briefs
   briefs -->|"the page's brief (1:1)"| assembler
   selected -->|"one record (1:1)"| assembler
-  assembler -->|"entity articles + reviewed record pages"| content
+  ingest -.->|"current review + per-Asset rights"| assembler
+  assembler -->|"entity articles + stable Record pages"| content
   content -->|"renders"| site
   brand -.->|"tokens, logo"| site
   ingest <-.->|"review + corrections"| workbench
-  selector <-.->|"review the selection"| workbench
+  record <-.->|"target: CAS split/compose + atomic retirement"| workbench
+  predigest -.->|"validate existing parent source maps"| workbench
+  selector <-.->|"planned: review the selection"| workbench
+  assimilator <-.->|"merge shortlist + replayable graph curation"| workbench
   archive -.->|"check against source"| workbench
-  workbench -.->|"digestible signal + visual notes"| digester
+  workbench -.->|"review verdict + Ingest annotations"| digester
 
-  class raw,ingest,housekeeping_proposals,predigest,archive,bucket src
+  class raw,asset,record,ingest,housekeeping_proposals,predigest,archive,bucket src
   class ingester,housekeeping,digester,digests,selector,selected,assimilator,kg,synthesiser,briefs,assembler,content,site pub
   class workbench rev
   class brand store
 
   click raw nodeClick
+  click asset nodeClick
+  click record nodeClick
   click ingester nodeClick
   click ingest nodeClick
   click housekeeping nodeClick

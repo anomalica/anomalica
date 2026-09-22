@@ -6,20 +6,28 @@ Identifiers. Companion to the terms in [data-model.md](data-model.md) and the fo
 spec in [ingest-format.md](ingest-format.md), both of which carry the corrected
 vocabulary.
 
-## The rule
+> **Identity amendment 2026-09-22:** Decision
+> [0051](../decisions/0051-asset-record-selection-and-evidence-identity.md)
+> supersedes this document's one-Asset/one-Record and normalised-scope hash model.
+> Asset bytes, ordered Record Selection and generated Ingest revision now have
+> distinct identities. The path history below remains migration evidence, not the
+> current identity contract.
+
+## Current rule
 
 Each stage is named after what produces it.
 
 | Term | What it is | Where it lives |
 |------|-----------|----------------|
-| **record** | The original artefact, in whatever format it arrived: the PDF, the audio file, the ebook, the captured web page. Immutable. | `records/` |
-| **ingest** | The markdown transcription of one record, written by the ingester. Has its own hash, its own character offsets, its own edit history. | `ingests/store/{hash}.md` |
+| **asset** | Immutable acquired bytes: a PDF, audio file, ebook, captured web page or image. | `records/{asset_hash}.{ext}` |
+| **record** | A stable named logical work defined by an ordered Selection over one or more Assets. | Frontmatter in `ingests/store/{content_hash}.md` |
+| **ingest** | The current generated readable representation of one Record. It has exact body/pre-digest/Git revision hashes and edit history. | Body in `ingests/store/{content_hash}.md` |
 | **digest** | The claims file written by the digester from one ingest. | `digests/{slug}.yaml` |
 | **source** | Not a file. The person or organisation that produced a record. David Fravor is a source; the New York Times is a source. | Graph node |
 
-A record maps to exactly one ingest. That one-to-one relationship is what makes the
-migration tractable, and it is why `record_id` is not being renamed: it identifies
-the record, and the ingest is derivable from it.
+A Record resolves to one current Ingest and may have historical Ingest revisions.
+`record_id` remains correct because it identifies the stable Record, not one
+generated revision.
 
 ## This is not a find-and-replace
 
@@ -101,20 +109,21 @@ They are listed so the remaining work is visible rather than assumed finished.
 | `record_id` | CORRECT AS IS | 158 | Identifies the record, and one record has exactly one ingest |
 | `record_hash` | rule settled, data lagging | 1,982, nearly all in generated pages | See below |
 
-`record_hash` needs no decision: the rule was already settled on 2026-07-25
-([ingest-format.md](ingest-format.md#store)). `content_hash` hashes the archived
-original's bytes plus any scope string, never the extracted body, which is what makes
-re-extraction in place safe.
+The pre-0051 `record_hash` rule was believed settled on 2026-07-25 as archived
+bytes plus a scope string. Decision 0051 replaces it: `content_hash` is now the
+domain-separated hash of the canonical ordered Selection over explicit Asset
+hashes and typed selectors. The generated body remains excluded, which preserves
+safe re-extraction in place.
 
-THE NARRATIVE AND THE DATA DISAGREE, and the data is consistent enough to be
+The historical narrative and data disagreed, and the data was consistent enough to be
 believed. Across all 221 ingests: audio, pdf and video (171) hash the original's
 bytes and carry no `source_hash`; web and ebook (50) hash the body and every one
 carries `source_hash`. No exceptions either way, and ebooks extracted after the
 reconciliation date behave identically to those before it. So this is a two-hash
 design for the two types whose original is not the text, not an unmigrated tail.
-Either the reconciliation never shipped for web and ebook or its written scope is too
-broad; the ingester owns the hashing and is resolving which. `ingest-format.md`
-carries the measured table and a pointer to the contradiction.
+Either that reconciliation never shipped for web and ebook or its written scope
+was too broad. The explicit Asset migration in decision 0051 resolves the target
+contract without pretending legacy hashes used the new codec.
 
 Nearly all occurrences are in generated pages under `content/`, which the assembler
 rewrites, so they are not hand-edited.

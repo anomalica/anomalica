@@ -1,15 +1,20 @@
 # Ingest Format
 
-The ingest format is the interchange format between the ingester and the digester.
-Each record - the original artefact, in whatever format it arrived - is transcribed
-into exactly one ingest, a `.md` file in this format.
+The ingest format is the interchange between the ingester and digester. An
+immutable **Asset** is acquired bytes. An ordered **Selection** over one or more
+Assets defines a stable **Record**. An **Ingest** is the generated readable
+representation of that Record. See [decision
+0051](../decisions/0051-asset-record-selection-and-evidence-identity.md).
 
-NAMING. A **record** is the original: the PDF, the audio file, the ebook, the
-captured web page. An **ingest** is the markdown we transcribe it into. They are
-not the same object and must not share a word: an ingest has its own hash, its own
-character offsets, and its own edit history, while the record it came from is
-immutable. Code and directories that call an ingest a "record" predate this and are
-being corrected; [data-model.md](data-model.md) holds the canonical terms.
+`record/3` is the accepted migration target, not current emitted data. Deployed
+Ingester and consumers still use `record/1` or `/2` and their scalar source model;
+they must not infer Asset, Selection or page-map authority until migrated.
+
+The current `.md` file is an atomic implementation envelope: its frontmatter is
+the authoritative Record definition and its body is the current generated Ingest.
+Re-extraction or review edits change that Ingest revision, not the Record identity.
+Code and paths that call the whole file a record are legacy naming; consumers must
+still keep Asset, Record and Ingest identities distinct.
 
 See [architecture decision record 0019](../decisions/0019-record-interchange-format.md) for why this format was chosen.
 
@@ -19,15 +24,20 @@ The canonical machine-readable field list is [`reference/format-specs.yaml`](../
 
 A record file has three parts:
 
-1. **Frontmatter** - YAML (a human-readable metadata format) block at the top, fenced with `---`. Document-level metadata.
-2. **Content** - markdown text. The actual content as it naturally reads.
+1. **Frontmatter** - YAML fenced with `---`. The Record definition plus current extraction metadata.
+2. **Content** - generated markdown text. The selected content as it naturally reads.
 3. **Annotations** - either block-level (YAML inside HTML comments) or inline (`{{YAML}}`).
 
 All annotations use YAML throughout - the same data format as the frontmatter. Block annotations for structural markers (page boundaries, speaker turns, images). Inline annotations for mid-sentence markers (redactions, illegible text, actions).
 
 The first `---` fenced block is always the frontmatter. All HTML comments in the body are annotations - the ingester does not produce any other HTML comments. Text between annotations is content.
 
-**The body in this file is not the space claim spans index.** A digest's claim `location` counts characters in the **materialised pre-digest** - this body after deterministic model-prep (whitespace collapsed, annotations stripped, irrelevant regions removed, timestamps dropped), produced by `anomalica_common.pre_digest.materialise()`. Resolving a span against the raw body below lands consistently off, in one direction, growing with position. To resolve a claim to its text, materialise first; the frame and its rules are specified in [digest-format.md](digest-format.md#a-span-must-declare-its-frame).
+**The body in this file is not by itself the complete claim-anchor frame.** A
+schema-2 digest anchors each quote fragment both in the exact materialised
+pre-digest and in the selected Asset page text. `materialise()` must carry a
+deterministic source map through whitespace collapse, annotation removal and other
+transforms. Resolving a body span without that map cannot establish an Asset
+anchor and fails closed. See [digest-format.md](digest-format.md#source_anchors).
 
 This is stated here rather than only in the digest spec because the mistake is made by consumers reading *records*, who have no reason to open the digest format at all. A frame mismatch is invisible when made: every figure stays internally consistent, monotonic and reproducible, and because the error can only run one direction it produces a clean 100%-positive drift that reads as strong evidence of a systematic bug. One such investigation cost about five hours and produced a corpus-wide table of 1,589 "drifted" claims across seven books, all of which were correct.
 
@@ -43,9 +53,26 @@ Required fields:
 
 ```yaml
 ---
-schema: anomalica/record/1
+schema: anomalica/record/3
+content_hash: sha256:cf74ff9325207f22d92ff805386830db6066ef1ec8a70fa00ce2adc850ff89f3
 title: "Document title"
-source_type: pdf
+source_types: [pdf]
+assets:
+  - asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    file_format: pdf
+    archived_ext: pdf
+    source_type: pdf
+    pages: 12
+    acquisition:
+      acquired_at: "2026-09-22T09:00:00Z"
+      fetched_url: "https://example.org/document.pdf"
+    copyright:
+      status: publicly_accessible
+selection:
+  - asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    selector: {type: pdf_page, page: 4}
+page_map:
+  - {record_page: 1, asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, asset_file_page: 4}
 provenance:
   publisher: "..."
   published_date: "2023-07-26"
@@ -53,11 +80,18 @@ provenance:
 ---
 ```
 
-Every frontmatter field - its type, whether it is required, which source types it applies to, and a description - is listed once in [`reference/format-specs.yaml`](../reference/format-specs.yaml) under `types.ingest`. That YAML is the canonical field list; this document does not repeat it. The hash fields (`content_hash`, `source_hash`) are explained in narrative under [Store](#store); the body-annotation sub-fields (image, chapter, snapshot roles) are specified in their sections below.
+Every frontmatter field is listed once in
+[`reference/format-specs.yaml`](../reference/format-specs.yaml) under
+`types.ingest`. The Asset, Selection, Record identity and legacy rules are under
+[Store](#store). Body annotation sub-fields are specified below.
 
 ### Provenance
 
-Every record carries a `provenance` block - the canonical home for source-origin metadata, consolidating what used to be scattered across separate top-level fields (`publisher`, `source_url`, `date_published`, `source_id`, `creators`, and the rest). One block, one source of truth ([decision 0043](../decisions/0043-canonical-provenance-block.md)).
+For `record/3`, the optional `provenance` block is the canonical home for
+work-origin metadata: publisher, creators, publication, canonical work location
+and work identifiers. Copy acquisition metadata has exactly one different home,
+`assets[].acquisition` ([decisions 0043](../decisions/0043-canonical-provenance-block.md)
+and [0051](../decisions/0051-asset-record-selection-and-evidence-identity.md)).
 
 ```yaml
 provenance:
@@ -65,30 +99,26 @@ provenance:
   publisher: "Department of Energy"           # issuing body / channel / author-org (not the hosting platform)
   creators: ["Edward Teller"]                 # human author(s) / host(s), person names in natural order
   published_date: "1949-03"                   # the source's own publication or upload date (ISO 8601, may be partial)
-  acquired_date: "2026-07-11T09:00:00Z"       # when Anomalica brought the source in
   source_url: "https://www.war.gov/..."       # canonical URL of the original
-  fetched_url: "https://web.archive.org/..."  # the URL actually retrieved, when different from source_url
   also_published_at:                          # other URLs this same record is published at (see below)
     - "https://www.youtube.com/watch?v=..."
-  source_file: "los-alamos-1949.pdf"          # original filename, for a source ingested from a local file with no URL
-  identifiers:                                # native source identifiers, keyed by scheme
+  identifiers:                                # work identifiers, keyed by scheme
     virin: "..."
-    youtube: "aB8zcAttP1E"
   description: "..."                           # the source's OWN blurb, verbatim - never AI-generated
 ```
 
-Each source type fills what it has; a sub-field with no value is OMITTED, never set to null. Origin-unknown is simply the absence of `source_url`, `fetched_url`, `source_file`, and `identifiers` - there is no separate marker (this replaces the old scalar `provenance: unknown`).
+Each Record fills only what is evidenced; a sub-field with no value is omitted,
+never null. Work-origin-unknown is the absence of `source_url` and `identifiers`,
+not a separate marker. Acquisition-origin-unknown is assessed independently from
+the Asset block. Legacy `/1` and `/2` provenance fields remain read-only migration
+input and are not copied into both layers.
 
-**`also_published_at` is a dedup key, not a citation list.** One artefact is often
-published in more than one place - an episode on the publisher's own channel and a
-repost on another. Those uploads are not separate records: they are one record
-reachable at several URLs. When duplicates of it have been ingested and are then
-merged, the surviving record keeps a single `source_url` and lists the other
-listings here. Every consumer that decides "do we already hold this?" MUST match
-against these as well as `source_url`: re-encountering an alias otherwise ingests it
-afresh and recreates the duplicate the merge removed. Aliases follow the record that
-carries them - on a `superseded_by` record they are retired with it and match
-nothing.
+**`also_published_at` is an evidenced locator alias, not a citation list or Record
+identity.** One work may be published in several places. A locator is attached only
+after evidence establishes the same work; matching it can find candidate Records
+but never collapses different Selections or prevents one Asset from supporting
+several Records. Aliases follow the Record that carries them and retire with either
+replacement or structural retirement.
 
 It does not confer independence, and the two questions are separate. Independence
 is about who stands behind a claim, counted by provenance-chain root
@@ -98,7 +128,13 @@ answering to more URLs never raises it.
 Two boundaries are load-bearing:
 
 - **Source facts, not subject facts.** Provenance is about the SOURCE - who issued it, when it was published, where to find it. A subject's incident place and incident date are NOT provenance; they are extracted as claims about place and event nodes, so they stay inside the scored, corroborated evidence model. `published_date` is strictly the source's publication or upload date.
-- **Copyright is not mirrored here.** `copyright` (and `copyright.status`) is the single authoritative copyright field, top-level; provenance carries no `license`. `classification` likewise stays top-level. The `description` is the source's verbatim blurb, never AI-written - and reproducing a `licensed` or `restricted` source's blurb is itself reproduction, so it is omitted or truncated for those sources, exactly as the source text is gated.
+- **Copyright is not mirrored here.** In `record/3`, each selected Asset's
+  `assets[].copyright` block is authoritative; the top-level `copyright` field is
+  authoritative only for legacy `/1` and `/2` Records. Provenance carries no
+  `license`. A consumer evaluates every selected Asset and no Record-level value
+  may widen a member decision. `classification` stays at Record level. The
+  `description` is the source's verbatim blurb, never AI-written, and is omitted
+  or truncated when the applicable Asset rights forbid reproduction.
 
 #### The work and the copy are different things
 
@@ -113,7 +149,9 @@ posted_date: "2026-08-13"       # when that channel posted it
 
 `posted_by` and `posted_date` describe **the copy the fetcher actually saw**, which is all it can observe. `publisher` and `date_published` keep their existing meaning - the work - and the handler no longer writes them from channel metadata. On a fresh ingest they are simply **absent** until someone identifies the work, which is the same not-evidenced convention as [date precision](#date-precision-record-only-what-the-source-evidences). Where the channel *is* the originator, all four are filled and the pairs match; there is no special case.
 
-`posted_date` is also distinct from `acquired_date`: the channel posted the copy, we fetched it. Different actors, different dates.
+`posted_date` is also distinct from each Asset's `acquisition.acquired_at`: the
+channel posted the copy, while Anomalica acquired particular bytes. Different
+actors, layers and dates.
 
 `container_title` records the journal, book, or programme a work appeared in - "Topological Foundations of Electromagnetism" for a chapter, "Scientific Reports" for a paper, "11Alive News Extra" for the WXIA segment. One field for all three, following CSL's `container-title`: the venue is the same relation whether it is bound, published, or broadcast, and splitting it into book-specific and journal-specific fields buys nothing. It is a different axis from `posted_by` - the venue **of the work**, against the channel that reposted **a copy**.
 
@@ -266,15 +304,25 @@ Taking the `Date` header as `published_date` is a correction, not a refinement. 
 
 ### The archived original
 
-Every record whose source was archived carries `archived_ext` - the bare extension of that archived object, which lives at `records/{content_hash}.{archived_ext}` (the content delivery network still serves it under its pre-rename `/sources/` prefix - [naming-migration.md](naming-migration.md), step 6). That pair is the whole address: consumers build it to fetch or play the source (the workbench serving a reviewer the audio behind a transcript, for instance).
+Every archived original is an Asset at
+`records/{bare_asset_hash}.{archived_ext}`. A Record may have several Assets and
+has no original at `records/{content_hash}.*` unless its legacy Asset hash happens
+to equal that value. Consumers resolve originals through `assets[]`; they never
+construct an original path from Record identity.
 
 **The extension is not derivable, and must never be re-derived from `container`.** `codec` and `container` under `processing.source` describe the STREAM; the extension is a property of the FILE. yt-dlp writes `.opus` while reporting `container: ogg`, and a file downloaded as `.ogg` reports an identical stream - so the same metadata legitimately backs both extensions. Before this field existed, 76 of 122 records said `container: ogg` against a `.opus` file on disk, and a container-derived URL 404'd for the majority of the library. There is no glob on the CDN, so a wrong extension is simply a miss. Write the extension down; never infer it.
 
-`archived_ext` is also **distinct from `source_file`**, which is the ORIGINAL filename of a local-file ingest. They describe different files and may legitimately disagree: a video ingested from `interview.mkv` and archived audio-only carries `source_file: interview.mkv` alongside `archived_ext: opus`. That is correct, not an inconsistency - do not reconcile them.
+`archived_ext` is an Asset property and remains distinct from the acquisition's
+`source_file`. They may legitimately disagree: a video acquired as
+`interview.mkv` and retained as audio-only may carry `source_file: interview.mkv`
+with `archived_ext: opus`.
 
 ### The waveform peaks sidecar
 
-An audio or video record may carry a peaks sidecar at `records/{content_hash}.peaks.json` (schema `anomalica/peaks/1`) - an amplitude envelope of the archived original, computed once at archive time. A reviewer aligning a word's timestamp needs to see the sound's onset; the envelope is what draws that waveform.
+An audio or video Asset may carry a peaks sidecar at
+`records/{asset_hash}.peaks.json` (schema `anomalica/peaks/1`) - an amplitude
+envelope of that archived Asset, computed once at archive time. A reviewer aligning
+a word's timestamp needs to see the sound's onset; the envelope draws that waveform.
 
 ```json
 {"schema": "anomalica/peaks/1", "hex_hash": "5a05136d...",
@@ -399,13 +447,21 @@ Records with no sections and no length problem stay whole-record. The threshold 
 
 ### Copyright status: what a source gets by default
 
-`copyright.status` is one of `public_domain`, `open_licence`, `publicly_accessible`, `licensed`, `restricted`. Only the first two serve the ORIGINAL file openly; the rest gate it behind proof of possession. What differs between them is not whether *you* can reach the content, but whether Anomalica may redistribute the original file.
+Each `record/3` Asset's `copyright.status` is one of `public_domain`,
+`open_licence`, `publicly_accessible`, `licensed`, `restricted`. Only the first two
+serve that Asset's original bytes openly; the rest gate them behind access checks.
+Legacy `/1` and `/2` use their top-level projection during migration only.
 
-**`copyright.status` describes the content the publisher produced and licensed - not everything the file contains.** A publication can embed third-party material its publisher never held the rights to sublicence, and a single status per record cannot describe that. `copyright.media` carries the status of embedded media separately; absent, it inherits `status`.
+**`copyright.status` describes the content the publisher produced and licensed -
+not everything the Asset contains.** A publication can embed third-party material
+its publisher never held the rights to sublicence. `copyright.media` carries the
+status of embedded media separately; absent, it inherits that Asset's `status`.
 
 The case that forces it: Argentina's Air Force publishes its UAP case reports under CC BY 4.0, but the reports are built around photographs and video stills submitted by private witnesses, which the licence's own "*excepto cuando se declare lo contrario*" carve-out excludes. The analysis text is genuinely open; the witness photographs are not the Air Force's to license. So `status: open_licence` with `copyright.media: restricted`.
 
-**Do not collapse this to "the record's status is the most restrictive of its parts".** That gates the publisher's own openly-licensed analysis behind proof of possession - hiding public government material for no benefit, which is the same error the `.gov` default exists to prevent, and here it would gate exactly the officially-adjudicated text most worth surfacing.
+**Do not collapse a Record to the most restrictive member or an Asset to the most
+restrictive embedded part.** Apply each authority to the output bytes it governs.
+Otherwise one photograph can incorrectly gate openly licensed analysis.
 
 The two errors are not symmetrical, so the defaults are not either:
 
@@ -437,9 +493,11 @@ record body or another source-derived input may leave controlled local storage;
 they do not answer whether a route is private enough, technically available or
 approved for spending.
 
-For the record body, a reviewed `copyright.status` of `public_domain` or
-`open_licence` admits hosted processing in principle. `publicly_accessible`,
-`licensed`, `restricted`, an absent status or an unrecognised status does not.
+For a `record/3` body, every contributing Asset must have
+`assets[].copyright.status` of `public_domain` or `open_licence` to admit hosted
+processing in principle. `publicly_accessible`, `licensed`, `restricted`, an
+absent status or an unrecognised status on any member denies the complete payload.
+Legacy `/1` and `/2` evaluate their one top-level status.
 Public availability proves access, not permission to submit the work to a model
 provider. A general licence to possess or display a source likewise does not
 establish provider-side processing rights. Existing `copyright` evidence such as
@@ -473,12 +531,13 @@ the record, use, provider and necessary processors. Free text or an operational
 assertion cannot fill that gap. This is fail-closed by design rather than an
 invitation to invent a boolean permission field.
 
-Each submitted input unit is checked independently. The body uses
-`copyright.status`; media bytes use the more specific `copyright.media` or the
-individual image override when one exists. An invocation or batch containing any
-ineligible or unresolved input is denied as a whole. The dispatcher resolves the
-current live record by `content_hash`; failure to resolve it, malformed
-frontmatter or a hash mismatch denies dispatch. It then applies this gate before
+Each submitted input unit is checked independently. For a multi-Asset Record every
+contributing Asset must authorise the exact use; permission or possession of one
+member never unlocks another. Media bytes use their own or inherited Asset status.
+An invocation or batch containing any ineligible or unresolved input is denied as
+a whole. The dispatcher resolves the current live Record by `content_hash` and
+each Asset by `asset_hash`; failure to resolve any member, malformed frontmatter
+or a hash mismatch denies dispatch. It then applies this gate before
 privacy or zero-data-retention policy, model eligibility, route selection,
 allowance reservation and spend approval. Passing one later gate never
 compensates for failing an earlier one.
@@ -493,29 +552,52 @@ label alone remains descriptive and grants nothing.
 
 ### Web record snapshots
 
-For `source_type: web` records, the ingester captures three artefacts from a single page load and lands each in the sibling `records/` directory. The frontmatter exposes them like this:
+For a web Asset, the ingester captures three artefacts from a single page load
+and lands each in the sibling `records/` directory. Every retained byte sequence
+is an Asset; snapshots are derivative Asset descriptors rather than a second hash
+vocabulary. The frontmatter exposes them like this:
 
 ```yaml
-source_hash: sha256:904c041f...   # raw post-render HTML asset
+assets:
+  - asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa # raw post-render HTML Asset
+    file_format: html
+    archived_ext: html
+    source_type: web
+    acquisition: {acquired_at: "2026-09-03T09:12:00Z", fetched_url: "https://example.org/article"}
+    copyright: {status: publicly_accessible}
 snapshots:
   - role: page_render
-    hash: sha256:82f42514...
-    content_type: application/pdf
+    asset:
+      asset_hash: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      file_format: pdf
+      archived_ext: pdf
+      source_type: web
+      pages: 1
+      acquisition: {acquired_at: "2026-09-03T09:12:00Z"}
+      copyright: {status: publicly_accessible}
+      derived_from: {asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, transform: chromium-page-render-v1}
   - role: single_file
-    hash: sha256:e7115739...
-    content_type: text/html
-    captured_at: "2026-09-03T09:12:00Z" # only on a re-captured snapshot
+    asset:
+      asset_hash: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      file_format: html
+      archived_ext: html
+      source_type: web
+      acquisition: {acquired_at: "2026-09-03T09:12:00Z"}
+      copyright: {status: publicly_accessible}
+      derived_from: {asset_hash: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, transform: single-file-cli-v1}
 ```
 
 | Role | What it is | Use it for |
 |------|-----------|------------|
-| (raw HTML via `source_hash`) | Post-render DOM, no external resources inlined | Fidelity check on the extraction. Renders unstyled in a sandboxed iframe because external CSS won't load - not the right surface for visual review. |
+| Raw HTML Asset | Post-render DOM, no external resources inlined | Fidelity check on the extraction. Renders unstyled in a sandboxed iframe because external CSS will not load - not the right surface for visual review. |
 | `page_render` | Single-page PDF rendered at 1024 px wide, sized to the document's scrollHeight (no internal pagination) | Printing; PDF.js review panes. |
 | `single_file` ("frozen page") | Self-contained HTML produced by `single-file-cli` with every external resource inlined as data URIs | **Canonical review surface.** Renders identically to the original page under `sandbox=""`. |
 
 Consumers preferring fidelity should pick `single_file` first, fall back to `page_render`, and use the raw HTML only as a last resort.
 
-`captured_at` appears on a snapshot that was re-captured after the record was ingested - a capture bug fixed later, for instance. A snapshot can only be rebuilt from the live page, so a re-captured one shows the site as it stood at `captured_at` rather than at `date_accessed`; its absence means the snapshot was taken at ingest. The ingest-time DOM is unaffected either way and stays archived under `source_hash`.
+A recaptured snapshot has a new `acquisition.acquired_at` and is a new immutable
+Asset derivative with explicit lineage; it never replaces the acquired Asset
+merely because it has the same role.
 
 Snapshot roles are an extensible registry. New roles can be added without bumping `schema` provided consumers ignore unknown roles. Known roles as of `anomalica/record/1`: `page_render`, `single_file`.
 
@@ -541,14 +623,21 @@ YAML inside HTML comments. Single-field annotations use inline comments. Multi-f
 <!-- file_page: 2 -->
 ```
 
-`file_page` is always the PDF page number (1-indexed from the start of the file). If the page has its own printed page number that differs, include `printed_page` on a separate line:
+In `record/3`, `file_page` is always the 1-based **Record-local** page ordinal in
+Selection order. `page_map` resolves it to `{asset_hash, asset_file_page}`, where
+`asset_file_page` is the 1-based physical PDF page ordinal or `1` for a standalone
+image. The separate pre-digest source map binds the exact Asset-page text hash used
+for claim coordinates. In legacy `record/1` and `/2`, `file_page` implicitly serves as both Record
+and single-Asset physical ordinal. If the page has its own printed label, include
+`printed_page` separately:
 
 ```markdown
 <!-- file_page: 19 -->
 <!-- printed_page: 15 -->
 ```
 
-`printed_page` is omitted when there is no printed page number, or when it matches `file_page`.
+`printed_page` is a verbatim reader-facing label, never an ordinal or selector. It
+is omitted when absent. Equality with `file_page` is only a display coincidence.
 
 For `ebook` records there is no fixed file pagination, so `file_page` does not apply. When the EPUB carries EPUB3 pagebreaks (`epub:type="pagebreak"` or `role="doc-pagebreak"`, whose `title` is the print-edition page), the ingester emits `printed_page` alone at each break position:
 
@@ -692,7 +781,12 @@ One annotation carrying a YAML mapping, for the same reason as [message boundari
 
 This is the general case of the message boundary; correspondence is the specialisation, carrying `from`, `date`, and `quoted` instead. A consumer treating both as "a contained work starts here" is reading them correctly.
 
-**A compilation is one record, not many.** Identity is source plus selection, so one PDF is one source. Splitting a proceedings into seventeen [scoped excerpts](data-model.md#record-unit-whole-containers-versus-scoped-excerpts) would price review and digestion per paper and multiply the store for nothing the annotation does not already give. And `document_type` is never set on the container - a record-level value asserts the whole record is one work.
+**A compilation Asset need not be one Record.** Keep a whole-container Record when
+the bundle itself is the useful work; split selected contained works when separate
+review and provenance justify it. Distinct `document` annotations, titles or
+creator strings do not by themselves establish independent evidence roots. Until
+Record metadata carries evidence of a distinct contained-work origin, every
+contained document fails closed to the shared Asset/container root.
 
 **A guard against "this is an annotation, not content" is written against POSITION, not notation.** Three times in one week a construct crossed a component boundary and the receiving side had been written for the notation it used to have: a classification-marker strip that matched one form, a `creators` guard matching `{{...}}` only and so letting `[redacted]` through as an author's name, and a bracket rule that could not tell `[interviewer 2]` from a literal `[sic]` inside a quote. The pattern is the same each time - a defensive test enumerating notations, and the notation moved.
 
@@ -778,7 +872,12 @@ image:
 | `caption` | string | no | The source's PRINTED caption for the image, verbatim - including any copyright or attribution line the source shows with it (e.g. `David Charles Grusch (Copyright (c) D. Grusch. Image may not be reproduced without permission.)`). Distinct from `alt` (the source's HTML alt attribute) and `description` (a generated factual description): the caption is what the source itself printed beneath the figure. It renders into the pre-digest as a `[caption: ...]` meta-note - context the model sees but the digester never extracts as a claim (attribution and copyright are not facts about the subject). Omitted when the source shows no caption. |
 | `irrelevant` | boolean | no | Reviewer's keep/drop DISPLAY flag. Absent (the default) means keep/render; `true` marks an image not worth rendering (an advertisement, a decorative element, a stock photo unrelated to the subject). Mirrors the text mark-irrelevant convention - kept unless explicitly marked. When `true`, the image is excluded from the pre-digest (never extracted) AND skipped by the assembler/site (never rendered) - the mark drops it from both extraction and display. |
 
-The `file` value is a bare filename so the body of the record stays self-contained and content-addressable. The full path on disk is `media/{record_hash}/{file}` relative to the ingests root, where `{record_hash}` is the hash of the record containing the annotation (the same value as the record's filename in `store/`). Embedding the record hash directly in the body would break the record_hash invariant for source types whose `content_hash` is computed from the body (ebook, web).
+The `file` value is a bare filename so the Ingest body remains portable across
+Record resolution and revision history. The full path is
+`media/{record_hash}/{file}` relative to the ingests root, where `record_hash` is
+the stable Selection-derived Record hash used by the file in `store/`. Embedding
+that hash directly in the body would create a needless self-reference. No
+`record/3` identity is body-derived; body edits change only the Ingest revision.
 
 When the same image appears in multiple records, each record gets its own copy under its own `media/{record_hash}/` subdirectory. This keeps records self-contained for downstream consumers (workbench, assembler, digester) at the cost of duplication, which is small in practice (cover art, publisher logos).
 
@@ -1142,6 +1241,13 @@ store/          # hash-named record files (source of truth)
   _pipeline_versions.yaml   # {media_type: current_version} manifest
   v1/                       # superseded records, retired here
     3211a96e...md
+  legacy-identities/        # /1-/2 envelopes and sidecars retired by identity migration
+    record-1/
+    record-2/
+  source-maps/    # immutable prep-version-9 maps, named by exact canonical JSON SHA-256
+  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.json
+pre-digests/    # immutable materialised model inputs, named by exact text SHA-256
+  dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.md
 by-name/        # human-readable symlinks
   2023-07-26-pdf-fravor-written-statement.md -> ../store/7bf2c20d...md
   2020-09-08-video-lex-fridman-122-david-fravor.md -> ../store/e27169e8...md
@@ -1294,70 +1400,71 @@ present and the original is ingested, corroboration counts the original ONCE.
 
 ### Store
 
-The `store/` directory contains the actual record files, named by `content_hash`. What `content_hash` hashes per source type, and how it links back to `records/`, is defined once in the canonical hash chain ([`format-specs.yaml`](../reference/format-specs.yaml), `chain:`) and is not restated here.
+The `store/` directory contains the current Record definitions and Ingest bodies,
+named by the Record `content_hash`. The `records/` archive contains immutable
+original Assets, named by Asset hash. These namespaces are intentionally distinct.
 
-**An ingest's own hash does not name its archived original for every type. Resolve
-through `source_hash` wherever it is present.** Measured across all 257 live ingests
-on disk (2026-08-16), the split is exact and has no exceptions:
+Schema `anomalica/record/3` requires:
 
-| Types | `content_hash` names the original | carries `source_hash` |
-|-------|----------------------------------|-----------------------|
-| audio, pdf, video (206) | yes, all | none |
-| web, ebook (51) | no, none | yes, all |
+- `assets`: a non-empty list of unique Asset descriptors in first-selection-use
+  order. Each has `asset_hash`, `file_format`, `archived_ext`, acquisition metadata
+  and its own rights/access decision.
+- `selection`: a non-empty ordered list of `{asset_hash, selector}`. Persisted
+  selectors are exactly `{type: whole}` or `{type: pdf_page, page: N}`.
+- `page_map` on paged Records: the complete sequential mapping from Record-local
+  page to Asset and physical Asset page.
+- `content_hash`: the domain-separated Record identity computed from the expanded
+  Selection exactly as specified by [decision
+  0051](../decisions/0051-asset-record-selection-and-evidence-identity.md).
 
-A resolver consulting `content_hash` alone therefore finds nothing at all for web and
-ebook, and gives no sign it looked in the wrong place - it reads as "no original
-archived".
+An authoring range is inclusive at the interface but is expanded before preview,
+hashing and persistence. Canonical identity therefore never depends on whether a
+caller wrote pages `4-5` or pages `4,5`. Expansion preserves supplied order.
+Duplicate or overlapping pages, `whole` mixed with another selector for one Asset,
+unsupported selectors, wrong formats and out-of-bounds pages are errors. No writer
+sorts, deduplicates or repairs them silently.
 
-**TO ASK WHETHER A FILE IS ALREADY HELD, INDEX BOTH FIELDS.** Hash the file and look
-for it under `content_hash` OR `source_hash`; matching on `content_hash` alone answers
-"no" for every ebook and every web record, which is exactly the case a
-have-we-got-this-already check exists to serve. The invariant is total and can be
-relied on: every one of the 17 ebook and 34 web records carries a `source_hash`, and
-every one of those 51 originals is present in `records/`. There is no partial-coverage
-case to code around.
+Successful ordinary acquisition creates exactly one whole-Asset Record for every
+source type unless that identical canonical Selection already exists. The
+first Workbench structural implementation accepts only whole standalone images
+and complete physical PDF pages; it does not structurally edit a whole audio,
+video, web or ebook Asset. It has no crop, figure or arbitrary-region selector. Missing Asset bytes,
+page text, page count, page map or source map fails closed. Composition concatenates
+already extracted page blocks in Selection order and never creates a synthetic PDF.
+A whole PDF Record retains its one identity-bearing whole selector while its
+generated page map expands deterministically to Record pages `1..N` mapped to
+physical Asset pages `1..N` in ascending order.
 
-This shape has now produced four wrong counts in one day, across three sessions. Each
-looked like a clean answer; see
-[the instrument measured itself](../knowledge/the-instrument-measured-itself.md). If a
-count of records touching this seems low, suspect the query before the data.
+Optional `work_provenance: {root_id, evidence}` records a positively established
+work identity. `evidence` is non-empty; absence means unknown. A title, printed
+boundary, separate Record or separate Asset is not enough to mint a root. This is
+the only Record input from which ordinary import may populate `records.work_id`.
 
-**The table above is the current state; the rule below is the ratified contract, and
-it has not shipped for web and ebook.** Measured 2026-08-16: all 34 web and all 17
-ebook records carry `source_hash`, all 206 audio/pdf/video carry none, with no
-exceptions - and ebooks extracted on 2026-07-29 and 2026-07-30 body-hash exactly like
-the older ones. That is a designed pattern still running, not an unmigrated tail.
+For existing `record/1` and `/2` files only, the implicit Selection is one
+`{type: whole}` element. Its Asset hash is `source_hash` when present and legacy
+`content_hash` otherwise. This is a concrete legacy read rule, not the new hash
+recipe and not a producer option. Migration hashes archived bytes already held and
+never reacquires a source. The byte hash must match the implied Asset hash and
+missing Asset, acquisition or rights data blocks migration. The migration writes
+`legacy_identities` and the canonical `anomalica/record-identity-map/1` old-to-new
+entry while replacing the live envelope in one CAS-bound commit. Several old live
+Records collapsing to one new Selection is a human-resolution conflict, never an
+automatic merge. Legacy sidecars remain versioned history and do not authorise the
+new `/3` Record; exact authorities are regenerated or explicitly revalidated.
 
-So write consumers against the table until the ingester's identity migration lands.
-The migration is staged and its move-list is unrun; when it completes, web and ebook
-`content_hash` becomes the asset hash and `source_hash` drops out wherever the two
-would be identical.
-
-This is the same shape as [0010](../decisions/0010-auditable-assembly.md),
-[0040](../decisions/0040-pipeline-versioning-and-supersession.md) and
-[0043](../decisions/0043-canonical-provenance-block.md): a decision recorded as
-settled while nothing emits it. A ratified rule is not evidence of a running one -
-count the field before building on it.
-
-**A record's identity is its source plus its selection, never its extraction output.** `content_hash` hashes the archived source asset's bytes, and - for a [scoped excerpt](data-model.md#record-unit-whole-containers-versus-scoped-excerpts) - the normalised scope string with it. It never hashes the extracted body.
-
-At the freshness boundary the record artefact is always the complete prefixed
-value `sha256:<content-hash>`. It is not the 56-character public `record_hash`, a
-friendly symlink, the Markdown file hash or a Git revision. Both
-`record-generation` and `digest-input` use this same stable record identity.
-
-That one rule is what makes re-extraction safe. Improving an extractor, stripping page chrome, fixing chapter numbering, segmenting an email thread: all change the body, none change the source or the selection, so all keep the same `content_hash`. The record is rewritten **in place** at `store/{hash}.md`, and every digest, review sidecar, highlight, and cross-record link bound to that hash survives untouched. Reconciled 2026-07-25; previously web, ebook, and excerpt records hashed their body, so any re-extraction minted a second store entry and silently detached everything keyed to the first.
-
-Two consequences worth stating, because both look wrong at a glance:
-
-- **The record file does not reproduce its own filename.** It never did for audio, video, or PDF - the name comes from the source asset, not from the markdown. This makes the remaining types behave the same way rather than adding an exception.
-- **A re-fetch that returns different bytes is a different record**, even when the extracted text is identical. That is correct and it is what [supersession](#versioning-and-supersession) exists for: re-*acquisition* changes identity and is stamped; re-*extraction* does not and is in place. Volatility now sits where the machinery to handle it already is.
-
-Selection is part of identity because one asset can yield several records: two excerpts of one statute must be distinguishable, and they are, by their scope strings. Absent an excerpt directive the scope is empty and identity is the asset alone.
+At the freshness boundary the Record artefact is the complete prefixed
+`content_hash`. Exact current Markdown bytes, parsed body bytes, the materialised
+pre-digest and Git blob each have their own revision hash. Re-extraction and review
+edits preserve Record identity but invalidate any derived artefact whose exact
+input binding no longer matches.
 
 #### Bodies may be edited in place
 
-**Annotation is hash-neutral by construction.** Marking a region irrelevant, adding a span note, correcting a chapter title - the whole reviewer workflow - changes the body and not the identity, because the identity never covered the body. A reviewer edits, the workbench commits back, the file keeps its name, and every digest, sidecar, link, and review span bound to that hash survives.
+**Annotation is Record-hash-neutral by construction.** Marking a region irrelevant,
+adding a span note or correcting a chapter title changes the current Ingest body,
+not the Selection. The file keeps its Record path, but exact-input authorities do
+not survive untouched: review, housekeeping, gold, digest and claim-anchor bindings
+must independently match the new body/pre-digest revision.
 
 This is the point of anchoring on the source rather than the extraction. The alternatives all fail: making every edit a supersession prices review at a re-identification per annotation, and hashing "the body with annotations stripped" requires the ingester, workbench, and digester to compute one normalisation identically - a divergence that is silent by nature, which is the failure being fixed rather than a fix for it.
 
@@ -1365,9 +1472,10 @@ This is the point of anchoring on the source rather than the extraction. The alt
 
 Order the work so it does not arise: **edit before digesting.** An annotation applied ahead of a digestion run is simply the text that run reads.
 
-**Records whose stored `content_hash` does not reproduce their body are not a data bug.** They are an artefact of the superseded body-anchored model, and they resolve when identity migrates - the hash stops claiming to describe the body. Do not hand-repair them, and do not compute body digests to reconcile them. Note also that the discrepancy is not attributable to annotation alone: in a 2026-07-30 measurement, 6 of 22 records *without* annotation markers also failed to reproduce their stated hash, so the legacy recipe has a second defect that the migration equally retires.
-
-Idempotency: if `{hash}.md` exists, the ingester skips extraction.
+Idempotency is layer-specific: an existing Asset hash skips acquisition; an existing
+canonical Selection resolves the Record; and generation is skipped only when the
+current Ingest revision is current for its declared extraction generation. A
+Record path alone is not proof that generation work is current.
 
 #### Post-commit result
 
@@ -1431,9 +1539,15 @@ One property makes this harder than deletion: **the store is version-controlled.
 
 Sidecars live next to the record in `store/`, named `{content_hash}.<kind>.json`:
 
-- `{hash}.verification.json` - cloze proof-of-possession challenges (ingester's
-  `shared/verification.py`; consumed by the workbench access gate). Present only
-  for records whose copyright status gates access.
+They bind one Record and, where stated, one exact current Ingest revision. On a
+structural split or composition they do not copy from a parent to a child: review,
+housekeeping, gold, verification, digest and graph state must be established for
+each new Record independently.
+
+- `{hash}.verification.json` - legacy cloze challenges retained as audit history
+  only. They cannot authorise access once Asset hashes and quotations are public
+  and are replaced by dynamic `anomalica/asset-possession-challenge/1` byte-range
+  proofs. No proof or expected bytes are persisted in a Record sidecar.
 - `{hash}.review.json` - review-coverage spans and the reviewer verdict
   (`anomalica/review-coverage/1`, written by the workbench). Version 1 carries
   private append-only review entries plus authoritative `observed_coverage`,
@@ -1485,36 +1599,49 @@ worker-mismatched state fails closed.
 
 ### Versioning and supersession
 
+[Decision 0051](../decisions/0051-asset-record-selection-and-evidence-identity.md)
+supersedes the one-source/one-live-Record parts of decision 0040. Several live
+Records may share Assets, source URL or identifiers when their Selections differ.
+`processing.asset_pipeline_versions` versions each selected Asset's Ingest
+generation, not Record identity. Legacy `/1` and `/2` Records retain scalar
+`processing.pipeline_version`.
+
+One-to-one **replacement** lineage continues to use `supersedes` and
+`superseded_by`. Structural lineage is separately one-to-many: an atomic Workbench
+operation may retire one temporary parent into several children, or create one
+composite from several parents. It records `structural_parents` on children and
+`retired_into` on the parent. A scalar `superseded_by` must never encode a split.
+Creation of every child/composite and parent retirement is one compare-and-swap
+bound Git commit; partial success is invalid.
+
+A structural parent remains at `store/{hash}.md` carrying `retired_into` so old
+references remain resolvable. Canonical live discovery excludes either
+`retired_into` or `superseded_by`. Structural retirement never writes scalar
+`superseded_by` and never moves the parent to `store/v1/`.
+
 Three orthogonal axes describe a record's generation, defined in full in
 [0040](../decisions/0040-pipeline-versioning-and-supersession.md):
 
 - `schema` (`anomalica/record/N`) is the on-disk FORMAT. A record/1 is not stale
   merely because record/2 exists as a format.
-- `processing.pipeline_version` (an integer, per media type) is the extraction
-  GENERATION. A record whose value is PRESENT and below the current version for
-  its media type is STALE: a consumer badges it "outdated (vN of M)" and it is a
-  backfill target, but it is still shown - it is the best available until
-  re-ingested. An ABSENT value means "generation not declared" - no badge, not
-  treated as 0 (so introducing the field does not flag the whole corpus). The
-  current version per media type is published in `store/_pipeline_versions.yaml`
-  (`{media_type: current_version}`), upserted by the ingester on every run.
+- `processing.asset_pipeline_versions` is a complete ordered list of
+  `{asset_hash, source_type, pipeline_version}` for `record/3`. Every positive
+  integer is compared with that source type's entry in
+  `store/_pipeline_versions.yaml`; the Ingest is current only when every selected
+  Asset is current. A lower member is stale. An absent, malformed, ahead or
+  unregistered member makes status unknown, never version zero. Legacy `/1` and
+  `/2` use the scalar `processing.pipeline_version` under the same per-source-type
+  comparison.
 - `processing.version` (the ingester's git short-hash) is fine-grained
   provenance, unchanged.
 
-**Supersession** retires a prior record when a source is re-ingested, keyed on
-LOGICAL source identity (`provenance.identifiers`, then `provenance.source_url` - the only identity
-stable across re-downloads; a per-download `content_hash` is not). The new record
-carries `supersedes: <old_content_hash>`; the prior record is stamped
-`superseded_by: <new_content_hash>`, moved from `store/{hash}.md` to
-`store/v1/{hash}.md`, and its `by-name/` symlink removed. The frontmatter flag is
-the source of truth - a consumer HIDES any record carrying `superseded_by` (one
-visible record per source); the `store/v1/` location is a derived convenience so
-a non-recursive `store/*.md` glob excludes retired records. Supersession is
-stamped across schema boundaries (a record/2 supersedes a record/1 of the same
-source). It applies only when re-acquisition changes the `content_hash` (a fresh
-download, or a web/ebook body change); re-extraction from the SAME asset keeps
-the hash and is an in-place update at `store/{hash}.md`, not a second record. So
-the browse list is always one-per-source.
+**Replacement supersession** applies only when one Record replaces one prior
+Record. The new Record carries `supersedes`; the prior Record carries scalar
+`superseded_by`. Shared URL or Asset identity does not imply replacement: several
+different Selections may remain live. Reacquisition creates a new Asset and a new
+Record Selection but requires evidenced replacement lineage rather than automatic
+newest-URL-wins. Re-extraction from the same Selection changes only the current
+Ingest revision.
 
 **Retire by moving, or mark in place - the discriminator is downstream pointers.**
 Move to `store/v1/` where nothing holds the old hash. **Mark in place** - leave the
@@ -1551,7 +1678,11 @@ hash, or the rename collides. See
 
 ### By-name
 
-The `by-name/` directory contains symlinks with human-readable names, pointing into `store/`. The naming convention is:
+The `by-name/` directory contains legacy derived symlinks with human-readable names,
+pointing into `store/`. It is non-authoritative: canonical discovery enumerates
+`store/` and validates Selection identity. Local and edge writers are not required
+to update symlinks atomically with Record creation or retirement. A maintenance
+pass may rebuild them from current store contents. The naming convention is:
 
 ```
 {date}-{source_type}-{slugified-title}.md
@@ -1563,7 +1694,8 @@ For example:
 - `2024-08-20-ebook-imminent.md`
 - `2009-pdf-nimitz-executive-summary.md`
 
-The date, source_type, and title are taken from the record's frontmatter. The symlinks are regenerated from the store contents and can be deleted and rebuilt at any time.
+The date, source type and title are taken from Record frontmatter. The symlinks can
+be deleted and rebuilt at any time.
 
 ### Media
 

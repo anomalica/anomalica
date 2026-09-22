@@ -123,3 +123,31 @@ touches the canonical, so tuning-loop experiments cannot leak into the graph.
 A `--variant-only` flag forces variant-only even for an active-prompt side-run
 (benchmarks). Implemented in `digester/digest_store.py`, wired into the
 `extract` / `batch-extract` CLI via `--digests-root`.
+
+## Amendment (2026-09-22): agreement, evidence and independence are separate
+
+[Decision 0051](0051-asset-record-selection-and-evidence-identity.md) supersedes
+the rule above that “different sources, same fact” automatically counts as
+independent corroboration. A Record is an ordered Selection and two different
+Records may overlap on one Asset. Different Assets may also be copies or
+derivatives of one work.
+
+The corrected order is:
+
+1. Same-fact detection creates a semantic agreement relation.
+2. Claims whose exact anchors overlap on the same physical Asset page in the same
+   exact page-text frame are one transitive evidence unit and can contribute at
+   most once.
+3. Disjoint evidence is not automatically independent. An additional count
+   requires established distinct work or assertion-origin provenance with no
+   shared lineage.
+4. Missing or unresolved roots fail closed. Separate documents in one bundle
+   share the Asset/container root unless Record metadata establishes distinct
+   roots with evidence.
+
+Multiple models still add zero independence. The selected-digest design is
+unchanged. Schema `anomalica/digest/2` now also carries the exact ordered
+`source_anchors` required by 0051. This anchor-driven bump is independent of the
+still-deferred selector build: the current producer may emit one canonical digest
+2 for an eligible page-mapped PDF/image Record, while comparison variants remain
+inert and no selected-digest stage is implied.

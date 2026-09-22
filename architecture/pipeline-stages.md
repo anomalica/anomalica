@@ -14,24 +14,28 @@ money or subscription allowance; a step marked free spends neither.
 
 ## The stages
 
+Stages 2-5, the source-map/`digest/2` parts of 7-8, and Asset-derived work in 15
+describe the accepted 0051 migration target. Deployed components still use the
+legacy single-source Record, scalar digest location and graph schema.
+
 | # | Stage | Trigger | Runs on | Costs | Writes |
 |---|-------|---------|---------|-------|--------|
-| 1 | **Intake** | A URL or file the operator adds | Local CPU | free | A stub in `ingests/store/v1/` with the source's real title |
-| 2 | **Acquire** | A stub with no archived original | Local CPU | free | The original in `records/{hash}.{ext}`, plus a frozen page and a full-page render for web sources |
-| 3 | **Ingest: transcribe** | An audio or video stub | Local GPU | free | A record with per-word timestamps (Whisper on the card) |
-| 4 | **Ingest: extract** | A web, ebook or image stub | Local CPU | free | A record, extracted by rule (no model) |
-| 5 | **Ingest: read** | A PDF stub | Remote AI | metered | A record, read by a vision model |
+| 1 | **Intake** | A URL or file the operator adds | Local CPU | free | An untracked scheduler-owned `queue/*.md` candidate |
+| 2 | **Acquire Asset** | A candidate with no archived original | Local CPU | free | Immutable bytes at `records/{asset_hash}.{ext}` plus acquisition/rights metadata |
+| 3 | **Create Record** | A new Asset with no Record | Local CPU | free | A default whole-Asset Record and canonical ordered Selection; PDF/image may be explicitly marked temporary for structural review |
+| 4 | **Ingest: transcribe/extract** | A Record with no current Ingest | Local GPU, CPU or authorised remote AI by format | format-dependent | The current generated Ingest and structural Record page map |
+| 5 | **Structure Record** | A reviewer submits a CAS-bound split/composition | Local CPU | human | Atomic children/composite plus parent retirement; no sidecar inheritance |
 | 6a | **Housekeeping: deterministic** | Scheduler reconciliation finds an eligible unreviewed live record without a current version 3 deterministic result; a valid post-commit ingest result runs the same check immediately | Local CPU | free | Deterministic `anomalica/housekeeping/3` proposals and a pending-research sidecar |
 | 6b | **Housekeeping: metadata research** | The same exact-input sidecar has deterministic complete and research pending; an authenticated waiver is the only non-run completion | Remote AI | subscription only | Research proposals merged into the same sidecar, or an explicit durable waiver |
-| 7 | **Pre-digest** | A record with no current pre-digest | Local CPU | free | The exact model input, stored so it can be inspected ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)) |
-| 8 | **Digest** | A record with no digest, or one whose body was re-extracted | Remote AI | plan or metered | Claims and nodes in `digests/` |
+| 7 | **Pre-digest** | A Record with no current pre-digest; page-mapped PDF/image also lacks a current source map | Local CPU | free | The exact model input; PDF/image preparation version 9 also emits the deterministic Asset-page source map ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)) |
+| 8 | **Digest** | A Record with no digest, or one whose body was re-extracted | Remote AI | plan or metered | Digest 2 with exact anchors for page-mapped PDF/image; digest 1 for other media pending typed coordinates |
 | 9 | **Quote check** | Runs as the **last step of every digest**, and as a backfill for any digest whose claims carry no verdict | Local GPU | free | A label on each claim: does its quote support it, contradict it, or neither |
 | 10 | **Variant digest** | A record already in the comparison - one a reviewer highlighted, or one that already carries a variant - and a model that has not covered it | Remote AI | metered | A second digest under that model, for side-by-side comparison only |
 | 11 | **Import** | A digest not yet in the graph | Local CPU | free | Claims and nodes in the knowledge graph |
 | 12 | **Embed** | Claims without vectors | Local CPU | free | Claim vectors, for corroboration and merge shortlisting |
 | 13 | **Merge shortlist** | The graph changed since the last pass | Local GPU | free | Candidate node pairs, scored by a reranker so the likeliest duplicates sort first |
 | 14 | **Merge verify** | Shortlisted pairs no human or model has judged | Remote AI | plan | A verdict per pair; nothing merges without a human |
-| 15 | **Corroborate** | Claim pairs across records that may agree or conflict | Remote AI | plan | Corroboration links |
+| 15 | **Relate evidence** | Claim pairs that may agree or conflict | Remote AI plus deterministic validation | plan | Semantic agreement links, exact Asset-page/text-frame evidence units and separately evidenced provenance independence |
 | 16 | **Propose pages** | The graph changed | Local CPU | free | Which pages should exist |
 | 17 | **Synthesise** | A page whose brief is stale or missing | Local CPU | free | One brief per page: the graph slice that page is written from |
 | 18 | **Assemble** | A brief newer than its page, or a page with dead citations | Remote AI | metered | The page's prose in `content/` |

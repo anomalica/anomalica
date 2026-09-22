@@ -15,23 +15,43 @@ nodes:
     copyright: "Follows the source: public-domain and openly-licensed material is free to share; copyrighted material is handled
       under copyright and not republished."
   ingester:
-    kind: "Component (Python)"
+    kind: "Component (Python; Record/3 target planned)"
     zone: "public"
-    desc: "Converts raw sources into structured text records. Per-format handlers: PDF, web, audio/video (transcription via
-      whisperx + speaker diarisation), ebook. Runs on the local graphics card."
-    output: "One markdown + YAML record per source (to Ingests), plus the original file and the complete raw transcript (to
-      records/)."
+    desc: "Target: acquire immutable Assets, establish an ordered Selection and Record, then generate the structured-text
+      Ingest. Current implementation still writes legacy record/1 or record/2 from one input. Per-format handlers cover PDF,
+      web, audio/video, ebook and image."
+    output: "Target: Asset bytes archived by byte SHA-256, one default whole-Asset Record, and its current Ingest."
     contains: "Just code - an open-source tool. The records it produces inherit the source's copyright, but the ingester itself
       is public."
     copyright: "PUBLIC - open-source code."
+  asset:
+    kind: "Planned migration data object (immutable)"
+    format: "Original bytes plus anomalica/asset/1 metadata"
+    zone: "source"
+    desc: "One acquired byte sequence, or explicitly linked retained derivative, identified by full SHA-256. It owns archive
+      binding, file format, acquisition locator/time and rights/access authority. Several Records may select it."
+    output: "Validated immutable input to ordered Record selections."
+    contains: "Original third-party bytes; copyright follows each Asset."
+    copyright: "Evaluated per Asset. Permission or possession of one Asset never unlocks another."
+  record:
+    kind: "Planned migration data object (stable identity)"
+    format: "anomalica/record/3 frontmatter"
+    spec: ingest
+    zone: "source"
+    desc: "Accepted target, not yet emitted. A named logical work defined by a non-empty ordered list of whole-Asset or physical-PDF-page
+      selectors. Its domain-separated content_hash excludes titles, URLs, rights and generated text. One Record may compose
+      several Assets."
+    output: "Stable identity and page map consumed by Ingest generation, review, digestion and public Record routing."
+    contains: "Selection and metadata, not a synthetic original."
+    copyright: "Record access resolves every selected Asset independently."
   ingest:
     kind: "Data store (private)"
     format: "Markdown (.md) with YAML frontmatter plus verification, review and housekeeping sidecars"
     spec: ingest
     zone: "source"
-    desc: "The record store - one ingest per source: a markdown + YAML file, content-addressed by hash. This is the binding
-      contract every downstream stage reads against."
-    output: "The record, consumed by the digester and the workbench."
+    desc: "The generated readable representation of a Record. The target Markdown envelope carries authoritative record/3
+      frontmatter; deployed files remain legacy record/1 or record/2 while exact body/pre-digest hashes identify revisions."
+    output: "The current Ingest, consumed by the digester and Workbench."
     contains: "The full source text of each record, so its copyright follows the source - a mix of public-domain and copyrighted
       material."
     copyright: "Follows the source. This store is kept private because it can hold copyrighted text we are not allowed to
@@ -75,8 +95,8 @@ nodes:
   archive:
     kind: "Data store (records/)"
     zone: "source"
-    desc: "Durable archive of the original raw files plus the complete raw AI transcripts (full whisperx + pyannote output,
-      confidences and all). Lets a record be re-rendered to a new format without re-running it on the graphics card."
+    desc: "Durable archive of original Assets by Asset hash plus complete raw AI transcripts. A composite has no synthetic
+      original at its Record hash."
     output: "Re-render source for the ingester; provenance of last resort."
     contains: "The original files + raw transcripts. Copyright follows the source."
     copyright: "Follows the source - kept where copyright requires it, the same constraint as the ingests. Backed up off-machine
@@ -96,69 +116,68 @@ nodes:
   workbench:
     kind: "Component (Svelte + FastAPI)"
     zone: "review"
-    desc: "The human review app, and the hub that touches almost everything. A reviewer loads a record, checks it against
+    desc: "The private human review app. Target: a reviewer loads a Record, checks its Ingest against each authorised Asset,
       the original source and the raw archive, corrects the record text, labels who is speaking, adds visual notes (what's
-      on screen but not in the audio), reviews the selector's choice - which per-model digest is best - rather than editing
-      digests directly - marks which records are observed enough to digest, and blocks new content review until deterministic
-      housekeeping completes, metadata research completes or is explicitly waived, and every proposal is decided. Decision
-      requests contain only item ids/statuses bound to the viewed ref/input/result/version; the backend reloads operations
-      and commits atomically under the authenticated reviewer identity."
-    output: "Corrections committed back to the records (ingests) as git commits; selection preferences for the selector to
-      replay; a 'digestible' signal and a visual-notes sidecar for the digester."
+      on screen but not in the audio), marks which records are observed enough to digest, and blocks new content review until
+      deterministic housekeeping completes, metadata research completes or is explicitly waived, and every proposal is decided.
+      It can preview and atomically commit CAS-bound page/image splits or multi-Asset composition. That structural and per-Asset
+      possession contract is not implemented; current writes and gates remain legacy launch blockers. Target clients submit
+      only selections and editable metadata; the server derives bodies, maps and hashes."
+    output: "Ingest corrections and review sidecars; atomic structural lineage/retirement commits; replayable graph curation.
+      Selector preferences are planned with the selector, not current output. It does not ordinarily edit model digests."
     contains: "Reviewer edits + observations; reads the source material to check records against it."
     copyright: "PUBLIC tool. It reads source material that may be copyrighted but never exposes it publicly - what it publishes
       back are the corrections, not the source."
   digester:
     kind: "Component (Python)"
     zone: "public"
-    desc: "AI reads each record and extracts the atomic factual claims and the entities (nodes) they involve, with provenance
+    desc: "AI reads each Record and extracts the atomic factual claims and the entities (nodes) they involve, with provenance
       - who said it, where, attestation level, then checks every claim against its own quote with a local classifier (the
       quote check). Defaults to the Claude subscription."
-    output: "Digests - one per model (a source is digested by several models, 1..N), each a full set of nodes + claims for
-      the record."
+    output: "Currently one canonical digest/1 per Record with scalar location. The accepted migration emits digest/2 exact
+      Asset-page anchors only for page-mapped PDF/image record/3; a deferred 1..N comparison path may later emit inert candidates."
     contains: "Structured facts with provenance - no copyrighted text, just claims traceable to a source."
     copyright: "Its output (digests) is public."
   digests:
-    kind: "Data store (public)"
+    kind: "Planned data store (public)"
     format: "YAML (.yaml)"
-    spec: per_model_digest
+    spec: digest
     zone: "public"
-    desc: "The per-model digests of one source - one digest file per model. A source is digested by several models (1..N),
-      each producing a full set of nodes + claims; the selector picks the single best. Kept as the rebuildable inputs the
-      selected digest is chosen from. Inert: never assimilated directly."
+    desc: "PLANNED, not the current canonical path. Per-model digests of one Record - one digest file per model. A Record
+      is digested by several models (1..N), each producing a full set of nodes + claims; the selector picks the single best.
+      Kept as the rebuildable inputs the selected digest is chosen from. Inert: never assimilated directly."
     output: "The candidates for the selector."
     contains: "Facts and claims with provenance, per record per model - not source text."
     copyright: "PUBLIC - facts and claims aren't copyrightable."
   selector:
-    kind: "Component (Python)"
+    kind: "Planned component (Python)"
     zone: "public"
-    desc: "A source is digested by several models (1..N), producing one digest per model. The selector picks the single best
-      of those per-model digests to carry forward - it selects a whole digest, it does not merge them. Automated, but a reviewer
-      can steer it in the workbench - say which model's digest is better - and that preference is replayed, so the result
-      stays rebuildable. Decision 0039."
-    output: "One selected digest per source - the only one assimilated; the per-model digests are kept as the rebuildable
+    desc: "PLANNED, not currently implemented. A Record is digested by several models (1..N), producing one digest per model.
+      The selector picks the single best of those per-model digests to carry forward - it selects a whole digest, it does
+      not merge them. Automated, but a reviewer can steer it in the workbench - say which model's digest is better - and that
+      preference is replayed, so the result stays rebuildable. Decision 0039."
+    output: "One selected digest per Record - the only one assimilated; the per-model digests are kept as the rebuildable
       inputs."
     contains: "The digest-selection + scoring logic. Facts with provenance, no copyrighted text."
     copyright: "Its output (the selected digest) is public."
   selected:
     kind: "Data store (public)"
     format: "YAML (.yaml)"
-    spec: selected_digest
+    spec: digest
     zone: "public"
-    desc: "The selected digest per source - the single best per-model digest, chosen by the selector. The source of truth
-      for the knowledge graph: the graph is rebuildable from the selected digests, and each of these is chosen from the per-model
-      digests."
-    output: "The input to the assimilator, and the claims input to assembler record mode; current ingest review and copyright
-      authority separately decides whether and how that public record page is emitted."
+    desc: "The one canonical digest per Record and source of truth for graph import. Today the digester writes it directly.
+      If the planned selector lands, it will instead be the single best candidate chosen from per-model digests."
+    output: "The one canonical input to the assimilator, and the claims input to assembler record mode; current ingest review
+      and copyright authority separately decides whether and how that public record page is emitted."
     contains: "Facts and claims with provenance, per record - not source text."
     copyright: "PUBLIC - facts and claims aren't copyrightable, so everything from the digests onward is public."
   assimilator:
     kind: "Component (Python)"
     zone: "public"
-    desc: "Sits beside the knowledge graph and maintains it: reads the current graph plus the new digest files, resolves the
-      same real-world entity named across many records into a single node, accumulates every claim about it, computes corroboration
-      (independent sources agreeing) and evidence scores, and writes the updated graph back. Incremental - seeded once, grown
-      each run. This is where the project's differentiator lives."
+    desc: "Maintains the current scalar-location graph and resolves entities and semantic agreement. Accepted migration target:
+      group anchors overlapping on the same physical Asset page and exact page-text frame into evidence units, and count independence
+      only from evidenced distinct work/assertion roots. Asset, Selection, anchor and evidence-unit relations are not implemented;
+      unknown lineage fails closed."
     output: "Reads and writes the knowledge graph - maintains it incrementally."
     contains: "The integration logic - import, entity matching, scoring, corroboration, embeddings and search - now its own
       component, split out of the digester. Also shortlists likely duplicate nodes (embedding neighbours, reranked by a local
@@ -198,11 +217,12 @@ nodes:
   assembler:
     kind: "Component (Python)"
     zone: "public"
-    desc: "Two kinds of page. For an entity article it reads one brief from the synthesiser and writes the prose from that
-      alone - it never reads the knowledge graph directly. For a reviewed public record page it reads one selected digest,
-      verifies current ingest review eligibility and projects source content through independent copyright allow-lists. It
-      assembles only from sourced claims, never adds facts from training data, and never generates imagery. Defaults to the
-      Claude subscription."
+    desc: "Two target page paths. For an entity article it reads one brief from the synthesiser and writes the prose from
+      that alone. Accepted but not implemented: for every live Record maintain a stable hash route with a safe noindex metadata
+      shell until complete review plus exact-anchor eligibility, then an indexed explanation. In this contract only page-mapped
+      PDF/image Records can gain generated claims; other media remain metadata shells. It projects source content through
+      per-Asset copyright allow-lists. It assembles only from sourced claims, never adds facts from training data, and never
+      generates imagery. Defaults to the Claude subscription."
     output: "Entity articles from briefs and reviewed record articles from a selected digest plus live ingest authority, both
       to Content."
     contains: "Assembled prose, every sentence traceable to a claim and its source."
@@ -251,11 +271,12 @@ links:
     - label: "View on GitHub"
       url: "https://github.com/anomalica/digester"
   digests:
-    - note: "Per-model digests (one file per model), kept as the rebuildable inputs the selected digest is chosen from."
+    - note: "Planned per-model candidate store; not the current canonical path."
   selector:
-    - note: "Decision 0039 - multi-model digestion; the selector picks the single best per-model digest."
+    - note: "Planned by decision 0039; not currently implemented."
   selected:
-    - note: "Public data - the selected per-record digest the knowledge graph is built from."
+    - note: "Public data - the canonical per-Record digest the knowledge graph is built from; currently written directly by
+        the digester."
   assimilator:
     - label: "View on GitHub"
       url: "https://github.com/anomalica/assimilator"

@@ -2,7 +2,13 @@
 
 Date: 2026-03-21
 Status: draft
-Updated: 2026-04-11
+Updated: 2026-09-22
+
+> **Layer clarification:** Decision
+> [0051](../0051-asset-record-selection-and-evidence-identity.md) makes each
+> `assets[].copyright` block authoritative. References below to Record-level
+> copyright or grants are legacy wording where not yet rewritten; no such value may
+> widen an Asset decision.
 
 ## Context
 
@@ -69,7 +75,9 @@ Other jurisdictions concur:
 
 ### What the workbench displays
 
-The workbench is publicly accessible. Anyone can use it to audit the full provenance chain of any claim - from the original source, through ingestion, to digestion. This transparency is fundamental to the platform's credibility.
+The Workbench is private. Public provenance is exposed through stable safe Record
+pages; private source review and possession-gated access remain in the authenticated
+Workbench.
 
 What the workbench can show depends on the copyright status of the source and whether the viewer can demonstrate they have a legitimate copy:
 
@@ -77,8 +85,8 @@ What the workbench can show depends on the copyright status of the source and wh
 |---|---|---|---|---|
 | `public_domain` / `open_licence` | Shown | Shown | Served directly from storage | Shown |
 | `publicly_accessible` (web articles, YouTube, podcasts) | Shown | Shown | Embedded or linked from original source URL | Shown |
-| `licensed` (explicit permission from rights holder) | Shown | **Shown** | Gated unless the permission is evidenced - see below | Gated unless evidenced |
-| `restricted` (books, paywalled papers, documentaries) | Shown | **Shown** | Gated: hash verification or manual access grant | Gated: hash verification or manual access grant |
+| `licensed` (explicit permission from rights holder) | Shown | **Shown** | Gated: nonce-bound byte-range proof or manual access grant | Gated: nonce-bound byte-range proof or manual access grant |
+| `restricted` (books, paywalled papers, documentaries) | Shown | **Shown** | Gated: nonce-bound byte-range proof or manual access grant | Gated: nonce-bound byte-range proof or manual access grant |
 
 
 **A SUPPORTING QUOTE IS NEVER GATED, WHATEVER THE STATUS.** The `Supporting quotes`
@@ -110,12 +118,15 @@ gated. This matches the implementation (`SNAPSHOT_PUBLIC` in the workbench's
 is added or a field is absent, an allow-list merely over-gates, which is a
 correction rather than a disclosure.
 
-**`licensed` does not serve freely on the strength of the word.** Permission is
+**`licensed` does not serve freely on the strength of the word or its evidence.** Permission is
 specific - it may cover quotation and not redistribution, it may have expired, it
 may have come from someone without the standing to grant it. What makes the status
 real is the evidence beside it: `holder`, `granted_by`, `granted_at`, `licence_url`,
 `expires`. A `licensed` record carrying none of those is indistinguishable from a
-mislabelled `restricted` one, so it is treated as restricted.
+mislabelled `restricted` one, so it is treated as restricted. Those fields justify
+classification but do not encode audience or permitted use; they therefore never
+widen either public or Workbench access. Any access without a possession proof
+requires the separate explicit per-user, per-Asset manual grant.
 
 That is not hypothetical. On 2026-08-20 all seventeen `licensed` records in the
 store - *Communion*, *Thinking, Fast and Slow*, *Imminent*, *Dark Mission* and
@@ -125,32 +136,48 @@ from any of those rights holders. They were commercial books, which this table's
 serving code followed this document instead of its own allow-list, all seventeen
 would have been published in full.
 
-For copyrighted sources, there are two independent paths to unlock the ingested markdown view:
+For gated Assets, there are two independent paths inside an authenticated,
+allow-listed Workbench session:
 
-1. **Hash verification (no login required).** The viewer drags their copy of the source file into the browser. The workbench computes the file's SHA-256 hash client-side (using hash-wasm in a Web Worker, streaming so large files are handled without loading them fully into memory). The full 64-character hash is sent to the workbench API, which returns the ingest if the hash matches. The original file never leaves the viewer's browser and is never uploaded. This works without authentication - possession of the source file is the proof. See the [review workbench architecture](../../architecture/review-workbench.md) for the truncated-hash system that makes provenance references publicly visible without exposing the full hash needed to fetch ingests.
+1. **Nonce-bound byte-range proof.** The reviewer selects each exact local copy.
+   The browser hashes unpredictable server-selected byte ranges with a short-lived
+   nonce, without uploading bytes. The Asset hash identifies the target but is
+   public and grants nothing by itself. Success authorises only that Asset, session
+   and use; a composite view requires every gated member.
 
-2. **Manual access grant (login required).** A viewer with an account can request access. An Anomalica member approves it. The grant is per user per record, stored in the workbench's grants file (see below). This covers cases where hash verification is impractical (physical book owners, different digital editions with different hashes).
+2. **Manual access grant.** A grant binds the authenticated reviewer, explicit
+   Asset hashes and allowed uses. It covers cases where exact-byte verification is
+   impractical; a Record id alone grants nothing.
 
 ### Access grants storage
 
-Access grants are stored in a YAML file in the workbench repository, separate from the records themselves. User identity is stored as a salted SHA-256 hash of their email address to avoid storing personally identifiable information:
+Access grants are stored in a YAML file in the workbench repository, separate from
+the records themselves. User identity is an HMAC-SHA-256 pseudonym over the
+authenticated issuer and subject using a Workbench secret that is never committed:
 
 ```yaml
-salt: anomalica-grants
 grants:
-  - user: a1b2c3d4e5...  # SHA-256 of salt + email
-    records:
-      - pentagon-uap-report-2021
-      - kean-ufos-generals-2010
+  - user: hmac-sha256:a1b2c3d4e5...
+    assets:
+      - sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      - sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    uses: [review]
     granted_by: anomalica-admin
     granted_at: 2026-04-11
 ```
 
-The workbench computes `SHA256("anomalica-grants" + user_email)` from the authenticated session and checks for a matching entry. The salt prevents pre-computed rainbow table lookups against the hashes.
+The Workbench computes
+`HMAC-SHA256(secret, UTF8(issuer) || 0x00 || UTF8(subject))` from the authenticated
+session and checks for the full lowercase digest. Email addresses and a public
+fixed salt are forbidden. Rotating the secret requires an authenticated atomic
+rewrite of all grants; a missing key fails closed.
 
-## Per-record copyright metadata
+## Per-Asset copyright metadata
 
-Each ingested record carries a `copyright` block in its YAML frontmatter that describes the legal status of the original work. This metadata tells the workbench what display rules to apply. It does not contain any user or access information.
+Each `record/3` Asset descriptor carries a `copyright` block describing the legal
+status of those exact bytes. The Workbench applies it independently to every
+selected member. Legacy `/1` and `/2` Records retain their top-level block only as
+migration input. Rights metadata contains no user or access information.
 
 ### Schema
 
@@ -162,7 +189,6 @@ copyright:
   licence_url: https://creativecommons.org/licenses/by/4.0/
   granted_by: Jane Smith, Head of Licensing
   granted_at: 2026-04-11
-  expires: null
   reference: correspondence/cbs-2026-04-11.pdf
 ```
 
@@ -170,10 +196,17 @@ The `status` field tells the workbench what display rules to apply. The `detail`
 
 ### Defaults and safety
 
-The ingester sets the copyright status automatically based on the source type:
+The ingester applies the same ordered acquisition defaults as the canonical Ingest
+contract:
 
-- **Web pages, YouTube, podcasts** (anything with a public URL): `publicly_accessible`. The original is freely available on the internet - gating the ingested reproduction of something anyone can read by clicking a link serves no purpose.
-- **Everything else** (PDFs, local files, books, documentaries): `restricted`. This is the safe default - no content is served beyond extracted claims until someone actively determines the copyright status and provides justification.
+- an explicit operator status wins;
+- a `.gov` or `.mil` hostname defaults to `public_domain`;
+- every other anonymously retrieved HTTP(S) URL defaults to
+  `publicly_accessible`, regardless of file format;
+- a local file defaults to `restricted`.
+
+These are defaults, not licence determinations. Hostname matching is exact; a URL
+path containing `.gov` does not qualify.
 
 The `publicly_accessible` status can be downgraded to `restricted` if a source is taken offline or paywalled after ingestion. The `restricted` status can be upgraded to `public_domain`, `open_licence`, or `licensed` once someone determines the actual copyright status and provides justification.
 
@@ -197,16 +230,25 @@ For `licensed` status, the `reference` field points to evidence of the permissio
 
 ## Original file storage
 
-The workbench needs access to original source files to display them alongside ingested markdown during review. Originals are stored in object storage (Bunny Storage), keyed by the raw source asset's SHA-256 - the hash that names the file in `records/`. Which field carries that hash is per-type: `source_hash` (frontmatter) for `web`; `content_hash` (frontmatter, which hashes the source bytes) for `audio`/`video`/`pdf`; and for `ebook` only the verification sidecar's `sha256` (no frontmatter field). See ingest-format.md's `source_hash` row.
+The Workbench needs access to original source files to display them alongside an
+Ingest. Every original is an immutable Asset stored by `assets[].asset_hash`,
+independent of source type and Record identity. For a multi-Asset Record, access is
+checked per member and one successful possession proof never unlocks the rest.
 
 Two storage zones are used:
 
 - **Public zone** (CDN-backed) - public domain and open-licence originals. Served directly to anyone. URL pattern: `https://cdn.anomalica.is/sources/{asset_hash}.{ext}` (the source-asset hash, per type as above)
-- **Private zone** (no public access) - copyrighted originals. Only accessible via the workbench API, which checks hash verification or manual grant before proxying the file. No direct public URL exists.
+- **Private zone** (no public access) - copyrighted originals. Only accessible via
+  the Workbench API, which checks a nonce-bound byte-range proof or explicit grant
+  before proxying the file. No direct public URL exists.
 
 For publicly available sources (YouTube, podcasts, news articles), the original is not stored - the workbench embeds or links to it at its source URL.
 
-The ingester uploads originals to the appropriate storage zone during ingestion, based on the record's copyright status. If the status is later changed (e.g. from `restricted` to `public_domain` after determining copyright has expired), the file is moved between zones.
+The ingester uploads each original to the appropriate storage zone during
+ingestion, based on that Asset's authoritative copyright status. If a member's
+status is later changed (for example from `restricted` to `public_domain` after
+determining copyright has expired), only that Asset is moved between zones; one
+member's status never widens another's.
 
 For local development, the workbench backend serves originals from a local directory. The ingester already retains source files on disk during processing.
 
@@ -214,6 +256,10 @@ For local development, the workbench backend serves originals from a local direc
 
 The platform can draw on a broad range of sources including books and copyrighted journalism without infringing copyright. The legal basis is fourfold: facts are not copyrightable (universal), Japan's Article 30-4 permits the information analysis that produces those facts, Article 32 makes short attributed quotation a lawful right (covering the published evidential quotes; see [Quotation policy](#quotation-policy)), and the platform never distributes copyrighted source material to the public.
 
-The workbench provides full transparency into the extraction pipeline while respecting copyright. Anyone can audit the digested claims and their provenance. For copyrighted sources, viewing the ingested reproduction requires demonstrating access to the original (via hash match or manual grant).
+The workbench provides full transparency into the extraction pipeline while
+respecting copyright. Anyone can audit the digested claims and their provenance.
+For copyrighted sources, viewing the ingested reproduction requires demonstrating
+access through the nonce-bound byte-range proof or holding an explicit manual
+grant. A public Asset hash never grants access.
 
 Every claim in the knowledge graph is traceable to a specific source. For copyrighted sources, the reader sees the attribution and a pointer to where to find the original, not the original content itself.
