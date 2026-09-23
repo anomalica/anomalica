@@ -668,13 +668,10 @@ The identity of a printed page is the pair `(printed_page_sequence, printed_page
 An EPUB exported by Anomalica Prometheus may also carry an edition-specific Kindle source position on each paragraph. The ingester preserves it immediately before that paragraph:
 
 ```markdown
-<!--
-kindle_position: 2147
-element_id: 392
--->
+{{_kindle_position: 2147}}Paragraph text begins here.
 ```
 
-`kindle_position` is the stable renderer position within the exact Kindle edition identified by its ASIN and content version. `element_id` is the renderer paragraph identifier and is omitted when unavailable. These are not printed pages and must not be presented as such. They provide a reproducible fallback citation anchor when the edition has no EPUB page list. Both values remain as source-location context in the materialised pre-digest.
+`_kindle_position` is the stable renderer position within the exact Kindle edition identified by its ASIN and content version. It is a hidden point field: the stored Ingest retains the coordinate, while the materialised pre-digest strips the marker without consuming the paragraph text or its boundary. It is not a printed page or automatically a reader-visible Kindle Location and must not be presented as either. It provides a reproducible fallback citation anchor when the edition has no EPUB page list. Prometheus `element_id` values are renderer structure rather than useful location evidence; the ingester does not copy them into the record, while the archived EPUB retains them.
 
 ### Speaker change
 
