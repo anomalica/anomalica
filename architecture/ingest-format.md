@@ -6,9 +6,13 @@ Assets defines a stable **Record**. An **Ingest** is the generated readable
 representation of that Record. See [decision
 0051](../decisions/0051-asset-record-selection-and-evidence-identity.md).
 
-`record/3` is the accepted migration target, not current emitted data. Deployed
-Ingester and consumers still use `record/1` or `/2` and their scalar source model;
-they must not infer Asset, Selection or page-map authority until migrated.
+`record/3` is the Ingester's current output for ordinary acquisitions. Each such
+run archives the exact acquired bytes as one immutable Asset and emits the default
+whole-Asset Selection; PDF and image output also carries the complete page map and
+its preparation-version-9 source map. Existing `record/1` and `/2` envelopes remain
+legacy-readable and are migrated deterministically from held Asset bytes rather
+than reacquired. Consumers use explicit Asset, Selection and page-map authority for
+`record/3` and the documented implicit whole-Asset rule only for legacy envelopes.
 
 The current `.md` file is an atomic implementation envelope: its frontmatter is
 the authoritative Record definition and its body is the current generated Ingest.

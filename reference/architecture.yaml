@@ -15,17 +15,17 @@ nodes:
     copyright: "Follows the source: public-domain and openly-licensed material is free to share; copyrighted material is handled
       under copyright and not republished."
   ingester:
-    kind: "Component (Python; Record/3 target planned)"
+    kind: "Component (Python; emits Record/3)"
     zone: "public"
-    desc: "Target: acquire immutable Assets, establish an ordered Selection and Record, then generate the structured-text
-      Ingest. Current implementation still writes legacy record/1 or record/2 from one input. Per-format handlers cover PDF,
-      web, audio/video, ebook and image."
-    output: "Target: Asset bytes archived by byte SHA-256, one default whole-Asset Record, and its current Ingest."
+    desc: "Acquires immutable Assets, establishes an ordered Selection and Record, then generates the structured-text Ingest.
+      Ordinary acquisitions emit one default whole-Asset record/3. Per-format handlers cover PDF, web, audio/video, ebook
+      and image; legacy record/1 and record/2 remain deterministic read and migration inputs."
+    output: "Asset bytes archived by byte SHA-256, one default whole-Asset Record, and its current Ingest."
     contains: "Just code - an open-source tool. The records it produces inherit the source's copyright, but the ingester itself
       is public."
     copyright: "PUBLIC - open-source code."
   asset:
-    kind: "Planned migration data object (immutable)"
+    kind: "Data object (immutable)"
     format: "Original bytes plus anomalica/asset/1 metadata"
     zone: "source"
     desc: "One acquired byte sequence, or explicitly linked retained derivative, identified by full SHA-256. It owns archive
@@ -34,13 +34,13 @@ nodes:
     contains: "Original third-party bytes; copyright follows each Asset."
     copyright: "Evaluated per Asset. Permission or possession of one Asset never unlocks another."
   record:
-    kind: "Planned migration data object (stable identity)"
+    kind: "Data object (stable identity)"
     format: "anomalica/record/3 frontmatter"
     spec: ingest
     zone: "source"
-    desc: "Accepted target, not yet emitted. A named logical work defined by a non-empty ordered list of whole-Asset or physical-PDF-page
-      selectors. Its domain-separated content_hash excludes titles, URLs, rights and generated text. One Record may compose
-      several Assets."
+    desc: "A named logical work defined by a non-empty ordered list of whole-Asset or physical-PDF-page selectors. The Ingester
+      emits the ordinary one-whole-Asset form. Its domain-separated content_hash excludes titles, URLs, rights and generated
+      text. One Record may compose several Assets."
     output: "Stable identity and page map consumed by Ingest generation, review, digestion and public Record routing."
     contains: "Selection and metadata, not a synthetic original."
     copyright: "Record access resolves every selected Asset independently."
@@ -49,8 +49,9 @@ nodes:
     format: "Markdown (.md) with YAML frontmatter plus verification, review and housekeeping sidecars"
     spec: ingest
     zone: "source"
-    desc: "The generated readable representation of a Record. The target Markdown envelope carries authoritative record/3
-      frontmatter; deployed files remain legacy record/1 or record/2 while exact body/pre-digest hashes identify revisions."
+    desc: "The generated readable representation of a Record. Newly produced Markdown envelopes carry authoritative record/3
+      frontmatter; retained record/1 and record/2 files remain legacy migration inputs. Exact body/pre-digest hashes identify
+      revisions."
     output: "The current Ingest, consumed by the digester and Workbench."
     contains: "The full source text of each record, so its copyright follows the source - a mix of public-domain and copyrighted
       material."

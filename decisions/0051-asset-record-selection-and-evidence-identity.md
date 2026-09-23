@@ -29,13 +29,17 @@ and fail closed on everything else.
 
 ### Implementation status
 
-This decision is the accepted migration target, not a description of deployed
-behaviour. At acceptance, Ingester emits legacy `record/1` or `/2`, Digester emits
-`digest/1` with scalar locations, Assimilator has no Asset/Selection/anchor/evidence-unit
-tables, Workbench has no structural API or per-Asset challenge, and Assembler has
-no stable shell/enrichment split. Until each component implements this contract,
-those legacy paths remain current implementation and none may claim `/3`, `/2`
-anchors or Asset-derived independence by inference.
+At acceptance this decision described a migration target. As of 2026-09-23, the
+Ingester emits `record/3` for ordinary acquisitions: exact acquired bytes become
+one immutable Asset, the default Record selects that whole Asset, PDF/image output
+includes the complete server-derived page map and preparation-version-9 source
+map, and legacy `/1` or `/2` envelopes remain deterministic read and migration
+inputs. Digester still emits `digest/1` with scalar locations, Assimilator has no
+Asset/Selection/anchor/evidence-unit tables, Workbench has no structural API or
+per-Asset challenge, and Assembler has no stable shell/enrichment split. Until
+each of those components implements its part of this contract, its legacy path
+remains current and it may not claim `/2` anchors or Asset-derived independence by
+inference.
 
 ### Four distinct layers
 
