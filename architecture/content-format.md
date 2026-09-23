@@ -97,9 +97,17 @@ mode forbids. A restricted value is omitted rather than delivered for the site
 to hide. Facts/entities inspection and reviewer links stay in the Workbench.
 
 `source.assets` contains one safe projection per selected Asset in first-use order.
-Each member is exactly `{ordinal, source_type, file_format, pages?,
+Each member is exactly `{ordinal, source_type, file_format, acquired_at?, pages?,
 selected_record_pages, capabilities}`; `ordinal` is 1-based, pages is omitted for
 non-paged media, selected Record pages stay ordered, and no Asset hash is exposed.
+The optional `acquired_at` is copied without changing its value from the matching
+`record/3 assets[].acquisition.acquired_at` only when it is a string that matches
+the canonical RFC 3339 timestamp form, denotes a real instant, carries `Z` or a
+numeric offset, and is safe for public disclosure. If it is missing, malformed or
+otherwise unsafe, the producer omits `acquired_at`; it never emits null, repairs or
+coerces the value, infers a time or offset, uses another acquisition field, or
+substitutes another Asset's value. Asset acquisition metadata, including this
+projection, is excluded from Record identity.
 Each member's `capabilities` object contains exactly `source_body`,
 `archived_original`, `media`, `provider_embed` and `external_link`. Permission or
 possession of one Asset never widens another member. A composite source body is

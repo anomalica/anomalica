@@ -108,8 +108,9 @@ from the canonical expanded Selection only:
    `anomalica-record-identity-v1` followed by one zero byte.
 4. SHA-256 the complete preimage and prefix the lowercase result with `sha256:`.
 
-Titles, URLs, rights, provenance, page labels, extraction output and mutable
-metadata are excluded. Asset and selector order are included.
+Titles, URLs, rights, provenance, Asset acquisition metadata including
+`acquired_at`, page labels, extraction output and mutable metadata are excluded.
+Asset and selector order are included.
 
 The fixture below hashes to
 `sha256:cf74ff9325207f22d92ff805386830db6066ef1ec8a70fa00ce2adc850ff89f3`:
@@ -254,6 +255,17 @@ only for `/1` and `/2` Records and cannot widen a member decision. Permission or
 of one Asset never unlocks another. A composite body or original is available
 only to a caller authorised for every contributing member needed by that output;
 public reproduction applies the public allow-list independently to each Asset.
+
+In `anomalica/public-record/2`, `source` is exactly `{assets: [...]}` in
+first-selection-use order. Each Asset member is exactly `{ordinal, source_type,
+file_format, acquired_at?, pages?, selected_record_pages, capabilities}`. The
+optional `acquired_at` is copied from that member's
+`record/3 assets[].acquisition.acquired_at` only when it is an offset-bearing
+RFC 3339 instant (with `Z` or a numeric offset), validates as a real instant and
+is safe for public disclosure. A missing, malformed or otherwise unsafe value is
+omitted, never set to null, repaired, inferred from another field or substituted
+from another Asset. It remains acquisition metadata and does not enter Record
+identity.
 
 Public Asset and Record hashes are identifiers, never access credentials. For a
 gated local copy the Workbench issues an authenticated, single-use, short-lived

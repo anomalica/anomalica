@@ -21,7 +21,7 @@
 # describes. `status: stable` = grounded in a ratified spec doc; `status: provisional` =
 # the underlying design is not yet settled (do not treat as final).
 
-spec_version: 13
+spec_version: 14
 types:
   asset:
     schema: anomalica/asset/1
@@ -77,7 +77,8 @@ types:
     fixture:
       json: '{"schema":"anomalica/record-identity/1","selection":[{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","selector":{"type":"pdf_page","page":4}},{"asset_hash":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","selector":{"type":"pdf_page","page":5}},{"asset_hash":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","selector":{"type":"whole"}}]}'
       content_hash: sha256:cf74ff9325207f22d92ff805386830db6066ef1ec8a70fa00ce2adc850ff89f3
-    exclusions: [title, URLs, rights, provenance, printed page labels, extraction output, mutable metadata]
+    exclusions: [title, URLs, rights, provenance, Asset acquisition metadata including acquired_at, printed page labels, extraction
+        output, mutable metadata]
   ingest:
     schema: anomalica/record/3
     status: stable
@@ -1208,12 +1209,16 @@ types:
       - {name: metadata, type: object, required: true, description: "Allow-listed source_types, document_type, publisher,
           creators, publication date, duration and page count; absent values omitted."}
       - {name: source, type: object, required: eligible-generated-only, description: "Exactly `{assets: [...]}` in first-selection-use
-          order. Each member is exactly `{ordinal, source_type, file_format, pages?, selected_record_pages, capabilities}`;
-          ordinal is 1-based, selected_record_pages is an ordered positive-integer list, and capabilities has exactly source_body,
-          archived_original, media, provider_embed and external_link. Every capability is `{mode, reason}` plus only its permitted
-          payload from content-format.md. Full Asset hashes are forbidden. Permission or possession of one member never unlocks
-          another; composite body access requires authority for every contributing member. Missing, unknown or inconsistent
-          state denies."}
+          order. Each member is exactly `{ordinal, source_type, file_format, acquired_at?, pages?, selected_record_pages,
+          capabilities}`; ordinal is 1-based, selected_record_pages is an ordered positive-integer list, and capabilities
+          has exactly source_body, archived_original, media, provider_embed and external_link. acquired_at is optional and
+          is copied without changing its value from the matching `record/3 assets[].acquisition.acquired_at` only when it
+          is a string that matches types.ingest.temporal.forms.rfc3339_timestamp, validates as a real instant with an explicit
+          Z or numeric offset, and is safe for public disclosure. Missing, malformed or otherwise unsafe acquired_at is omitted,
+          never null, repaired, coerced, inferred or substituted from another field or Asset; it is excluded from Record identity.
+          Every capability is `{mode, reason}` plus only its permitted payload from content-format.md. Full Asset hashes are
+          forbidden. Permission or possession of one member never unlocks another; composite body access requires authority
+          for every contributing member. Missing, unknown or inconsistent capability state denies."}
       - {name: references, type: list, required: eligible-generated-only, description: "Attributed claims with stable Record
           route plus `#source-{source_anchor_id}` evidence-site anchors and citation-sized supporting quotations. The id follows
           decision 0051's exact domain-separated codec; a truncated-id collision fails the page build."}
