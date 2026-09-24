@@ -545,6 +545,11 @@ This is the content hash of the **pre-digest** - the ingest after all
 deterministic model-prep (irrelevant regions removed, footnotes inlined,
 word-timestamps stripped), which is exactly the text the model extracted from
 ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)).
+The accepted [field-level annotation rule](../decisions/0052-field-level-ingest-annotation-visibility.md)
+is partially implemented. Preparation version 9 strips the deployed
+`_kindle_position` marker, while the generic field-level parser and the wider
+page-marker migration remain pending. A preparation change does not
+retroactively alter stored pre-digests or their bindings.
 
 ```yaml
 pre_digest:

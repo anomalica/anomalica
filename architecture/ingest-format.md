@@ -34,6 +34,46 @@ A record file has three parts:
 
 All annotations use YAML throughout - the same data format as the frontmatter. Block annotations for structural markers (page boundaries, speaker turns, images). Inline annotations for mid-sentence markers (redactions, illegible text, actions).
 
+**Accepted annotation-visibility target, partially deployed:** a leading `_` on
+an annotation field name means that field stays in the Ingest but does not reach
+the materialised pre-digest. Fields without the prefix may supply content or
+context; one multi-field annotation may carry both. The full meaning, exceptions
+for exclusion regions and span markers, and cross-component migration are in
+[decision 0052](../decisions/0052-field-level-ingest-annotation-visibility.md).
+The ebook producer and preparation version 9 implement `_kindle_position` as a
+narrow first case. The shared materialiser does not yet interpret the prefix
+generically, so adding it to any other live field does not automatically hide
+that field from the extraction model. Existing explicit transforms still handle
+legacy word times and printed-page sequence state.
+
+In the target grammar the underscore belongs to **each field**, including a
+nested field, rather than to the whole comment. Of the following examples, only
+`_kindle_position` is current canonical producer output:
+
+```markdown
+{{_t: 1.25}}A {{_t: 1.50}}word.
+{{_kindle_position: 2147}}The next paragraph starts here.
+{{_printed_page: 15}}Text following an EPUB page turn.
+
+<!--
+image:
+  _file: abc123def4567.jpg
+  description: "The diagram labels two observation sites."
+-->
+```
+
+The pre-digest has `A word.`, the paragraphs and the diagram description,
+without their coordinates or image filename. The Ingest retains all fields.
+Unprefixed fields in the same comment may still supply model context. A
+conforming parser removes the prefix when interpreting the field for page
+navigation, image loading or later claim alignment; it must not rename it in the
+stored Ingest merely to render it. Inline annotations remain flat: when two
+point fields coincide, place two adjacent inline markers rather than nesting
+YAML braces inside `{{...}}`. The `_irrelevant` start/end pair is special: it
+excludes the enclosed prose as well as its own markers. An image marked
+irrelevant and a transcript `[irrelevant]` speaker turn likewise exclude their
+content.
+
 The first `---` fenced block is always the frontmatter. All HTML comments in the body are annotations - the ingester does not produce any other HTML comments. Text between annotations is content.
 
 **The body in this file is not by itself the complete claim-anchor frame.** A
@@ -320,6 +360,16 @@ construct an original path from Record identity.
 `source_file`. They may legitimately disagree: a video acquired as
 `interview.mkv` and retained as audio-only may carry `source_file: interview.mkv`
 with `archived_ext: opus`.
+
+`source_file` is a filename, not the acquisition host's filesystem path. New or
+changed repository-bound metadata must not introduce an operator's
+home-directory path, local `file://` URL or absolute local file locator. Keep
+the machine path in private acquisition state and record an evidenced public
+source URL separately when one exists. This restriction applies when writing
+nested Asset acquisition metadata, legacy frontmatter, queue stubs and review
+edits. An unchanged legacy value may remain until its own migration. Original
+source text in the record body remains evidence and is not rewritten by this
+metadata rule.
 
 ### The waveform peaks sidecar
 
@@ -615,9 +665,9 @@ The body carries the extracted content only - the ingester does not inject the t
 
 YAML inside HTML comments. Single-field annotations use inline comments. Multi-field annotations use multi-line comments. Used for structural markers that sit between content.
 
-> **Adding an annotation type carries three obligations, not two.** Update this document in the same change, and update the emitter - both understood. The third is easy to miss: **decide and record how the pre-digest treats it**, stripped or preserved as context, and tell the digester. The digester cannot infer the disposition of a type it has never seen.
+> **Adding an annotation type carries three obligations, not two.** Update this document in the same change, and update the emitter - both understood. The third is easy to miss: **decide and record how the pre-digest treats it**, stripped or preserved as context, and tell the digester. The digester cannot infer the disposition of a type it has never seen. Under [decision 0052](../decisions/0052-field-level-ingest-annotation-visibility.md), the underscore states field-level visibility; the annotation still needs defined semantics (a point, content context or a region).
 >
-> **The fallback is currently the unsafe direction, so do not rely on it.** `anomalica_common.pre_digest` matches an **allow-list** of four families (`highlight`, `link`, `note`, `cites`); anything outside them passes straight through to the model as literal text. So an undecided annotation type is not hidden from extraction - it is *shown* to it, and our own syntax arrives in the model input as if it were source text. That is why `{{classification: ...}}` reaches claim extraction today. This lives in the shared module, so it binds the assimilator as well as the digester. If the fallback is later inverted to strip-by-default, the obligation is unchanged and only the consequence of forgetting changes - from "our syntax reached the model" to "a new annotation went missing". Cheap to write down now; expensive to discover in a digest six weeks later.
+> **The fallback is currently the unsafe direction, so do not rely on it.** `anomalica_common.pre_digest` applies explicit transforms for the annotation families it knows; anything else passes straight through to the model as literal text. It does not yet implement a generic underscore rule. So an undecided annotation type is not hidden from extraction - it is *shown* to it, and our own syntax arrives in the model input as if it were source text. That is why `{{classification: ...}}` reaches claim extraction today. This lives in the shared module, so it binds the assimilator as well as the digester. If the fallback is later inverted to strip-by-default, the obligation is unchanged and only the consequence of forgetting changes - from "our syntax reached the model" to "a new annotation went missing". Cheap to write down now; expensive to discover in a digest six weeks later.
 
 
 
@@ -1497,7 +1547,9 @@ review, a sidecar or corpus history. New stubs remain Git-untracked and contain
 frontmatter only. A valid pending stub has a non-empty canonical `source_id`, a
 valid `source_type`, a non-empty display `title`, a UTC ISO 8601 `intake_date`,
 and at least one non-empty acquisition locator such as `source_url`, `reference`
-or `asset_path`. It has no record `content_hash`, body, `ingested` or
+or `asset_ref`. `asset_ref` is an opaque queue-local identifier resolved only
+against scheduler state outside Git; a local `asset_path` or `file://` URL must
+not be written into a new stub. It has no record `content_hash`, body, `ingested` or
 `ingested_at` completion stamp. It also omits `schema`: in particular,
 `schema: anomalica/record/1` would falsely identify an intake intention as a
 record. A future versioned intake interchange would require its own schema.
