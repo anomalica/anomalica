@@ -143,6 +143,7 @@ provenance:
   publisher: "Department of Energy"           # issuing body / channel / author-org (not the hosting platform)
   creators: ["Edward Teller"]                 # human author(s) / host(s), person names in natural order
   published_date: "1949-03"                   # the source's own publication or upload date (ISO 8601, may be partial)
+  updated_date: "2023-12-11T19:50:43+00:00"   # the source's own last-modified date, where it states one
   source_url: "https://www.war.gov/..."       # canonical URL of the original
   also_published_at:                          # other URLs this same record is published at (see below)
     - "https://www.youtube.com/watch?v=..."
@@ -171,7 +172,7 @@ answering to more URLs never raises it.
 
 Two boundaries are load-bearing:
 
-- **Source facts, not subject facts.** Provenance is about the SOURCE - who issued it, when it was published, where to find it. A subject's incident place and incident date are NOT provenance; they are extracted as claims about place and event nodes, so they stay inside the scored, corroborated evidence model. `published_date` is strictly the source's publication or upload date.
+- **Source facts, not subject facts.** Provenance is about the SOURCE - who issued it, when it was published, where to find it. A subject's incident place and incident date are NOT provenance; they are extracted as claims about place and event nodes, so they stay inside the scored, corroborated evidence model. `published_date` is strictly the source's publication or upload date. `updated_date` is the source's own last-modified date where it states one (a web article's `article:modified_time`, an RFC822 `Date` of a superseding message); it is omitted rather than copied from `published_date` when the source shows no separate update.
 - **Copyright is not mirrored here.** In `record/3`, each selected Asset's
   `assets[].copyright` block is authoritative; the top-level `copyright` field is
   authoritative only for legacy `/1` and `/2` Records. Provenance carries no

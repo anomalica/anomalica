@@ -192,6 +192,8 @@ types:
       # until then they are the live contract and a validator must accept them.
       - {name: date_published, type: string, required: false, description: "Source publication date or evidenced publication
           instant. Exact forms and serialisation are defined by `temporal`; never guess precision. -> provenance.published_date."}
+      - {name: updated_date, type: string, required: false, description: "The source's own last-modified date where it states
+          one (ISO 8601). Omitted rather than copied from published_date when the source shows no separate update. -> provenance.updated_date."}
       - {name: source_url, type: string, required: false, description: "Canonical URL of the original. -> provenance.source_url."}
       - {name: fetched_url, type: string, required: false, description: "URL actually retrieved when different (e.g. Wayback).
           Legacy /1-/2 field; migrates to the matching Asset acquisition block."}
@@ -235,11 +237,11 @@ types:
           catalogue vocabulary (agency/virin/dvids_id/incident_date), not this one. Was listed required:true, which meant
           zero live records validated. Consumers read the flat fields above until the migration lands. Canonical source-origin
           block (decision 0043 as layered by 0051; narrative + example in ingest-format.md). Record/3 sub-fields, each OMITTED
-          when absent (never null): collection; publisher; creators; published_date; posted_by and posted_date; source_url
-          (canonical public location of the work); identifiers (work ids such as ISBN, DOI or VIRIN); description; audience;
-          disclosure. Copy acquisition time, fetched URL, local filename and copy identifiers belong only to each Asset's
-          acquisition block. Legacy /1 and /2 provenance may still carry those old fields read-only. The description is the
-          source's OWN blurb, verbatim, never AI - omitted or truncated for licensed/restricted sources per copyright.status).
+          when absent (never null): collection; publisher; creators; published_date; updated_date; posted_by and posted_date;
+          source_url (canonical public location of the work); identifiers (work ids such as ISBN, DOI or VIRIN); description;
+          audience; disclosure. Copy acquisition time, fetched URL, local filename and copy identifiers belong only to each
+          Asset's acquisition block. Legacy /1 and /2 provenance may still carry those old fields read-only. The description
+          is the source's OWN blurb, verbatim, never AI - omitted or truncated for licensed/restricted sources per copyright.status).
           SOURCE facts only - a subject's incident place and date are claims, not provenance. Copyright is NOT mirrored here;
           assets[].copyright is authoritative in record/3 and the top-level legacy projection remains authoritative only in
           /1 and /2. Origin-unknown is simply the absence of source_url/fetched_url/source_file/identifiers. Also carries
