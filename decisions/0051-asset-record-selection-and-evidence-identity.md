@@ -349,6 +349,16 @@ migration still succeeds after the checks above, but structural preview,
 `digest/2`, exact anchors and public generated claims remain blocked until that
 upstream material is produced under its own authorised process.
 
+### Amendment 2026-09-26: missing historical acquisition time
+
+The migration check above no longer requires a historical acquisition time
+when none was recorded. A legacy Asset with no evidenced timestamp omits
+`assets[].acquisition.acquired_at`; it must not take the source's publication
+date, a filesystem timestamp or a Git commit time as the acquisition time.
+Present but invalid acquisition metadata still blocks migration, as do missing
+or mismatched archived bytes and missing rights authority. New acquisitions
+continue to record their actual acquisition time.
+
 ## Consequences
 
 - One Asset can safely yield several live Records and one Record can compose

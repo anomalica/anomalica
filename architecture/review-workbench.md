@@ -214,16 +214,22 @@ Video and audio playback uses the browser's built-in HTML5 media elements. Synci
 
 ### Split and compose Records
 
-The accepted structural target can split one temporary parent into several child
-Records or compose one Record from several Assets; the deployed Workbench does not
-yet implement these routes. The first implementation will accept only complete
+The local Workbench can split one temporary parent into several child Records
+or compose one Record from several Assets. Reviewers select one PDF/image Record
+to split or several to compose. Older `/1` and `/2` PDF/image Records are upgraded
+from their held bytes first; the original, legacy review and housekeeping history
+remain preserved. Preparing an eligible Record marks it temporary and commits its
+deterministic source map before a reviewer assigns pages and titles. A missing
+legacy acquisition time remains unknown, never guessed. The editor accepts only complete
 physical PDF pages and whole standalone images. The client submits ordered
 selections and editable metadata, never generated body text, hashes, page maps or
 archive paths. The server derives preview and commit from one compare-and-swap
 bound Git ref, validates every Asset/page/source map, expands ranges to atomic
 selectors and derives the sequential Record `page_map`.
 
-Each parent must be live and explicitly carry `structure_status: temporary`.
+Each parent must be live and explicitly carry `structure_status: temporary` at
+preview and commit. Temporary bundles are withheld from extraction and public
+Record-page reconciliation while they await structural review.
 Commit creates every child or composite as final and retires all parents atomically. A
 failed validation or stale ref writes nothing. Structural one-to-many lineage is
 separate from scalar `superseded_by`. Parent review, housekeeping, gold,

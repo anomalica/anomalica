@@ -138,6 +138,11 @@ work-origin metadata: publisher, creators, publication, canonical work location
 and work identifiers. Copy acquisition metadata has exactly one different home,
 `assets[].acquisition` ([decisions 0043](../decisions/0043-canonical-provenance-block.md)
 and [0051](../decisions/0051-asset-record-selection-and-evidence-identity.md)).
+For legacy holdings without an evidenced acquisition time,
+`assets[].acquisition.acquired_at` is omitted, not inferred from the PDF's
+publication date, Git history or filesystem timestamps. New acquisitions
+record the actual time. A present value must be an offset-bearing RFC 3339
+instant; absence remains unknown when a legacy Record is migrated.
 
 ```yaml
 provenance:
