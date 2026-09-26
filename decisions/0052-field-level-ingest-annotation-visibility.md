@@ -1,6 +1,7 @@
 # 0052. Field-level visibility of Ingest annotations in the pre-digest
 
 Date: 2026-09-24
+Revised: 2026-09-26 (recorded the deployed printed-page compatibility transform)
 Status: accepted; partially implemented
 
 ## Context
@@ -9,13 +10,13 @@ Status: accepted; partially implemented
 carriers: YAML mappings in HTML comments and inline `{{YAML}}`. The carrier says
 where an annotation sits, not whether it is source context for the extraction
 model. [0042](0042-pre-digest-stage-and-eval-only-highlights.md) makes the
-materialised pre-digest the exact model input, but its producer currently removes
-selected annotation names by regular expression and leaves others untouched.
-PDF page and EPUB printed-page comments therefore reach the model; word times,
-printed-page sequence state and Kindle source positions have explicit removal
-rules. The Kindle rule is a narrow deployed case rather than a generic
+materialised pre-digest the exact model input, but its producer removed selected
+annotation names by regular expression and left others untouched. At acceptance,
+PDF page and EPUB printed-page comments therefore reached the model; word times,
+printed-page sequence state and Kindle source positions had explicit removal
+rules. The Kindle rule was a narrow deployed case rather than a generic
 interpretation of underscored fields. The recorded format's claim that
-classification annotations are stripped is not implemented by the shared
+classification annotations were stripped was not implemented by the shared
 producer either.
 
 A block can mix two kinds of information. An image annotation's `file` identifies
@@ -88,16 +89,24 @@ labels and physical PDF page ordinals also remain different coordinates. The
 model must not be asked to reconstruct either from text stripped before its
 call. A claim that cannot be aligned does not acquire a fabricated locator.
 
-**Implementation status:** the generic rule remains a migration target. One
-narrow slice is deployed: the ebook producer emits
-`{{_kindle_position: 2147}}`, and preparation version 9 strips that form plus the
-legacy Kindle block without consuming its paragraph. This explicit transform
-does not make `_t`, `_file_page` or any other underscored key hidden. Existing
-undressed fields and legacy `{{t:1.25}}` remain readable during the migration.
-The canonical output form uses YAML's `: ` separator, including in future
+**Implementation status:** the generic rule remains a migration target. At
+acceptance, one narrow slice was deployed: the ebook producer emitted
+`{{_kindle_position: 2147}}`, and preparation version 9 stripped that form plus
+the legacy Kindle block without consuming its paragraph. On 2026-09-26 the
+shared preparation added another explicit compatibility transform: it strips
+the current unprefixed `printed_page` as well as `printed_page_sequence` from
+model input while leaving both annotations in the raw Ingest. Printed-page
+labels therefore remain available to the Workbench and human review, and
+sequence state remains available to deterministic readers. Page writers have
+not migrated to `_printed_page` or `_printed_page_sequence`.
+
+These explicit transforms do not make `_t`, `_file_page` or any other
+underscored key hidden. Unprefixed fields without a registered explicit
+transform and legacy `{{t:1.25}}` remain readable during the migration. The
+canonical output form uses YAML's `: ` separator, including in future
 word-timing markers. Newly materialised pre-digests record their preparation
 version; stored pre-digests and bindings are not rewritten. No typed ebook or
-audio evidence support follows from the Kindle projection change.
+audio evidence support follows from these projection changes.
 
 ### Migration inventory
 
@@ -108,7 +117,8 @@ review-state migration, not a punctuation-only edit.
 | Existing data | Intended model projection | Migration boundary |
 |---|---|---|
 | `t` | No coordinate syntax | The current legacy marker is already stripped. Emit `_t` only after generic readers support it and preserve the word-to-time map. |
-| `file_page`, `printed_page` | No coordinate syntax | Emit `_file_page` and `_printed_page`; build the locator map first and preserve verbatim printed-page labels. This migration remains pending. |
+| `file_page` | No coordinate syntax | It still reaches model input. Emit `_file_page` only after building the locator map and updating all structural readers; this migration remains pending. |
+| `printed_page` | No coordinate syntax | The current unprefixed marker is stripped by an explicit transform while the raw Ingest retains its verbatim label for review. The coordinated migration to `_printed_page` remains pending. |
 | `printed_page_sequence` | No coordinate syntax | The current undressed field is already stripped by an explicit transform. Migrate to `_printed_page_sequence` after structural readers support it. |
 | `kindle_position` | No coordinate syntax | The producer now emits `_kindle_position`, and preparation version 9 strips canonical and legacy forms. Preserve the edition-specific raw position; deterministic claim alignment and typed downstream evidence remain pending. |
 | `chapter`, `chapter_title` | Printed source heading where it exists, not a duplicated machine label | Keep structural chapter identity for chunking and review. Suppress a marker only after proving its title is supplied as source text or otherwise retaining needed context. |

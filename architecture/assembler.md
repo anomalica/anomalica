@@ -42,7 +42,8 @@ digest's `record.content_hash` names that live record and its
 its `pre_digest.sha256` equals the hash obtained by materialising the current record
 body through the shared pre-digest implementation; missing legacy provenance
 fails closed. Generated claims require a page-mapped PDF/image `record/3`,
-`anomalica/digest/2`, preparation version 9 and its current exact source-map hash.
+`anomalica/digest/2`, the current source-mapped preparation version (introduced
+at 9, now 10) and its exact source-map hash.
 Audio, video, web and ebook Records remain shells until a later typed-coordinate
 contract. The producer removes the generated body when eligibility
 is lost and retains the shell. The article's generated description and

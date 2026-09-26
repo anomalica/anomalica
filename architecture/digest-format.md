@@ -24,9 +24,11 @@ The canonical machine-readable field lists are
 `types.digest_v1` and `types.per_model_digest`); this document is their narrative
 companion.
 
-`digest/2`, preparation-version-9 source maps and Asset-page anchors are the
-accepted migration target, not current Digester output. The deployed Digester
-currently emits `digest/1` with scalar `location` for every medium.
+Preparation version 9 introduced exact Asset-page source maps for `digest/2`;
+the current source-mapped producer uses preparation version 10. The Digester
+supports `digest/2` for eligible page-mapped PDF/image Records; the held corpus
+still has no canonical schema-2 digest. Other media emit `digest/1` with scalar
+`location` until their typed coordinates are defined.
 
 ## Schema identifier
 
@@ -59,7 +61,7 @@ extraction_generation: 1
 extraction_config: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 pre_digest:
   sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  prep_version: 9
+  prep_version: 10
   source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 ```
 
@@ -172,7 +174,9 @@ infrastructure claims, the key is absent rather than present with `[]`.
 extractions; readers accept their absence on legacy digests only by classifying
 those digests as unknown and not current. `pre_digest` is required on all new
 output: schema 1 carries `{sha256, prep_version}`, while schema 2 additionally
-requires `source_map_sha256` and preparation version 9. Existing pre-stamping
+requires `source_map_sha256`. Version 9 was the first source-map contract; new
+schema-2 output uses preparation version 10. Stored version-9 bindings remain
+readable against their exact historical pre-digest and map. Existing pre-stamping
 schema-1 files may omit it and are freshness-unknown. `ai_usage`, `prompts`,
 `curation`, and `terminology` are optional blocks (see below).
 
@@ -189,7 +193,7 @@ extraction_generation: 1
 extraction_config: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 pre_digest:
   sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  prep_version: 9
+  prep_version: 10
   source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 record_snapshot_sha256: sha256:375ead75c85f48ad5f19f2c3ab797b3cbb7099651dd23eb752ebc5cdec021b47
 record:
@@ -287,8 +291,9 @@ The required non-empty ordered list of exact evidence sites from which a schema-
 claim was drawn. Anchors are **always derived by deterministic realignment and the
 pre-digest source map, never taken from a model's rough location**.
 
-Schema 2 and preparation version 9 are limited in this contract to page-mapped
-PDF/image Records. A non-paged Record cannot fabricate page coordinates and remains
+Schema 2 and source-mapped preparation (introduced at version 9, currently
+version 10) are limited in this contract to page-mapped PDF/image Records. A
+non-paged Record cannot fabricate page coordinates and remains
 schema 1; its claims are ineligible for anchor-based evidence counting and public
 generated claim sections.
 
@@ -546,15 +551,16 @@ deterministic model-prep (irrelevant regions removed, footnotes inlined,
 word-timestamps stripped), which is exactly the text the model extracted from
 ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)).
 The accepted [field-level annotation rule](../decisions/0052-field-level-ingest-annotation-visibility.md)
-is partially implemented. Preparation version 9 strips the deployed
-`_kindle_position` marker, while the generic field-level parser and the wider
-page-marker migration remain pending. A preparation change does not
+is partially implemented. Version 9 introduced removal of `_kindle_position`;
+current preparation version 10 also strips raw `printed_page` and
+`printed_page_sequence` comments, including mid-paragraph page breaks. The
+generic underscore parser and `file_page` migration remain pending. A preparation change does not
 retroactively alter stored pre-digests or their bindings.
 
 ```yaml
 pre_digest:
   sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  prep_version: 9
+  prep_version: 10
   source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 ```
 
@@ -565,6 +571,9 @@ model sampling means it does not promise byte-identical model output.
 source map from every retained body interval to Asset-page text. It follows the
 deployed transformation namespace through version 8; it does not reuse the older
 architecture document's former version-1 example or renumber live output.
+The current producer uses version 10; a historical version-9 digest is
+validated against the historical materialised text and map it records, never
+relabeled as version 10.
 `source_map_sha256` binds the canonical compact JSON bytes and resolves
 `source-maps/{bare_source_map_sha256}.json` in the ingests repository at the same
 committed ref as the Record/Ingest. Missing, ambiguous or stale mapping
@@ -801,7 +810,7 @@ Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-ca
 
 - **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored at `digests/variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml` (a `variants/` subtree beside the canonical digests at the root of `digests/`; the assimilator globs `**/*.yaml` there and drops anything under `variants/`, so they are never imported). The variant key carries the model AND the prompt hash ([0039 amendment 2026-07-04](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)), so a prompt tune on the same model never overwrites the prior output. This layout is built; the variants store now.
 - **One canonical** at the unchanged `digests/{friendly-name}.yaml` - a SELECTED per-model digest, not a merge: the selector picks one whole variant as the canonical (no claim-clustering, no dedup-across-variants, no best-phrasing synthesis). Until the selector lands the canonical is latest-written by a production run. It is the only digest the assimilator imports; the variants are inert.
-- **Schema `anomalica/digest/2`** carries exact Asset source anchors and preparation-version-9 source maps. When the selector lands, its canonical output additionally gains `selected_from` (the candidate variants and winner); the selected digest preserves the winning variant's extraction identity unchanged.
+- **Schema `anomalica/digest/2`** carries exact Asset source anchors and source maps (introduced in preparation version 9; new output uses version 10). When the selector lands, its canonical output additionally gains `selected_from` (the candidate variants and winner); the selected digest preserves the winning variant's extraction identity unchanged.
 - **Independence**: multiple models on one Record are alternatives, not
   corroboration. Anchor overlap on one physical Asset page in the same exact
   page-text frame establishes one evidence unit; additional independence also

@@ -9,7 +9,8 @@ representation of that Record. See [decision
 `record/3` is the Ingester's current output for ordinary acquisitions. Each such
 run archives the exact acquired bytes as one immutable Asset and emits the default
 whole-Asset Selection; PDF and image output also carries the complete page map and
-its preparation-version-9 source map. Existing `record/1` and `/2` envelopes remain
+a source map under the current preparation version 10 (introduced at version 9).
+Existing `record/1` and `/2` envelopes remain
 legacy-readable and are migrated deterministically from held Asset bytes rather
 than reacquired. Consumers use explicit Asset, Selection and page-map authority for
 `record/3` and the documented implicit whole-Asset rule only for legacy envelopes.
@@ -44,7 +45,8 @@ The ebook producer and preparation version 9 implement `_kindle_position` as a
 narrow first case. The shared materialiser does not yet interpret the prefix
 generically, so adding it to any other live field does not automatically hide
 that field from the extraction model. Existing explicit transforms still handle
-legacy word times and printed-page sequence state.
+legacy word times and strip the current unprefixed `printed_page` and
+`printed_page_sequence` fields from model input.
 
 In the target grammar the underscore belongs to **each field**, including a
 nested field, rather than to the whole comment. Of the following examples, only
@@ -714,7 +716,19 @@ Some EPUB editions interleave more than one printed pagination sequence. For exa
 
 The identity of a printed page is the pair `(printed_page_sequence, printed_page)`. Sequence numbers describe distinct pagination runs in EPUB spine reading order; they do not replace or alter the verbatim reader-facing page label. Emit sequence markers only when repeated labels make the distinction necessary. An EPUB whose page labels are unambiguous carries no `printed_page_sequence` markers and remains byte-for-byte unchanged. Once sequence markers are required, emit one immediately before each state transition rather than repeating the sequence on every page.
 
-`printed_page` remains in the materialised pre-digest as source-location context. `printed_page_sequence` is structural disambiguation for deterministic consumers, not source content or a supported claim-location syntax, so `anomalica_common.pre_digest.materialise()` strips the complete sequence-marker line before model input. Adding it changes the stored record binding and preparation version but otherwise leaves the model input unchanged; its numeric payload never reaches extraction. EPUBs without pagebreaks carry no page markers and locate content by [chapter boundary](#chapter-boundary) only.
+The raw Ingest retains both annotations, with their current unprefixed
+`printed_page` and `printed_page_sequence` spellings. This keeps printed-page
+labels available to the Workbench and human reviewers, and sequence state
+available to deterministic readers.
+`anomalica_common.pre_digest.materialise()` strips both annotations from the
+shared pre-digest and model input without consuming adjoining source text;
+neither payload reaches extraction. This is an explicit compatibility transform,
+not the generic underscore rule accepted by [decision
+0052](../decisions/0052-field-level-ingest-annotation-visibility.md). Writers
+must not independently rename either field to `_printed_page` or
+`_printed_page_sequence`; that coordinated producer, consumer and record
+migration remains pending. EPUBs without pagebreaks carry no page markers and
+locate content by [chapter boundary](#chapter-boundary) only.
 
 An EPUB exported by Anomalica Prometheus may also carry an edition-specific Kindle source position on each paragraph. The ingester preserves it immediately before that paragraph:
 
