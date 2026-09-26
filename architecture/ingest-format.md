@@ -283,10 +283,12 @@ The two are orthogonal, and they come apart immediately. The same email is `web`
 
 ```
 book  paper  report  article  letter  email  statement  form  transcript  slide
-interview  documentary  podcast  lecture  broadcast  recording  footage
+interview  hearing  documentary  podcast  lecture  broadcast  recording  footage
 ```
 
-It was open until 2026-09-01 and is closed now because it is displayed: the workbench shows it as a record's primary type and offers it as a dropdown, and a field rendered to a reviewer and used to weigh evidence cannot be free text - a value nobody else uses is a value nothing can query. The seventeen were derived from what the corpus actually holds rather than proposed and then fitted to. Additions go through a change to this document. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. It exists to drive extraction, not to classify for its own sake.
+It was open until 2026-09-01 and is closed now because it is displayed: the workbench shows it as a record's primary type and offers it as a dropdown, and a field rendered to a reviewer and used to weigh evidence cannot be free text - a value nobody else uses is a value nothing can query. The original seventeen were derived from what the corpus actually holds rather than proposed and then fitted to. Additions go through a change to this document. "Document" carries the sense it has in the node taxonomy: an information artefact whatever the medium, so a recorded interview is as much a document as a memo is. It exists to drive extraction, not to classify for its own sake.
+
+`hearing` describes the record of a formally convened proceeding with witnesses and questions, such as a congressional hearing, whether acquired as video, audio or an official record of proceedings. A separately published verbatim text is a `transcript`; an individual witness's separately published written submission is a `statement`. Coverage of a hearing by a news programme remains a `broadcast`.
 
 `footage` is visual moving-image material presented as captured scenes or events,
 rather than an organised programme such as a `documentary` or `broadcast`.
