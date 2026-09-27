@@ -359,6 +359,20 @@ Present but invalid acquisition metadata still blocks migration, as do missing
 or mismatched archived bytes and missing rights authority. New acquisitions
 continue to record their actual acquisition time.
 
+### Amendment 2026-09-27: Asset-first acquisition and explicit Record release
+
+The rule above that every successful ordinary acquisition immediately creates
+a whole-Asset Record is superseded for the asset-first workflow. Acquisition
+must persist an Asset independently of any Record or Ingest; a human may then
+define zero, one or several Records from it. Completing Asset inspection and
+releasing each Record for ingestion are separate actions. Neither authorises a
+digest without the current Ingest's human review. The Selection identity, page
+constraints and per-Asset rights rules in this decision remain in force.
+Existing automatic whole-Record ingest paths remain legacy implementation
+behaviour during rollout; their existence does not imply readiness under the
+new workflow. The target storage and responsibility split is in
+[Asset intake and Record release](../architecture/asset-intake.md).
+
 ## Consequences
 
 - One Asset can safely yield several live Records and one Record can compose
