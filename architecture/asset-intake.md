@@ -10,13 +10,29 @@ registered Asset and a queue stub is not a Record definition.
 
 ## Ownership and sequence
 
-Workbench is the private operator interface and exposes the same actions via
-authenticated APIs. Its backend calls ingester-owned acquisition and PDF
-inspection primitives rather than maintaining a second fetcher or archive
-implementation. The ingests repository holds durable private metadata; exact
-original bytes remain in `records/{asset_hash}.{ext}`. Scheduler discovers and
-dispatches ready Records; it neither decides PDF boundaries nor grants rights.
-Digester continues to require a separate human review of the generated Ingest.
+**Acquisition and catalogue** is the private operator interface and API for
+submitting URLs or files, browsing followed channels and feeds, fetching bytes,
+describing Assets, defining Record selections and releasing Records for ingest.
+It is one logical service, not necessarily another repository or deployment.
+Move the existing scheduler intake, channel/feed browsing and pre-ingest
+download paths behind it; reuse the ingester's acquisition and archive
+primitives rather than maintaining a second fetcher. Ingester then transforms
+acquired, released selections without fetching again. Workbench owns review of
+generated Ingests and digest/graph curation, not acquisition or initial page
+structuring. Its existing structural page-selection code can be reused by the
+acquisition interface. Scheduler discovers and dispatches ready Records and
+monitors resources; it neither decides PDF boundaries nor grants rights.
+
+The ingests repository holds durable private metadata. Exact bytes currently
+land in `records/{asset_hash}.{ext}` and are backed up to rights-separated object
+storage. The existing uploader runs **after ingestion** and reads Record
+frontmatter, so it does not back up an Asset without a Record. Acquisition must
+upload at successful Asset registration, independently of Ingest generation.
+In a cloud deployment durable private object storage is the authoritative
+archive; workers use hash-verified local caches, not a particular machine's
+disk or a CDN URL as the only original. Only openly redistributable Assets go
+to the public delivery zone. Gated originals remain authenticated. The CDN is
+a delivery layer, not a metadata store or a blanket publication decision.
 
 1. **Acquire an Asset.** Accept a URL or local PDF, fetch/import without model
    extraction, verify file format and physical page count, hash the exact held
@@ -25,7 +41,7 @@ Digester continues to require a separate human review of the generated Ingest.
    additional acquisitions can be recorded without rewriting the byte identity.
    Failure creates no registered Asset. Repository metadata records a source
    filename, not a machine path or `file://` URL.
-2. **Inspect.** Workbench shows the PDF and physical pages, title, description,
+2. **Inspect.** Acquisition shows the PDF and physical pages, title, description,
    acquisition facts, rights and Records selecting it. An Asset may remain
    unstructured indefinitely; an image that will never be digested is still an
    Asset. Its metadata may change without changing its hash. An unselected Asset
@@ -64,7 +80,7 @@ infer readiness from an Asset, queue stub or default whole-Asset Record.
 ## Descriptions, dates and rights
 
 Both Asset and Record definitions have an optional private
-`catalogue.description`, editable in Workbench. It is a human-facing description
+`catalogue.description`, editable in Acquisition. It is a human-facing description
 of that Asset or selected work, not an extraction input or a public source
 quotation. An Asset description may be seeded from a landing-page blurb, with
 the text's origin and URL recorded so it is not represented as words printed in
@@ -93,19 +109,25 @@ refused before archiving under the source-registration rule in
 
 ## Surfaces and rollout
 
-Workbench defaults to **Records**, with a sibling **Assets** view that includes
-Assets with zero Records. Assets supplies URL/local-PDF acquisition, metadata
-and rights editing, physical-page inspection, Record definition and completion.
-Adapt the existing Structure editor's page assignment and Selection checks, but
-remove its extracted-parent and two-children requirements for this path. Local
-page rendering can precede model extraction; exact source text and maps cannot
-be claimed before extraction. APIs validate authenticated role, URI/fetch
-boundaries and Asset bytes on the server, never trust client-supplied hashes or
-archive paths, and compare-and-swap committed metadata changes.
+Acquisition defaults to a **Records** catalogue, with sibling **Assets** and
+**Sources** views. Assets includes those with zero Records; Sources browses
+followed channels, playlists and podcast feeds. Selecting a source item queues
+acquisition, not ingestion. Assets supplies URL/file submission, metadata and
+rights editing, physical-page inspection, Record definition and completion.
+Adapt Workbench's existing Structure editor's page assignment and Selection
+checks, but remove its extracted-parent and two-children requirements for this
+path. Local page rendering can precede model extraction; exact source text and
+maps cannot be claimed before extraction. Authenticated APIs validate role,
+URI/fetch boundaries and Asset bytes on the server, never trust client-supplied
+hashes or archive paths, and compare-and-swap committed metadata changes. The
+interface and workers may run locally first; cloud workers must consume the
+same durable Asset and Record identities rather than machine-specific paths.
 
-Scheduler remains the resource monitor and dispatcher. Its new input is a ready
-Record definition, not an Asset-complete flag. Existing transient intake jobs
-and historical Records need an explicit legacy path during rollout, not silent
-reinterpretation as reviewed definitions. The first asset-first release is PDF
-only; other media may be registered as Assets without entering this new
-ingestion queue.
+Scheduler remains the resource monitor and dispatcher. Its ingest input is a
+ready Record definition whose Asset bytes are acquired and verified, not an
+acquisition request or Asset-complete flag. It may run an acquisition worker
+under shared resource scheduling, but acquisition requests must not masquerade
+as eligible ingest jobs. Existing transient intake jobs and historical Records
+need an explicit migration or legacy path, not silent reinterpretation as
+reviewed definitions. The first asset-first structuring release is PDF only;
+other media may be acquired and catalogued without entering that queue.

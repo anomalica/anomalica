@@ -371,7 +371,10 @@ constraints and per-Asset rights rules in this decision remain in force.
 Existing automatic whole-Record ingest paths remain legacy implementation
 behaviour during rollout; their existence does not imply readiness under the
 new workflow. The target storage and responsibility split is in
-[Asset intake and Record release](../architecture/asset-intake.md).
+[Asset intake and Record release](../architecture/asset-intake.md). Acquisition
+and initial Record structuring belong in the acquisition/catalogue interface;
+Workbench reviews generated Ingests. Scheduler dispatches ready Records rather
+than serving as the operator's source catalogue.
 
 ## Consequences
 

@@ -14,13 +14,22 @@ nodes:
     contains: "Third-party material in whatever form it was published - documents, broadcasts, articles, testimony."
     copyright: "Follows the source: public-domain and openly-licensed material is free to share; copyrighted material is handled
       under copyright and not republished."
+  acquisition:
+    kind: "Target component (private operator interface + API)"
+    zone: "source"
+    desc: "One acquisition and catalogue surface for URL and file submission, followed channels and feeds, Asset descriptions
+      and rights, PDF page inspection and explicit Record release. It consolidates the scheduler's current intake/channel/download
+      paths and reuses ingester-owned acquisition/archive primitives. Not yet deployed as an independent boundary."
+    output: "Registered immutable Assets and draft or ready Record definitions; no generated Ingest or digest."
+    contains: "Source acquisition facts and private catalogue metadata, including restricted third-party material."
+    copyright: "Per-Asset rights determine private archive and eligible delivery; a fetchable URL does not grant redistribution."
   ingester:
     kind: "Component (Python; emits Record/3)"
     zone: "public"
-    desc: "Acquires immutable Assets, establishes an ordered Selection and Record, then generates the structured-text Ingest.
-      Ordinary acquisitions emit one default whole-Asset record/3. Per-format handlers cover PDF, web, audio/video, ebook
-      and image; legacy record/1 and record/2 remain deterministic read and migration inputs."
-    output: "Asset bytes archived by byte SHA-256, one default whole-Asset Record, and its current Ingest."
+    desc: "Currently acquires immutable Assets, creates one default whole-Asset Record and generates its Ingest. Target: consume
+      an acquired, released Record Selection without fetching again or creating another default Record. Per-format handlers
+      cover PDF, web, audio/video, ebook and image; legacy record/1 and record/2 remain migration inputs."
+    output: "Currently archives Asset bytes and emits one default Record and Ingest; target emits the selected Record's Ingest."
     contains: "Just code - an open-source tool. The records it produces inherit the source's copyright, but the ingester itself
       is public."
     copyright: "PUBLIC - open-source code."
@@ -96,7 +105,8 @@ nodes:
   archive:
     kind: "Data store (records/)"
     zone: "source"
-    desc: "Durable archive of original Assets by Asset hash plus complete raw AI transcripts. A composite has no synthetic
+    desc: "Local content-addressed archive of original Assets plus complete raw AI transcripts. Today this is authoritative;
+      target cloud workers use it as a hash-verified cache of durable private object storage. A composite has no synthetic
       original at its Record hash."
     output: "Re-render source for the ingester; provenance of last resort."
     contains: "The original files + raw transcripts. Copyright follows the source."
@@ -105,9 +115,9 @@ nodes:
   bucket:
     kind: "Data store (object storage)"
     zone: "source"
-    desc: "Off-machine object storage - a cloud storage bucket - holding the source originals so a non-embeddable local file
-      can be served to readers and the archive survives loss of the local machine or link-rot at the origin. The originals
-      are pushed here from the records/ archive, routed by copyright."
+    desc: "Rights-separated object storage of source originals. Currently populated after ingest from the local records/ archive;
+      target acquisition uploads each registered Asset before Record definition, and cloud workers read from here through
+      verified local caches. Public delivery is separate from durable storage."
     output: "Originals served to readers; a durable backup of the records/ archive."
     contains: "The original source files - a mix of public-domain and copyrighted material, held in separate zones by status."
     copyright: "Split by status and enforced by the storage zone itself: public-domain and openly-licensed originals sit in
@@ -121,9 +131,9 @@ nodes:
       the original source and the raw archive, corrects the record text, labels who is speaking, adds visual notes (what's
       on screen but not in the audio), marks which records are observed enough to digest, and blocks new content review until
       deterministic housekeeping completes, metadata research completes or is explicitly waived, and every proposal is decided.
-      It can preview and atomically commit CAS-bound page/image splits or multi-Asset composition. That structural and per-Asset
-      possession contract is not implemented; current writes and gates remain legacy launch blockers. Target clients submit
-      only selections and editable metadata; the server derives bodies, maps and hashes."
+      The current structural editor can preview and commit page/image splits from already extracted temporary parents; the
+      target acquisition interface reuses its selection logic for Asset-first Record definitions. Per-Asset possession remains
+      a separate access gate."
     output: "Ingest corrections and review sidecars; atomic structural lineage/retirement commits; replayable graph curation.
       Selector preferences are planned with the selector, not current output. It does not ordinarily edit model digests."
     contains: "Reviewer edits + observations; reads the source material to check records against it."

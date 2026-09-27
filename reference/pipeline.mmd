@@ -5,6 +5,7 @@ flowchart TB
   classDef store fill:#ffffff,stroke:#5E5A50,stroke-width:1.3px,color:#2c2a24;
 
   raw@{ shape: doc, label: "Raw source" }
+  acquisition@{ shape: rounded, label: "Acquisition + catalogue (target)" }
   asset@{ shape: docs, label: "Immutable Asset(s)" }
   record@{ shape: doc, label: "Ordered Selection / Record" }
   ingester@{ shape: rounded, label: "Ingester" }
@@ -28,17 +29,21 @@ flowchart TB
   site@{ shape: rounded, label: "Site" }
   brand@{ shape: docs, label: "Brand" }
 
-  raw -->|"acquire exact bytes"| ingester
-  ingester -->|"archive by byte SHA-256"| asset
+  raw -->|"target: submit URL, file or followed source"| acquisition
+  acquisition -->|"target: acquire exact bytes + register"| asset
+  raw -.->|"current: fetch and extract together"| ingester
+  ingester -.->|"current: archive at ingest"| asset
   asset -->|"ordered whole/page selectors"| record
-  record -->|"generate current representation"| ingest
+  acquisition -->|"target: define and release Records"| record
+  record -->|"ready selection"| ingester
+  ingester -->|"generate current representation"| ingest
   ingester -.->|"post-commit fast path"| housekeeping
   ingest -->|"startup + ≤5-minute tuple reconciliation"| housekeeping
   housekeeping -->|"deterministic, then priority subscription research"| housekeeping_proposals
   housekeeping_proposals <-.->|"gate review; decide + atomic apply"| workbench
   asset -->|"originals"| archive
   ingester -->|"raw transcripts"| archive
-  archive -->|"originals uploaded off-machine"| bucket
+  archive -->|"originals uploaded off-machine; target: at registration"| bucket
   bucket -.->|"public Assets only"| site
   bucket -.->|"gated Assets, per-member authority"| workbench
   ingest -->|"deterministic prep: exact input + PDF/image source map"| predigest
@@ -58,7 +63,7 @@ flowchart TB
   content -->|"renders"| site
   brand -.->|"tokens, logo"| site
   ingest <-.->|"review + corrections"| workbench
-  record <-.->|"target: CAS split/compose + atomic retirement"| workbench
+  record <-.->|"current: split/compose extracted parents"| workbench
   predigest -.->|"validate existing parent source maps"| workbench
   selector <-.->|"planned: review the selection"| workbench
   assimilator <-.->|"merge shortlist + replayable graph curation"| workbench
@@ -66,11 +71,12 @@ flowchart TB
   workbench -.->|"review verdict + Ingest annotations"| digester
 
   class raw,asset,record,ingest,housekeeping_proposals,predigest,archive,bucket src
-  class ingester,housekeeping,digester,digests,selector,selected,assimilator,kg,synthesiser,briefs,assembler,content,site pub
+  class acquisition,ingester,housekeeping,digester,digests,selector,selected,assimilator,kg,synthesiser,briefs,assembler,content,site pub
   class workbench rev
   class brand store
 
   click raw nodeClick
+  click acquisition nodeClick
   click asset nodeClick
   click record nodeClick
   click ingester nodeClick
