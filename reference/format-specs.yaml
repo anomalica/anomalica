@@ -348,11 +348,13 @@ types:
           banner, verbatim with parentheses stripped (e.g. SECRET//REL TO USA, FVEY). Present only for documents carrying
           a marking."}
       - {name: processing, type: object, required: false, description: "Processing metadata: handler, version (git short-hash),
-          tools, source characteristics and asset_pipeline_versions. The latter is a complete first-selection-use ordered
-          list of `{asset_hash, source_type, pipeline_version}` for record/3; each positive version is compared only with
-          that source_type's explicit store/_pipeline_versions.yaml entry. The legacy scalar pipeline_version is valid only
-          for /1 and /2. Every selected Asset must be equal/current; lower is stale, while absent, malformed, ahead or a missing
-          manifest entry is unknown. Producers never default an unregistered type to generation 1."}
+          tools, source characteristics and asset_pipeline_versions. For a lost-audio replacement retaining an earlier transcript,
+          transcript_reused_from_asset names the old sha256 Asset and transcript_reuse_basis states the sampled speech/timing
+          validation; neither claims bit-identical audio or re-extraction. asset_pipeline_versions is a complete first-selection-use
+          ordered list of `{asset_hash, source_type, pipeline_version}` for record/3; each positive version is compared only
+          with that source_type's explicit store/_pipeline_versions.yaml entry. The legacy scalar pipeline_version is valid
+          only for /1 and /2. Every selected Asset must be equal/current; lower is stale, while absent, malformed, ahead or
+          a missing manifest entry is unknown. Producers never default an unregistered type to generation 1."}
       - {name: supersedes, type: string, required: false, description: "content_hash of the prior record this one retired,
           when a re-ingest of the same logical source (its `provenance.source_url` / `provenance.identifiers`) superseded
           an earlier extraction. Stamped across schema boundaries. See 0040."}

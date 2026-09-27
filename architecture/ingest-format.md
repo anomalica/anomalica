@@ -1720,6 +1720,18 @@ Record Selection but requires evidenced replacement lineage rather than automati
 newest-URL-wins. Re-extraction from the same Selection changes only the current
 Ingest revision.
 
+When exact archived audio has been lost but the same source URL can be reacquired,
+new bytes get a **new Asset hash** even if playback length and file size match.
+If an existing word-timed transcript is retained after speech and timing checks
+against the new audio, `processing.transcript_reused_from_asset` records the lost
+Asset hash and `processing.transcript_reuse_basis` states the check performed.
+The original `date_extracted` and extraction-tool metadata describe that retained
+transcript; the replacement Asset's acquisition date and `processing.source` describe
+the new bytes. These two fields do not claim a bit-identical recording, exhaustive
+transcript verification or a new extraction. Preserve the earlier record and its
+sidecars as retired history; never place reacquired bytes at its old Asset hash or
+equate the two Record identities in the legacy identity map.
+
 **Retire by moving, or mark in place - the discriminator is downstream pointers.**
 Move to `store/v1/` where nothing holds the old hash. **Mark in place** - leave the
 file at `store/{hash}.md` carrying `superseded_by` - where something does, because
