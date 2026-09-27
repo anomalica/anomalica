@@ -202,8 +202,12 @@ Current checks, ordered by value rather than ease:
    deciding that "Eyes On Cinema" is a redistributor and that the underlying work
    is a 1987 broadcast is exactly the call [ingest-format](ingest-format.md) says
    cannot be made mechanically.
-2. **Missing `container_title` (`metadata`, metadata-research).** The journal,
-   book or programme a work appeared in.
+2. **Missing or inconsistent `container_title` (`metadata`, metadata-research).**
+   The evidenced standalone name of the journal, book, podcast or programme a
+   work appeared in. Keep publisher, posting account and human creator separate;
+   do not concatenate their names into a guessed series title. An unidentified
+   series leaves the field absent. Existing proposals do not automatically change
+   when the research instruction changes and still require individual judgement.
 3. **Deterministic field hygiene (`metadata`).** Required-field presence per
    `source_type`, date precision written per the quoting rule, `creators` that
    parse as a list. No model.
