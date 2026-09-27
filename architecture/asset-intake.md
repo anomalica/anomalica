@@ -23,20 +23,24 @@ structuring. Its existing structural page-selection code can be reused by the
 acquisition interface. Scheduler discovers and dispatches ready Records and
 monitors resources; it neither decides PDF boundaries nor grants rights.
 
-The ingests repository holds durable private metadata. Exact bytes currently
-land in `records/{asset_hash}.{ext}` and are backed up to rights-separated object
-storage. The existing uploader runs **after ingestion** and reads Record
-frontmatter, so it does not back up an Asset without a Record. Acquisition must
-upload at successful Asset registration, independently of Ingest generation.
-In a cloud deployment durable private object storage is the authoritative
-archive; workers use hash-verified local caches, not a particular machine's
-disk or a CDN URL as the only original. Only openly redistributable Assets go
-to the public delivery zone. Gated originals remain authenticated. The CDN is
-a delivery layer, not a metadata store or a blanket publication decision.
+The ingests repository holds durable private metadata. **Remote, rights-separated
+object storage is the authoritative Asset archive in the target architecture,
+including when an acquisition worker runs locally.** Acquisition stages bytes
+temporarily, computes and checks their hash, writes the immutable remote object
+and verifies it before registering the Asset as acquired. A worker may cache
+bytes under `records/{asset_hash}.{ext}`; no Record or ingestion job depends on
+that cache surviving. The existing `records/` folder is today's authoritative
+local archive of originals and some processing sidecars. Its remote uploader
+runs **after ingestion** and reads Record frontmatter, so it does not back up an
+Asset without a Record. Migration must verify remote copies of existing
+holdings before local storage can become only a cache; do not discard originals
+on the assumption that a remote copy exists. Only openly redistributable Assets
+go to the public delivery zone. Gated originals remain authenticated. The CDN
+is a delivery layer, not a metadata store or a blanket publication decision.
 
-1. **Acquire an Asset.** Accept a URL or local PDF, fetch/import without model
+1. **Acquire an Asset.** Accept a URL or uploaded PDF, fetch/import without model
    extraction, verify file format and physical page count, hash the exact held
-   bytes and archive them. Persist a separate Asset manifest keyed by byte hash
+   bytes and verify their remote archival copy. Persist a separate Asset manifest keyed by byte hash
    even when no Record is created. Repeated bytes resolve to the same Asset;
    additional acquisitions can be recorded without rewriting the byte identity.
    Failure creates no registered Asset. Repository metadata records a source
@@ -120,8 +124,8 @@ path. Local page rendering can precede model extraction; exact source text and
 maps cannot be claimed before extraction. Authenticated APIs validate role,
 URI/fetch boundaries and Asset bytes on the server, never trust client-supplied
 hashes or archive paths, and compare-and-swap committed metadata changes. The
-interface and workers may run locally first; cloud workers must consume the
-same durable Asset and Record identities rather than machine-specific paths.
+same API and storage contract applies whether workers run locally or in a cloud
+deployment; durable metadata never contains machine-specific paths.
 
 Scheduler remains the resource monitor and dispatcher. Its ingest input is a
 ready Record definition whose Asset bytes are acquired and verified, not an

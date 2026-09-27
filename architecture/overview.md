@@ -69,20 +69,25 @@ and has shown no contention.
 
 ## Data flow
 
-The following is the accepted 0051 target data flow. It is not yet the deployed
-cross-repository path: Ingester still writes `record/1` or `/2`, Digester writes
-`digest/1` scalar locations, Assimilator lacks Asset-derived relations, Workbench
-lacks structural and per-Asset challenge APIs, and Assembler lacks stable Record
-shells. Those implementation gaps fail closed rather than being inferred from
-legacy fields.
+The following is the accepted target data flow. It is not yet the fully deployed
+cross-repository path: Ingester emits `record/3` for ordinary acquisitions but
+still acquires and creates a default whole-Asset Record in the same run;
+Asset-first registration and release remain to be implemented. Digester still
+writes `digest/1` scalar locations, Assimilator lacks Asset-derived relations,
+Workbench lacks per-Asset challenges, and Assembler lacks stable Record shells.
+Those gaps fail closed rather than being inferred from legacy fields.
 
-Acquisition stores immutable Assets by byte SHA-256. An ordered Selection over one
-or more Assets defines a stable Record; the ingester generates its current Ingest
-in the access-controlled repository. Initial acquisition creates a whole-Asset
-Record automatically. A PDF/image Record explicitly marked temporary may later be
-split or composed by the private Workbench from validated complete physical PDF
-pages and whole images without reacquiring a source or synthesizing a PDF. Whole
-audio, video, web and ebook Records are outside this first structural surface.
+Acquisition stores immutable Assets by byte SHA-256 in authoritative remote
+object storage, with a verified local cache where useful. An ordered Selection
+over one or more Assets defines a stable Record; the ingester generates its
+current Ingest in the access-controlled repository. The acquisition catalogue
+can retain an Asset without creating a Record, define one or several Records
+from whole Assets or complete physical PDF pages, and release each Record
+separately for ingestion. The existing Workbench editor can split already
+extracted temporary PDF/image parents; its page-selection logic is useful in
+the acquisition interface, but it is not the Asset-first entry point. Whole
+audio, video, web and ebook selections remain outside the first PDF structuring
+surface. See [Asset intake and Record release](asset-intake.md).
 
 For page-mapped PDF/image Records, before extraction the digester derives a
 materialised **pre-digest** and source map back through Record pages to Asset pages.
@@ -105,8 +110,11 @@ A principle runs through all of this: **data flows one direction, and human edit
 
 Digests are publicly readable on the git hosting platform but are not rendered as pages on the site. The site presents assembled articles only. Each article's references link back to both the original source material and the digest, giving readers a path to verify claims or report errors via the repository's issue tracker. Corrections to digests trigger a database rebuild and article reassembly.
 
-Original source files are archived locally as
-`records/{asset_hash}.{ext}` and backed up off-machine. Public-domain and
-open-licence Assets may be copied to a public serving zone. Gated Assets remain
-private and are available only through the Workbench after per-Asset authority;
-private or signed URLs never enter static public content.
+Today original source files are archived locally as
+`records/{asset_hash}.{ext}` and uploaded off-machine after ingestion. In the
+target contract remote rights-separated object storage is the authoritative
+archive from acquisition onward, including for local workers; `records/` is a
+verified local cache, not a required durable volume. Public-domain and
+open-licence Assets may be served from a public zone. Gated Assets remain
+private and are available only after per-Asset authority; private or signed
+URLs never enter static public content.

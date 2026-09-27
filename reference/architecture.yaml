@@ -106,19 +106,19 @@ nodes:
     kind: "Data store (records/)"
     zone: "source"
     desc: "Local content-addressed archive of original Assets plus complete raw AI transcripts. Today this is authoritative;
-      target cloud workers use it as a hash-verified cache of durable private object storage. A composite has no synthetic
-      original at its Record hash."
+      target workers use it as an optional hash-verified cache of remote object storage even when running locally. A composite
+      has no synthetic original at its Record hash."
     output: "Re-render source for the ingester; provenance of last resort."
     contains: "The original files + raw transcripts. Copyright follows the source."
-    copyright: "Follows the source - kept where copyright requires it, the same constraint as the ingests. Backed up off-machine
-      to object storage (the bucket node)."
+    copyright: "Follows the source. Existing local originals require verified remote copies before they can become disposable
+      caches; no migration may presume that every file was already uploaded."
   bucket:
     kind: "Data store (object storage)"
     zone: "source"
-    desc: "Rights-separated object storage of source originals. Currently populated after ingest from the local records/ archive;
-      target acquisition uploads each registered Asset before Record definition, and cloud workers read from here through
-      verified local caches. Public delivery is separate from durable storage."
-    output: "Originals served to readers; a durable backup of the records/ archive."
+    desc: "Authoritative rights-separated object storage of source originals in the target design, whether workers run locally
+      or remotely. Currently populated after ingest from records/; acquisition must verify the remote object before marking
+      an Asset acquired. Workers may use hash-verified local caches. Public delivery is separate from durable storage."
+    output: "Durable Asset originals and controlled access for workers; eligible originals may also be served to readers."
     contains: "The original source files - a mix of public-domain and copyrighted material, held in separate zones by status."
     copyright: "Split by status and enforced by the storage zone itself: public-domain and openly-licensed originals sit in
       an open zone (served by a direct URL); copyrighted originals sit in a token-authenticated zone and are only ever handed

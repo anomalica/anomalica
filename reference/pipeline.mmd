@@ -13,8 +13,8 @@ flowchart TB
   housekeeping@{ shape: rounded, label: "Scheduler housekeeping" }
   housekeeping_proposals@{ shape: docs, label: "Housekeeping proposals" }
   predigest@{ shape: doc, label: "Pre-digest" }
-  archive@{ shape: docs, label: "records/ archive" }
-  bucket@{ shape: lin-cyl, label: "Object storage" }
+  archive@{ shape: docs, label: "records/ local archive (target: cache)" }
+  bucket@{ shape: lin-cyl, label: "Remote Asset archive" }
   workbench@{ shape: rounded, label: "Workbench" }
   digester@{ shape: rounded, label: "Digester" }
   digests@{ shape: docs, label: "Per-model digests (planned)" }
@@ -43,7 +43,9 @@ flowchart TB
   housekeeping_proposals <-.->|"gate review; decide + atomic apply"| workbench
   asset -->|"originals"| archive
   ingester -->|"raw transcripts"| archive
-  archive -->|"originals uploaded off-machine; target: at registration"| bucket
+  archive -.->|"current: upload after ingest"| bucket
+  acquisition -->|"target: verified remote copy before registration"| bucket
+  bucket -.->|"target: hash-verified worker cache"| archive
   bucket -.->|"public Assets only"| site
   bucket -.->|"gated Assets, per-member authority"| workbench
   ingest -->|"deterministic prep: exact input + PDF/image source map"| predigest
