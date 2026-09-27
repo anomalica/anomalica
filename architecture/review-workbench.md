@@ -354,8 +354,15 @@ Every ordinary ingest-edit read returns `base_record_sha`, the Git blob id of
 the displayed record, and `base_ref`, the commit whose tree supplied it. The
 frontend echoes both on `PUT
 /api/ingests/<64-lowercase-hex-content-hash>`. The backend rejects a changed ref
-or blob with conflict before writing; it never applies stale whole-record
-browser content over a newer edit.
+or blob with conflict before writing when the submitted content omits a newer
+record edit. The browser retains the unsaved draft on a conflict. A reviewer
+can explicitly choose to save over the exact newer Git ref named in that
+conflict (`overwrite_ref`); the backend rechecks the ref under the write lock
+and records the overwritten ref in the review commit. Unrelated ref movement
+and newer changes already present in the submitted content do not require an
+override. On return from housekeeping, the Workbench reloads the record before
+opening the editor. A browser patch whose base no longer matches is retained
+for export rather than silently deleted.
 
 - **Author** - the reviewer (name and email from their OAuth profile). This is the person who made the correction.
 - **Committer** - the workbench service account. This is the system that applied the change.
