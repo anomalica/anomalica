@@ -25,7 +25,7 @@ The canonical machine-readable field lists are
 companion.
 
 Preparation version 9 introduced exact Asset-page source maps for `digest/2`;
-the current source-mapped producer uses preparation version 10. The Digester
+the current source-mapped producer uses preparation version 11. The Digester
 supports `digest/2` for eligible page-mapped PDF/image Records; the held corpus
 still has no canonical schema-2 digest. Other media emit `digest/1` with scalar
 `location` until their typed coordinates are defined.
@@ -61,7 +61,7 @@ extraction_generation: 1
 extraction_config: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 pre_digest:
   sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  prep_version: 10
+  prep_version: 11
   source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 ```
 
@@ -193,7 +193,7 @@ extraction_generation: 1
 extraction_config: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 pre_digest:
   sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  prep_version: 10
+  prep_version: 11
   source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 record_snapshot_sha256: sha256:375ead75c85f48ad5f19f2c3ab797b3cbb7099651dd23eb752ebc5cdec021b47
 record:
@@ -552,15 +552,16 @@ word-timestamps stripped), which is exactly the text the model extracted from
 ([decision 0042](../decisions/0042-pre-digest-stage-and-eval-only-highlights.md)).
 The accepted [field-level annotation rule](../decisions/0052-field-level-ingest-annotation-visibility.md)
 is partially implemented. Version 9 introduced removal of `_kindle_position`;
-current preparation version 10 also strips raw `printed_page` and
-`printed_page_sequence` comments, including mid-paragraph page breaks. The
+version 10 added removal of raw `printed_page` coordinates. Current preparation
+version 11 also handles inline `printed_page_sequence` points without separating
+source words and decodes image caption/description YAML scalars faithfully. The
 generic underscore parser and `file_page` migration remain pending. A preparation change does not
 retroactively alter stored pre-digests or their bindings.
 
 ```yaml
 pre_digest:
   sha256: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  prep_version: 10
+  prep_version: 11
   source_map_sha256: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 ```
 
@@ -571,7 +572,7 @@ model sampling means it does not promise byte-identical model output.
 source map from every retained body interval to Asset-page text. It follows the
 deployed transformation namespace through version 8; it does not reuse the older
 architecture document's former version-1 example or renumber live output.
-The current producer uses version 10; a historical version-9 digest is
+The current producer uses version 11; a historical version-9 or version-10 digest is
 validated against the historical materialised text and map it records, never
 relabeled as version 10.
 `source_map_sha256` binds the canonical compact JSON bytes and resolves
@@ -810,7 +811,7 @@ Direction recorded in [decision 0039](../decisions/0039-multi-model-digestion-ca
 
 - **N model-variants per ingest** - one ingest digested by several models, each a full digest, stored at `digests/variants/{friendly-name}/{model-id}.{prompt-sha8}.yaml` (a `variants/` subtree beside the canonical digests at the root of `digests/`; the assimilator globs `**/*.yaml` there and drops anything under `variants/`, so they are never imported). The variant key carries the model AND the prompt hash ([0039 amendment 2026-07-04](../decisions/0039-multi-model-digestion-canonical-reconciliation.md)), so a prompt tune on the same model never overwrites the prior output. This layout is built; the variants store now.
 - **One canonical** at the unchanged `digests/{friendly-name}.yaml` - a SELECTED per-model digest, not a merge: the selector picks one whole variant as the canonical (no claim-clustering, no dedup-across-variants, no best-phrasing synthesis). Until the selector lands the canonical is latest-written by a production run. It is the only digest the assimilator imports; the variants are inert.
-- **Schema `anomalica/digest/2`** carries exact Asset source anchors and source maps (introduced in preparation version 9; new output uses version 10). When the selector lands, its canonical output additionally gains `selected_from` (the candidate variants and winner); the selected digest preserves the winning variant's extraction identity unchanged.
+- **Schema `anomalica/digest/2`** carries exact Asset source anchors and source maps (introduced in preparation version 9; new output uses version 11). When the selector lands, its canonical output additionally gains `selected_from` (the candidate variants and winner); the selected digest preserves the winning variant's extraction identity unchanged.
 - **Independence**: multiple models on one Record are alternatives, not
   corroboration. Anchor overlap on one physical Asset page in the same exact
   page-text frame establishes one evidence unit; additional independence also

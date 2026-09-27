@@ -63,7 +63,7 @@ no body, source reproduction, generated summary, claims, claim quotations, Asset
 hashes or private locators. When the Record becomes eligible, the same route loses
 `noindex` and gains the indexed generated explanation, references and independently
 authorised source capabilities. In this contract only page-mapped PDF/image
-`record/3` input with a current `anomalica/digest/2`, preparation version 10 and
+`record/3` input with a current `anomalica/digest/2`, preparation version 11 and
 matching source-map hash can gain generated content. Version 9 introduced this
 source-map contract and remains readable as a historical binding. Other media remain shells
 until their typed coordinates are defined. Losing eligibility returns it to the shell rather

@@ -9,7 +9,7 @@ representation of that Record. See [decision
 `record/3` is the Ingester's current output for ordinary acquisitions. Each such
 run archives the exact acquired bytes as one immutable Asset and emits the default
 whole-Asset Selection; PDF and image output also carries the complete page map and
-a source map under the current preparation version 10 (introduced at version 9).
+a source map under the current preparation version 11 (introduced at version 9).
 Existing `record/1` and `/2` envelopes remain
 legacy-readable and are migrated deterministically from held Asset bytes rather
 than reacquired. Consumers use explicit Asset, Selection and page-map authority for
@@ -206,6 +206,8 @@ channel posted the copy, while Anomalica acquired particular bytes. Different
 actors, layers and dates.
 
 `container_title` records the journal, book, or programme a work appeared in - "Topological Foundations of Electromagnetism" for a chapter, "Scientific Reports" for a paper, "11Alive News Extra" for the WXIA segment. One field for all three, following CSL's `container-title`: the venue is the same relation whether it is bound, published, or broadcast, and splitting it into book-specific and journal-specific fields buys nothing. It is a different axis from `posted_by` - the venue **of the work**, against the channel that reposted **a copy**.
+
+For an episode, `container_title` is the evidenced name of its recurring programme or podcast. Keep it distinct from the issuing brand or network (`publisher`), the account that posted this copy (`posted_by`) and the human presenter (`creators`). When a source uses both a standalone programme name and a longer channel- or host-branded display name for the same series, prefer the evidenced standalone name consistently. Do not construct a title by joining a brand, programme and presenter, or shorten the only evidenced official title by guesswork. A standalone upload with no evidenced series has no `container_title`; the channel and the video's own title do not fill that gap. For example, if a source establishes a programme named `Reality Check`, a network named `NewsNation` and a presenter named Ross Coulthart, those belong in `container_title`, `publisher` and `creators` respectively, not in one concatenated field.
 
 **The attribution is false on its own terms.** A 1988 WXIA-TV segment records Eyes On Cinema as its publisher and 2026 as its publication year; a 1967 recording of James McDonald's Australia tour is filed as published 2026-08-11. Live: 15 records attributed to one archival channel, and a single 1997 Art Bell broadcast filed as 8 records.
 
@@ -711,7 +713,9 @@ For `ebook` records there is no fixed file pagination, so `file_page` does not a
 <!-- printed_page: 15 -->
 ```
 
-The label is taken verbatim from the pagebreak, so front-matter roman numerals (`iii`, `viii`) and index labels appear as-is. A page break can fall mid-paragraph, so the marker records where print page N begins in the reflowed text.
+The label is taken verbatim from the pagebreak, so front-matter roman numerals (`iii`, `viii`) and index labels appear as-is. EPUB page-list or NCX page targets and accessible pagebreak labels are also evidence for the label. Quote YAML-sensitive labels, including leading zeros (`"015"`), so parsing preserves their exact spelling. An opaque element ID is not evidence of a printed label.
+
+A page break can fall mid-paragraph or midword. Preserve its exact text position without adding whitespace: `photo<!-- printed_page: "015" -->graph`. A coincident `printed_page_sequence` point may be an adjacent comment. The shared materialiser removes both points without separating the word.
 
 Some EPUB editions interleave more than one printed pagination sequence. For example, added chapters may restart at page 4 before the EPUB spine returns to backmatter continuing at page 303. Where labels repeat across those sequences, the ingester disambiguates them with `printed_page_sequence`, a 1-based integer state. The state defaults to `1`; immediately before the first `printed_page` after every transition, including a transition back to sequence 1, emit the new state:
 
@@ -956,6 +960,10 @@ that hash directly in the body would create a needless self-reference. No
 
 When the same image appears in multiple records, each record gets its own copy under its own `media/{record_hash}/` subdirectory. This keeps records self-contained for downstream consumers (workbench, assembler, digester) at the cost of duplication, which is small in practice (cover art, publisher logos).
 
+Within an EPUB record, deduplicate the stored bytes but retain every source image occurrence and its own alternative text and printed caption. A single-image `figure` with `figcaption` supplies an explicit caption association; nearby prose alone does not. Ambiguous multi-image captions and captions containing source coordinates or note references remain in their source position rather than being moved into an invented association. Simple SVG image-wrapper accessibility text may supply `alt`.
+
+Caption and description values are YAML text scalars. Consumers decode quotation escapes and literal or folded blocks as YAML; reading only the first field line loses source text. Missing or unsupported embedded resources must produce a visible extraction failure rather than silently disappear.
+
 **How images render into the pre-digest.** An image is not stripped to bare prose; it is rendered into the pre-digest as a `[...]` meta-note (see [the bracket meta-notation](#the-bracket-meta-notation)):
 
 - `[image]` alone when the annotation has no description - signalling only that an image is present;
@@ -991,6 +999,12 @@ image:
 ### Chapter boundary
 
 Marks the start of a chapter or top-level structural section in long-form documents (primarily ebooks).
+
+For EPUB, resolve navigation targets by their package path and fragment in spine
+order. Several chapters can share one XHTML file; equal basenames in different
+directories are different documents. Nested subsection entries remain headings
+rather than receiving invented chapter numbers. A printed chapter designation
+may be reconciled with its adjacent title without losing intervening page points.
 
 ```markdown
 <!-- chapter: 1 -->
